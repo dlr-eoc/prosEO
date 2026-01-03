@@ -1,3 +1,8 @@
+/**
+ * OrderGenConfiguration.java
+ *
+ * (C) 2025 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ordergen;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -7,6 +12,12 @@ import org.springframework.context.annotation.Configuration;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 
+/**
+ * Configuration class for the prosEO OrderGenerator component
+ *
+ * @author Ernst Melchinger
+ *
+ */
 @Configuration
 @ConfigurationProperties(prefix = "proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")

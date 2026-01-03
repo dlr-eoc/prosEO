@@ -1,5 +1,12 @@
+/**
+ * TriggerManager.java
+ *
+ * (C) 2025 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ordergen.rest;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,15 +24,21 @@ import de.dlr.proseo.model.DataDrivenOrderTrigger;
 import de.dlr.proseo.model.DatatakeOrderTrigger;
 import de.dlr.proseo.model.OrbitOrderTrigger;
 import de.dlr.proseo.model.OrderTrigger;
+import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.TimeIntervalOrderTrigger;
-import de.dlr.proseo.model.enums.TriggerType;
+import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.rest.model.RestTrigger;
 import de.dlr.proseo.model.service.SecurityService;
-import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ordergen.util.TriggerUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
+/**
+ * TriggerManager to create, modify, list or delete triggers.
+ *
+ * @author Ernst Melchinger
+ *
+ */
 @Component
 @Transactional(isolation = Isolation.REPEATABLE_READ)
 public class TriggerManager {
@@ -55,7 +68,7 @@ public class TriggerManager {
 	 */
 	public RestTrigger createTrigger(RestTrigger trigger) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> createtrigger({})", (null == trigger ? "MISSING" : trigger.getName()));
+			logger.trace(">>> createTrigger({})", (null == trigger ? "MISSING" : trigger.getName()));
 
 		if (null == trigger) {
 			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_MISSING));
@@ -72,6 +85,7 @@ public class TriggerManager {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "triggerName", "trigger creation"));
 		}
 		OrderTrigger modelTrigger = TriggerUtil.toModelTrigger(trigger);
+		TriggerUtil.check(modelTrigger);
 
 		// Make sure a trigger with the same trigger name and trigger version does not yet exist
 		if (null != TriggerUtil.findByMissionCodeAndTriggerNameAndType(trigger.getMissionCode(), trigger.getName(),
@@ -88,6 +102,16 @@ public class TriggerManager {
 		return restTrigger;
 	}
 
+
+	/**
+	 * Delete a trigger 
+	 *
+	 * @param mission 			the mission code
+	 * @param name				the trigger name
+	 * @param type				the trigger type
+	 * @throws IllegalArgumentException if any of the input data was invalid
+	 * @throws SecurityException        if a cross-mission data access was attempted
+	 */
 	public void deleteTrigger(String mission, String name, String type) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteTrigger({}, {}, {})", mission, name, type);
@@ -121,6 +145,15 @@ public class TriggerManager {
 
 	}
 
+	/**
+	 * Get a list of triggers filtered by mission, name and type.
+	 *
+	 * @param mission 			the mission code
+	 * @param name				the trigger name
+	 * @param type				the trigger type
+	 * @throws IllegalArgumentException if any of the input data was invalid
+	 * @throws SecurityException        if a cross-mission data access was attempted
+	 */
 	public List<RestTrigger> getTriggers(String mission, String name, String type) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getTrigger({}, {}, {})", mission, name, type);
@@ -133,10 +166,17 @@ public class TriggerManager {
 		return triggers;
 	}
 	
-
+	/**
+	 * Modify a trigger 
+	 *
+	 * @param trigger a Json representation of the modified trigger
+	 * @return a Json representation of the trigger after creation (with ID and version number)
+	 * @throws IllegalArgumentException if any of the input data was invalid
+	 * @throws SecurityException        if a cross-mission data access was attempted
+	 */
 	public RestTrigger modifyTrigger(RestTrigger trigger) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> createtrigger({})", (null == trigger ? "MISSING" : trigger.getName()));
+			logger.trace(">>> modifyTrigger({})", (null == trigger ? "MISSING" : trigger.getName()));
 
 		if (null == trigger) {
 			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_MISSING));
@@ -163,15 +203,15 @@ public class TriggerManager {
 		OrderTrigger changedTrigger = TriggerUtil.toModelTrigger(trigger);
 		Boolean triggerChanged = false;
 
-		if (!modelTrigger.getWorkflow().equals(changedTrigger.getWorkflow())) {
+		if (isNotEqual(modelTrigger.getWorkflow(), changedTrigger.getWorkflow())) {
 			triggerChanged = true;
 			modelTrigger.setWorkflow(changedTrigger.getWorkflow());
 		}
-		if (!modelTrigger.getExecutionDelay().equals(changedTrigger.getExecutionDelay())) {
+		if (isNotEqual(modelTrigger.getExecutionDelay(), changedTrigger.getExecutionDelay())) {
 			triggerChanged = true;
 			modelTrigger.setExecutionDelay(changedTrigger.getExecutionDelay());
 		}
-		if (!modelTrigger.getPriority().equals(changedTrigger.getPriority())) {
+		if (isNotEqual(modelTrigger.getPriority(), changedTrigger.getPriority())) {
 			triggerChanged = true;
 			modelTrigger.setPriority(changedTrigger.getPriority());
 		}
@@ -185,40 +225,40 @@ public class TriggerManager {
 		} else if (modelTrigger instanceof TimeIntervalOrderTrigger && changedTrigger instanceof TimeIntervalOrderTrigger) {
 			TimeIntervalOrderTrigger modelTriggerLoc = (TimeIntervalOrderTrigger) modelTrigger;
 			TimeIntervalOrderTrigger changedTriggerLoc = (TimeIntervalOrderTrigger) changedTrigger;
-			if (!modelTriggerLoc.getTriggerInterval().equals(changedTriggerLoc.getTriggerInterval())) {
+			if (isNotEqual(modelTriggerLoc.getTriggerInterval(), changedTriggerLoc.getTriggerInterval())) {
 				triggerChanged = true;
 				modelTriggerLoc.setTriggerInterval(changedTriggerLoc.getTriggerInterval());
 			}
-			if (!modelTriggerLoc.getNextTriggerTime().equals(changedTriggerLoc.getNextTriggerTime())) {
+			if (isNotEqual(modelTriggerLoc.getNextTriggerTime(), changedTriggerLoc.getNextTriggerTime())) {
 				triggerChanged = true;
 				modelTriggerLoc.setNextTriggerTime(changedTriggerLoc.getNextTriggerTime());
-			}	
+			} 	
 		} else if (modelTrigger instanceof CalendarOrderTrigger && changedTrigger instanceof CalendarOrderTrigger) {
 			CalendarOrderTrigger modelTriggerLoc = (CalendarOrderTrigger) modelTrigger;
 			CalendarOrderTrigger changedTriggerLoc = (CalendarOrderTrigger) changedTrigger;
-			if (!modelTriggerLoc.getCronExpression().equals(changedTriggerLoc.getCronExpression())) {
+			if (isNotEqual(modelTriggerLoc.getCronExpression(), changedTriggerLoc.getCronExpression())) {
 				triggerChanged = true;
 				modelTriggerLoc.setCronExpression(changedTriggerLoc.getCronExpression());
 			}	
 		} else if (modelTrigger instanceof OrbitOrderTrigger && changedTrigger instanceof OrbitOrderTrigger) {
 			OrbitOrderTrigger modelTriggerLoc = (OrbitOrderTrigger) modelTrigger;
 			OrbitOrderTrigger changedTriggerLoc = (OrbitOrderTrigger) changedTrigger;
-			if (!modelTriggerLoc.getSpacecraft().equals(changedTriggerLoc.getSpacecraft())) {
+			if (isNotEqual(modelTriggerLoc.getSpacecraft(), changedTriggerLoc.getSpacecraft())) {
 				triggerChanged = true;
 				modelTriggerLoc.setSpacecraft(changedTriggerLoc.getSpacecraft());
 			}	
-			if (!modelTriggerLoc.getDeltaTime().equals(changedTriggerLoc.getDeltaTime())) {
+			if (isNotEqual(modelTriggerLoc.getDeltaTime(), changedTriggerLoc.getDeltaTime())) {
 				triggerChanged = true;
 				modelTriggerLoc.setDeltaTime(changedTriggerLoc.getDeltaTime());
 			}	
 		} else if (modelTrigger instanceof DatatakeOrderTrigger && changedTrigger instanceof DatatakeOrderTrigger) {
 			DatatakeOrderTrigger modelTriggerLoc = (DatatakeOrderTrigger) modelTrigger;
 			DatatakeOrderTrigger changedTriggerLoc = (DatatakeOrderTrigger) changedTrigger;
-			if (!modelTriggerLoc.getDatatakeType().equals(changedTriggerLoc.getDatatakeType())) {
+			if (isNotEqual(modelTriggerLoc.getDatatakeType(), changedTriggerLoc.getDatatakeType())) {
 				triggerChanged = true;
 				modelTriggerLoc.setDatatakeType(changedTriggerLoc.getDatatakeType());
 			}	
-			if (!modelTriggerLoc.getLastDatatakeStartTime().equals(changedTriggerLoc.getLastDatatakeStartTime())) {
+			if (isNotEqual(modelTriggerLoc.getLastDatatakeStartTime(), changedTriggerLoc.getLastDatatakeStartTime())) {
 				triggerChanged = true;
 				modelTriggerLoc.setLastDatatakeStartTime(changedTriggerLoc.getLastDatatakeStartTime());
 			}	
@@ -226,7 +266,7 @@ public class TriggerManager {
 				triggerChanged = true;
 				modelTriggerLoc.setParametersToCopy(changedTriggerLoc.getParametersToCopy());
 			}
-			if (!modelTriggerLoc.getDeltaTime().equals(changedTriggerLoc.getDeltaTime())) {
+			if (isNotEqual(modelTriggerLoc.getDeltaTime(), changedTriggerLoc.getDeltaTime())) {
 				triggerChanged = true;
 				modelTriggerLoc.setDeltaTime(changedTriggerLoc.getDeltaTime());
 			}	
@@ -242,5 +282,61 @@ public class TriggerManager {
 			logger.log(OrderGenMessage.TRIGGER_NOT_MODIFIED, name, type, mission);
 		}
 		return TriggerUtil.toRestTrigger(modelTrigger);
+	}
+
+	// Some methods to compare objects
+	private Boolean isNotEqual(String a, String b) {
+		if ((a != null && b != null
+					&& !a.equals(b))
+					|| (a != null && b == null)
+					|| (a == null && b != null)) {
+			return true;
+		}
+		return false;
+	}
+	private Boolean isNotEqual(Instant a, Instant b) {
+		if ((a != null && b != null
+					&& !a.equals(b))
+					|| (a != null && b == null)
+					|| (a == null && b != null)) {
+			return true;
+		}
+		return false;
+	}
+	private Boolean isNotEqual(Spacecraft a, Spacecraft b) {
+		if ((a != null && b != null
+					&& !a.equals(b))
+					|| (a != null && b == null)
+					|| (a == null && b != null)) {
+			return true;
+		}
+		return false;
+	}
+	private Boolean isNotEqual(Duration a, Duration b) {
+		if ((a != null && b != null
+					&& !a.equals(b))
+					|| (a != null && b == null)
+					|| (a == null && b != null)) {
+			return true;
+		}
+		return false;
+	}
+	private Boolean isNotEqual(Integer a, Integer b) {
+		if ((a != null && b != null
+					&& !a.equals(b))
+					|| (a != null && b == null)
+					|| (a == null && b != null)) {
+			return true;
+		}
+		return false;
+	}
+	private Boolean isNotEqual(Workflow a, Workflow b) {
+		if ((a != null && b != null
+					&& !a.equals(b))
+					|| (a != null && b == null)
+					|| (a == null && b != null)) {
+			return true;
+		}
+		return false;
 	}
 }

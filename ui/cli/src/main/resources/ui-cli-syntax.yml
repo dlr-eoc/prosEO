@@ -1284,7 +1284,7 @@ commands:
             - name: type
               type: string
               optional: true
-              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval})
+              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval })
             - name: name
               type: string
               optional: true
@@ -1304,7 +1304,7 @@ commands:
             - name: type
               type: string
               optional: true
-              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval}, mandatory if not read from file)
+              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval }, mandatory if not read from file)
             - name: name
               type: string
               optional: true
@@ -1332,7 +1332,7 @@ commands:
             - name: type
               type: string
               optional: true
-              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval}, mandatory if not read from file)
+              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval }, mandatory if not read from file)
             - name: name
               type: string
               optional: true
@@ -1348,7 +1348,7 @@ commands:
           parameters:
             - name: type
               type: string
-              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval})
+              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval })
             - name: name
               type: string
               description: The trigger name

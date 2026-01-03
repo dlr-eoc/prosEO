@@ -20,7 +20,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
+import de.dlr.proseo.model.enums.TriggerType;
 import de.dlr.proseo.model.rest.model.RestTrigger;
+import de.dlr.proseo.model.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -51,7 +53,12 @@ public class TriggerCommandRunner {
 	
 
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
+	private static final String PROMPT_TRIGGER_TYPE = "Trigger type (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_NAME = "Trigger name (empty field cancels): ";
+	private static final String PROMPT_TRIGGER_CRON_EXP = "Trigger cron expression (empty field cancels): ";
+	private static final String PROMPT_TRIGGER_SPACECRAFT = "Trigger spacecarft code (empty field cancels): ";
+	private static final String PROMPT_TRIGGER_TIMEINTERVAL = "Trigger time interval (empty field cancels): ";
+	private static final String PROMPT_WORKFLOW_NAME = "Trigger workflow name (empty field cancels): ";
 	private static final String URI_PATH_TRIGGERS = "/triggers";
 	private static final String TRIGGERS = "triggers";
 
@@ -172,11 +179,22 @@ public class TriggerCommandRunner {
 		}
 
 		/* Check command parameters (overriding values from trigger class file) */
+		TriggerType type = null;
 		for (int i = 0; i < createCommand.getParameters().size(); ++i) {
 			ParsedParameter param = createCommand.getParameters().get(i);
 			if (0 == i) {
 				// First parameter is trigger type
-				restTrigger.setType(param.getValue());
+				String val = param.getValue();
+				try {
+					type = TriggerType.valueOf(val);
+				} catch (Exception e) {
+					// unknown type
+					System.err.println(ProseoLogger.format(UIMessage.INVALID_TRIGGER_TYPE, val));
+					return;
+				}
+				if (type != null) {
+					restTrigger.setType(val);
+				}
 			} else if (1 == i) {
 				// Second parameter is trigger name
 				restTrigger.setName(param.getValue());
@@ -198,7 +216,23 @@ public class TriggerCommandRunner {
 
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
-		if (null == restTrigger.getName() || 0 == restTrigger.getName().length()) {
+		if (StringUtils.isNullOrEmpty(restTrigger.getType())) {
+			System.out.print(PROMPT_TRIGGER_TYPE);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+				return;
+			}
+			try {
+				type = TriggerType.valueOf(response);
+			} catch (Exception e) {
+				// unknown type
+				System.err.println(ProseoLogger.format(UIMessage.INVALID_TRIGGER_TYPE, response));
+				return;
+			}
+			restTrigger.setType(response);
+		}
+		if (StringUtils.isNullOrEmpty(restTrigger.getName())) {
 			System.out.print(PROMPT_TRIGGER_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -206,6 +240,65 @@ public class TriggerCommandRunner {
 				return;
 			}
 			restTrigger.setName(response);
+		}
+		if (StringUtils.isNullOrEmpty(restTrigger.getWorkflowName())) {
+			System.out.print(PROMPT_WORKFLOW_NAME);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+				return;
+			}
+			restTrigger.setWorkflowName(response);
+		}
+		switch (type) {
+		case Calendar:
+			if (StringUtils.isNullOrEmpty(restTrigger.getCronExpression())) {
+				System.out.print(PROMPT_TRIGGER_CRON_EXP);
+				String response = System.console().readLine();
+				if (response.isBlank()) {
+					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+					return;
+				}
+				restTrigger.setCronExpression(response);
+			}
+			break;
+		case DataDriven:
+			// no special mandatory attributes
+			break;
+		case Datatake:
+
+			break;
+		case Orbit:
+			if (StringUtils.isNullOrEmpty(restTrigger.getSpacecraftCode())) {
+				System.out.print(PROMPT_TRIGGER_SPACECRAFT);
+				String response = System.console().readLine();
+				if (response.isBlank()) {
+					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+					return;
+				}
+				restTrigger.setSpacecraftCode(response);
+			}
+			break;
+		case TimeInterval:
+			if (null == restTrigger.getTriggerInterval()) {
+				System.out.print(PROMPT_TRIGGER_TIMEINTERVAL);
+				String response = System.console().readLine();
+				if (response.isBlank()) {
+					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+					return;
+				}
+				Long interval = null;
+				try {
+					interval = Long.valueOf(response);
+				} catch (NumberFormatException e) {
+					System.out.println(ProseoLogger.format(UIMessage.INVALID_NUMBER_FORMAT));
+					return;					
+				}
+				restTrigger.setTriggerInterval(interval);
+			}
+			break;
+		default:
+			break;
 		}
 
 		/* Create trigger */
@@ -253,7 +346,6 @@ public class TriggerCommandRunner {
 		/* Check command options */
 		String triggerOutputFormat = CLIUtil.FILE_FORMAT_YAML;
 		boolean isVerbose = false;
-		String requestedInputProductClass = null;
 		for (ParsedOption option : showCommand.getOptions()) {
 			switch (option.getName()) {
 			case OPTION_FORMAT:
@@ -274,6 +366,13 @@ public class TriggerCommandRunner {
 			String paramValue = showCommand.getParameters().get(i).getValue();
 			if (0 == i) {
 				// First parameter is trigger type
+				try {
+					TriggerType.valueOf(paramValue);
+				} catch (Exception e) {
+					// unknown type
+					System.err.println(ProseoLogger.format(UIMessage.INVALID_TRIGGER_TYPE, paramValue));
+					return;
+				}
 				requestURI += "&type=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
 			} else if (1 == i) {
 				// Second parameter is trigger name
@@ -381,7 +480,18 @@ public class TriggerCommandRunner {
 			ParsedParameter param = updateCommand.getParameters().get(i);
 			if (0 == i) {
 				// First parameter is trigger type
-				updatedTrigger.setType(param.getValue());
+				String val = param.getValue();
+				TriggerType type = null;
+				try {
+					type= TriggerType.valueOf(val);
+				} catch (Exception e) {
+					// unknown type
+					System.err.println(ProseoLogger.format(UIMessage.INVALID_TRIGGER_TYPE, val));
+					return;
+				}
+				if (type != null) {
+					updatedTrigger.setType(val);
+				}
 			} else if (1 == i) {
 				// Second parameter is trigger name
 				updatedTrigger.setName(param.getValue());
@@ -574,7 +684,19 @@ public class TriggerCommandRunner {
 			return;
 		}
 		String name = deleteCommand.getParameters().get(1).getValue();
-		String type = deleteCommand.getParameters().get(0).getValue();
+		String val = deleteCommand.getParameters().get(0).getValue();
+		String type = null;
+		TriggerType triggerType = null;
+		try {
+			triggerType= TriggerType.valueOf(val);
+		} catch (Exception e) {
+			// unknown type
+			System.err.println(ProseoLogger.format(UIMessage.INVALID_TRIGGER_TYPE, val));
+			return;
+		}
+		if (triggerType != null) {
+			type = val;
+		}
 
 		/* Retrieve the trigger using Trigger Manager service */
 		List<?> resultList = null;

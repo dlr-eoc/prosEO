@@ -5,10 +5,13 @@
  */
 package de.dlr.proseo.ordergen.util;
 
+import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.quartz.CronExpression;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.OrderGenMessage;
@@ -25,6 +28,7 @@ import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestTrigger;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
+import de.dlr.proseo.model.util.StringUtils;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
@@ -39,6 +43,9 @@ public class TriggerUtil {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(TriggerUtil.class);
 
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
 
 	/**
 	 * Convert a prosEO model OrderTrigger into a REST Trigger
@@ -153,16 +160,16 @@ public class TriggerUtil {
 				trigger.incrementVersion();
 			} 
 		}
-		if (null != restTrigger.getMissionCode()) {
+		if (!StringUtils.isNullOrEmpty(restTrigger.getMissionCode())) {
 			trigger.setMission(RepositoryService.getMissionRepository().findByCode(restTrigger.getMissionCode()));
 		}		
-		if (null != restTrigger.getWorkflowName() && null != restTrigger.getMissionCode()) {
+		if (!StringUtils.isNullOrEmpty(restTrigger.getWorkflowName()) && !StringUtils.isNullOrEmpty(restTrigger.getMissionCode())) {
 			List<Workflow> wfl = RepositoryService.getWorkflowRepository().findByMissionCodeAndName(restTrigger.getMissionCode(), restTrigger.getWorkflowName());
 			if (wfl.size() > 0) {
 				trigger.setWorkflow(wfl.get(0));
 			}
 		}		
-		if (null != restTrigger.getName()) {
+		if (!StringUtils.isNullOrEmpty(restTrigger.getName())) {
 			trigger.setName(restTrigger.getName());
 		}
 		if (null != restTrigger.getPriority()) {
@@ -177,7 +184,7 @@ public class TriggerUtil {
 				((DataDrivenOrderTrigger)trigger).getParametersToCopy().addAll(restTrigger.getParametersToCopy());
 			}
 		} else if (restTrigger.getType().equals(TriggerType.Calendar.name())) {
-			if (null != restTrigger.getCronExpression()) {
+			if (!StringUtils.isNullOrEmpty(restTrigger.getCronExpression())) {
 				((CalendarOrderTrigger)trigger).setCronExpression(restTrigger.getCronExpression());
 			}
 		} else if (restTrigger.getType().equals(TriggerType.Datatake.name())) {
@@ -187,24 +194,24 @@ public class TriggerUtil {
 			if (null != restTrigger.getParametersToCopy()) {
 				((DatatakeOrderTrigger)trigger).getParametersToCopy().addAll(restTrigger.getParametersToCopy());
 			}
-			if (null != restTrigger.getDatatakeType()) {
+			if (!StringUtils.isNullOrEmpty(restTrigger.getDatatakeType())) {
 				((DatatakeOrderTrigger)trigger).setDatatakeType(restTrigger.getDatatakeType());
 			}
-			if (null != restTrigger.getLastDatatakeStartTime()) {
+			if (!StringUtils.isNullOrEmpty(restTrigger.getLastDatatakeStartTime())) {
 				((DatatakeOrderTrigger)trigger).setLastDatatakeStartTime(Instant.from(OrbitTimeFormatter.parse(restTrigger.getLastDatatakeStartTime())));
 			}
 		} else if (restTrigger.getType().equals(TriggerType.Orbit.name())) {
 			if (null != restTrigger.getDeltaTime()) {
 				((OrbitOrderTrigger)trigger).setDeltaTime(Duration.ofSeconds(restTrigger.getDeltaTime()));
 			}
-			if (null != restTrigger.getSpacecraftCode()) {
-				((OrbitOrderTrigger)trigger).setSpacecraft(RepositoryService.getSpacecraftRepository().findByMissionAndCode(null, restTrigger.getSpacecraftCode()));
+			if (!StringUtils.isNullOrEmpty(restTrigger.getSpacecraftCode())) {
+				((OrbitOrderTrigger)trigger).setSpacecraft(RepositoryService.getSpacecraftRepository().findByMissionAndCode(restTrigger.getMissionCode(), restTrigger.getSpacecraftCode()));
 			}
 		} else if (restTrigger.getType().equals(TriggerType.TimeInterval.name())) {
 			if (null != restTrigger.getTriggerInterval()) {
 				((TimeIntervalOrderTrigger)trigger).setTriggerInterval(Duration.ofSeconds(restTrigger.getTriggerInterval()));
 			}
-			if (null != restTrigger.getNextTriggerTime()) {
+			if (!StringUtils.isNullOrEmpty(restTrigger.getNextTriggerTime())) {
 				((TimeIntervalOrderTrigger)trigger).setNextTriggerTime(Instant.from(OrbitTimeFormatter.parse(restTrigger.getNextTriggerTime())));
 			}
 		}
@@ -373,8 +380,36 @@ public class TriggerUtil {
 		return null;
 	}
 
-	/** JPA entity manager */
-	@PersistenceContext
-	private EntityManager em;
+	public static OrderTrigger check(OrderTrigger modelTrigger) throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> check({})", modelTrigger.getName());
+		
+		if (modelTrigger != null) {
+			if (modelTrigger instanceof CalendarOrderTrigger) {
+				CalendarOrderTrigger trigger = (CalendarOrderTrigger) modelTrigger;
+				try {
+					new CronExpression(trigger.getCronExpression());
+				} catch (ParseException e) {
+					throw new IllegalArgumentException(logger.log(OrderGenMessage.INVALID_CRON_EXPRESSION, trigger.getCronExpression(),
+							trigger.getName(), TriggerType.Calendar));
+				}
+			} else if (modelTrigger instanceof DataDrivenOrderTrigger) {
+				// nothing to check
+			} else if (modelTrigger instanceof DatatakeOrderTrigger) {
+			} else if (modelTrigger instanceof OrbitOrderTrigger) {
+				OrbitOrderTrigger trigger = (OrbitOrderTrigger) modelTrigger;
+				if (trigger.getSpacecraft() == null) {
+					throw new IllegalArgumentException(logger.log(OrderGenMessage.SPACECRAFT_NOT_SET,
+							trigger.getName(), TriggerType.Orbit));
+				}
+			} else if (modelTrigger instanceof TimeIntervalOrderTrigger) {
+				TimeIntervalOrderTrigger trigger = (TimeIntervalOrderTrigger) modelTrigger;
+				if (trigger.getTriggerInterval() == null) {
+					throw new IllegalArgumentException(logger.log(OrderGenMessage.INTERVAL_NOT_SET,
+							trigger.getName(), TriggerType.TimeInterval));
+				}
+			}
+		}
+		return modelTrigger;
+	}
 	
 }

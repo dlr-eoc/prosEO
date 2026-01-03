@@ -23,8 +23,12 @@ public enum OrderGenMessage implements ProseoMessage {
 	TRIGGER_MODIFIED						(4711, Level.INFO, true, "Trigger {0}, type {1} modified for mission {2}", ""),
 	TRIGGER_NOT_MODIFIED					(4712, Level.INFO, true, "Trigger {0}, type {1} not modified for mission {2}", ""),
 	TRIGGER_TYPE_DIFFER						(4713, Level.ERROR, false, "Trigger types are different", ""),
-		
+	INVALID_CRON_EXPRESSION					(4714, Level.ERROR, false, "Invalid cron expression ''{0}'' of trigger with name {1} and type {2}", ""),
+	SPACECRAFT_NOT_SET						(4715, Level.ERROR, false, "Spacecraft not defined for trigger with name {0} and type {1}", ""),
+	INTERVAL_NOT_SET						(4716, Level.ERROR, false, "Time interval not defined for trigger with name {0} and type {1}", ""),
+	
 	;
+	
 	private final int code;
 	private final String description;
 	private final Level level;

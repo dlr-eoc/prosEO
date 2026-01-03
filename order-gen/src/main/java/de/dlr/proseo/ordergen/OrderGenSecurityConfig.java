@@ -1,3 +1,8 @@
+/**
+ * OrderGenSecurityConfig.java
+ *
+ * (C) 2025 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ordergen;
 
 import javax.sql.DataSource;
@@ -5,7 +10,6 @@ import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,6 +22,12 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.model.enums.UserRole;
 
+/**
+ * Security configuration class for the prosEO OrderGenerator component
+ *
+ * @author Ernst Melchinger
+ *
+ */
 @Configuration
 @EnableWebSecurity
 public class OrderGenSecurityConfig {
