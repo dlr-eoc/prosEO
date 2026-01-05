@@ -53,6 +53,9 @@ public class TriggerManager {
 	/** REST template builder */
 	@Autowired
 	RestTemplateBuilder rtb;
+	
+	@Autowired
+	private TriggerUtil triggerUtil;
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(TriggerManager.class);
@@ -84,18 +87,18 @@ public class TriggerManager {
 		if (null == trigger.getName() || trigger.getName().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "triggerName", "trigger creation"));
 		}
-		OrderTrigger modelTrigger = TriggerUtil.toModelTrigger(trigger);
-		TriggerUtil.check(modelTrigger);
+		OrderTrigger modelTrigger = triggerUtil.toModelTrigger(trigger);
+		triggerUtil.check(modelTrigger);
 
 		// Make sure a trigger with the same trigger name and trigger version does not yet exist
-		if (null != TriggerUtil.findByMissionCodeAndTriggerNameAndType(trigger.getMissionCode(), trigger.getName(),
+		if (null != triggerUtil.findByMissionCodeAndTriggerNameAndType(trigger.getMissionCode(), trigger.getName(),
 					trigger.getType())) {
 			throw new IllegalArgumentException(logger.log(OrderGenMessage.DUPLICATE_TRIGGER, trigger.getMissionCode(),
 					trigger.getName(), trigger.getType()));
 		}
 
-		modelTrigger = TriggerUtil.save(modelTrigger);
-		RestTrigger restTrigger = TriggerUtil.toRestTrigger(modelTrigger);
+		modelTrigger = triggerUtil.save(modelTrigger);
+		RestTrigger restTrigger = triggerUtil.toRestTrigger(modelTrigger);
 		logger.log(OrderGenMessage.TRIGGER_CREATED,
 				restTrigger.getName(), restTrigger.getType(), restTrigger.getMissionCode());
 
@@ -132,7 +135,7 @@ public class TriggerManager {
 					securityService.getMission()));
 		}
 
-		OrderTrigger trigger = TriggerUtil.findByMissionCodeAndTriggerNameAndType(mission, name,
+		OrderTrigger trigger = triggerUtil.findByMissionCodeAndTriggerNameAndType(mission, name,
 				type);
 		// Make sure a trigger with the trigger name and trigger version does exist
 		if (null == trigger) {
@@ -140,8 +143,34 @@ public class TriggerManager {
 					name, type));
 		}
 
-		TriggerUtil.delete(trigger, type);
+		triggerUtil.delete(trigger, type);
 		logger.log(OrderGenMessage.TRIGGER_DELETED, mission, name, type);
+
+	}
+
+	/**
+	 * Reload all triggers 
+	 *
+	 * @param mission 			the mission code
+	 * @throws IllegalArgumentException if any of the input data was invalid
+	 * @throws SecurityException        if a cross-mission data access was attempted
+	 */
+	public void reloadTriggers(String mission) throws IllegalArgumentException, SecurityException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> reloadTriggers({}, {}, {})", mission);
+
+		if (null == mission || mission.isEmpty()) {
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_MISSION_MISSING));
+		}
+
+		// Ensure user is authorized for the mission of the trigger
+		if (!securityService.isAuthorizedForMission(mission)) {
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, mission,
+					securityService.getMission()));
+		}
+
+		// triggerUtil.delete(trigger, type);
+		logger.log(OrderGenMessage.TRIGGERS_LOADED, mission);
 
 	}
 
@@ -159,8 +188,8 @@ public class TriggerManager {
 			logger.trace(">>> getTrigger({}, {}, {})", mission, name, type);
 		List<RestTrigger> triggers = new ArrayList<RestTrigger>();
 				
-		for (OrderTrigger orderTrigger : TriggerUtil.findAllByMissionCodeAndTriggerNameAndType(mission, name, type)) {
-			triggers.add(TriggerUtil.toRestTrigger(orderTrigger));
+		for (OrderTrigger orderTrigger : triggerUtil.findAllByMissionCodeAndTriggerNameAndType(mission, name, type)) {
+			triggers.add(triggerUtil.toRestTrigger(orderTrigger));
 		}
 
 		return triggers;
@@ -194,13 +223,13 @@ public class TriggerManager {
 			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_TYPE_MISSING));
 		}
 		
-		OrderTrigger modelTrigger = TriggerUtil.findOneByMissionCodeAndTriggerNameAndType(mission, name, type);
+		OrderTrigger modelTrigger = triggerUtil.findOneByMissionCodeAndTriggerNameAndType(mission, name, type);
 		if (modelTrigger == null) {
 			throw new IllegalArgumentException(logger.log(OrderGenMessage.TRIGGER_NOT_EXIST, mission,
 					name, type));
 		}
 		
-		OrderTrigger changedTrigger = TriggerUtil.toModelTrigger(trigger);
+		OrderTrigger changedTrigger = triggerUtil.toModelTrigger(trigger);
 		Boolean triggerChanged = false;
 
 		if (isNotEqual(modelTrigger.getWorkflow(), changedTrigger.getWorkflow())) {
@@ -276,12 +305,12 @@ public class TriggerManager {
 		}
 		if (triggerChanged) {
 			modelTrigger.incrementVersion();
-			TriggerUtil.save(modelTrigger);
+			triggerUtil.save(modelTrigger);
 			logger.log(OrderGenMessage.TRIGGER_MODIFIED, name, type, mission);
 		} else {
 			logger.log(OrderGenMessage.TRIGGER_NOT_MODIFIED, name, type, mission);
 		}
-		return TriggerUtil.toRestTrigger(modelTrigger);
+		return triggerUtil.toRestTrigger(modelTrigger);
 	}
 
 	// Some methods to compare objects

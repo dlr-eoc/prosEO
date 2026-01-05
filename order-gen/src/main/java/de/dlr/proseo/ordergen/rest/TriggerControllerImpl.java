@@ -137,4 +137,19 @@ public class TriggerControllerImpl implements TriggerController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
+
+	@Override
+	public ResponseEntity<Object> reloadTriggers(String mission, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> reloadTriggers({})", mission);
+
+		try {
+			triggerManager.reloadTriggers(mission);
+			return new ResponseEntity<Object>(HttpStatus.OK);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
+	}
 }
