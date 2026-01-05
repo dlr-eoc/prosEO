@@ -1266,6 +1266,92 @@ commands:
         - name: processingFacility
           type: string
           description: The name of the facility to ingest the products to
+# Commands for Orger Generator
+    - name: trigger
+      description: Commands for managing order triggers
+      subcommands:
+        - name: show
+          description: Lists order triggers, optionally restricted to a given trigger type or specific trigger name.
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give trigger details, otherwise show only trigger name, type, priority and execution delay.
+              shortForm: v
+          parameters:
+            - name: type
+              type: string
+              optional: true
+              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval })
+            - name: name
+              type: string
+              optional: true
+              description: The trigger name
+        - name: create
+          description: Create a new trigger, if the input is not from a file,
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the order definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: type
+              type: string
+              optional: true
+              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval }, mandatory if not read from file)
+            - name: name
+              type: string
+              optional: true
+              description: The trigger name for user reference (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A trigger attribute to update in the form "<attribute name>=<attribute value>",
+                           overrides values given in the trigger definition file
+        - name: update
+          description: Update a processing order (only allowed in status Initial)
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the trigger definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the trigger definition file and/or the command parameters
+          parameters:
+            - name: type
+              type: string
+              optional: true
+              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval }, mandatory if not read from file)
+            - name: name
+              type: string
+              optional: true
+              description: The trigger name for user reference (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A trigger attribute to update in the form "<attribute name>=<attribute value>",
+                           overrides values given in the trigger definition file
+        - name: delete
+          description: Delete the named trigger
+          parameters:
+            - name: type
+              type: string
+              description: The trigger type (one of { Calendar, Datatake, DataDriven, Orbit, TimeInterval })
+            - name: name
+              type: string
+              description: The trigger name
 
     # Commands for the User Manager
     - name: user

@@ -1,0 +1,18 @@
+[
+    {
+        "id": 890456231,
+        "version": 1,
+        "missionCode": "S5P",
+        "name": "trigger_1",
+        "type": "DataDriven",
+        "workflowName": "wf_1"
+    },    
+    {
+        "id": 890456231,
+        "version": 1,
+        "missionCode": "S5P",
+        "name": "trigger_1",
+        "type": "DataDriven",
+        "workflowName": "wf_1"
+    }
+]

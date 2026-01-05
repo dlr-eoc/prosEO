@@ -91,6 +91,7 @@ public class LoggingDocumentation {
 		tableOfContents.append("<li><a href=\"#MonitorMessage\">Monitor Messages</a></li>");
 		tableOfContents.append("<li><a href=\"#NotificationMessage\">Notification Messages</a></li>");
 		tableOfContents.append("<li><a href=\"#OdipMessage\">ODIP Messages</a></li>");
+		tableOfContents.append("<li><a href=\"#OrderGenMessage\">Order Generator Messages</a></li>");
 		tableOfContents.append("<li><a href=\"#OrderMgrMessage\">Order Manager Messages</a></li>");
 		tableOfContents.append("<li><a href=\"#PlannerMessage\">Planner Messages</a></li>");
 		tableOfContents.append("<li><a href=\"#PripMessage\">PRIP Messages</a></li>");
@@ -149,6 +150,9 @@ public class LoggingDocumentation {
 		messages.append("<h2 id=\"OdipMessage\">ODIP Messages</h2>");
 		messages.append(addService(OdipMessage.class));
 
+		messages.append("<h2 id=\"OrderGenMessage\">Order Generator Messages</h2>");
+		messages.append(addService(OrderGenMessage.class));
+		
 		messages.append("<h2 id=\"OrderMgrMessage\">Order Manager Messages</h2>");
 		messages.append(addService(OrderMgrMessage.class));
 

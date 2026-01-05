@@ -297,6 +297,18 @@ public enum UIMessage implements ProseoMessage {
 	NO_ARCHIVE_CODE_GIVEN					(6281, Level.ERROR, false, "No product archive code given", ""),
 	NO_ARCHIVES_FOUND						(6282, Level.ERROR, false, "No product archives found", ""),
 	AUTHENTICATION_MISSING					(6283, Level.ERROR, false, "No authentication was provided", ""),
+	TRIGGER_CREATED							(6284, Level.INFO,  true,  "Trigger {0} of type {1} created (database ID {2})", ""),
+	TRIGGER_DATA_INVALID					(6285, Level.ERROR, false, "Trigger data invalid (cause: {0})", ""),
+	TRIGGER_DELETE_FAILED					(6286, Level.ERROR, false, "Deletion of trigger {0} failed (cause: {1})", ""),
+	TRIGGER_DELETED							(6287, Level.INFO, true, "Trigger {0} deleted", ""),
+	TRIGGER_NOT_FOUND						(6288, Level.ERROR, false, "Trigger {0} not found", ""),
+	TRIGGER_NOT_FOUND_BY_ID					(6289, Level.ERROR, false, "Trigger with database ID {0} not found", ""),
+	TRIGGER_NOT_READABLE					(6290, Level.ERROR, false, "Trigger {0} not readable (cause: {1})", ""),
+	TRIGGER_UPDATED							(6291, Level.INFO, true, "Trigger {0} of type {1} updated (new version {2})", ""),
+	NO_TRIGGER_IDENTIFIER_GIVEN				(6292, Level.ERROR, false, "No trigger name or type given", ""),
+	NO_TRIGGERS_FOUND						(6293, Level.ERROR, false, "No triggers found for given search criteria", ""),
+	INVALID_TRIGGER_TYPE					(6294, Level.ERROR, false, "Invalid trigger type ''{0}'', has to be one of (Calendar, Datatake, DataDriven, Orbit, TimeInterval)", ""),
+	INVALID_NUMBER_FORMAT					(6295, Level.ERROR, false, "Invalid number format", ""),
 	
 	;
 

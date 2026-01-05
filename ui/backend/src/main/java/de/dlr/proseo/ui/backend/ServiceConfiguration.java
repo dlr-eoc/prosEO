@@ -50,6 +50,10 @@ public class ServiceConfiguration {
 	@Value("${proseo.archiveManager.url}")
 	private String archiveManagerUrl;
 
+	/** The URL of the prosEO Order Generator */
+	@Value("${proseo.ordergen.url}")
+	private String orderGenUrl;
+
 	/** Timeout for HTTP connections */
 	@Value("${proseo.http.timeout}")
 	private Long httpTimeout;
@@ -124,6 +128,15 @@ public class ServiceConfiguration {
 	 */
 	public String getArchiveManagerUrl() {
 		return archiveManagerUrl;
+	}
+
+	/**
+	 * Gets the URL of the prosEO Order Generator component
+	 *
+	 * @return the archiveManagerUrl
+	 */
+	public String getOrderGenUrl() {
+		return orderGenUrl;
 	}
 
 	/**
