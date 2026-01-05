@@ -24,11 +24,11 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.ordergen.util.TriggerUtil;
 
 
-public class OrdergenScheduler {
+public class OrderGenScheduler {
 	
 
 	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(OrdergenScheduler.class);
+	private static ProseoLogger logger = new ProseoLogger(OrderGenScheduler.class);
 
 	private Scheduler sched = null;
 	

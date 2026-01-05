@@ -14,7 +14,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.PlatformTransactionManager;
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.ordergen.quartz.OrdergenScheduler;
+import de.dlr.proseo.ordergen.quartz.OrderGenScheduler;
 import de.dlr.proseo.ordergen.util.TriggerUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -52,7 +52,7 @@ public class OrderGenerator implements CommandLineRunner {
 	public void run(String... args) throws Exception {
 		// TODO Auto-generated method stub		
 		
-		OrdergenScheduler sched = new OrdergenScheduler();
+		OrderGenScheduler sched = new OrderGenScheduler();
 		sched.init(triggerUtil);
 		sched.buildCalendarTriggers();
 		
