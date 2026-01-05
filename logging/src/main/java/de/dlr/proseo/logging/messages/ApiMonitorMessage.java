@@ -49,6 +49,29 @@ public enum ApiMonitorMessage implements ProseoMessage {
 	ODATA_SESSION_REQ_ABORTED	(7029, Level.ERROR, false, "OData request for files of session {0} aborted (cause: {1} / {2})", ""),
 	ODATA_SESSION_REQ_FAILED	(7030, Level.ERROR, false, "OData request for files of session {0} failed with HTTP status code {1}, message: {2}", ""),
 	SESSION_RETRIEVAL_RESULT	(7031, Level.INFO, true, "Session file list request returned {0} files out of {1} available", ""),
+	AUXIP_START_MESSAGE			(7032, Level.INFO, true, "------  Starting AUXIP Monitor  ------\n"
+															+ "AUXIP base URI . . . . . . : {0}\n"
+															+ "AUXIP context. . . . . . . : {1}\n"
+															+ "Use token-based auth . . . : {2}\n"
+															+ "Product types requested  . : {3}\n"
+															+ "Transfer history file  . . : {4}\n"
+															+ "AUXIP check interval   . . : {5}\n"
+															+ "Chunk retrieval interval . : {6}\n"
+															+ "History truncation interval: {7}\n"
+															+ "History retention period . : {8}\n"
+															+ "Max. transfer sessions . . : {9}\n"
+															+ "Transfer session wait time : {10}\n"
+															+ "Max. session wait cycles . : {11}\n"
+															+ "Maximum number of retries  : {12}\n"
+															+ "AUXIP wait interval in ms  : {13}"
+															,""),
+	PRODUCT_EVICTED				(7033, Level.WARN, true, "Product {0} already evicted at {1} – skipped", ""),
+	WAIT_INTERRUPTED			(7034, Level.ERROR, false, "Wait for next chunk of product data interrupted", ""),
+	EXCEPTION_THROWN			(7035, Level.ERROR, false, "Exception thrown in AUXIP monitor: {0} / {1}", ""),
+	CHECKSUM_MISMATCH			(7036, Level.ERROR, false, "Checksum mismatch for product file {0} (expected: {1}, got {2})", ""),
+	PRODUCT_TRANSFER_COMPLETED	(7037, Level.INFO, true, "Transfer completed: |{0}|{1}|{2}|{3}|{4}|", ""),
+	PRODUCT_DOWNLOAD_FAILED_AFTER_RETRIES	(7038, Level.ERROR, false, "Download of product file {0} failed after {1} retries (cause: {2})", ""),
+	PRODUCT_DOWNLOAD_FAILED		(7039, Level.ERROR, false, "Download of product file {0} failed (cause: {2})", ""),
 	
 	// -- EDIP Monitor --
 	EDIP_NOT_READABLE			(7050, Level.ERROR, false, "EDIP directory {0} not readable (cause: {1})", ""),
