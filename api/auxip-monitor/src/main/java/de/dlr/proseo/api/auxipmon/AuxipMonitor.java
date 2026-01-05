@@ -94,10 +94,7 @@ public class AuxipMonitor extends BaseMonitor {
 	@Autowired
 	private AuxipMonitorConfiguration config;
 
-	/* package */ static final int MSG_ID_COPY_FILE_FAILED = 5307;
-
 	// Message strings
-	/* package */ static final String MSG_COPY_FILE_FAILED = "(E%d) Copying of session data file %s failed (cause: %s)";
 	private static final String MSG_MAX_RETRIES_REACHED = "Maximum number of retries reached";
 
 	/** A logger for this class */
