@@ -21,6 +21,7 @@ public class CalendarOrderTrigger extends TimerOrderTrigger {
 
     /**
      * A cron-style expression to schedule trigger firing
+     * See https://javadoc.io/doc/org.quartz-scheduler/quartz/latest/org/quartz/CronExpression.html
      */
     private String cronExpression;
 

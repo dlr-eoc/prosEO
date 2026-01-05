@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.quartz.CronExpression;
+import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.OrderGenMessage;
@@ -20,11 +21,9 @@ import de.dlr.proseo.model.DataDrivenOrderTrigger;
 import de.dlr.proseo.model.DatatakeOrderTrigger;
 import de.dlr.proseo.model.OrbitOrderTrigger;
 import de.dlr.proseo.model.OrderTrigger;
-import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.TimeIntervalOrderTrigger;
 import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.enums.TriggerType;
-import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestTrigger;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
@@ -38,6 +37,7 @@ import jakarta.persistence.PersistenceContext;
  * @author Ernst Melchinger
  * 
  */
+@Component
 public class TriggerUtil {
 
 	/** A logger for this class */
@@ -53,7 +53,7 @@ public class TriggerUtil {
 	 * @param trigger the prosEO model trigger
 	 * @return an equivalent REST Trigger or null, if no model Trigger was given
 	 */
-	public static RestTrigger toRestTrigger(OrderTrigger trigger) {
+	public RestTrigger toRestTrigger(OrderTrigger trigger) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestTrigger({})", (null == trigger ? "MISSING" : trigger.getId()));
 		
 		if (trigger == null) {
@@ -134,7 +134,7 @@ public class TriggerUtil {
 	 * @return a (roughly) equivalent model trigger
 	 * @throws IllegalArgumentException if the REST trigger violates syntax rules for date, enum or numeric values
 	 */
-	public static OrderTrigger toModelTrigger(RestTrigger restTrigger) throws IllegalArgumentException {		
+	public OrderTrigger toModelTrigger(RestTrigger restTrigger) throws IllegalArgumentException {		
 		if (logger.isTraceEnabled()) logger.trace(">>> toModelTrigger({})", (null == restTrigger ? "MISSING" : restTrigger.getId()));
 		
 		if (restTrigger == null || restTrigger.getType() == null) {
@@ -219,7 +219,7 @@ public class TriggerUtil {
 		return trigger;
 	}
 	
-	public static OrderTrigger findByMissionCodeAndTriggerNameAndType(String misssionCode, String name, String typeString) {
+	public OrderTrigger findByMissionCodeAndTriggerNameAndType(String misssionCode, String name, String typeString) {
 		if (logger.isTraceEnabled()) logger.trace(">>> findByMissionCodeAndTriggerNameAndType({}, {}, {})", misssionCode, name, typeString);
 
 		TriggerType type = TriggerType.valueOf(typeString);
@@ -243,7 +243,7 @@ public class TriggerUtil {
 	}
 
 
-	public static OrderTrigger findOneByMissionCodeAndTriggerNameAndType(String misssionCode, String name, String typeString) {
+	public OrderTrigger findOneByMissionCodeAndTriggerNameAndType(String misssionCode, String name, String typeString) {
 		if (logger.isTraceEnabled()) logger.trace(">>> findOneByMissionCodeAndTriggerNameAndType({}, {}, {})", misssionCode, name, typeString);
 
 		if (misssionCode == null || misssionCode.isEmpty()) {
@@ -258,7 +258,7 @@ public class TriggerUtil {
 			logger.log(OrderGenMessage.TRIGGER_NAME_MISSING);
 			return null;
 		}
-		List<OrderTrigger> triggers = TriggerUtil.findAllByMissionCodeAndTriggerNameAndType(misssionCode, name, typeString);
+		List<OrderTrigger> triggers = this.findAllByMissionCodeAndTriggerNameAndType(misssionCode, name, typeString);
 		if (triggers.isEmpty()) {
 			return null;
 		} else {
@@ -266,29 +266,55 @@ public class TriggerUtil {
 		}
 	}
 	
-	public static List<OrderTrigger> findAllByMissionCodeAndTriggerNameAndType(String misssionCode, String name, String typeString) {
+	public List<OrderTrigger> findAllByMissionCodeAndTriggerNameAndType(String misssionCode, String name, String typeString) {
 		if (logger.isTraceEnabled()) logger.trace(">>> findAllByMissionCodeAndTriggerNameAndType({}, {}, {})", misssionCode, name, typeString);
 		TriggerType type = null;
+		Boolean hasName = !(name == null || name.isEmpty());
+		Boolean hasMission = !(misssionCode == null || misssionCode.isEmpty());
 		if (typeString != null) {
 			type = TriggerType.valueOf(typeString);
 		}
 		List<OrderTrigger> triggers = new ArrayList<OrderTrigger>();
 		if (type == null) {
-			if (name == null || name.isEmpty()) {
-				triggers.addAll(RepositoryService.getCalendarOrderTriggerRepository().findByMissionCode(misssionCode));
-				triggers.addAll(RepositoryService.getDataDrivenOrderTriggerRepository().findByMissionCode(misssionCode));
-				triggers.addAll(RepositoryService.getDatatakeOrderTriggerRepository().findByMissionCode(misssionCode));
-				triggers.addAll(RepositoryService.getOrbitOrderTriggerRepository().findByMissionCode(misssionCode));
-				triggers.addAll(RepositoryService.getTimeIntervalOrderTriggerRepository().findByMissionCode(misssionCode));
-			} else {
+			if (hasMission && hasName) {
 				triggers.add(RepositoryService.getCalendarOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
 				triggers.add(RepositoryService.getDataDrivenOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
 				triggers.add(RepositoryService.getDatatakeOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
 				triggers.add(RepositoryService.getOrbitOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
 				triggers.add(RepositoryService.getTimeIntervalOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
+			} else if (hasMission) {				
+				triggers.addAll(RepositoryService.getCalendarOrderTriggerRepository().findByMissionCode(misssionCode));
+				triggers.addAll(RepositoryService.getDataDrivenOrderTriggerRepository().findByMissionCode(misssionCode));
+				triggers.addAll(RepositoryService.getDatatakeOrderTriggerRepository().findByMissionCode(misssionCode));
+				triggers.addAll(RepositoryService.getOrbitOrderTriggerRepository().findByMissionCode(misssionCode));
+				triggers.addAll(RepositoryService.getTimeIntervalOrderTriggerRepository().findByMissionCode(misssionCode));
+			} else if (hasName) {
+				if (logger.isWarnEnabled()) {
+					logger.log(OrderGenMessage.ONLY_BY_NAME_NOT_IMPLEMENTED);
+				}
 			}
 		} else {
-			if (name == null || name.isEmpty()) {
+			if (hasMission && hasName) {
+				switch (type) {
+				case Calendar:
+					triggers.add(RepositoryService.getCalendarOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
+					break;
+				case DataDriven:
+					triggers.add(RepositoryService.getDataDrivenOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
+					break;
+				case Datatake:
+					triggers.add(RepositoryService.getDatatakeOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
+					break;
+				case Orbit:
+					triggers.add(RepositoryService.getOrbitOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
+					break;
+				case TimeInterval:
+					triggers.add(RepositoryService.getTimeIntervalOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
+					break;
+				default:
+					break;
+				}
+			} else if (hasMission) {
 				switch (type) {
 				case Calendar:
 					triggers.addAll(RepositoryService.getCalendarOrderTriggerRepository().findByMissionCode(misssionCode));
@@ -309,31 +335,15 @@ public class TriggerUtil {
 					break;
 				}
 			} else {
-				switch (type) {
-				case Calendar:
-					triggers.add(RepositoryService.getCalendarOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
-					break;
-				case DataDriven:
-					triggers.add(RepositoryService.getDataDrivenOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
-					break;
-				case Datatake:
-					triggers.add(RepositoryService.getDatatakeOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
-					break;
-				case Orbit:
-					triggers.add(RepositoryService.getOrbitOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
-					break;
-				case TimeInterval:
-					triggers.add(RepositoryService.getTimeIntervalOrderTriggerRepository().findByMissionCodeAndName(misssionCode, name));
-					break;
-				default:
-					break;
+				if (logger.isWarnEnabled()) {
+					logger.log(OrderGenMessage.ONLY_BY_NAME_NOT_IMPLEMENTED);
 				}
 			}
 		}
 		return triggers;
 	}
 	
-	public static void delete(OrderTrigger trigger, String typeString) {
+	public void delete(OrderTrigger trigger, String typeString) {
 
 		TriggerType type = TriggerType.valueOf(typeString);
 
@@ -358,7 +368,7 @@ public class TriggerUtil {
 		}
 	}
 	
-	public static OrderTrigger save(OrderTrigger trigger) {
+	public OrderTrigger save(OrderTrigger trigger) {
 		if (logger.isTraceEnabled()) logger.trace(">>> save({})", trigger.getName());
 
 		if (trigger instanceof CalendarOrderTrigger) {
@@ -380,7 +390,7 @@ public class TriggerUtil {
 		return null;
 	}
 
-	public static OrderTrigger check(OrderTrigger modelTrigger) throws IllegalArgumentException {
+	public OrderTrigger check(OrderTrigger modelTrigger) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> check({})", modelTrigger.getName());
 		
 		if (modelTrigger != null) {

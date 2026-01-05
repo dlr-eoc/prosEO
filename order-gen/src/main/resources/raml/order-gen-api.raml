@@ -162,4 +162,16 @@ resourceTypes:
         type: string
     responses:
       204:
+  /reload:
+    type: standard
+    get:
+      description: |
+        Stop triggers, reload them from database and start again.
+      displayName: reloadTriggers
+      queryParameters:
+        mission?: 
+          description: the mission code
+          type: string
+      responses:
+        200:
             
