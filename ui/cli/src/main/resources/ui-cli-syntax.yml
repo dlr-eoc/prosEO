@@ -1352,6 +1352,8 @@ commands:
             - name: name
               type: string
               description: The trigger name
+        - name: reload
+          description: Reload all triggers and restart scheduler
 
     # Commands for the User Manager
     - name: user

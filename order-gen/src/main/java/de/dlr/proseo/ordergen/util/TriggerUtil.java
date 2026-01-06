@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.quartz.CronExpression;
+import org.quartz.SchedulerException;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -28,6 +29,7 @@ import de.dlr.proseo.model.rest.model.RestTrigger;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.StringUtils;
+import de.dlr.proseo.ordergen.OrderGenerator;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
@@ -422,4 +424,13 @@ public class TriggerUtil {
 		return modelTrigger;
 	}
 	
+	/**
+	 * Reload and restart all triggers
+	 * 
+	 * @throws SchedulerException
+	 */
+	public void reload() throws SchedulerException {
+		if (logger.isTraceEnabled()) logger.trace(">>> reload()");
+		OrderGenerator.scheduler.reload();
+	}
 }

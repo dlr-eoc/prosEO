@@ -45,6 +45,7 @@ public class TriggerCommandRunner {
 	private static final String CMD_CREATE = "create";
 	private static final String CMD_UPDATE = "update";
 	private static final String CMD_DELETE = "delete";
+	private static final String CMD_RELOAD = "reload";
 
 	private static final String OPTION_DELETE_ATTRIBUTES = "delete-attributes";
 	private static final String OPTION_VERBOSE = "verbose";
@@ -60,6 +61,7 @@ public class TriggerCommandRunner {
 	private static final String PROMPT_TRIGGER_TIMEINTERVAL = "Trigger time interval (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_NAME = "Trigger workflow name (empty field cancels): ";
 	private static final String URI_PATH_TRIGGERS = "/triggers";
+	private static final String URI_PATH_RELOAD = "/reload";
 	private static final String TRIGGERS = "triggers";
 
 	/** The user manager used by all command runners */
@@ -131,6 +133,9 @@ public class TriggerCommandRunner {
 				break COMMAND;
 			case CMD_DELETE:
 				deleteTrigger(subcommand);
+				break COMMAND;
+			case CMD_RELOAD:
+				reloadTrigger(subcommand);
 				break COMMAND;
 			default:
 				System.err.println(
@@ -770,6 +775,52 @@ public class TriggerCommandRunner {
 
 		/* Report success */
 		String message = logger.log(UIMessage.TRIGGER_DELETED, restTrigger.getName());
+		System.out.println(message);
+	}
+
+	/**
+	 * Delete the given trigger
+	 *
+	 * @param deleteCommand the parsed "trigger delete" command
+	 */
+	private void reloadTrigger(ParsedCommand deleteCommand) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> reloadTrigger({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
+
+		/* reload and restart */
+		List<?> resultList = null;
+		try {
+			serviceConnection.getFromService(serviceConfig.getOrderGenUrl(),
+					URI_PATH_TRIGGERS + URI_PATH_RELOAD + "?mission=" + loginManager.getMission(),
+					List.class,
+					loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getStatusCode().value()) {
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = (null == e.getStatusText()
+						? ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), TRIGGERS,
+								loginManager.getMission())
+						: e.getStatusText());
+				break;
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = (null == e.getStatusText()
+						? ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), TRIGGERS,
+								loginManager.getMission())
+						: e.getStatusText());
+				break;
+			default:
+				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (Exception e) {
+			System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+			return;
+		}
+
+		/* Report success */
+		String message = logger.log(UIMessage.TRIGGERS_RELOADED);
 		System.out.println(message);
 	}
 

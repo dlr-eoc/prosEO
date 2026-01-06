@@ -309,6 +309,7 @@ public enum UIMessage implements ProseoMessage {
 	NO_TRIGGERS_FOUND						(6293, Level.ERROR, false, "No triggers found for given search criteria", ""),
 	INVALID_TRIGGER_TYPE					(6294, Level.ERROR, false, "Invalid trigger type ''{0}'', has to be one of (Calendar, Datatake, DataDriven, Orbit, TimeInterval)", ""),
 	INVALID_NUMBER_FORMAT					(6295, Level.ERROR, false, "Invalid number format", ""),
+	TRIGGERS_RELOADED						(6296, Level.INFO, false, "All triggers reloaded and started", ""),
 	
 	;
 

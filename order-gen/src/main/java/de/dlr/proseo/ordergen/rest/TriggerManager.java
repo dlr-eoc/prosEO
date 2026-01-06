@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
@@ -151,11 +152,11 @@ public class TriggerManager {
 	/**
 	 * Reload all triggers 
 	 *
-	 * @param mission 			the mission code
+	 * @param mission 			not used
 	 * @throws IllegalArgumentException if any of the input data was invalid
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
-	public void reloadTriggers(String mission) throws IllegalArgumentException, SecurityException {
+	public void reloadTriggers(String mission) throws IllegalArgumentException, SecurityException, SchedulerException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> reloadTriggers({}, {}, {})", mission);
 
@@ -169,8 +170,8 @@ public class TriggerManager {
 					securityService.getMission()));
 		}
 
-		// triggerUtil.delete(trigger, type);
-		logger.log(OrderGenMessage.TRIGGERS_LOADED, mission);
+		triggerUtil.reload();
+		logger.log(OrderGenMessage.TRIGGERS_RELOADED);
 
 	}
 

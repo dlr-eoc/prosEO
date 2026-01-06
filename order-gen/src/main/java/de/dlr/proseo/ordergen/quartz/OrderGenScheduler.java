@@ -1,3 +1,8 @@
+/**
+ * OrderGenScheduler.java
+ *
+ * (C) 2025 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ordergen.quartz;
 
 import static org.quartz.CronScheduleBuilder.cronSchedule;
@@ -14,6 +19,9 @@ import org.quartz.SchedulerFactory;
 import org.quartz.SchedulerMetaData;
 import org.quartz.impl.StdSchedulerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.CalendarOrderTrigger;
@@ -24,26 +32,44 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.ordergen.util.TriggerUtil;
 
 
+/**
+ * OrderGenScheduler to hold and manage triggers.
+ *
+ * @author Ernst Melchinger
+ *
+ */
+@Transactional(isolation = Isolation.REPEATABLE_READ)
 public class OrderGenScheduler {
-	
-
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OrderGenScheduler.class);
 
+	// The quartz scheduler
 	private Scheduler sched = null;
 	
+	// Reference to the util instance
 	private TriggerUtil triggerUtil;
 	
+	/**
+	 * Initialize the scheduler
+	 * 
+	 * @param util The TriggerUtil instance
+	 * @throws SchedulerException
+	 */
 	public void init(TriggerUtil util) throws SchedulerException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> buildCalendarTriggers()");
+			logger.trace(">>> initialize quartz scheduler()");
 		triggerUtil = util;
 		// First we must get a reference to a scheduler
 		SchedulerFactory sf = new StdSchedulerFactory();
 		sched = sf.getScheduler();
 	}
 	
-	public void buildCalendarTriggers() {
+	/**
+	 * Load the Calendar trigger from database and add it to the scheduler
+	 * 
+	 * @throws SchedulerException
+	 */
+	public void buildCalendarTriggers() throws SchedulerException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> buildCalendarTriggers()");
 		for (Mission mission : RepositoryService.getMissionRepository().findAll()) {
@@ -57,41 +83,56 @@ public class OrderGenScheduler {
 
 					qartzJob.getJobDataMap().put("ordergenTrigger", trigger);
 
-					try {
-						Date ft = sched.scheduleJob(qartzJob, qartzTrigger);
-					} catch (SchedulerException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					Date ft = sched.scheduleJob(qartzJob, qartzTrigger);
 				}
 			}
 		}
-
 		if (logger.isTraceEnabled())
-			logger.trace("--- start sched");
-	    try {
-			sched.start();
-			
-		} catch (SchedulerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			logger.trace("<<< CalendarTriggers built");
+	}
 
-	    try {
-	      // wait five minutes to show jobs
-	      Thread.sleep(60L * 1000L);
-	      // executing...
-	    } catch (Exception e) {
-	      //
-	    }
-
-		if (logger.isTraceEnabled())
-			logger.trace("--- shutdown sched");
-	    try {
-			sched.shutdown(true);
-		} catch (SchedulerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	/**
+	 * Start the quartz scheduler
+	 * 
+	 * @throws SchedulerException
+	 */
+	public void start() throws SchedulerException {
+		if (logger.isTraceEnabled()) {
+			logger.trace(">>> start quartz scheduler");
 		}
+		sched.start();
+		if (logger.isTraceEnabled()) {
+			logger.trace("<<< quartz scheduler started");
+		}	
+	}
+
+	/**
+	 * Shutdown the quartz scheduler
+	 * 
+	 * @throws SchedulerException
+	 */
+	public void shutdown() throws SchedulerException {
+		if (logger.isTraceEnabled()) {
+			logger.trace(">>> shutdown quartz scheduler");
+		}
+		sched.shutdown(true);
+		if (logger.isTraceEnabled()) {
+			logger.trace("<<< quartz scheduler shutdown");
+		}	
+	}
+
+	/**
+	 * Shutdown, initialize, build triggers and start the quartz scheduler
+	 * 
+	 * @throws SchedulerException
+	 */
+	public void reload() throws SchedulerException {
+		if (logger.isTraceEnabled()) {
+			logger.trace(">>> reload triggers and restart quartz scheduler");
+		}
+		shutdown();
+		init(triggerUtil);
+		buildCalendarTriggers();
+		start();
 	}
 }
