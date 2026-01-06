@@ -48,13 +48,17 @@ public class OrderGenerator implements CommandLineRunner {
 	@Autowired
 	private TriggerUtil triggerUtil;
 	
+	public static OrderGenScheduler scheduler;
+	
+	
 	@Override
 	public void run(String... args) throws Exception {
 		// TODO Auto-generated method stub		
 		
-		OrderGenScheduler sched = new OrderGenScheduler();
-		sched.init(triggerUtil);
-		sched.buildCalendarTriggers();
+		scheduler = new OrderGenScheduler();
+		scheduler.init(triggerUtil);
+		scheduler.buildCalendarTriggers();
+		scheduler.start();
 		
 	}
 

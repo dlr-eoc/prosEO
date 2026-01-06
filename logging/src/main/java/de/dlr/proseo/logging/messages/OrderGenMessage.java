@@ -33,6 +33,7 @@ public enum OrderGenMessage implements ProseoMessage {
 	PRODUCT_NOT_FOUND						(4721, Level.ERROR, false, "Product with ID {0} not found in database", ""),
 	ORDER_GENERATED							(4722, Level.INFO, true, "Processing Order {0} generated from trigger {1}", ""),
 	NO_ORDER_GENERATED						(4723, Level.WARN, true, "No processing orders generated for product with database ID {0} (no trigger found with enabled workflows)", ""),
+	TRIGGERS_RELOADED						(4724, Level.INFO, true, "Triggers of all missions (re-)loaded", ""),
 	
 	;
 	

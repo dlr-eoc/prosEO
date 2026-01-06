@@ -9,6 +9,7 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -163,9 +164,7 @@ public class TriggerControllerImpl implements TriggerController {
 	}
 
 	/**
-	 * Stop triggers, reload them from database and start again
-	 * 
-	 * @param mission the miss
+	 * Reload and restart all triggers (mission is not used)
 	 */
 	@Override
 	public ResponseEntity<Object> reloadTriggers(String mission, HttpHeaders httpHeaders) {
@@ -179,6 +178,8 @@ public class TriggerControllerImpl implements TriggerController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (SchedulerException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
