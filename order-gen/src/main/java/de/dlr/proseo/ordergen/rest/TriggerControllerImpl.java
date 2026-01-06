@@ -138,6 +138,35 @@ public class TriggerControllerImpl implements TriggerController {
 		}
 	}
 
+	/**
+	 * Get all data driven triggers for workflows having the given product class as input product class
+	 * 
+	 * @param mission the mission code
+	 * @param productType the product type of the requested product class
+	 * @return HTTP status "OK" and the list of Json representation of the triggers found 
+	 *         or HTTP status "BAD_REQUEST" and an error message, if the given product type is invalid,
+	 * 		   or HTTP status "FORBIDDEN" and an error message, if a
+	 *         cross-mission data access was attempted
+	 */
+	@Override
+	public ResponseEntity<List<RestTrigger>> getByProductType(String mission, String productType, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getByProductType({}, {})", mission, productType);
+
+		try {
+			return new ResponseEntity<>(triggerManager.getByProductType(mission, productType), HttpStatus.OK);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
+	}
+
+	/**
+	 * Stop triggers, reload them from database and start again
+	 * 
+	 * @param mission the miss
+	 */
 	@Override
 	public ResponseEntity<Object> reloadTriggers(String mission, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled())
@@ -152,4 +181,5 @@ public class TriggerControllerImpl implements TriggerController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
+
 }

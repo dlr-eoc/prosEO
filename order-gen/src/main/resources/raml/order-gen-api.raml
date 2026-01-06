@@ -24,6 +24,16 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
+  RestClassOutputParameter: !include ../../../../../model/src/main/resources/raml/types/classoutputparameter.raml
+  RestInputFilter: !include ../../../../../model/src/main/resources/raml/types/inputfilter.raml
+  RestInputReference: !include ../../../../../model/src/main/resources/raml/types/inputreference.raml
+  RestJob: !include ../../../../../model/src/main/resources/raml/types/job.raml
+  RestJobStep: !include ../../../../../model/src/main/resources/raml/types/jobstep.raml
+  RestNotificationEndpoint: !include ../../../../../model/src/main/resources/raml/types/notificationendpoint.raml
+  RestOrbit: !include ../../../../../model/src/main/resources/raml/types/orbit.raml
+  RestOrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
+  RestOrder: !include ../../../../../model/src/main/resources/raml/types/order.raml
+  RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
   RestTrigger: !include ../../../../../model/src/main/resources/raml/types/trigger.raml
 
 
@@ -162,6 +172,26 @@ resourceTypes:
         type: string
     responses:
       204:
+  /byproducttype:
+    type: standard
+    get:
+      description: |
+        Get all data driven triggers for workflows having the given product class as input product class
+      displayName: getByProductType
+      queryParameters:
+        mission: 
+          description: the mission code
+          type: string
+        productType:
+          description: The product type of the requested product class
+          type: string
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestTrigger[]
+              example: !include ../../../../../model/src/main/resources/raml/examples/trigger-list.json
+        
   /reload:
     type: standard
     get:
@@ -175,3 +205,21 @@ resourceTypes:
       responses:
         200:
             
+/generator:
+  type: standard
+  /forProduct/{productId}:
+    type: standard
+    uriParameters:
+      productId:
+        description: Database ID of the input product to use for order generation
+        type: integer
+    post:
+      description: |
+        Fire a data-driven trigger to generate a processing order from the given input product
+      displayName: generateForProduct
+      responses:
+        201:
+          body:
+            application/json:
+              type: RestOrder[]
+              example: !include ../../../../../model/src/main/resources/raml/examples/order-list.json

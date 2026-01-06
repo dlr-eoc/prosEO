@@ -44,7 +44,7 @@ public enum IngestorMessage implements ProseoMessage {
 	NEW_PRODUCT_ADDED					(2030, Level.INFO, true, "New product with ID {0} and product type {1} added to database", ""),
 	NO_PRODUCT_FILES					(2031, Level.ERROR, false, "No product files found for product ID {0}", ""),
 	NO_PRODUCT_FILES_AT_FACILITY		(2032, Level.ERROR, false, "No product file found for product ID {0} at processing facility {1}", ""),
-	NOTIFICATION_FAILED					(2034, Level.WARN, true, "Notification of Production Planner failed (cause: {0})", ""),
+	PLANNER_NOTIFICATION_FAILED			(2034, Level.WARN, true, "Notification of Production Planner failed (cause: {0})", ""),
 	NUMBER_PRODUCT_FILES_DELETED		(2035, Level.INFO, true, "{0} product files deleted", ""),
 	ORBIT_NOT_FOUND						(2036, Level.ERROR, false, "Orbit {0} for spacecraft {1} not found", ""),
 	PRODUCT_CLASS_INVALID				(2037, Level.ERROR, false, "Product type {0} invalid", ""),
@@ -81,6 +81,8 @@ public enum IngestorMessage implements ProseoMessage {
 	UNEXPECTED_NUMBER_OF_FILE_PATHS		(2068, Level.ERROR, false, "Unexpected number of file paths ({0}, expected: {1}) received from Storage Manager at {2}", ""),
 	VISIBILITY_VIOLATION				(2069, Level.ERROR, false, "User not authorized for read access to product class {0}", ""),
 	PRODUCT_LIST_MISSING				(2070, Level.ERROR, false, "No product list given for ingestion", ""),
+	ORDERGEN_NOTIFICATION_FAILED		(2071, Level.WARN, true, "Notification of Order Generator failed (cause: {0})", ""),
+	ERROR_NOTIFYING_ORDERGEN			(2072, Level.ERROR, false, "Error notifying prosEO Order Generator of new product {0} of type {1} (Production Planner cause: {2})", ""),
 	
 	;
 

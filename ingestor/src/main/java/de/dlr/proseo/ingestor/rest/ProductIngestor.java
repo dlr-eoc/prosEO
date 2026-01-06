@@ -47,6 +47,7 @@ import de.dlr.proseo.interfaces.rest.model.RestProductFS;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.IngestorMessage;
+import de.dlr.proseo.model.DataDrivenOrderTrigger;
 import de.dlr.proseo.model.DownloadHistory;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
@@ -71,6 +72,7 @@ public class ProductIngestor {
 	private static final String URL_PLANNER_NOTIFY = "/product/%d";
 	private static final String URL_STORAGE_MANAGER_REGISTER = "/products";
 	private static final String URL_STORAGE_MANAGER_DELETE = "/products?pathInfo=%s";
+	private static final String URL_GENERATOR_NOTIFY = "/generator/forproduct/%d";
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductIngestor.class);
@@ -243,7 +245,7 @@ public class ProductIngestor {
 
 		// Database updated, notifying Production Planner if requested
 		if (ingestorConfig.getNotifyPlanner()) {
-			if (logger.isTraceEnabled()) logger.trace("... products ingested, now notifying planner");
+			if (logger.isTraceEnabled()) logger.trace("... products ingested, now notifying Production Planner");
 			transactionTemplate.setReadOnly(true);
 			transactionTemplate.execute(status -> {
 				for (RestProduct product: result) {
@@ -253,13 +255,34 @@ public class ProductIngestor {
 							logger.trace("... planner notification successful for product {}", product.getId());
 					} catch (Exception e) {
 						// If notification fails, log warning, but otherwise ignore
-						logger.log(IngestorMessage.NOTIFICATION_FAILED, e.getMessage());
+						logger.log(IngestorMessage.PLANNER_NOTIFICATION_FAILED, e.getMessage());
 					}
 				}
 				return null; // dummy, no return value needed
 			});
 		} else {
 			if (logger.isDebugEnabled()) logger.debug("... skipping Planner notification due to configuration setting");
+		}
+
+		// Notifying Order Generator if requested
+		if (ingestorConfig.getNotifyOrderGen()) {
+			if (logger.isTraceEnabled()) logger.trace("... products ingested, now notifying Order Generator");
+			transactionTemplate.setReadOnly(true);
+			transactionTemplate.execute(status -> {
+				for (RestProduct product: result) {
+					try {
+						notifyOrderGenerator(user, password, product);
+						if (logger.isTraceEnabled())
+							logger.trace("... Order Generator notification successful for product {}", product.getId());
+					} catch (Exception e) {
+						// If notification fails, log warning, but otherwise ignore
+						logger.log(IngestorMessage.ORDERGEN_NOTIFICATION_FAILED, e.getMessage());
+					}
+				}
+				return null; // dummy, no return value needed
+			});
+		} else {
+			if (logger.isDebugEnabled()) logger.debug("... skipping Order Generator notification due to configuration setting");
 		}
 
 		logger.log(IngestorMessage.PRODUCTS_INGESTED, result.size(), facility.getName());
@@ -443,6 +466,45 @@ public class ProductIngestor {
 			}
 		}
 	}
+	
+	/**
+	 * Notify the Order Generator component of newly ingested products
+	 *
+	 * @param user            the username to pass on to the Order Generator
+	 * @param password        the password to pass on to the Order Generator
+	 * @param ingestorProduct a product description with product file locations
+	 */
+	private void notifyOrderGenerator(String user, String password, RestProduct ingestorProduct) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> notifyOrderGenerator({}, PWD, {})", user, ingestorProduct.getProductClass());
+		
+		// Retrieve the product class from the database
+		ProductClass modelProductClass = RepositoryService.getProductClassRepository()
+			.findByMissionCodeAndProductType(ingestorProduct.getMissionCode(), ingestorProduct.getProductClass());
+		if (null == modelProductClass) {
+			throw new IllegalArgumentException(
+					logger.log(IngestorMessage.PRODUCT_CLASS_INVALID, ingestorProduct.getProductClass()));
+		}
+
+		// Check whether there are data-driven order triggers for the product's class
+		List<DataDrivenOrderTrigger> triggers = RepositoryService.getDataDrivenOrderTriggerRepository()
+				.findByMissionCodeAndProductClass(modelProductClass.getMission().getCode(), modelProductClass);
+		
+		if (!triggers.isEmpty()) {
+			// If so, inform the production planner of the new product
+			String orderGeneratorUrl = ingestorConfig.getOrderGeneratorUrl()
+					+ String.format(URL_GENERATOR_NOTIFY, ingestorProduct.getId());
+
+			RestTemplate restTemplate = rtb.connectTimeout(Duration.ofMillis(ingestorConfig.getOrderGeneratorTimeout()))
+				.basicAuthentication(user, password)
+				.build();
+			ResponseEntity<String> response = restTemplate.getForEntity(orderGeneratorUrl, String.class);
+			if (!HttpStatus.CREATED.equals(response.getStatusCode())) {
+				throw new ProcessingException(logger.log(IngestorMessage.ERROR_NOTIFYING_PLANNER, ingestorProduct.getId(),
+						ingestorProduct.getProductClass(), response.getStatusCode().toString()));
+			}
+		}
+	}
 
 	/**
 	 * Get the product file metadata for a product at a given processing facility
@@ -557,7 +619,17 @@ public class ProductIngestor {
 				notifyPlanner(user, password, ProductUtil.toRestProduct(modelProduct), facility.getId());
 			} catch (Exception e) {
 				// If notification fails, log warning, but otherwise ignore
-				logger.log(IngestorMessage.NOTIFICATION_FAILED, e);
+				logger.log(IngestorMessage.PLANNER_NOTIFICATION_FAILED, e);
+			}
+		}
+
+		// Notifying Order Generator if requested
+		if (ingestorConfig.getNotifyOrderGen()) {
+			try {
+				notifyOrderGenerator(user, password, ProductUtil.toRestProduct(modelProduct));
+			} catch (Exception e) {
+				// If notification fails, log warning, but otherwise ignore
+				logger.log(IngestorMessage.ORDERGEN_NOTIFICATION_FAILED, e);
 			}
 		}
 
