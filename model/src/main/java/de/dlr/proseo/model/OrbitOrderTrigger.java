@@ -23,6 +23,12 @@ public class OrbitOrderTrigger extends MissionPlanningOrderTrigger {
 	 */
 	@ManyToOne
 	private Spacecraft spacecraft;
+	
+	/**
+	 * The last orbit for which a trigger was generated
+	 */
+	@ManyToOne
+	private Orbit lastOrbit;
 
 	/**
 	 * Gets the associated spacecraft
@@ -40,6 +46,24 @@ public class OrbitOrderTrigger extends MissionPlanningOrderTrigger {
 	 */
 	public void setSpacecraft(Spacecraft spacecraft) {
 		this.spacecraft = spacecraft;
+	}
+
+	/**
+	 * Gets the last orbit for which a trigger was generated
+	 * 
+	 * @return the last orbit
+	 */
+	public Orbit getLastOrbit() {
+		return lastOrbit;
+	}
+
+	/**
+	 * Sets the last orbit for which a trigger was generated
+	 * 
+	 * @param lastOrbit the last orbit to set
+	 */
+	public void setLastOrbit(Orbit lastOrbit) {
+		this.lastOrbit = lastOrbit;
 	}
 	
 }
