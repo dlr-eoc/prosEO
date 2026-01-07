@@ -507,16 +507,16 @@ public abstract class BaseMonitor extends Thread {
 							// Transfer object to local target directory
 							if (transferToTargetDir(objectToTransfer)) {
 
-								// Record transfer in history
-								try {
-									recordTransfer(objectToTransfer);
-								} catch (IOException e) {
-									logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString());
-									return;
-								}
-
 								// Trigger follow-on action
-								if (!triggerFollowOnAction(objectToTransfer)) {
+								if (triggerFollowOnAction(objectToTransfer)) {
+									// Record transfer in history
+									try {
+										recordTransfer(objectToTransfer);
+									} catch (IOException e) {
+										logger.log(ApiMonitorMessage.ABORTING_TASK, e.toString());
+										return;
+									}
+								} else {
 									logger.log(ApiMonitorMessage.FOLLOW_ON_ACTION_FAILED, objectToTransfer.getIdentifier());
 								}
 

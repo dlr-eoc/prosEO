@@ -28,7 +28,12 @@ public enum OrderGenMessage implements ProseoMessage {
 	INTERVAL_NOT_SET						(4716, Level.ERROR, false, "Time interval not defined for trigger with name {0} and type {1}", ""),
 	TRIGGERS_LOADED							(4717, Level.INFO, true, "Triggers of mission {0} (re-)loaded", ""),
 	ONLY_BY_NAME_NOT_IMPLEMENTED			(4718, Level.WARN, true, "Find trigger only by name is not implemented", ""),
-	TRIGGERS_RELOADED						(4719, Level.INFO, true, "Triggers of all missions (re-)loaded", ""),
+	MISSION_OR_PRODUCT_TYPE_MISSING			(4719, Level.ERROR, false, "Incomplete parameters: mission ''{0}'', product type ''{1}''", ""),
+	PRODUCT_TYPE_INVALID					(4720, Level.ERROR, false, "Product type {1} invalid for mission {0}", ""),
+	PRODUCT_NOT_FOUND						(4721, Level.ERROR, false, "Product with ID {0} not found in database", ""),
+	ORDER_GENERATED							(4722, Level.INFO, true, "Processing Order {0} generated from trigger {1}", ""),
+	NO_ORDER_GENERATED						(4723, Level.WARN, true, "No processing orders generated for product with database ID {0} (no trigger found with enabled workflows)", ""),
+	TRIGGERS_RELOADED						(4724, Level.INFO, true, "Triggers of all missions (re-)loaded", ""),
 	
 	;
 	

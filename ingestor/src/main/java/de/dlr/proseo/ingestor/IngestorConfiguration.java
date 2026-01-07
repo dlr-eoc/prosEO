@@ -40,6 +40,15 @@ public class IngestorConfiguration {
 	private String productionPlannerTimeout;
 	private Long productionPlannerTimeoutLong = null;
 
+	/** The URL of the prosEO Order Generator */
+	@Value("${proseo.orderGenerator.url}")
+	private String orderGeneratorUrl;
+
+	/** Connection timeout [ms] for Order Generator */
+	@Value("${proseo.productionPlanner.timeout}")
+	private String orderGeneratorTimeout;
+	private Long orderGeneratorTimeoutLong = null;
+
 	/** Connection timeout [ms] for Storage Manager */
 	@Value("${proseo.storageManager.timeout}")
 	private String storageManagerTimeout;
@@ -62,6 +71,10 @@ public class IngestorConfiguration {
 	@Value("${proseo.ingestor.notifyPlanner:true}")
 	private Boolean notifyPlanner;
 
+	/** Notify Order Generator upon product ingestion */
+	@Value("${proseo.ingestor.notifyOrderGen:true}")
+	private Boolean notifyOrderGen;
+
 	/** The maximum number of results to be retrieved by REST requests */
 	@Value("${spring.maxResults}")
 	public Integer maxResults;
@@ -72,7 +85,7 @@ public class IngestorConfiguration {
 	/**
 	 * Gets the URL of the prosEO Production Planner component
 	 *
-	 * @return the productionPlannerUrl the URL of the Production Planner
+	 * @return the URL of the Production Planner
 	 */
 	public String getProductionPlannerUrl() {
 		return productionPlannerUrl;
@@ -81,7 +94,7 @@ public class IngestorConfiguration {
 	/**
 	 * Gets the timeout in milliseconds for Production Planner connections
 	 *
-	 * @return the productionPlannerTimeout
+	 * @return the timeout for Production Planner connections
 	 */
 	public long getProductionPlannerTimeout() {
 		if (null == productionPlannerTimeoutLong) {
@@ -97,6 +110,36 @@ public class IngestorConfiguration {
 			}
 		}
 		return productionPlannerTimeoutLong.longValue();
+	}
+
+	/**
+	 * Gets the URL of the prosEO Order Generator component
+	 *
+	 * @return the URL of the Order Generator
+	 */
+	public String getOrderGeneratorUrl() {
+		return orderGeneratorUrl;
+	}
+
+	/**
+	 * Gets the timeout in milliseconds for Order Generator connections
+	 *
+	 * @return the timeout for Order Generator connections
+	 */
+	public long getOrderGeneratorTimeout() {
+		if (null == orderGeneratorTimeoutLong) {
+			if (null == orderGeneratorTimeout) {
+				orderGeneratorTimeoutLong = DEFAULT_TIMEOUT;
+			} else {
+				try {
+					orderGeneratorTimeoutLong = Long.parseLong(orderGeneratorTimeout);
+				} catch (NumberFormatException e) {
+					logger.log(IngestorMessage.INVALID_TIMEOUT, orderGeneratorTimeout, DEFAULT_TIMEOUT);
+					orderGeneratorTimeoutLong = DEFAULT_TIMEOUT;
+				}
+			}
+		}
+		return orderGeneratorTimeoutLong.longValue();
 	}
 
 	/**
@@ -169,6 +212,16 @@ public class IngestorConfiguration {
 	 */
 	public Boolean getNotifyPlanner() {
 		return notifyPlanner;
+	}
+
+	/**
+	 * Indicates whether the Order Generator should be notified about new product
+	 * ingestions
+	 *
+	 * @return true, if Order Generator notification is requested, false otherwise
+	 */
+	public Boolean getNotifyOrderGen() {
+		return notifyOrderGen;
 	}
 
 	/**

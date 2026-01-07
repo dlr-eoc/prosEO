@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import de.dlr.proseo.model.DataDrivenOrderTrigger;
+import de.dlr.proseo.model.ProductClass;
 
 /**
  * Data Access Object for the DataDrivenOrderTrigger class
@@ -36,4 +37,14 @@ public interface DataDrivenOrderTriggerRepository extends JpaRepository<DataDriv
 	 */
 	@Query("select t from DataDrivenOrderTrigger t where t.mission.code = ?1 and t.name = ?2")
 	public DataDrivenOrderTrigger findByMissionCodeAndName(String missionCode, String name);
+
+	/**
+	 * Get all triggers within a mission with a workflow having the given product class as input
+	 * @param missionCode the mission code
+	 * @param productClass the input product class of the trigger's workflow
+	 * 
+	 * @return the list of triggers for this mission using the given product class as workflow input
+	 */
+	@Query("select t from DataDrivenOrderTrigger t where t.mission.code = ?1 and t.workflow.inputProductClass = ?2")
+	public List<DataDrivenOrderTrigger> findByMissionCodeAndProductClass(String missionCode, ProductClass productclass);
 }

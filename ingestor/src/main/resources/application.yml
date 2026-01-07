@@ -23,9 +23,16 @@ proseo:
         cleanupCycleTime: 1
         # Notify Production Planner upon product ingestion? (For reprocessing it may be advisable to set this to false)
         notifyPlanner: true
+        # Notify Order Generator upon product ingestion? (Set to true for Systematic Production with triggers)
+        notifyOrderGen: true
     productionPlanner:
         # URL for Production Planner (leave as empty string [""] if no Planner is installed)
         url: http://proseo-prodplanner:8080/proseo/planner/v0.1
+        # Connection timeout in ms
+        timeout: 10000
+    orderGenerator:
+        # URL for Order Generator (leave as empty string [""] if no Order Generator is installed)
+        url: http://proseo-order-gen:8080/proseo/order-gen/v0.1
         # Connection timeout in ms
         timeout: 10000
     storageManager:

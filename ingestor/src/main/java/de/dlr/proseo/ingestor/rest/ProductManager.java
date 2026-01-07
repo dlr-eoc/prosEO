@@ -1222,11 +1222,12 @@ public class ProductManager {
 			throws IllegalArgumentException, NoResultException, SecurityException {
 		
 		String fileName = null;
-		try {
-			fileName = URLDecoder.decode(encodedFileName, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if (null != encodedFileName) {
+			try {
+				fileName = URLDecoder.decode(encodedFileName, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				// ignore, we can continue without a valid file name
+			} 
 		}
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getDownloadTokenById({}, {})", id, fileName);

@@ -11,7 +11,6 @@ import java.util.Set;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
-import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Table;
 
 /**

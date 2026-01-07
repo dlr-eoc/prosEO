@@ -22,6 +22,7 @@ import de.dlr.proseo.model.DataDrivenOrderTrigger;
 import de.dlr.proseo.model.DatatakeOrderTrigger;
 import de.dlr.proseo.model.OrbitOrderTrigger;
 import de.dlr.proseo.model.OrderTrigger;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.TimeIntervalOrderTrigger;
 import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.enums.TriggerType;
@@ -422,6 +423,28 @@ public class TriggerUtil {
 			}
 		}
 		return modelTrigger;
+	}
+
+	/**
+	 * Get all data driven triggers for workflows having the given product class as input product class
+	 * 
+	 * @param missionCode the code of the mission the product type is for
+	 * @param productType the product type of the requested product class
+	 * @return a list of data driven triggers
+	 * @throws IllegalArgumentException if the given product type does not belong to any product class of the mission
+	 */
+	public List<DataDrivenOrderTrigger> findDataDrivenByProductType(String missionCode, String productType) throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> findDataDrivenByProductType({})", productType);
+
+		// Find product class for product type (else throw IllegalArgumentException)
+		ProductClass productClass = RepositoryService.getProductClassRepository()
+				.findByMissionCodeAndProductType(missionCode, productType);
+		if (null == productClass) {
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.PRODUCT_TYPE_INVALID, missionCode, productType));
+		}
+		
+		// Find triggers using RepositoryService.getDataDrivenOrderTriggerRepository() exclusively
+		return RepositoryService.getDataDrivenOrderTriggerRepository().findByMissionCodeAndProductClass(missionCode, productClass);
 	}
 	
 	/**

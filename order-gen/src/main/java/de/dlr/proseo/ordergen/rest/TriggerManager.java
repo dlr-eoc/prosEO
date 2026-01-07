@@ -5,10 +5,9 @@
  */
 package de.dlr.proseo.ordergen.rest;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +24,7 @@ import de.dlr.proseo.model.DataDrivenOrderTrigger;
 import de.dlr.proseo.model.DatatakeOrderTrigger;
 import de.dlr.proseo.model.OrbitOrderTrigger;
 import de.dlr.proseo.model.OrderTrigger;
-import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.TimeIntervalOrderTrigger;
-import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.rest.model.RestTrigger;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.ordergen.util.TriggerUtil;
@@ -197,6 +194,39 @@ public class TriggerManager {
 	}
 	
 	/**
+	 * Get all data driven triggers for workflows having the given product class as input product class
+	 * 
+	 * @param mission the mission code
+	 * @param productType the product type of the requested product class
+	 * @return a list of data driven triggers
+	 * @throws IllegalArgumentException if the given product type does not belong to any product class of the mission
+	 * @throws SecurityException        if a cross-mission data access was attempted
+	 */
+	public List<RestTrigger> getByProductType(String mission, String productType) 
+			throws IllegalArgumentException, SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getByProductType({}, {})", mission, productType);
+
+		if (null == mission || mission.isBlank() || null == productType || productType.isBlank()) {
+			throw new IllegalArgumentException(logger.log(OrderGenMessage.MISSION_OR_PRODUCT_TYPE_MISSING));
+		}
+		
+		// Ensure user is authorized for the mission of the product type
+		if (!securityService.isAuthorizedForMission(mission)) {
+			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS, mission,
+					securityService.getMission()));
+		}
+
+		List<RestTrigger> triggers = new ArrayList<RestTrigger>();
+		
+		for (DataDrivenOrderTrigger orderTrigger : triggerUtil.findDataDrivenByProductType(mission, productType)) {
+			triggers.add(triggerUtil.toRestTrigger(orderTrigger));
+		}
+
+		return triggers;
+	}
+
+	
+	/**
 	 * Modify a trigger 
 	 *
 	 * @param trigger a Json representation of the modified trigger
@@ -233,15 +263,15 @@ public class TriggerManager {
 		OrderTrigger changedTrigger = triggerUtil.toModelTrigger(trigger);
 		Boolean triggerChanged = false;
 
-		if (isNotEqual(modelTrigger.getWorkflow(), changedTrigger.getWorkflow())) {
+		if (!Objects.equals(modelTrigger.getWorkflow(), changedTrigger.getWorkflow())) {
 			triggerChanged = true;
 			modelTrigger.setWorkflow(changedTrigger.getWorkflow());
 		}
-		if (isNotEqual(modelTrigger.getExecutionDelay(), changedTrigger.getExecutionDelay())) {
+		if (!Objects.equals(modelTrigger.getExecutionDelay(), changedTrigger.getExecutionDelay())) {
 			triggerChanged = true;
 			modelTrigger.setExecutionDelay(changedTrigger.getExecutionDelay());
 		}
-		if (isNotEqual(modelTrigger.getPriority(), changedTrigger.getPriority())) {
+		if (!Objects.equals(modelTrigger.getPriority(), changedTrigger.getPriority())) {
 			triggerChanged = true;
 			modelTrigger.setPriority(changedTrigger.getPriority());
 		}
@@ -255,40 +285,40 @@ public class TriggerManager {
 		} else if (modelTrigger instanceof TimeIntervalOrderTrigger && changedTrigger instanceof TimeIntervalOrderTrigger) {
 			TimeIntervalOrderTrigger modelTriggerLoc = (TimeIntervalOrderTrigger) modelTrigger;
 			TimeIntervalOrderTrigger changedTriggerLoc = (TimeIntervalOrderTrigger) changedTrigger;
-			if (isNotEqual(modelTriggerLoc.getTriggerInterval(), changedTriggerLoc.getTriggerInterval())) {
+			if (!Objects.equals(modelTriggerLoc.getTriggerInterval(), changedTriggerLoc.getTriggerInterval())) {
 				triggerChanged = true;
 				modelTriggerLoc.setTriggerInterval(changedTriggerLoc.getTriggerInterval());
 			}
-			if (isNotEqual(modelTriggerLoc.getNextTriggerTime(), changedTriggerLoc.getNextTriggerTime())) {
+			if (!Objects.equals(modelTriggerLoc.getNextTriggerTime(), changedTriggerLoc.getNextTriggerTime())) {
 				triggerChanged = true;
 				modelTriggerLoc.setNextTriggerTime(changedTriggerLoc.getNextTriggerTime());
 			} 	
 		} else if (modelTrigger instanceof CalendarOrderTrigger && changedTrigger instanceof CalendarOrderTrigger) {
 			CalendarOrderTrigger modelTriggerLoc = (CalendarOrderTrigger) modelTrigger;
 			CalendarOrderTrigger changedTriggerLoc = (CalendarOrderTrigger) changedTrigger;
-			if (isNotEqual(modelTriggerLoc.getCronExpression(), changedTriggerLoc.getCronExpression())) {
+			if (!Objects.equals(modelTriggerLoc.getCronExpression(), changedTriggerLoc.getCronExpression())) {
 				triggerChanged = true;
 				modelTriggerLoc.setCronExpression(changedTriggerLoc.getCronExpression());
 			}	
 		} else if (modelTrigger instanceof OrbitOrderTrigger && changedTrigger instanceof OrbitOrderTrigger) {
 			OrbitOrderTrigger modelTriggerLoc = (OrbitOrderTrigger) modelTrigger;
 			OrbitOrderTrigger changedTriggerLoc = (OrbitOrderTrigger) changedTrigger;
-			if (isNotEqual(modelTriggerLoc.getSpacecraft(), changedTriggerLoc.getSpacecraft())) {
+			if (!Objects.equals(modelTriggerLoc.getSpacecraft(), changedTriggerLoc.getSpacecraft())) {
 				triggerChanged = true;
 				modelTriggerLoc.setSpacecraft(changedTriggerLoc.getSpacecraft());
 			}	
-			if (isNotEqual(modelTriggerLoc.getDeltaTime(), changedTriggerLoc.getDeltaTime())) {
+			if (!Objects.equals(modelTriggerLoc.getDeltaTime(), changedTriggerLoc.getDeltaTime())) {
 				triggerChanged = true;
 				modelTriggerLoc.setDeltaTime(changedTriggerLoc.getDeltaTime());
 			}	
 		} else if (modelTrigger instanceof DatatakeOrderTrigger && changedTrigger instanceof DatatakeOrderTrigger) {
 			DatatakeOrderTrigger modelTriggerLoc = (DatatakeOrderTrigger) modelTrigger;
 			DatatakeOrderTrigger changedTriggerLoc = (DatatakeOrderTrigger) changedTrigger;
-			if (isNotEqual(modelTriggerLoc.getDatatakeType(), changedTriggerLoc.getDatatakeType())) {
+			if (!Objects.equals(modelTriggerLoc.getDatatakeType(), changedTriggerLoc.getDatatakeType())) {
 				triggerChanged = true;
 				modelTriggerLoc.setDatatakeType(changedTriggerLoc.getDatatakeType());
 			}	
-			if (isNotEqual(modelTriggerLoc.getLastDatatakeStartTime(), changedTriggerLoc.getLastDatatakeStartTime())) {
+			if (!Objects.equals(modelTriggerLoc.getLastDatatakeStartTime(), changedTriggerLoc.getLastDatatakeStartTime())) {
 				triggerChanged = true;
 				modelTriggerLoc.setLastDatatakeStartTime(changedTriggerLoc.getLastDatatakeStartTime());
 			}	
@@ -296,7 +326,7 @@ public class TriggerManager {
 				triggerChanged = true;
 				modelTriggerLoc.setParametersToCopy(changedTriggerLoc.getParametersToCopy());
 			}
-			if (isNotEqual(modelTriggerLoc.getDeltaTime(), changedTriggerLoc.getDeltaTime())) {
+			if (!Objects.equals(modelTriggerLoc.getDeltaTime(), changedTriggerLoc.getDeltaTime())) {
 				triggerChanged = true;
 				modelTriggerLoc.setDeltaTime(changedTriggerLoc.getDeltaTime());
 			}	
@@ -314,59 +344,5 @@ public class TriggerManager {
 		return triggerUtil.toRestTrigger(modelTrigger);
 	}
 
-	// Some methods to compare objects
-	private Boolean isNotEqual(String a, String b) {
-		if ((a != null && b != null
-					&& !a.equals(b))
-					|| (a != null && b == null)
-					|| (a == null && b != null)) {
-			return true;
-		}
-		return false;
-	}
-	private Boolean isNotEqual(Instant a, Instant b) {
-		if ((a != null && b != null
-					&& !a.equals(b))
-					|| (a != null && b == null)
-					|| (a == null && b != null)) {
-			return true;
-		}
-		return false;
-	}
-	private Boolean isNotEqual(Spacecraft a, Spacecraft b) {
-		if ((a != null && b != null
-					&& !a.equals(b))
-					|| (a != null && b == null)
-					|| (a == null && b != null)) {
-			return true;
-		}
-		return false;
-	}
-	private Boolean isNotEqual(Duration a, Duration b) {
-		if ((a != null && b != null
-					&& !a.equals(b))
-					|| (a != null && b == null)
-					|| (a == null && b != null)) {
-			return true;
-		}
-		return false;
-	}
-	private Boolean isNotEqual(Integer a, Integer b) {
-		if ((a != null && b != null
-					&& !a.equals(b))
-					|| (a != null && b == null)
-					|| (a == null && b != null)) {
-			return true;
-		}
-		return false;
-	}
-	private Boolean isNotEqual(Workflow a, Workflow b) {
-		if ((a != null && b != null
-					&& !a.equals(b))
-					|| (a != null && b == null)
-					|| (a == null && b != null)) {
-			return true;
-		}
-		return false;
-	}
+
 }
