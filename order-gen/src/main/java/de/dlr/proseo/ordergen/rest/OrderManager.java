@@ -25,6 +25,7 @@ import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.ordergen.OrderGenerator;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
@@ -82,12 +83,12 @@ public class OrderManager {
 			if (trigger.getWorkflow().isEnabled()) {
 				
 				// TODO Generate processing order from product data and workflow (analogous to ODIP with input product)
-				RestOrder order = new RestOrder();
-				order.setIdentifier("DUMMY");
-				
-				orderList.add(order);
-				
-				logger.log(OrderGenMessage.ORDER_GENERATED, order.getIdentifier(), trigger.getName());
+				RestOrder order = 
+						OrderGenerator.orderCreator.createAndStartFromTrigger(trigger, null, null, null, productId);
+				if (order != null) {
+					orderList.add(order);
+					logger.log(OrderGenMessage.ORDER_GENERATED, order.getIdentifier(), trigger.getName());
+				}
 			}
 		}
 		

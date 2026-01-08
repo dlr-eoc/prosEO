@@ -4,12 +4,12 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.model.CalendarOrderTrigger;
+import de.dlr.proseo.model.TimeIntervalOrderTrigger;
 import de.dlr.proseo.ordergen.OrderGenerator;
 
-public class CalendarTriggerJob implements Job {
+public class TimeIntervalTriggerJob implements Job {
 	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(CalendarTriggerJob.class);
+	private static ProseoLogger logger = new ProseoLogger(TimeIntervalTriggerJob.class);
 	
 	@Override
 	public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -17,9 +17,9 @@ public class CalendarTriggerJob implements Job {
 
 		Object object = context.getJobDetail().getJobDataMap().get("orderTrigger");
 		String workflowName = null;
-		CalendarOrderTrigger trigger = null;
-		if (object instanceof CalendarOrderTrigger) {
-			trigger = ((CalendarOrderTrigger) object);
+		TimeIntervalOrderTrigger trigger = null;
+		if (object instanceof TimeIntervalOrderTrigger) {
+			trigger = ((TimeIntervalOrderTrigger) object);
 			workflowName = trigger.getWorkflow().getName();
 		}
 		if (logger.isTraceEnabled()) {

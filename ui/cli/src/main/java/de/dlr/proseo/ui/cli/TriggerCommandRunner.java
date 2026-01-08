@@ -172,11 +172,19 @@ public class TriggerCommandRunner {
 
 		/* Read trigger file, if any */
 		RestTrigger restTrigger = null;
+		TriggerType type = null;
 		if (null == triggerFile) {
 			restTrigger = new RestTrigger();
 		} else {
 			try {
 				restTrigger = CLIUtil.parseObjectFile(triggerFile, triggerFileFormat, RestTrigger.class);
+				try {
+					type = TriggerType.valueOf(restTrigger.getType());
+				} catch (Exception e) {
+					// unknown type
+					System.err.println(ProseoLogger.format(UIMessage.INVALID_TRIGGER_TYPE, restTrigger.getType()));
+					return;
+				}
 			} catch (IllegalArgumentException | IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
@@ -184,7 +192,6 @@ public class TriggerCommandRunner {
 		}
 
 		/* Check command parameters (overriding values from trigger class file) */
-		TriggerType type = null;
 		for (int i = 0; i < createCommand.getParameters().size(); ++i) {
 			ParsedParameter param = createCommand.getParameters().get(i);
 			if (0 == i) {
@@ -469,11 +476,19 @@ public class TriggerCommandRunner {
 
 		/* Read trigger file, if any */
 		RestTrigger updatedTrigger = null;
+		TriggerType type = null;
 		if (null == triggerFile) {
 			updatedTrigger = new RestTrigger();
 		} else {
 			try {
 				updatedTrigger = CLIUtil.parseObjectFile(triggerFile, triggerFileFormat, RestTrigger.class);
+				try {
+					type = TriggerType.valueOf(updatedTrigger.getType());
+				} catch (Exception e) {
+					// unknown type
+					System.err.println(ProseoLogger.format(UIMessage.INVALID_TRIGGER_TYPE, updatedTrigger.getType()));
+					return;
+				}
 			} catch (IllegalArgumentException | IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
@@ -486,7 +501,7 @@ public class TriggerCommandRunner {
 			if (0 == i) {
 				// First parameter is trigger type
 				String val = param.getValue();
-				TriggerType type = null;
+				type = null;
 				try {
 					type= TriggerType.valueOf(val);
 				} catch (Exception e) {
@@ -519,20 +534,20 @@ public class TriggerCommandRunner {
 			return;
 		}
 		String name = updatedTrigger.getName();
-		String type = updatedTrigger.getType();
+		String typeString = updatedTrigger.getType();
 		/* Retrieve the trigger using Trigger Manager service */
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getOrderGenUrl(),
 					URI_PATH_TRIGGERS + "?mission=" + loginManager.getMission() + "&name="
 							+ URLEncoder.encode(name, Charset.defaultCharset()) + "&type="
-							+ URLEncoder.encode(type, Charset.defaultCharset()),
+							+ URLEncoder.encode(typeString, Charset.defaultCharset()),
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.TRIGGER_NOT_FOUND, name, type);
+				message = ProseoLogger.format(UIMessage.TRIGGER_NOT_FOUND, name, typeString);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -551,7 +566,7 @@ public class TriggerCommandRunner {
 			return;
 		}
 		if (resultList.isEmpty()) {
-			String message = logger.log(UIMessage.TRIGGER_NOT_FOUND, name, type);
+			String message = logger.log(UIMessage.TRIGGER_NOT_FOUND, name, typeString);
 			System.err.println(message);
 			return;
 		}

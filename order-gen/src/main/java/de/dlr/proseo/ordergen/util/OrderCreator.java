@@ -1,15 +1,48 @@
 package de.dlr.proseo.ordergen.util;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClientResponseException;
-
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.OrderGenMessage;
+import de.dlr.proseo.model.CalendarOrderTrigger;
+import de.dlr.proseo.model.DataDrivenOrderTrigger;
+import de.dlr.proseo.model.DatatakeOrderTrigger;
+import de.dlr.proseo.model.OrbitOrderTrigger;
+import de.dlr.proseo.model.OrderTrigger;
+import de.dlr.proseo.model.Parameter;
+import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.TimeIntervalOrderTrigger;
+import de.dlr.proseo.model.Workflow;
+import de.dlr.proseo.model.WorkflowOption;
+import de.dlr.proseo.model.WorkflowOption.WorkflowOptionType;
+import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.enums.TriggerType;
+import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestOrder;
+import de.dlr.proseo.model.rest.model.RestParameter;
+import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
+import de.dlr.proseo.model.util.ProseoUtil;
+import de.dlr.proseo.model.util.StringUtils;
 import de.dlr.proseo.ordergen.OrderGenConfiguration;
 import de.dlr.proseo.ordergen.service.ServiceConnection;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 public class OrderCreator {
 
@@ -23,14 +56,55 @@ public class OrderCreator {
 	private final String URI_PATH_ORDERS_APPROVE = "/orders/approve";
 	private final String URI_PATH_ORDERS_PLAN = "/orders/plan";
 	private final String URI_PATH_ORDERS_RESUME = "/orders/resume";
+	
 
-	/** MonitorServices configuration */
-	@Autowired
-	protected OrderGenConfiguration config;
+	private final String ORDER_SLICING_TYPE = "NONE";
+	private final String ORDER_PRODUCTION_TYOE = "SYSTEMATIC";
 
+	/** Transaction manager for transaction control */
+	private PlatformTransactionManager txManager;
+
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
+	
+	private OrderGenConfiguration config;
+
+	private TriggerUtil triggerUtil;
+	
 	/** The connector service to the prosEO backend services */
-	@Autowired
 	protected ServiceConnection serviceConnection;
+
+	/**
+	 * @param txManager the txManager to set
+	 */
+	public void setTxManager(PlatformTransactionManager txManager) {
+		this.txManager = txManager;
+	}
+
+	/**
+	 * @param config the config to set
+	 */
+	public void setConfig(OrderGenConfiguration config) {
+		this.config = config;
+	}
+
+	/**
+	 * @param triggerUtil the triggerUtil to set
+	 */
+	public void setTriggerUtil(TriggerUtil triggerUtil) {
+		this.triggerUtil = triggerUtil;
+	}
+
+	/**
+	 * @param serviceConnection the serviceConnection to set
+	 */
+	public void setServiceConnection(ServiceConnection serviceConnection) {
+		this.serviceConnection = serviceConnection;
+	}
+
+	protected final DateTimeFormatter instantFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss.SSSSSS")
+		.withZone(ZoneId.of("UTC"));
 
 	/**
 	 * Sends an order to the production planner and releases it.
@@ -192,5 +266,263 @@ public class OrderCreator {
 
 		return createdOrder;
 	}
-	
+
+	public RestOrder createAndStartFromTrigger(OrderTrigger orderTrigger, Date previousFireTime, Date fireTime, Date nextFireTime, Long productId) {
+		if (orderTrigger != null && orderTrigger instanceof OrderTrigger) {
+			if (logger.isTraceEnabled())
+				logger.trace(">>> createAndStartFromTrigger({})", orderTrigger.getName());
+		} else {
+			logger.log(OrderGenMessage.ORDER_DATA_INVALID, ">>> createAndStartFromTrigger(NULL)");
+			return null;
+		}
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
+		TriggerType typeTmp = null;
+		if (orderTrigger instanceof CalendarOrderTrigger) {
+			typeTmp = TriggerType.Calendar;
+		} else if (orderTrigger instanceof TimeIntervalOrderTrigger) {
+			typeTmp = TriggerType.TimeInterval;
+		} else if (orderTrigger instanceof OrbitOrderTrigger) {
+			typeTmp = TriggerType.Orbit;
+		} else if (orderTrigger instanceof DatatakeOrderTrigger) {
+			typeTmp = TriggerType.Datatake;
+		} else if (orderTrigger instanceof DataDrivenOrderTrigger) {
+			typeTmp = TriggerType.DataDriven;
+		}
+		TriggerType type = typeTmp;
+		Instant startTime = null;
+		Instant stopTime = null;
+		// calculate start and stop time
+		switch (type) {
+		case Calendar:
+			stopTime = fireTime.toInstant().truncatedTo(ChronoUnit.SECONDS);
+			if (previousFireTime == null && nextFireTime != null) {
+				startTime = stopTime.minus(Duration.between(stopTime, nextFireTime.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+			} else {
+				startTime = previousFireTime.toInstant().truncatedTo(ChronoUnit.SECONDS);
+			}
+			break;
+		case TimeInterval:
+			TimeIntervalOrderTrigger tiTrigger = (TimeIntervalOrderTrigger)orderTrigger;
+			startTime = fireTime.toInstant();
+			stopTime = startTime.plus(tiTrigger.getTriggerInterval());
+			tiTrigger.setNextTriggerTime(stopTime);
+			transactionTemplate.setReadOnly(false);
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+				try {
+					transactionTemplate.setReadOnly(false);
+					transactionTemplate.execute((status) -> {
+						triggerUtil.save(tiTrigger);
+						return null;
+					});
+
+					break;
+				} catch (CannotAcquireLockException e) {
+					if (logger.isDebugEnabled())
+						logger.debug("... database concurrency issue detected: ", e);
+
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
+					} else {
+						if (logger.isDebugEnabled())
+							logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+						throw e;
+					}
+				}
+			}
+			break;
+		case DataDriven:
+			if (productId == null) {
+				logger.log(OrderGenMessage.PRODUCT_NOT_FOUND, productId);
+				return null;
+			}
+			transactionTemplate.setReadOnly(true);
+			
+			final Product inputProduct = transactionTemplate.execute((status) -> {
+				Optional<Product> inputProductOpt = RepositoryService.getProductRepository().findById(productId);
+				if (inputProductOpt.isEmpty()) {
+					logger.log(OrderGenMessage.PRODUCT_NOT_FOUND, productId);
+					return null;
+				}
+				return inputProductOpt.get();
+			});
+			if (inputProduct == null) {
+				return null;
+			}
+			startTime = inputProduct.getSensingStartTime();
+			stopTime = inputProduct.getSensingStopTime();
+			break;
+		default:
+			break;
+		}
+
+		final Instant finalStartTime = startTime;
+		final Instant finalStopTime = stopTime;
+		
+		transactionTemplate.setReadOnly(true);
+		
+		final RestOrder order = transactionTemplate.execute((status) -> {
+			Optional<Workflow> optWorkflow = RepositoryService.getWorkflowRepository().findById(orderTrigger.getWorkflow().getId());
+			if (!optWorkflow.isPresent()) {
+				logger.log(OrderGenMessage.WORKFLOW_NOT_FOUND, orderTrigger.getWorkflow().getId());
+				return new RestOrder();
+			}
+			Workflow workflow  = optWorkflow.get(); 
+			if (!workflow.getEnabled()) {
+				// no workflow reference, return error
+				logger.log(OrderGenMessage.WORKFLOW_NOT_ENABLED, workflow.getName());
+				return new RestOrder();
+			}
+
+			Instant now = Instant.now();
+			String orderIdentifier = workflow.getName() + "_" + orderTrigger.getName() + "_" + instantFormatter.format(finalStartTime);
+			RestOrder restOrder = new RestOrder();
+			restOrder.setMissionCode(workflow.getMission().getCode());
+			restOrder.setIdentifier(orderIdentifier);
+			restOrder.setWorkflowName(workflow.getName());
+			restOrder.setWorkflowUuid(workflow.getUuid().toString());
+			restOrder.setPriority(orderTrigger.getPriority());
+			restOrder.setExecutionTime(Date.from(now.plus(orderTrigger.getExecutionDelay().toMillis(), ChronoUnit.MILLIS)));
+			restOrder.setSubmissionTime(Date.from(now));
+			
+			restOrder.setStartTime(OrbitTimeFormatter.format(finalStartTime));
+			restOrder.setStopTime(OrbitTimeFormatter.format(finalStopTime));
+			
+			if (workflow.getProcessingMode() != null && !workflow.getProcessingMode().isEmpty()) {
+				restOrder.setProcessingMode(workflow.getProcessingMode());
+			} else {
+				restOrder.setProcessingMode(orderTrigger.getMission().getProcessingModes().toArray()[0].toString());
+			}
+			if (workflow.getOutputFileClass() != null && !workflow.getOutputFileClass().isEmpty()) {
+				restOrder.setOutputFileClass(workflow.getOutputFileClass());
+			} else {
+				restOrder.setProcessingMode(orderTrigger.getMission().getFileClasses().toArray()[0].toString());
+			}
+
+			restOrder.setProductionType(ORDER_PRODUCTION_TYOE);
+			if (workflow.getSlicingType() != null) {
+				restOrder.setSlicingType(workflow.getSlicingType().toString());
+			} else {
+				restOrder.setSlicingType(ORDER_SLICING_TYPE);
+			}
+			if (workflow.getSliceDuration() != null) {
+				restOrder.setSliceDuration(workflow.getSliceDuration().getSeconds());
+			}
+			if (workflow.getSliceOverlap() != null) {
+				restOrder.setSliceOverlap(workflow.getSliceOverlap().getSeconds());
+			}
+			restOrder.getRequestedProductClasses().add(workflow.getOutputProductClass().getProductType());
+			restOrder.getConfiguredProcessors().add(workflow.getConfiguredProcessor().getIdentifier());
+			switch (type) {
+			case DataDriven:
+				DataDrivenOrderTrigger dtTrigger = (DataDrivenOrderTrigger)orderTrigger;
+				if (!dtTrigger.getParametersToCopy().isEmpty()) {
+					Optional<Product> inputProductOpt = RepositoryService.getProductRepository().findById(productId);
+					Product product = inputProductOpt.get();
+					Boolean copyAll = dtTrigger.getParametersToCopy().contains("*");
+					for (String key : product.getParameters().keySet()) {
+						if (copyAll || dtTrigger.getParametersToCopy().contains(key)) {
+							restOrder.getOutputParameters()
+							.add(new RestParameter(key, product.getParameters().get(key).getParameterType().toString(),
+									product.getParameters().get(key).getParameterValue()));
+						}
+					}						
+				}
+				break;
+			default:
+				break;
+			}
+			if (workflow.getOutputParameters() != null) {
+				for (String paramKey : workflow.getOutputParameters().keySet()) {
+					restOrder.getOutputParameters()
+					.add(new RestParameter(paramKey, workflow.getOutputParameters().get(paramKey).getParameterType().toString(),
+							workflow.getOutputParameters().get(paramKey).getParameterValue()));
+				}
+			}
+			if (workflow.getClassOutputParameters() != null) {
+				for (ProductClass targetClass : workflow.getClassOutputParameters().keySet()) {
+					RestClassOutputParameter restClassOutputParameter = new RestClassOutputParameter();
+					restClassOutputParameter.setProductClass(targetClass.getProductType());
+					Map<String, Parameter> outputParameters = workflow.getClassOutputParameters()
+							.get(targetClass)
+							.getOutputParameters();
+					for (String paramKey : outputParameters.keySet()) {
+						restClassOutputParameter.getOutputParameters()
+						.add(new RestParameter(paramKey, outputParameters.get(paramKey).getParameterType().toString(),
+								outputParameters.get(paramKey).getParameterValue()));
+					}
+					restOrder.getClassOutputParameters().add(restClassOutputParameter);
+				}
+			}
+
+			for (WorkflowOption wo : workflow.getWorkflowOptions()) {
+
+				RestParameter param = new RestParameter();
+				param.setKey(wo.getName());
+				if (wo.getType().equals(WorkflowOptionType.NUMBER)) {
+					// check for number type
+					try {
+						Integer.parseInt(wo.getDefaultValue());
+						param.setParameterType(ParameterType.INTEGER.toString());
+					} catch (NumberFormatException e) {
+						// try double
+						try {
+							Double.parseDouble(wo.getDefaultValue());
+							param.setParameterType(ParameterType.DOUBLE.toString());
+						} catch (NumberFormatException ex) {
+							// error, value string is not a number
+							logger.log(OrderGenMessage.MSG_WORKFLOW_OPTION_NO_TYPE_MATCH, wo.getName(),
+									wo.getType(), wo.getDefaultValue());
+							return new RestOrder();
+						}
+					}
+
+				} else if (wo.getType().equals(WorkflowOptionType.DATENUMBER)) {
+					/**
+					 * Assumption is that this type means the day of year, i. e. it must be an integer number in the range
+					 * 1..366
+					 */
+					try {
+						Integer dn = Integer.parseInt(wo.getDefaultValue());
+						if (dn < 1 || dn > 366) {
+							logger.log(OrderGenMessage.MSG_WORKFLOW_OPTION_NO_TYPE_MATCH, wo.getName(),
+									wo.getType(), wo.getDefaultValue());
+							return new RestOrder();
+						}
+						param.setParameterType(ParameterType.INTEGER.toString());
+					} catch (NumberFormatException e) {
+						logger.log(OrderGenMessage.MSG_WORKFLOW_OPTION_NO_TYPE_MATCH, wo.getName(), wo.getType(),
+								wo.getDefaultValue());
+						return new RestOrder();
+					}
+				} else {
+					// all others are strings
+					param.setParameterType(ParameterType.STRING.toString());
+				}
+				param.setParameterValue(wo.getDefaultValue());
+				restOrder.getDynamicProcessingParameters().add(param);
+			}
+			return restOrder;
+		});
+
+		if (StringUtils.isNullOrEmpty(order.getIdentifier())) {
+			return null;
+		}
+		// REST order is built, go on
+		RestOrder restOrder = (RestOrder) order;
+		try {
+			restOrder = createOrder(restOrder);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			restOrder = planAndReleaseOrder(restOrder, orderTrigger.getMission().getCode(), config.getUser(), config.getPassword());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return restOrder;
+	}
 }

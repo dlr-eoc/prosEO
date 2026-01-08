@@ -34,6 +34,10 @@ public enum OrderGenMessage implements ProseoMessage {
 	ORDER_GENERATED							(4722, Level.INFO, true, "Processing Order {0} generated from trigger {1}", ""),
 	NO_ORDER_GENERATED						(4723, Level.WARN, true, "No processing orders generated for product with database ID {0} (no trigger found with enabled workflows)", ""),
 	TRIGGERS_RELOADED						(4724, Level.INFO, true, "Triggers of all missions (re-)loaded", ""),
+	NO_TRIGGER 								(4725, Level.ERROR, false, "Trigger is not defined (NULL)", ""),
+	WORKFLOW_NOT_ENABLED    				(4726, Level.ERROR, false, "Workflow referenced by name {0} is disabled (not useable)", ""),
+	WORKFLOW_NOT_FOUND	    				(4727, Level.ERROR, false, "Workflow referenced by id {0} not found", ""),
+	MSG_WORKFLOW_OPTION_NO_TYPE_MATCH 		(4728, Level.ERROR, false, "Workflow option {0} does not match type: {1}, value: {2}", ""),
 	
 	;
 	
