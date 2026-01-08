@@ -1,7 +1,7 @@
 --
--- prosEO Database Schema Update for prosEO 0.9.5
+-- prosEO Database Schema Update for prosEO 1.1.0
 --
--- Date: 2023-09-19
+-- Date: 2024-08-20
 --
 
 --
