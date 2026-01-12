@@ -72,7 +72,7 @@ public class ProductIngestor {
 	private static final String URL_PLANNER_NOTIFY = "/product/%d";
 	private static final String URL_STORAGE_MANAGER_REGISTER = "/products";
 	private static final String URL_STORAGE_MANAGER_DELETE = "/products?pathInfo=%s";
-	private static final String URL_GENERATOR_NOTIFY = "/generator/forproduct/%d";
+	private static final String URL_GENERATOR_NOTIFY = "/generator/forProduct/%d";
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(ProductIngestor.class);
@@ -498,7 +498,7 @@ public class ProductIngestor {
 			RestTemplate restTemplate = rtb.connectTimeout(Duration.ofMillis(ingestorConfig.getOrderGeneratorTimeout()))
 				.basicAuthentication(user, password)
 				.build();
-			ResponseEntity<String> response = restTemplate.getForEntity(orderGeneratorUrl, String.class);
+			ResponseEntity<String> response = restTemplate.postForEntity(orderGeneratorUrl, "", String.class);
 			if (!HttpStatus.CREATED.equals(response.getStatusCode())) {
 				throw new ProcessingException(logger.log(IngestorMessage.ERROR_NOTIFYING_PLANNER, ingestorProduct.getId(),
 						ingestorProduct.getProductClass(), response.getStatusCode().toString()));

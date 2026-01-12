@@ -43,15 +43,15 @@ public class OrderGenConfiguration {
 	private String orderManagerUrl;
 
 	/** User */
-	@Value("${proseo.ordergen.user}")
+	@Value("${proseo.orderGenerator.user}")
 	private String user;
 
 	/** Password */
-	@Value("${proseo.ordergen.password}")
+	@Value("${proseo.orderGenerator.password}")
 	private String password;
 
 	/** Facility to use */
-	@Value("${proseo.ordergen.facility}")
+	@Value("${proseo.orderGenerator.facility}")
 	private String facility;
 	
 	/**

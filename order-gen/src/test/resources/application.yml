@@ -31,7 +31,7 @@ proseo:
         # The URL of the prosEO Order Manager
         url: http://localhost:8080/order-mgr
 
-    ordergen:
+    orderGenerator:
         # User and password for access to Order Manager and Production Planner
         user: user
         password: password

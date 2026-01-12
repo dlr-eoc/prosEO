@@ -84,8 +84,8 @@ public class IngestorSecurityConfig {
                                 base + "/ingest/**")
                         .hasAnyRole(UserRole.PRODUCT_READER.toString(), UserRole.PRODUCT_READER_RESTRICTED.toString(),
                                 UserRole.PRODUCT_READER_ALL.toString())
-                        .requestMatchers(HttpMethod.POST, base + "/ingest/**")
-                        .hasAnyRole(UserRole.PRODUCT_INGESTOR.toString())
+                        .requestMatchers(HttpMethod.POST, base + "/ingest/*", base + "/ingest/*/*")
+                        .hasRole(UserRole.PRODUCT_INGESTOR.toString())
                         .anyRequest()
                         .hasAnyRole(UserRole.PRODUCT_MGR.toString()))
     			.csrf((csrf) -> csrf.disable());

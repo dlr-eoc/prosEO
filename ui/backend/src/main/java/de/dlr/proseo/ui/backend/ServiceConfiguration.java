@@ -51,7 +51,7 @@ public class ServiceConfiguration {
 	private String archiveManagerUrl;
 
 	/** The URL of the prosEO Order Generator */
-	@Value("${proseo.ordergen.url}")
+	@Value("${proseo.orderGenerator.url}")
 	private String orderGenUrl;
 
 	/** Timeout for HTTP connections */

@@ -30,6 +30,7 @@ import de.dlr.proseo.model.TimeIntervalOrderTrigger;
 import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.WorkflowOption;
 import de.dlr.proseo.model.WorkflowOption.WorkflowOptionType;
+import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.enums.TriggerType;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
@@ -111,7 +112,7 @@ public class OrderCreator {
 	 *
 	 * @param order The order to be sent and released.
 	 * @return The created order after sending and releasing.
-	 * @throws OdipException If an error occurs during the process of sending and releasing the order.
+	 * @throws Exception If an error occurs during the process of sending and releasing the order.
 	 */
 	public RestOrder createOrder(RestOrder order) throws Exception {
 		RestOrder createdOrder = null;
@@ -156,10 +157,10 @@ public class OrderCreator {
 	 *
 	 * @param order The order to be sent and released.
 	 * @return The created order after sending and releasing.
-	 * @throws OdipException If an error occurs during the process of sending and releasing the order.
+	 * @throws Exception If an error occurs during the process of sending and releasing the order.
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
-	public RestOrder planAndReleaseOrder(RestOrder order, String mission, String user, String password) throws Exception {
+	public RestOrder planAndReleaseOrder(RestOrder order) throws Exception {
 		RestOrder createdOrder = null;
 		if (order != null) {
 			if (logger.isTraceEnabled())
@@ -171,7 +172,8 @@ public class OrderCreator {
 				try {
 					createdOrder = serviceConnection.patchToService(config.getProductionPlannerUrl(),
 							URI_PATH_ORDERS_APPROVE + "/" + order.getId(), order, RestOrder.class,
-							mission + "-" + user, password);
+							order.getMissionCode() + "-" + config.getUser(),
+							config.getPassword());
 					break;
 				} catch (RestClientResponseException e) {
 					String message = null;
@@ -204,7 +206,8 @@ public class OrderCreator {
 				try {
 					createdOrder = serviceConnection.putToService(config.getProductionPlannerUrl(),
 							URI_PATH_ORDERS_PLAN + "/" + createdOrder.getId() + "?facility=" + config.getFacility() + "&wait=true",
-							RestOrder.class, mission + "-" + user, password);
+							RestOrder.class, order.getMissionCode() + "-" + config.getUser(),
+							config.getPassword());
 					break;
 				} catch (RestClientResponseException e) {
 					String message = null;
@@ -215,7 +218,7 @@ public class OrderCreator {
 					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 					case org.apache.http.HttpStatus.SC_FORBIDDEN:
 						message = (null == e.getStatusText()
-								? ProseoLogger.format(OrderGenMessage.NOT_AUTHORIZED, user, ORDERS,
+								? ProseoLogger.format(OrderGenMessage.NOT_AUTHORIZED, config.getUser(), ORDERS,
 										order.getMissionCode())
 								: e.getStatusText());
 						break;
@@ -237,7 +240,8 @@ public class OrderCreator {
 				try {
 					createdOrder = serviceConnection.patchToService(config.getProductionPlannerUrl(),
 							URI_PATH_ORDERS_RESUME + "/" + createdOrder.getId() + "?wait=true", createdOrder, RestOrder.class,
-							mission + "-" + user, password);
+							order.getMissionCode() + "-" + config.getUser(),
+							config.getPassword());
 					break;
 				} catch (RestClientResponseException e) {
 					String message = null;
@@ -248,7 +252,7 @@ public class OrderCreator {
 					case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 					case org.apache.http.HttpStatus.SC_FORBIDDEN:
 						message = (null == e.getStatusText()
-								? ProseoLogger.format(OrderGenMessage.NOT_AUTHORIZED, user, ORDERS,
+								? ProseoLogger.format(OrderGenMessage.NOT_AUTHORIZED, config.getUser(), ORDERS,
 										order.getMissionCode())
 								: e.getStatusText());
 						break;
@@ -267,6 +271,16 @@ public class OrderCreator {
 		return createdOrder;
 	}
 
+	/**
+	 * Build a RestOrder out of trigger information. Use time parameters or porductId to calculate the sensing start and stop times.
+	 * 
+	 * @param orderTrigger The trigger
+	 * @param previousFireTime The previous fire time of a quartz job (Calendar or TimeInterval trigger)
+	 * @param fireTime The current fire time of a quartz job (Calendar or TimeInterval trigger)
+	 * @param nextFireTime The next fire time of a quartz job (Calendar or TimeInterval trigger)
+	 * @param productId The product id of a DataDriven trigger
+	 * @return
+	 */
 	public RestOrder createAndStartFromTrigger(OrderTrigger orderTrigger, Date previousFireTime, Date fireTime, Date nextFireTime, Long productId) {
 		if (orderTrigger != null && orderTrigger instanceof OrderTrigger) {
 			if (logger.isTraceEnabled())
@@ -290,17 +304,19 @@ public class OrderCreator {
 		} else if (orderTrigger instanceof DataDrivenOrderTrigger) {
 			typeTmp = TriggerType.DataDriven;
 		}
-		TriggerType type = typeTmp;
+		final TriggerType type = typeTmp;
 		Instant startTime = null;
 		Instant stopTime = null;
 		// calculate start and stop time
 		switch (type) {
 		case Calendar:
-			stopTime = fireTime.toInstant().truncatedTo(ChronoUnit.SECONDS);
-			if (previousFireTime == null && nextFireTime != null) {
-				startTime = stopTime.minus(Duration.between(stopTime, nextFireTime.toInstant().truncatedTo(ChronoUnit.SECONDS)));
+			startTime = fireTime.toInstant().truncatedTo(ChronoUnit.SECONDS);
+			if (nextFireTime != null) {
+				stopTime = nextFireTime.toInstant().truncatedTo(ChronoUnit.SECONDS);
+			} else if (previousFireTime != null) {
+				stopTime = startTime.plus(Duration.between(startTime, previousFireTime.toInstant().truncatedTo(ChronoUnit.SECONDS)));
 			} else {
-				startTime = previousFireTime.toInstant().truncatedTo(ChronoUnit.SECONDS);
+				// error
 			}
 			break;
 		case TimeInterval:
@@ -386,8 +402,6 @@ public class OrderCreator {
 			restOrder.setExecutionTime(Date.from(now.plus(orderTrigger.getExecutionDelay().toMillis(), ChronoUnit.MILLIS)));
 			restOrder.setSubmissionTime(Date.from(now));
 			
-			restOrder.setStartTime(OrbitTimeFormatter.format(finalStartTime));
-			restOrder.setStopTime(OrbitTimeFormatter.format(finalStopTime));
 			
 			if (workflow.getProcessingMode() != null && !workflow.getProcessingMode().isEmpty()) {
 				restOrder.setProcessingMode(workflow.getProcessingMode());
@@ -406,6 +420,21 @@ public class OrderCreator {
 			} else {
 				restOrder.setSlicingType(ORDER_SLICING_TYPE);
 			}
+			// handle slicing type CALENDAR_DAY, CALENDAR_MONTH, CALENDAR_YEAR
+			Instant startTimeLoc = finalStartTime;
+			Instant stopTimeLoc = finalStopTime;
+			if (restOrder.getSlicingType().equals(OrderSlicingType.CALENDAR_DAY.toString())) {
+				startTimeLoc = finalStartTime.truncatedTo(ChronoUnit.DAYS);
+				stopTimeLoc = finalStartTime.truncatedTo(ChronoUnit.DAYS).plus(1, ChronoUnit.DAYS);
+			} else if (restOrder.getSlicingType().equals(OrderSlicingType.CALENDAR_MONTH.toString())) {
+				startTimeLoc = finalStartTime.truncatedTo(ChronoUnit.MONTHS);
+				stopTimeLoc = finalStartTime.truncatedTo(ChronoUnit.MONTHS).plus(1, ChronoUnit.MONTHS);
+			} else if (restOrder.getSlicingType().equals(OrderSlicingType.CALENDAR_YEAR.toString())) {
+				startTimeLoc = finalStartTime.truncatedTo(ChronoUnit.YEARS);
+				stopTimeLoc = finalStartTime.truncatedTo(ChronoUnit.YEARS).plus(1, ChronoUnit.YEARS);
+			}
+			restOrder.setStartTime(OrbitTimeFormatter.format(startTimeLoc));
+			restOrder.setStopTime(OrbitTimeFormatter.format(stopTimeLoc));
 			if (workflow.getSliceDuration() != null) {
 				restOrder.setSliceDuration(workflow.getSliceDuration().getSeconds());
 			}
@@ -518,7 +547,7 @@ public class OrderCreator {
 			e.printStackTrace();
 		}
 		try {
-			restOrder = planAndReleaseOrder(restOrder, orderTrigger.getMission().getCode(), config.getUser(), config.getPassword());
+			restOrder = planAndReleaseOrder(restOrder);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
