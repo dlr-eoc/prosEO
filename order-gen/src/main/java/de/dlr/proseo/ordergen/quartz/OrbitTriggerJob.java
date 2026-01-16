@@ -1,0 +1,40 @@
+package de.dlr.proseo.ordergen.quartz;
+
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.quartz.SchedulerException;
+
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.model.OrbitOrderTrigger;
+import de.dlr.proseo.ordergen.OrderGenerator;
+
+public class OrbitTriggerJob implements Job {
+	/** A logger for this class */
+	private static ProseoLogger logger = new ProseoLogger(OrbitTriggerJob.class);
+	
+	@Override
+	public void execute(JobExecutionContext context) throws JobExecutionException {
+		// TODO Auto-generated method stub
+
+		Object object = context.getJobDetail().getJobDataMap().get("orderTrigger");
+		String workflowName = null;
+		OrbitOrderTrigger trigger = null;
+		if (object instanceof OrbitOrderTrigger) {
+			trigger = ((OrbitOrderTrigger) object);
+			workflowName = trigger.getWorkflow().getName();
+		}
+		if (logger.isTraceEnabled()) {
+			logger.trace("--- trigger fired ({}, {})", context.getJobDetail().getKey(), workflowName);
+		}
+
+		OrderGenerator.orderCreator.createAndStartFromTrigger(trigger, context.getPreviousFireTime(), context.getFireTime(), context.getNextFireTime(), null);
+		try {
+			OrderGenerator.scheduler.buildNextOrbitTriggerFor(trigger);
+		} catch (SchedulerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+}
