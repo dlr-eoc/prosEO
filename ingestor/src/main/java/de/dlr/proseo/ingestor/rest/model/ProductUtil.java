@@ -180,7 +180,7 @@ public class ProductUtil {
 			modelProduct.setSensingStopTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getSensingStopTime())));
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(
-					logger.log(IngestorMessage.INVALID_SENSING_STOP_TIME, restProduct.getSensingStartTime()));
+					logger.log(IngestorMessage.INVALID_SENSING_STOP_TIME, restProduct.getSensingStopTime()));
 		}
 		if (null == restProduct.getRawDataAvailabilityTime()) {
 			modelProduct.setRawDataAvailabilityTime(null);

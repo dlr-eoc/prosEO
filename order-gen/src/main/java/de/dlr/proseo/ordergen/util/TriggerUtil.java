@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.quartz.CronExpression;
 import org.quartz.SchedulerException;
+import org.springframework.security.web.authentication.ott.DefaultGenerateOneTimeTokenRequestResolver;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -110,6 +111,9 @@ public class TriggerUtil {
 			}	
 			if (null != triggerLoc.getDeltaTime()) {
 				restTrigger.setDeltaTime(triggerLoc.getDeltaTime().getSeconds());
+			}	
+			if (null != triggerLoc.getLastOrbit()) {
+				restTrigger.setLastOrbitNumber(Long.valueOf(triggerLoc.getLastOrbit().getOrbitNumber()));
 			}	
 		} else if (trigger instanceof DatatakeOrderTrigger) {
 			DatatakeOrderTrigger triggerLoc = (DatatakeOrderTrigger) trigger;
@@ -209,6 +213,10 @@ public class TriggerUtil {
 			}
 			if (!StringUtils.isNullOrEmpty(restTrigger.getSpacecraftCode())) {
 				((OrbitOrderTrigger)trigger).setSpacecraft(RepositoryService.getSpacecraftRepository().findByMissionAndCode(restTrigger.getMissionCode(), restTrigger.getSpacecraftCode()));
+			}
+			if (restTrigger.getLastOrbitNumber() != null) {
+				((OrbitOrderTrigger)trigger).setLastOrbit(RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumber(restTrigger.getMissionCode(), 
+						restTrigger.getSpacecraftCode(), Math.toIntExact(restTrigger.getLastOrbitNumber())));
 			}
 		} else if (restTrigger.getType().equals(TriggerType.TimeInterval.name())) {
 			if (null != restTrigger.getTriggerInterval()) {

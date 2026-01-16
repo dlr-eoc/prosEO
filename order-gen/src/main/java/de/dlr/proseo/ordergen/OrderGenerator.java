@@ -74,6 +74,7 @@ public class OrderGenerator implements CommandLineRunner {
 		// TODO Auto-generated method stub		
 		
 		scheduler = new OrderGenScheduler();
+		scheduler.setTxManager(txManager);
 		scheduler.init(triggerUtil);
 		orderCreator = new OrderCreator();
 		orderCreator.setTxManager(txManager);
@@ -82,6 +83,7 @@ public class OrderGenerator implements CommandLineRunner {
 		orderCreator.setConfig(config);
 		scheduler.buildCalendarTriggers();
 		scheduler.buildImeIntervalTriggers();
+		scheduler.buildOrbitTriggers();
 		scheduler.start();
 		
 	}

@@ -5,7 +5,9 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -34,6 +36,7 @@ import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.enums.TriggerType;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
+import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -239,7 +242,7 @@ public class OrderCreator {
 			while (3 > i++) {
 				try {
 					createdOrder = serviceConnection.patchToService(config.getProductionPlannerUrl(),
-							URI_PATH_ORDERS_RESUME + "/" + createdOrder.getId() + "?wait=true", createdOrder, RestOrder.class,
+							URI_PATH_ORDERS_RESUME + "/" + createdOrder.getId() + "?wait=false", createdOrder, RestOrder.class,
 							order.getMissionCode() + "-" + config.getUser(),
 							config.getPassword());
 					break;
@@ -307,6 +310,8 @@ public class OrderCreator {
 		final TriggerType type = typeTmp;
 		Instant startTime = null;
 		Instant stopTime = null;
+		List<RestOrbitQuery> orbits = new ArrayList<>();
+		String orderIdentifierSuffix = "";
 		// calculate start and stop time
 		switch (type) {
 		case Calendar:
@@ -318,6 +323,7 @@ public class OrderCreator {
 			} else {
 				// error
 			}
+			orderIdentifierSuffix = instantFormatter.format(startTime);
 			break;
 		case TimeInterval:
 			TimeIntervalOrderTrigger tiTrigger = (TimeIntervalOrderTrigger)orderTrigger;
@@ -347,6 +353,7 @@ public class OrderCreator {
 					}
 				}
 			}
+			orderIdentifierSuffix = instantFormatter.format(startTime);
 			break;
 		case DataDriven:
 			if (productId == null) {
@@ -368,6 +375,16 @@ public class OrderCreator {
 			}
 			startTime = inputProduct.getSensingStartTime();
 			stopTime = inputProduct.getSensingStopTime();
+			orderIdentifierSuffix = instantFormatter.format(startTime);
+			break;
+		case Orbit:
+			OrbitOrderTrigger orbitTrigger = (OrbitOrderTrigger)orderTrigger;
+			RestOrbitQuery orbitQ = new RestOrbitQuery();
+			orbitQ.setOrbitNumberFrom(Long.valueOf(orbitTrigger.getLastOrbit().getOrbitNumber()));
+			orbitQ.setOrbitNumberTo(Long.valueOf(orbitTrigger.getLastOrbit().getOrbitNumber()));
+			orbitQ.setSpacecraftCode(orbitTrigger.getSpacecraft().getCode());
+			orbits.add(orbitQ);
+			orderIdentifierSuffix = orbitTrigger.getLastOrbit().getOrbitNumber().toString();
 			break;
 		default:
 			break;
@@ -375,7 +392,8 @@ public class OrderCreator {
 
 		final Instant finalStartTime = startTime;
 		final Instant finalStopTime = stopTime;
-		
+		final List<RestOrbitQuery> finalOrbits = orbits; 
+		final String finalOrderIdentifierSuffix = orderIdentifierSuffix;
 		transactionTemplate.setReadOnly(true);
 		
 		final RestOrder order = transactionTemplate.execute((status) -> {
@@ -392,7 +410,12 @@ public class OrderCreator {
 			}
 
 			Instant now = Instant.now();
-			String orderIdentifier = workflow.getName() + "_" + orderTrigger.getName() + "_" + instantFormatter.format(finalStartTime);
+			String orderIdentifier = workflow.getName() + "_" + orderTrigger.getName() + "_" + finalOrderIdentifierSuffix;
+			if (RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(orderTrigger.getMission().getCode(), orderIdentifier) != null) {
+				if (logger.isTraceEnabled())
+					logger.trace("    order already exists ({})", orderIdentifier);
+				return new RestOrder();
+			}
 			RestOrder restOrder = new RestOrder();
 			restOrder.setMissionCode(workflow.getMission().getCode());
 			restOrder.setIdentifier(orderIdentifier);
@@ -420,21 +443,24 @@ public class OrderCreator {
 			} else {
 				restOrder.setSlicingType(ORDER_SLICING_TYPE);
 			}
+			restOrder.setOrbits(finalOrbits);
 			// handle slicing type CALENDAR_DAY, CALENDAR_MONTH, CALENDAR_YEAR
 			Instant startTimeLoc = finalStartTime;
 			Instant stopTimeLoc = finalStopTime;
-			if (restOrder.getSlicingType().equals(OrderSlicingType.CALENDAR_DAY.toString())) {
-				startTimeLoc = finalStartTime.truncatedTo(ChronoUnit.DAYS);
-				stopTimeLoc = finalStartTime.truncatedTo(ChronoUnit.DAYS).plus(1, ChronoUnit.DAYS);
-			} else if (restOrder.getSlicingType().equals(OrderSlicingType.CALENDAR_MONTH.toString())) {
-				startTimeLoc = finalStartTime.truncatedTo(ChronoUnit.MONTHS);
-				stopTimeLoc = finalStartTime.truncatedTo(ChronoUnit.MONTHS).plus(1, ChronoUnit.MONTHS);
-			} else if (restOrder.getSlicingType().equals(OrderSlicingType.CALENDAR_YEAR.toString())) {
-				startTimeLoc = finalStartTime.truncatedTo(ChronoUnit.YEARS);
-				stopTimeLoc = finalStartTime.truncatedTo(ChronoUnit.YEARS).plus(1, ChronoUnit.YEARS);
+			if (startTimeLoc != null && stopTimeLoc != null) {
+				if (restOrder.getSlicingType().equals(OrderSlicingType.CALENDAR_DAY.toString())) {
+					startTimeLoc = finalStartTime.truncatedTo(ChronoUnit.DAYS);
+					stopTimeLoc = finalStartTime.truncatedTo(ChronoUnit.DAYS).plus(1, ChronoUnit.DAYS);
+				} else if (restOrder.getSlicingType().equals(OrderSlicingType.CALENDAR_MONTH.toString())) {
+					startTimeLoc = finalStartTime.truncatedTo(ChronoUnit.MONTHS);
+					stopTimeLoc = finalStartTime.truncatedTo(ChronoUnit.MONTHS).plus(1, ChronoUnit.MONTHS);
+				} else if (restOrder.getSlicingType().equals(OrderSlicingType.CALENDAR_YEAR.toString())) {
+					startTimeLoc = finalStartTime.truncatedTo(ChronoUnit.YEARS);
+					stopTimeLoc = finalStartTime.truncatedTo(ChronoUnit.YEARS).plus(1, ChronoUnit.YEARS);
+				}
+				restOrder.setStartTime(OrbitTimeFormatter.format(startTimeLoc));
+				restOrder.setStopTime(OrbitTimeFormatter.format(stopTimeLoc));
 			}
-			restOrder.setStartTime(OrbitTimeFormatter.format(startTimeLoc));
-			restOrder.setStopTime(OrbitTimeFormatter.format(stopTimeLoc));
 			if (workflow.getSliceDuration() != null) {
 				restOrder.setSliceDuration(workflow.getSliceDuration().getSeconds());
 			}

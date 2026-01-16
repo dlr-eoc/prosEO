@@ -311,6 +311,10 @@ public class TriggerManager {
 				triggerChanged = true;
 				modelTriggerLoc.setDeltaTime(changedTriggerLoc.getDeltaTime());
 			}	
+			if (!Objects.equals(modelTriggerLoc.getLastOrbit(), changedTriggerLoc.getLastOrbit())) {
+				triggerChanged = true;
+				modelTriggerLoc.setLastOrbit(changedTriggerLoc.getLastOrbit());
+			}	
 		} else if (modelTrigger instanceof DatatakeOrderTrigger && changedTrigger instanceof DatatakeOrderTrigger) {
 			DatatakeOrderTrigger modelTriggerLoc = (DatatakeOrderTrigger) modelTrigger;
 			DatatakeOrderTrigger changedTriggerLoc = (DatatakeOrderTrigger) changedTrigger;

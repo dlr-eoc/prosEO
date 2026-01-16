@@ -80,12 +80,14 @@ public class IngestorSecurityConfig {
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/actuator/health")
                         .permitAll()
-                        .requestMatchers(HttpMethod.GET, base + "/products", base + "/products/**",
-                                base + "/ingest/**")
+                        .requestMatchers(HttpMethod.POST, base + "/ingest/**")
+                        .hasAnyRole(UserRole.PRODUCT_INGESTOR.toString())
+                        .requestMatchers(HttpMethod.GET, base + "/ingest/**")
                         .hasAnyRole(UserRole.PRODUCT_READER.toString(), UserRole.PRODUCT_READER_RESTRICTED.toString(),
                                 UserRole.PRODUCT_READER_ALL.toString())
-                        .requestMatchers(HttpMethod.POST, base + "/ingest/*", base + "/ingest/*/*")
-                        .hasRole(UserRole.PRODUCT_INGESTOR.toString())
+                        .requestMatchers(HttpMethod.GET, base + "/products", base + "/products/**")
+                        .hasAnyRole(UserRole.PRODUCT_READER.toString(), UserRole.PRODUCT_READER_RESTRICTED.toString(),
+                                UserRole.PRODUCT_READER_ALL.toString())
                         .anyRequest()
                         .hasAnyRole(UserRole.PRODUCT_MGR.toString()))
     			.csrf((csrf) -> csrf.disable());

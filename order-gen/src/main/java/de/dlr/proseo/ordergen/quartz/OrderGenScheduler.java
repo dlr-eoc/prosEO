@@ -27,18 +27,24 @@ import org.quartz.DateBuilder.IntervalUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.quartz.QuartzEndpoint.QuartzTriggerGroupSummaryDescriptor;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.CalendarOrderTrigger;
 import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.Orbit;
+import de.dlr.proseo.model.OrbitOrderTrigger;
 import de.dlr.proseo.model.OrderTrigger;
 import de.dlr.proseo.model.TimeIntervalOrderTrigger;
 import de.dlr.proseo.model.enums.TriggerType;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.ordergen.util.TriggerUtil;
 
 
@@ -48,7 +54,6 @@ import de.dlr.proseo.ordergen.util.TriggerUtil;
  * @author Ernst Melchinger
  *
  */
-@Transactional(isolation = Isolation.REPEATABLE_READ)
 public class OrderGenScheduler {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OrderGenScheduler.class);
@@ -88,6 +93,7 @@ public class OrderGenScheduler {
 	 * 
 	 * @throws SchedulerException
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void buildCalendarTriggers() throws SchedulerException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> buildCalendarTriggers()");
@@ -114,6 +120,7 @@ public class OrderGenScheduler {
 	 * 
 	 * @throws SchedulerException
 	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void buildImeIntervalTriggers() throws SchedulerException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> buildImeIntervalTriggers()");
@@ -125,7 +132,7 @@ public class OrderGenScheduler {
 					if (trigger.getNextTriggerTime() != null) {
 						startTime = trigger.getNextTriggerTime();
 					}
-					JobDetail qartzJob =newJob(TimeIntervalTriggerJob.class).withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.TimeInterval.name()).build();
+					JobDetail qartzJob = newJob(TimeIntervalTriggerJob.class).withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.TimeInterval.name()).build();
 					SimpleTrigger qartzTrigger = newTrigger().withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.TimeInterval.name())
 							.startAt(Date.from(startTime))
 					        .withSchedule(simpleSchedule().withIntervalInMilliseconds(trigger.getTriggerInterval().toMillis()).repeatForever())							
@@ -138,6 +145,105 @@ public class OrderGenScheduler {
 		}
 		if (logger.isTraceEnabled())
 			logger.trace("<<< ImeIntervalTriggers built");
+	}
+
+	/**
+	 * Load the Orbit triggers from database and add them to the scheduler
+	 * 
+	 * @throws SchedulerException
+	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
+	public void buildOrbitTriggers() throws SchedulerException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> buildOrbitTriggers()");
+		for (Mission mission : RepositoryService.getMissionRepository().findAll()) {
+			for (OrderTrigger orderTrigger : triggerUtil.findAllByMissionCodeAndTriggerNameAndType(mission.getCode(), null, TriggerType.Orbit.name())) {
+				if (orderTrigger instanceof OrbitOrderTrigger) {
+					OrbitOrderTrigger trigger = (OrbitOrderTrigger)orderTrigger;
+					Orbit orbit = trigger.getLastOrbit();
+					if (orbit != null) {
+					// calculate start time using orbit
+					Instant startTime = orbit.getStopTime().plus(trigger.getDeltaTime());
+					JobDetail qartzJob = newJob(OrbitTriggerJob.class).withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Orbit.name()).build();
+					SimpleTrigger qartzTrigger = (SimpleTrigger)newTrigger().withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Orbit.name())
+							.startAt(Date.from(startTime))						
+							.build();
+					
+					qartzJob.getJobDataMap().put("orderTrigger", trigger);
+					Date ft = sched.scheduleJob(qartzJob, qartzTrigger);
+					} else {
+						// Error
+					}
+				}
+			}
+		}
+		if (logger.isTraceEnabled())
+			logger.trace("<<< ImeIntervalTriggers built");
+	}
+
+	public void buildNextOrbitTriggerFor(OrderTrigger orderTrigger) throws SchedulerException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> builNextdOrbitTriggerFor({})", orderTrigger.getName());
+				if (orderTrigger instanceof OrbitOrderTrigger) {
+					TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+					transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+						try {
+							transactionTemplate.setReadOnly(false);
+							Object o = transactionTemplate.execute((status) -> {
+								OrbitOrderTrigger trigger = RepositoryService.getOrbitOrderTriggerRepository().findByMissionCodeAndName(orderTrigger.getMission().getCode(), orderTrigger.getName());
+								Orbit orbit = trigger.getLastOrbit();
+								if (orbit != null) {
+									// calculate start time using orbit
+									Integer orbitNr = RepositoryService.getOrbitRepository()
+											.findNextByMissionCodeAndSpacecraftCodeAndOrbitNumber(trigger.getMission().getCode(), 
+													trigger.getSpacecraft().getCode(), orbit.getOrbitNumber());
+									Orbit nextOrbit = RepositoryService.getOrbitRepository()
+											.findByMissionCodeAndSpacecraftCodeAndOrbitNumber(trigger.getMission().getCode(), 
+													trigger.getSpacecraft().getCode(), orbitNr);
+									if (nextOrbit != null) {
+										trigger.setLastOrbit(nextOrbit);
+										triggerUtil.save(trigger);
+										Instant startTime = nextOrbit.getStopTime().plus(trigger.getDeltaTime());
+										JobDetail qartzJob = newJob(OrbitTriggerJob.class).withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Orbit.name()).build();
+										SimpleTrigger qartzTrigger = (SimpleTrigger)newTrigger().withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Orbit.name())
+												.startAt(Date.from(startTime))						
+												.build();
+
+										qartzJob.getJobDataMap().put("orderTrigger", trigger);
+										try {
+											sched.deleteJob(qartzJob.getKey());
+											Date ft = sched.scheduleJob(qartzJob, qartzTrigger);
+										} catch (SchedulerException e) {
+											// TODO Auto-generated catch block
+											e.printStackTrace();
+										}
+									} else {
+										// Error
+									}
+								} else {
+									// Error
+								}
+								return null;
+							});
+
+							break;
+						} catch (CannotAcquireLockException e) {
+							if (logger.isDebugEnabled())
+								logger.debug("... database concurrency issue detected: ", e);
+
+							if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+								ProseoUtil.dbWait();
+							} else {
+								if (logger.isDebugEnabled())
+									logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+								throw e;
+							}
+						}
+					}
+				}
+		if (logger.isTraceEnabled())
+			logger.trace("<<< OrbitTrigger built");
 	}
 
 	/**
@@ -182,6 +288,8 @@ public class OrderGenScheduler {
 		shutdown();
 		init(triggerUtil);
 		buildCalendarTriggers();
+		buildImeIntervalTriggers();
+		buildOrbitTriggers();
 		start();
 	}
 }

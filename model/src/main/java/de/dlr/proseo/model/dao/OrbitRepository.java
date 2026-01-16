@@ -72,4 +72,16 @@ public interface OrbitRepository extends JpaRepository<Orbit, Long> {
 	@Query("select o from Orbit o where o.spacecraft.mission.code = ?1 and o.spacecraft.code = ?2 and o.stopTime > ?3 and o.startTime < ?4")
 	public List<Orbit> findByMissionCodeAndSpacecraftCodeAndTimeIntersect(String missionCode, String spacecraftCode,
 			Instant startTime, Instant stopTime);
+	/**
+	 * Get the the next orbit with the given spacecraft and after orbit number
+	 * 
+	 * @param missionCode    the mission code
+	 * @param spacecraftCode the spacecraft code
+	 * @param orbitNumber    the orbit number
+	 * @return the unique orbit identified by the spacecraft code and the orbit
+	 *         number
+	 */
+	@Query("select min(o.orbitNumber) from Orbit o where o.spacecraft.mission.code = ?1 and o.spacecraft.code = ?2 and o.orbitNumber > ?3")
+	public Integer findNextByMissionCodeAndSpacecraftCodeAndOrbitNumber(String missionCode, String spacecraftCode, Integer orbitNumber);
+
 }

@@ -58,6 +58,8 @@ public class TriggerCommandRunner {
 	private static final String PROMPT_TRIGGER_NAME = "Trigger name (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_CRON_EXP = "Trigger cron expression (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_SPACECRAFT = "Trigger spacecarft code (empty field cancels): ";
+	private static final String PROMPT_TRIGGER_LAST_ORBIT = "Trigger last orbit number (empty field cancels): ";
+	private static final String PROMPT_TRIGGER_DELTA_TIME = "Trigger delta time (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_TIMEINTERVAL = "Trigger time interval (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_NAME = "Trigger workflow name (empty field cancels): ";
 	private static final String URI_PATH_TRIGGERS = "/triggers";
@@ -289,6 +291,38 @@ public class TriggerCommandRunner {
 					return;
 				}
 				restTrigger.setSpacecraftCode(response);
+			}
+			if (null == restTrigger.getLastOrbitNumber()) {
+				System.out.print(PROMPT_TRIGGER_LAST_ORBIT);
+				String response = System.console().readLine();
+				if (response.isBlank()) {
+					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+					return;
+				}
+				Long orbitNumber = 0L;
+				try {
+					orbitNumber = Long.valueOf(response);
+				} catch (NumberFormatException e) {
+					System.out.println(ProseoLogger.format(UIMessage.INVALID_NUMBER_FORMAT));
+					return;					
+				}
+				restTrigger.setLastOrbitNumber(orbitNumber);
+			}
+			if (null == restTrigger.getDeltaTime()) {
+				System.out.print(PROMPT_TRIGGER_DELTA_TIME);
+				String response = System.console().readLine();
+				if (response.isBlank()) {
+					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+					return;
+				}
+				Long deltaTime = 0L;
+				try {
+					deltaTime = Long.valueOf(response);
+				} catch (NumberFormatException e) {
+					System.out.println(ProseoLogger.format(UIMessage.INVALID_NUMBER_FORMAT));
+					return;					
+				}
+				restTrigger.setDeltaTime(deltaTime);
 			}
 			break;
 		case TimeInterval:
@@ -595,6 +629,9 @@ public class TriggerCommandRunner {
 		}
 		if (null != updatedTrigger.getSpacecraftCode()) {
 			restTrigger.setSpacecraftCode(updatedTrigger.getSpacecraftCode());
+		}
+		if (null != updatedTrigger.getLastOrbitNumber()) {
+			restTrigger.setLastOrbitNumber(updatedTrigger.getLastOrbitNumber());
 		}
 		if (null != updatedTrigger.getDatatakeType()) {
 			restTrigger.setDatatakeType(updatedTrigger.getDatatakeType());
