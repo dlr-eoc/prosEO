@@ -1,3 +1,8 @@
+/**
+ * OrbitTriggerJob.java
+ * 
+ * (C) 2025 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ordergen.quartz;
 
 import org.quartz.Job;
@@ -9,13 +14,18 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.OrbitOrderTrigger;
 import de.dlr.proseo.ordergen.OrderGenerator;
 
+/**
+ * Orbit quartz job implementation.
+ *
+ * @author Ernst Melchinger
+ *
+ */
 public class OrbitTriggerJob implements Job {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(OrbitTriggerJob.class);
 	
 	@Override
 	public void execute(JobExecutionContext context) throws JobExecutionException {
-		// TODO Auto-generated method stub
 
 		Object object = context.getJobDetail().getJobDataMap().get("orderTrigger");
 		String workflowName = null;

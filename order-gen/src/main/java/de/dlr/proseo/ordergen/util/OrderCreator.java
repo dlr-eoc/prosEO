@@ -1,3 +1,8 @@
+/**
+ * OrderCreator.java
+ * 
+ * (C) 2025 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ordergen.util;
 
 import java.time.Duration;
@@ -48,6 +53,12 @@ import de.dlr.proseo.ordergen.service.ServiceConnection;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
+/**
+ * Create and start a processing order.
+ *
+ * @author Ernst Melchinger
+ *
+ */
 public class OrderCreator {
 
 

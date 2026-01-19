@@ -1,3 +1,8 @@
+/**
+ * TimeIntervalTriggerJob.java
+ * 
+ * (C) 2025 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ordergen.quartz;
 
 import org.quartz.Job;
@@ -7,6 +12,12 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.TimeIntervalOrderTrigger;
 import de.dlr.proseo.ordergen.OrderGenerator;
 
+/**
+ * Time Interval quartz job implementation.
+ *
+ * @author Ernst Melchinger
+ *
+ */
 public class TimeIntervalTriggerJob implements Job {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(TimeIntervalTriggerJob.class);

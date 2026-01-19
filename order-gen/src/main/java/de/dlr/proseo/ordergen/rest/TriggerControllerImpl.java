@@ -120,7 +120,13 @@ public class TriggerControllerImpl implements TriggerController {
     /**
      * Update a trigger from the given JSON object
      * 
-     * 
+	 * @param restTrigger the Json object to create the trigger from
+	 * @param httpHeaders HTTP Authentication header
+	 * @return HTTP status "OK" and a response containing a Json object
+	 *         corresponding to the trigger after persistence (with ID and version
+	 *         for all contained objects) or HTTP status "FORBIDDEN" and an error
+	 *         message, if a cross-mission data access was attempted, or HTTP status
+	 *         "BAD_REQUEST", if any of the input data was invalid
      */
 	@Override
     public ResponseEntity<RestTrigger> updateTrigger(RestTrigger restTrigger, HttpHeaders httpHeaders) {

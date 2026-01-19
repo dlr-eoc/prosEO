@@ -9,8 +9,6 @@ import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
-import static org.quartz.DateBuilder.futureDate;
-import static org.quartz.JobKey.jobKey;
 import java.time.Instant;
 import java.util.Date;
 
@@ -19,16 +17,9 @@ import org.quartz.JobDetail;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SchedulerFactory;
-import org.quartz.SchedulerMetaData;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.SimpleTrigger;
-import org.quartz.DateBuilder;
-import org.quartz.DateBuilder.IntervalUnit;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.quartz.QuartzEndpoint.QuartzTriggerGroupSummaryDescriptor;
 import org.springframework.dao.CannotAcquireLockException;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Isolation;
@@ -46,7 +37,6 @@ import de.dlr.proseo.model.enums.TriggerType;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.ordergen.util.TriggerUtil;
-
 
 /**
  * OrderGenScheduler to hold and manage triggers.
@@ -101,13 +91,13 @@ public class OrderGenScheduler {
 			for (OrderTrigger orderTrigger : triggerUtil.findAllByMissionCodeAndTriggerNameAndType(mission.getCode(), null, TriggerType.Calendar.name())) {
 				if (orderTrigger instanceof CalendarOrderTrigger) {
 					CalendarOrderTrigger trigger = (CalendarOrderTrigger)orderTrigger;
-					JobDetail qartzJob = newJob(CalendarTriggerJob.class).withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Calendar.name()).build();
-					CronTrigger qartzTrigger = newTrigger().withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Calendar.name())
+					JobDetail quartzJob = newJob(CalendarTriggerJob.class).withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Calendar.name()).build();
+					CronTrigger quartzTrigger = newTrigger().withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Calendar.name())
 							.withSchedule(cronSchedule(trigger.getCronExpression()))
 							.build();
 					
-					qartzJob.getJobDataMap().put("orderTrigger", trigger);
-					Date ft = sched.scheduleJob(qartzJob, qartzTrigger);
+					quartzJob.getJobDataMap().put("orderTrigger", trigger);
+					sched.scheduleJob(quartzJob, quartzTrigger);
 				}
 			}
 		}
@@ -132,14 +122,14 @@ public class OrderGenScheduler {
 					if (trigger.getNextTriggerTime() != null) {
 						startTime = trigger.getNextTriggerTime();
 					}
-					JobDetail qartzJob = newJob(TimeIntervalTriggerJob.class).withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.TimeInterval.name()).build();
-					SimpleTrigger qartzTrigger = newTrigger().withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.TimeInterval.name())
+					JobDetail quartzJob = newJob(TimeIntervalTriggerJob.class).withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.TimeInterval.name()).build();
+					SimpleTrigger quartzTrigger = newTrigger().withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.TimeInterval.name())
 							.startAt(Date.from(startTime))
 					        .withSchedule(simpleSchedule().withIntervalInMilliseconds(trigger.getTriggerInterval().toMillis()).repeatForever())							
 							.build();
 					
-					qartzJob.getJobDataMap().put("orderTrigger", trigger);
-					Date ft = sched.scheduleJob(qartzJob, qartzTrigger);
+					quartzJob.getJobDataMap().put("orderTrigger", trigger);
+					sched.scheduleJob(quartzJob, quartzTrigger);
 				}
 			}
 		}
@@ -164,13 +154,13 @@ public class OrderGenScheduler {
 					if (orbit != null) {
 					// calculate start time using orbit
 					Instant startTime = orbit.getStopTime().plus(trigger.getDeltaTime());
-					JobDetail qartzJob = newJob(OrbitTriggerJob.class).withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Orbit.name()).build();
-					SimpleTrigger qartzTrigger = (SimpleTrigger)newTrigger().withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Orbit.name())
+					JobDetail quartzJob = newJob(OrbitTriggerJob.class).withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Orbit.name()).build();
+					SimpleTrigger quartzTrigger = (SimpleTrigger)newTrigger().withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Orbit.name())
 							.startAt(Date.from(startTime))						
 							.build();
 					
-					qartzJob.getJobDataMap().put("orderTrigger", trigger);
-					Date ft = sched.scheduleJob(qartzJob, qartzTrigger);
+					quartzJob.getJobDataMap().put("orderTrigger", trigger);
+					sched.scheduleJob(quartzJob, quartzTrigger);
 					} else {
 						// Error
 					}
@@ -181,6 +171,11 @@ public class OrderGenScheduler {
 			logger.trace("<<< ImeIntervalTriggers built");
 	}
 
+	/**
+	 * Build and start a trigger for the next orbit.
+	 * @param orderTrigger
+	 * @throws SchedulerException
+	 */
 	public void buildNextOrbitTriggerFor(OrderTrigger orderTrigger) throws SchedulerException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> builNextdOrbitTriggerFor({})", orderTrigger.getName());
@@ -205,15 +200,15 @@ public class OrderGenScheduler {
 										trigger.setLastOrbit(nextOrbit);
 										triggerUtil.save(trigger);
 										Instant startTime = nextOrbit.getStopTime().plus(trigger.getDeltaTime());
-										JobDetail qartzJob = newJob(OrbitTriggerJob.class).withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Orbit.name()).build();
-										SimpleTrigger qartzTrigger = (SimpleTrigger)newTrigger().withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Orbit.name())
+										JobDetail quartzJob = newJob(OrbitTriggerJob.class).withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Orbit.name()).build();
+										SimpleTrigger quartzTrigger = (SimpleTrigger)newTrigger().withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Orbit.name())
 												.startAt(Date.from(startTime))						
 												.build();
 
-										qartzJob.getJobDataMap().put("orderTrigger", trigger);
+										quartzJob.getJobDataMap().put("orderTrigger", trigger);
 										try {
-											sched.deleteJob(qartzJob.getKey());
-											Date ft = sched.scheduleJob(qartzJob, qartzTrigger);
+											sched.deleteJob(quartzJob.getKey());
+											sched.scheduleJob(quartzJob, quartzTrigger);
 										} catch (SchedulerException e) {
 											// TODO Auto-generated catch block
 											e.printStackTrace();

@@ -1,3 +1,8 @@
+/**
+ * ServiceConnection.java
+ * 
+ * (C) 2025 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.ordergen.service;
 
 import java.io.IOException;
@@ -45,6 +50,12 @@ import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.OdipMessage;
 import de.dlr.proseo.ordergen.OrderGenConfiguration;
 
+/**
+ * Manage HTTP calls.
+ *
+ * @author Ernst Melchinger
+ *
+ */
 @Service
 public class ServiceConnection {
 

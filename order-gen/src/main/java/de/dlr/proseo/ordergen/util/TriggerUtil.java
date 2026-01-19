@@ -13,7 +13,6 @@ import java.util.List;
 
 import org.quartz.CronExpression;
 import org.quartz.SchedulerException;
-import org.springframework.security.web.authentication.ott.DefaultGenerateOneTimeTokenRequestResolver;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;

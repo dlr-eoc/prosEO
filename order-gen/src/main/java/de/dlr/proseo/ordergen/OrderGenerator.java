@@ -71,16 +71,16 @@ public class OrderGenerator implements CommandLineRunner {
 	
 	@Override
 	public void run(String... args) throws Exception {
-		// TODO Auto-generated method stub		
-		
-		scheduler = new OrderGenScheduler();
-		scheduler.setTxManager(txManager);
-		scheduler.init(triggerUtil);
+		// Initialize public static members
 		orderCreator = new OrderCreator();
 		orderCreator.setTxManager(txManager);
 		orderCreator.setTriggerUtil(triggerUtil);
 		orderCreator.setServiceConnection(serviceConnection);
 		orderCreator.setConfig(config);
+		// Initialize and start quartz scheduler and triggers
+		scheduler = new OrderGenScheduler();
+		scheduler.setTxManager(txManager);
+		scheduler.init(triggerUtil);
 		scheduler.buildCalendarTriggers();
 		scheduler.buildImeIntervalTriggers();
 		scheduler.buildOrbitTriggers();
