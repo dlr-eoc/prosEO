@@ -29,8 +29,6 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.ws.rs.DefaultValue;
-
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job.JobState;
@@ -60,6 +58,14 @@ public class ProcessingOrder extends PersistentObject {
 	private static final String MSG_SLICING_DURATION_NOT_ALLOWED = "Setting of slicing duration not allowed for slicing type ";
 	private static final String MSG_SLICING_OVERLAP_NOT_ALLOWED = "Setting of slicing overlap not allowed for slicing type ";
 
+	public static String STATE_MESSAGE_COMPLETED = "requested output product is available";
+	public static String STATE_MESSAGE_QUEUED = "request is queued for processing";
+	public static String STATE_MESSAGE_RUNNING = "request is under processing";
+	public static String STATE_MESSAGE_CANCELLED = "request cancelled by user";
+	public static String STATE_MESSAGE_FAILED = "production has failed";
+	public static String STATE_MESSAGE_NO_INPUT_AVAILABLE = "input product currently unavailable";
+	public static String STATE_MESSAGE_NO_INPUT = "input product not found on LTA";
+	
 	/** Mission, to which this order belongs */
 	@ManyToOne
 	private Mission mission;
@@ -403,6 +409,7 @@ public class ProcessingOrder extends PersistentObject {
 			} else {
 				// Something is wrong, so setting the order to FAILED to be able to restart/reset it
 				orderState = OrderState.FAILED;
+				stateMessage = ProcessingOrder.STATE_MESSAGE_FAILED;
 				return;
 			}
 		}
@@ -432,6 +439,7 @@ public class ProcessingOrder extends PersistentObject {
 		if (jobCount == jobStateMap.get(JobState.CLOSED)) {
 			// All jobs are CLOSED
 			orderState = OrderState.CLOSED;
+			stateMessage = ProcessingOrder.STATE_MESSAGE_COMPLETED;
 			Duration retPeriod = getMission().getOrderRetentionPeriod();
 			if (retPeriod != null && getProductionType() == ProductionType.SYSTEMATIC) {
 				setEvictionTime(Instant.now().plus(retPeriod));
@@ -441,18 +449,22 @@ public class ProcessingOrder extends PersistentObject {
 			// All jobs are terminated in some way
 			if (0 < jobStateMap.get(JobState.FAILED)) {
 				orderState = OrderState.FAILED;
+				stateMessage = ProcessingOrder.STATE_MESSAGE_FAILED;
 			} else {
 				orderState = OrderState.COMPLETED;
+				stateMessage = ProcessingOrder.STATE_MESSAGE_COMPLETED;
 			}
 		// We still have unfinished jobs   && 0 < terminatedJobCount
 		} else if (0 == activeJobCount) {
 			// At least one job has terminated, but none is currently active
 			if (OrderState.SUSPENDING.equals(orderState)) {
 				orderState = OrderState.PLANNED;
+				stateMessage = ProcessingOrder.STATE_MESSAGE_QUEUED;
 			} else if (OrderState.RELEASING.equals(orderState)) {
 				// Keep status until all jobs are released
 				if (0 == jobStateMap.get(JobState.PLANNED)) {
 					orderState = OrderState.RUNNING;
+					stateMessage = ProcessingOrder.STATE_MESSAGE_RUNNING;
 				}
 			} else {
 				// keep state
@@ -466,13 +478,16 @@ public class ProcessingOrder extends PersistentObject {
 				// Keep status until all jobs are released
 				if (0 == jobStateMap.get(JobState.PLANNED)) {
 					orderState = OrderState.RUNNING;
+					stateMessage = ProcessingOrder.STATE_MESSAGE_RUNNING;
 				}
 			} else if (orderState == OrderState.PLANNED) {
 				// The complete order was suspended and some job steps finished later
 				// keep the order state
 				orderState = OrderState.PLANNED;
+				stateMessage = ProcessingOrder.STATE_MESSAGE_QUEUED;
 			} else {
 				orderState = OrderState.RUNNING;
+				stateMessage = ProcessingOrder.STATE_MESSAGE_RUNNING;
 			}
 		// No active and no terminated jobs
 		} else if (0 < jobStateMap.get(JobState.RELEASED)) {
@@ -481,25 +496,28 @@ public class ProcessingOrder extends PersistentObject {
 				if (jobCount == jobStateMap.get(JobState.RELEASED)) {
 					// All jobs are released
 					orderState = OrderState.RELEASED;
+					stateMessage = ProcessingOrder.STATE_MESSAGE_QUEUED;
 				} else {
 					// Do nothing, there are still jobs to release
 				}
 			} else {
 				orderState = OrderState.RELEASED;
+				stateMessage = ProcessingOrder.STATE_MESSAGE_QUEUED;
 			}
 		// All jobs should be either in state INITIAL or in state PLANNED
 		} else if (jobCount == jobStateMap.get(JobState.PLANNED)) {
 			// All jobs are planned
 			orderState = OrderState.PLANNED;
+			stateMessage = ProcessingOrder.STATE_MESSAGE_QUEUED;
 		} else {
 			if (OrderState.PLANNING_FAILED.equals(orderState)) {
 				// Do nothing, further way of action to be decided by operator
 			} else {
 				// We do have jobs, but they are not fully planned yet
 				orderState = OrderState.PLANNING;
+				stateMessage = ProcessingOrder.STATE_MESSAGE_QUEUED;
 			}
-		}
-		
+		}		
 	}
 
 	/**
