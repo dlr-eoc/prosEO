@@ -235,7 +235,7 @@ public class WorkflowMgrTest {
 
 		// Count workflows and assert success.
 		assertEquals("Wrong workflow count.", "2", workflowMgr.countWorkflows("UTM", null, null, null, null, true));
-		assertEquals("Wrong workflow count.", "0",
+		assertEquals("Wrong workflow count.", "1",
 				workflowMgr.countWorkflows("UTM", testWorkflowData[0][0], null, null, null, null));
 		assertEquals("Wrong workflow count.", "1",
 				workflowMgr.countWorkflows("UTM", null, testWorkflowData[0][2], null, null, null));

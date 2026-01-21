@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.procmgr.rest;
 
+import java.time.Duration;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
@@ -756,7 +757,7 @@ public class WorkflowMgr {
 			throw new IllegalArgumentException(
 					logger.log(ProcessorMgrMessage.FIELD_NOT_SET, "For workflow modification, configuredProcessor"));
 		} else if (null != restWorkflow.getConfiguredProcessor()
-				&& modelWorkflow.getConfiguredProcessor().getIdentifier() != restWorkflow.getConfiguredProcessor()) {
+				&& !modelWorkflow.getConfiguredProcessor().getIdentifier().equals(restWorkflow.getConfiguredProcessor())) {
 			workflowChanged = true;
 
 			ConfiguredProcessor newConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository()
@@ -830,14 +831,6 @@ public class WorkflowMgr {
 			modelWorkflow.setProcessingMode(restWorkflow.getProcessingMode());
 		}
 
-		// Quietly replace slice duration and overlap nulls
-		if (null == restWorkflow.getSliceDuration()) {
-			restWorkflow.setSliceDuration(0l);
-		}
-		if (null == restWorkflow.getSliceOverlap()) {
-			restWorkflow.setSliceOverlap(0l);
-		}
-
 		// Check that slice parameters are still consistent
 		if (null == restWorkflow.getSlicingType()) {
 			throw new IllegalArgumentException(
@@ -847,12 +840,36 @@ public class WorkflowMgr {
 		if (!restWorkflow.getSlicingType().equals(modelWorkflow.getSlicingType().toString())) {
 			workflowChanged = true;
 			if (restWorkflow.getSlicingType().equals(OrderSlicingType.TIME_SLICE.toString())
-					&& restWorkflow.getSliceDuration().equals(Long.valueOf(0l))) {
+					&& (restWorkflow.getSliceDuration() == null || restWorkflow.getSliceDuration().equals(Long.valueOf(0l)))) {
 				throw new IllegalArgumentException(logger.log(ProcessorMgrMessage.FIELD_NOT_SET,
 						"For workflow modification and slicingType TIME_SLICE, slicingDuration"));
 			}
 		}
-
+		// Set the slice parameters
+		if (!modelWorkflow.getSlicingType().equals(OrderSlicingType.valueOf(restWorkflow.getSlicingType()))) {
+			workflowChanged = true;
+			modelWorkflow.setSlicingType(OrderSlicingType.valueOf(restWorkflow.getSlicingType()));
+		}
+		Duration newDuration = null;
+		if (restWorkflow.getSliceDuration() != null) {
+			newDuration = Duration.ofSeconds(restWorkflow.getSliceDuration());
+		}
+		if ((modelWorkflow.getSliceDuration() == null && newDuration != null)
+				|| (modelWorkflow.getSliceDuration() != null && newDuration != null && !modelWorkflow.getSliceDuration().equals(newDuration))) {
+			workflowChanged = true;
+			modelWorkflow.setSliceDuration(newDuration);
+		}
+		Duration newOverlap = null;
+		if (restWorkflow.getSliceDuration() != null) {
+			newOverlap = Duration.ofSeconds(restWorkflow.getSliceOverlap());
+		} else {
+			newOverlap = Duration.ofSeconds(0L);
+		}
+		if (modelWorkflow.getSliceOverlap() == null 
+				|| !modelWorkflow.getSliceOverlap().equals(newOverlap)) {
+			workflowChanged = true;
+			modelWorkflow.setSliceOverlap(newOverlap);
+		}
 		// Check for changes in non-mandatory attributes
 
 		if (null != restWorkflow.getDescription() && !restWorkflow.getDescription().equals(modelWorkflow.getDescription())) {
