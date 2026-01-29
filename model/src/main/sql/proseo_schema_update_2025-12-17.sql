@@ -418,20 +418,6 @@ CREATE SEQUENCE public.processor_class_seq
 ALTER SEQUENCE public.processor_class_seq OWNER TO postgres;
 
 --
--- Name: processor_class_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.processor_class_seq
-    START WITH 1
-    INCREMENT BY 50
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.processor_class_seq OWNER TO postgres;
-
---
 -- Name: processor_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -607,7 +593,7 @@ ALTER SEQUENCE public.workflow_seq OWNER TO postgres;
 
 ALTER TABLE public.api_metrics
   ALTER COLUMN version DROP NOT NULL,
-  ALTER COLUMN metrictype TYPE smallint
+  ALTER COLUMN metrictype TYPE smallint,
   ADD CONSTRAINT api_metrics_metrictype_check CHECK (((metrictype >= 0) AND (metrictype <= 1)));
 
 ALTER TABLE public.class_output_parameter
@@ -816,8 +802,8 @@ ALTER TABLE public.product_parameters
 
 ALTER TABLE public.product_query
   ALTER COLUMN version DROP NOT NULL,
-  ALTER COLUMN jpql_query_condition TYPE oid,
-  ALTER COLUMN sql_query_condition TYPE oid;
+  ALTER COLUMN jpql_query_condition TYPE oid USING jpql_query_condition::oid,
+  ALTER COLUMN sql_query_condition TYPE oid USING sql_query_condition::oid;
 
 ALTER TABLE public.product_query_filter_conditions
   ADD CONSTRAINT product_query_filter_conditions_parameter_type_check 
@@ -868,7 +854,7 @@ ALTER TABLE public.workflow
     'CALENDAR_MONTH'::character varying, 'CALENDAR_YEAR'::character varying, 'TIME_SLICE'::character varying, 
     'NONE'::character varying])::text[])));
   
-ALTER TABLE public.workflow
+ALTER TABLE public.workflow_option
   ALTER COLUMN version DROP NOT NULL,
   ADD CONSTRAINT workflow_option_type_check 
     CHECK (((type)::text = ANY ((ARRAY['STRING'::character varying, 'NUMBER'::character varying, 
@@ -911,7 +897,6 @@ SELECT SETVAL('configuration_seq', (SELECT max(id) + 50 FROM configuration));
 SELECT SETVAL('configured_processor_seq', (SELECT max(id) + 50 FROM configured_processor));
 SELECT SETVAL('group_members_seq', (SELECT max(id) + 50 FROM group_members));
 SELECT SETVAL('groups_seq', (SELECT max(id) + 50 FROM groups));
-SELECT SETVAL('hibernate_seq', (SELECT max(id) + 50 FROM hibernate));
 SELECT SETVAL('input_filter_seq', (SELECT max(id) + 50 FROM input_filter));
 SELECT SETVAL('job_seq', (SELECT max(id) + 50 FROM job));
 SELECT SETVAL('job_step_seq', (SELECT max(id) + 50 FROM job_step));

@@ -42,54 +42,54 @@ CREATE INDEX idxcquj0irj1wkt95t0krnmwrkj2 ON public.api_metrics USING btree ("ti
 -- Change "text" attributes to "oid"
 --
 ALTER TABLE public.class_output_parameter_output_parameters
-  ALTER parameter_clob oid;
+  ALTER parameter_clob TYPE oid USING parameter_clob::oid;
 
 ALTER TABLE public.configuration_dyn_proc_parameters
-  ALTER parameter_clob oid;
+  ALTER parameter_clob TYPE oid USING parameter_clob::oid;
 
 ALTER TABLE public.input_filter_filter_conditions
-  ALTER parameter_clob oid;
+  ALTER parameter_clob TYPE oid USING parameter_clob::oid;
 
 ALTER TABLE public.job_step
-  ALTER processing_std_err oid,
-  ALTER processing_std_out oid;
+  ALTER processing_std_err TYPE oid USING processing_std_err::oid,
+  ALTER processing_std_out TYPE oid USING processing_std_out::oid;
 
 ALTER TABLE public.job_step_output_parameters
-  ALTER parameter_clob oid;
+  ALTER parameter_clob TYPE oid USING parameter_clob::oid;
 
 ALTER TABLE public.mission
-  ALTER product_file_template oid;
+  ALTER product_file_template TYPE oid USING product_file_template::oid;
 
 ALTER TABLE public.processing_facility
-  ALTER processing_engine_token oid;
+  ALTER processing_engine_token TYPE oid USING processing_engine_token::oid;
 
 ALTER TABLE public.processing_order_dynamic_processing_parameters
-  ALTER parameter_clob oid;
+  ALTER parameter_clob TYPE oid USING parameter_clob::oid;
 
 ALTER TABLE public.processing_order_output_parameters
-  ALTER parameter_clob oid;
+  ALTER parameter_clob TYPE oid USING parameter_clob::oid;
 
 ALTER TABLE public.product_class
-  ALTER product_file_template oid;
+  ALTER product_file_template TYPE oid USING product_file_template::oid;
 
 ALTER TABLE public.product_parameters
-  ALTER parameter_clob oid;
+  ALTER parameter_clob TYPE oid USING parameter_clob::oid;
 
 ALTER TABLE public.product_query_filter_conditions
-  ALTER parameter_clob oid;
+  ALTER parameter_clob TYPE oid USING parameter_clob::oid;
 
 ALTER TABLE public.simple_selection_rule_filter_conditions
-  ALTER parameter_clob oid;
+  ALTER parameter_clob TYPE oid USING parameter_clob::oid;
 
 ALTER TABLE public.workflow_output_parameters
-  ALTER parameter_clob oid;
+  ALTER parameter_clob TYPE oid USING parameter_clob::oid;
 
 
 --
 -- Make UUID mandatory for Configured Processors
 --
 ALTER TABLE public.configured_processor
-  ALTER uuid uuid NOT NULL;
+  ALTER uuid SET NOT NULL;
 
 
 --
