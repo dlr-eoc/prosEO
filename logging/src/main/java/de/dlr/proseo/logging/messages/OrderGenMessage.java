@@ -38,6 +38,7 @@ public enum OrderGenMessage implements ProseoMessage {
 	WORKFLOW_NOT_ENABLED    				(4726, Level.ERROR, false, "Workflow referenced by name {0} is disabled (not useable)", ""),
 	WORKFLOW_NOT_FOUND	    				(4727, Level.ERROR, false, "Workflow referenced by id {0} not found", ""),
 	MSG_WORKFLOW_OPTION_NO_TYPE_MATCH 		(4728, Level.ERROR, false, "Workflow option {0} does not match type: {1}, value: {2}", ""),
+	TRIGGERS_COUNTED						(4729, Level.INFO, true, "Triggers counted: {0}", ""),
 	
 	;
 	

@@ -425,7 +425,7 @@ public class TriggerCommandRunner {
 				requestURI += "&name=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
 			}
 		}
-		
+		requestURI += "&orderBy=type%20ASC,name%20ASC";
 
 		/* Get the trigger information from the Trigger Manager service */
 		List<?> resultList = null;
@@ -470,11 +470,11 @@ public class TriggerCommandRunner {
 			// Must be a list of triggers
 			String listFormat = "%-20s %-18s %-8s %s";
 			System.out
-				.println(String.format(listFormat, "Trigger name", "Type", "Priority", "Workflow"));
+				.println(String.format(listFormat, "Type", "Trigger name", "Priority", "Workflow"));
 			for (Object resultObject : (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
 					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
-					System.out.println(String.format(listFormat, resultMap.get("name"), resultMap.get("type"),
+					System.out.println(String.format(listFormat, resultMap.get("type"), resultMap.get("name"),
 							resultMap.get("priority"), resultMap.get("workflowName")));
 				}
 			}

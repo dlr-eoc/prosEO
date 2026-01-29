@@ -22,6 +22,7 @@ import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.OrderSource;
+import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.ProseoUtil;
@@ -491,7 +492,8 @@ public class OrderControllerImpl implements OrderController {
 				// resumed
 				RestOrder restOrder = getRestOrder(order.getId());
 				// handle special ODIP case
-				if (restOrder.getOrderSource().equals(OrderSource.ODIP.toString())) {
+				if (restOrder.getProductionType().equals(ProductionType.ON_DEMAND_DEFAULT.toString())
+						|| restOrder.getProductionType().equals(ProductionType.ON_DEMAND_NON_DEFAULT.toString())) {
 					// read database object and check state of job steps.
 					// They have to be released and not waiting input
 

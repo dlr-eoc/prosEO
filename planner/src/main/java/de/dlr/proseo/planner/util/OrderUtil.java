@@ -1667,82 +1667,74 @@ public class OrderUtil {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> sendNotification({})", order.getIdentifier());
 		if (order.getNotificationEndpoint() != null) {
-			switch (order.getOrderSource()) {
-			case ODIP:
-				if (logger.isTraceEnabled())
-					logger.trace(">>> sendNotification({})", OrderSource.ODIP);
-				// create the message content as String
-				// first check whether product is generated,
-				// use output product of first job step
-				JobStep jobStep = null;
-				if (!order.getJobs().isEmpty()) {
-					Job firstJob = null;
-					for (Job job : order.getJobs()) {
-						firstJob = job;
+			// create the message content as String
+			// first check whether product is generated,
+			// use output product of first job step
+			JobStep jobStep = null;
+			if (!order.getJobs().isEmpty()) {
+				Job firstJob = null;
+				for (Job job : order.getJobs()) {
+					firstJob = job;
+					break;
+				}
+				if (!firstJob.getJobSteps().isEmpty()) {
+					for (JobStep js : firstJob.getJobSteps()) {
+						jobStep = js;
 						break;
 					}
-					if (!firstJob.getJobSteps().isEmpty()) {
-						for (JobStep js : firstJob.getJobSteps()) {
-							jobStep = js;
-							break;
-						}
-					}
 				}
-				if (jobStep != null && jobStep.getOutputProduct() != null && jobStep.getOutputProduct().getProductFile() != null
-						&& jobStep.getOutputProduct().getProductFile() != null) {
-					String fileName = null;
-					Product product = jobStep.getOutputProduct();
-					fileName = getFirstFileName(product);
-					if (fileName != null) {
-						String message = String.join("\n", "POST", order.getNotificationEndpoint().getUri(), "{",
-								"    \"@odata.context\": \"$metadata#Notification/$entity\",",
-								"    \"ProductId\": \"" + product.getUuid() + "\",", "    \"ProductName\": \"" + fileName + "\",",
-								"    \"ProductionOrderId\": \"" + order.getUuid() + "\",",
-								"    \"NotificationDate\": \"" + Date.from(Instant.now()) + "\",", "}", "");
-
-						// Skip if notification service is not configured
-						if (config.getNotificationUrl().isBlank()) {
-							// TODO log error
-							return false;
-						}
-						RestMessage restMessage = new RestMessage();
-						restMessage.setEndpoint(order.getNotificationEndpoint().getUri());
-						restMessage.setUser(order.getNotificationEndpoint().getUsername());
-						restMessage.setPassword(order.getNotificationEndpoint().getPassword());
-						restMessage.setMessage(message);
-						restMessage.setRaw(true);
-						restMessage.setContentType(MediaType.APPLICATION_JSON);
-						restMessage.setSender(order.getOrderSource().toString());
-						String url = config.getNotificationUrl() + "/notify";
-						RestTemplate restTemplate = new RestTemplate();
-						ResponseEntity<String> response = null;
-						try {
-							if (logger.isTraceEnabled())
-								logger.trace(">>> notify({}, {})", url, restMessage);
-							response = restTemplate.postForEntity(url, restMessage, String.class);
-						} catch (RestClientException rce) {
-							logger.log(PlannerMessage.NOTIFY_FAILED, url, rce.getMessage());
-							return false;
-						} catch (Exception e) {
-							String msg = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage());
-
-							if (logger.isDebugEnabled())
-								logger.debug("... exception stack trace: ", msg);
-
-							return false;
-						}
-						if (!(HttpStatus.OK.equals(response.getStatusCode())
-								|| (HttpStatus.CREATED.equals(response.getStatusCode())))) {
-							logger.log(PlannerMessage.NOTIFY_FAILED, url, response.getStatusCode().toString());
-							return false;
-						}
-					}
-				}
-				return true;
-			default:
-				// do nothing
-				break;
 			}
+			if (jobStep != null && jobStep.getOutputProduct() != null && jobStep.getOutputProduct().getProductFile() != null
+					&& jobStep.getOutputProduct().getProductFile() != null) {
+				String fileName = null;
+				Product product = jobStep.getOutputProduct();
+				fileName = getFirstFileName(product);
+				if (fileName != null) {
+					String message = String.join("\n", "POST", order.getNotificationEndpoint().getUri(), "{",
+							"    \"@odata.context\": \"$metadata#Notification/$entity\",",
+							"    \"ProductId\": \"" + product.getUuid() + "\",", "    \"ProductName\": \"" + fileName + "\",",
+							"    \"ProductionOrderId\": \"" + order.getUuid() + "\",",
+							"    \"NotificationDate\": \"" + Date.from(Instant.now()) + "\",", "}", "");
+
+					// Skip if notification service is not configured
+					if (config.getNotificationUrl().isBlank()) {
+						// TODO log error
+						return false;
+					}
+					RestMessage restMessage = new RestMessage();
+					restMessage.setEndpoint(order.getNotificationEndpoint().getUri());
+					restMessage.setUser(order.getNotificationEndpoint().getUsername());
+					restMessage.setPassword(order.getNotificationEndpoint().getPassword());
+					restMessage.setMessage(message);
+					restMessage.setRaw(true);
+					restMessage.setContentType(MediaType.APPLICATION_JSON);
+					restMessage.setSender(order.getOrderSource().toString());
+					String url = config.getNotificationUrl() + "/notify";
+					RestTemplate restTemplate = new RestTemplate();
+					ResponseEntity<String> response = null;
+					try {
+						if (logger.isTraceEnabled())
+							logger.trace(">>> notify({}, {})", url, restMessage);
+						response = restTemplate.postForEntity(url, restMessage, String.class);
+					} catch (RestClientException rce) {
+						logger.log(PlannerMessage.NOTIFY_FAILED, url, rce.getMessage());
+						return false;
+					} catch (Exception e) {
+						String msg = logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage());
+
+						if (logger.isDebugEnabled())
+							logger.debug("... exception stack trace: ", msg);
+
+						return false;
+					}
+					if (!(HttpStatus.OK.equals(response.getStatusCode())
+							|| (HttpStatus.CREATED.equals(response.getStatusCode())))) {
+						logger.log(PlannerMessage.NOTIFY_FAILED, url, response.getStatusCode().toString());
+						return false;
+					}
+				}
+			}
+			return true;
 		}
 		return false;
 	}

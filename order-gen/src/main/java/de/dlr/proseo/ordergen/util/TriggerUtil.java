@@ -76,7 +76,13 @@ public class TriggerUtil {
 			restTrigger.setPriority(trigger.getPriority().longValue());
 		}	
 		if (null != trigger.getWorkflow()) {
-			restTrigger.setWorkflowName(trigger.getWorkflow().getName());
+			restTrigger.setWorkflowName(trigger.getWorkflow().getName());	
+			if (null != trigger.getWorkflow().getInputProductClass()) {
+				restTrigger.setInputProduct(trigger.getWorkflow().getInputProductClass().getProductType());
+			}		
+			if (null != trigger.getWorkflow().getOutputProductClass()) {
+				restTrigger.setOutputProduct(trigger.getWorkflow().getOutputProductClass().getProductType());
+			}	
 		}	
 		if (null != trigger.getExecutionDelay()) {
 			restTrigger.setExecutionDelay(trigger.getExecutionDelay().getSeconds());

@@ -51,12 +51,15 @@ public class TriggerControllerImpl implements TriggerController {
 	 */
 	@Override
 	public ResponseEntity<List<RestTrigger>> getTriggers(String mission, String name, String type,
-			HttpHeaders httpHeaders) {
+			String workflow, String inputProductClass, String outputProductClass, Integer recordFrom, 
+			Integer recordTo, String[] orderBy, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getTriggers({}, {}, {})", mission, name, type);
+			logger.trace(">>> getTriggers({}, {}, {}, {}, {}, {})", mission, name, type, workflow, inputProductClass, outputProductClass);
 
 		try {
-			return new ResponseEntity<>(triggerManager.getTriggers(mission, name, type), HttpStatus.OK);
+			return new ResponseEntity<>(triggerManager.getTriggers(mission, name, type, workflow, inputProductClass, outputProductClass,
+					 recordFrom, recordTo, orderBy), 
+					HttpStatus.OK);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {
@@ -64,6 +67,21 @@ public class TriggerControllerImpl implements TriggerController {
 		}
 	}
 
+	@Override
+	public ResponseEntity<?> countTriggers(String mission, String name, String type, String workflow,
+			String inputProductClass, String outputProductClass, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> countTriggers({}, {}, {}, {}, {}, {})", mission, name, type, workflow, inputProductClass, outputProductClass);
+
+		try {
+			return new ResponseEntity<>(triggerManager.countTriggers(mission, name, type, workflow, inputProductClass, outputProductClass), HttpStatus.OK);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
+	}
+	
 	/**
 	 * Create a trigger from the given Json object
 	 * 
@@ -188,5 +206,4 @@ public class TriggerControllerImpl implements TriggerController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
-
 }
