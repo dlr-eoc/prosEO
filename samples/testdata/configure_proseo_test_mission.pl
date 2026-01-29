@@ -154,30 +154,30 @@ my @processor_classes = ( 'PTML1B', 'PTML2', 'PTML3' );
 my @processors = (
     {
     	processorName => 'PTML1B', 
-    	processorVersion => '2.0.0',
-    	configuredProcessors => [ 'PTML1B_2.0.0_OPER_2020-03-25' ],
+    	processorVersion => '2.1.0-SNAPSHOT',
+    	configuredProcessors => [ 'PTML1B_2.1.0-SNAPSHOT_OPER_2020-03-25' ],
     	tasks => [ 
-    	   { taskName => 'ptm_l01b', taskVersion => '2.0.0' }
+    	   { taskName => 'ptm_l01b', taskVersion => '2.1.0-SNAPSHOT' }
     	],
-    	dockerImage => 'localhost:5000/proseo-sample-wrapper:2.0.0'
+    	dockerImage => 'localhost:5000/proseo-sample-wrapper:2.1.0-SNAPSHOT'
     },
     {
         processorName => 'PTML2', 
-        processorVersion => '2.0.0',
-        configuredProcessors => [ 'PTML2_2.0.0_OPER_2020-03-25' ],
+        processorVersion => '2.1.0-SNAPSHOT',
+        configuredProcessors => [ 'PTML2_2.1.0-SNAPSHOT_OPER_2020-03-25' ],
         tasks => [ 
-           { taskName => 'ptm_l2', taskVersion => '2.0.0' }
+           { taskName => 'ptm_l2', taskVersion => '2.1.0-SNAPSHOT' }
         ],
-        dockerImage => 'localhost:5000/proseo-sample-wrapper:2.0.0'
+        dockerImage => 'localhost:5000/proseo-sample-wrapper:2.1.0-SNAPSHOT'
     },
     {
         processorName => 'PTML3', 
-        processorVersion => '2.0.0',
-        configuredProcessors => [ 'PTML3_2.0.0_OPER_2020-03-25' ],
+        processorVersion => '2.1.0-SNAPSHOT',
+        configuredProcessors => [ 'PTML3_2.1.0-SNAPSHOT_OPER_2020-03-25' ],
         tasks => [ 
-           { taskName => 'ptm_l3', taskVersion => '2.0.0' }
+           { taskName => 'ptm_l3', taskVersion => '2.1.0-SNAPSHOT' }
         ],
-        dockerImage => 'localhost:5000/proseo-sample-wrapper:2.0.0'
+        dockerImage => 'localhost:5000/proseo-sample-wrapper:2.1.0-SNAPSHOT'
     }
 );
 my @configurations = (
@@ -195,7 +195,7 @@ my @configurations = (
     	staticInputFiles => [
     	   { fileType => 'processing_configuration', fileNameType => 'Physical', fileNames => [ '/usr/share/sample-processor/conf/ptm_l1b_config.xml' ] },
     	],
-    	configuredProcessors => [ 'PTML1B_2.0.0_OPER_2020-03-25' ]
+    	configuredProcessors => [ 'PTML1B_2.1.0-SNAPSHOT_OPER_2020-03-25' ]
     },
     { 
     	processorName => 'PTML2', 
@@ -211,7 +211,7 @@ my @configurations = (
             { fileVersion => '1.0', fileName => '/usr/share/sample-processor/conf/ptm_l2_config.xml' }
         ],
         staticInputFiles => [],
-        configuredProcessors => [ 'PTML2_2.0.0_OPER_2020-03-25' ]
+        configuredProcessors => [ 'PTML2_2.1.0-SNAPSHOT_OPER_2020-03-25' ]
     },
     { 
     	processorName => 'PTML3', 
@@ -225,26 +225,26 @@ my @configurations = (
         ],
         configurationFiles => [],
         staticInputFiles => [],
-        configuredProcessors => [ 'PTML3_2.0.0_OPER_2020-03-25' ]
+        configuredProcessors => [ 'PTML3_2.1.0-SNAPSHOT_OPER_2020-03-25' ]
     }
 );
 my @configured_processors = (
     {
-    	identifier => 'PTML1B_2.0.0_OPER_2020-03-25',
+    	identifier => 'PTML1B_2.1.0-SNAPSHOT_OPER_2020-03-25',
     	processorName => 'PTML1B',
-    	processorVersion => '2.0.0',
+    	processorVersion => '2.1.0-SNAPSHOT',
     	configurationVersion => 'OPER_2020-03-25' 
     },
     {
-        identifier => 'PTML2_2.0.0_OPER_2020-03-25',
+        identifier => 'PTML2_2.1.0-SNAPSHOT_OPER_2020-03-25',
         processorName => 'PTML2',
-        processorVersion => '2.0.0',
+        processorVersion => '2.1.0-SNAPSHOT',
         configurationVersion => 'OPER_2020-03-25' 
     },
     {
-        identifier => 'PTML3_2.0.0_OPER_2020-03-25',
+        identifier => 'PTML3_2.1.0-SNAPSHOT_OPER_2020-03-25',
         processorName => 'PTML3',
-        processorVersion => '2.0.0',
+        processorVersion => '2.1.0-SNAPSHOT',
         configurationVersion => 'OPER_2020-03-25' 
     }
 );
@@ -257,7 +257,7 @@ my @workflows = (
     	enabled => 'true',
     	inputProductClass => 'PTM_L2_A',
     	outputProductClass => 'PTM_L3',
-    	configuredProcessor => 'PTML3_2.0.0_OPER_2020-03-25',
+    	configuredProcessor => 'PTML3_2.1.0-SNAPSHOT_OPER_2020-03-25',
     	outputFileClass => 'TEST',
     	processingMode => 'OPER',
     	slicingType => 'NONE',
@@ -314,7 +314,7 @@ $product_processor_class{'PTM_L1B'} = 'PTML1B';
 $selection_rules{'PTM_L1B'} = '
     FOR PTM_L0 SELECT ValIntersect(0, 0);
     FOR AUX_IERS_B SELECT LatestValIntersect(60 D, 60 D)';
-$applicable_processors{'PTM_L1B'} = [ 'PTML1B_2.0.0_OPER_2020-03-25' ];
+$applicable_processors{'PTM_L1B'} = [ 'PTML1B_2.1.0-SNAPSHOT_OPER_2020-03-25' ];
 
 # Selection rules for PTM L2
 # Expected time coverage of the L2 products is on orbit (same as for the L1B product)
@@ -326,7 +326,7 @@ $slicing_types{'PTM_L2_A'} = 'ORBIT';
 $product_processor_class{'PTM_L2_A'} = 'PTML2';
 $selection_rules{'PTM_L2_A'} = '
     FOR PTM_L1B SELECT LatestValCover(0, 0)';
-$applicable_processors{'PTM_L2_A'} = [ 'PTML2_2.0.0_OPER_2020-03-25' ];
+$applicable_processors{'PTM_L2_A'} = [ 'PTML2_2.1.0-SNAPSHOT_OPER_2020-03-25' ];
 # Output PTM_L2_B
 push @product_types, 'PTM_L2_B';
 $processing_levels{'PTM_L2_B'} = 'L2B';
@@ -334,7 +334,7 @@ $slicing_types{'PTM_L2_B'} = 'ORBIT';
 $product_processor_class{'PTM_L2_B'} = 'PTML2';
 $selection_rules{'PTM_L2_B'} = '
     FOR PTM_L1B_P1 SELECT LatestValCover(0, 0)';
-$applicable_processors{'PTM_L2_B'} = [ 'PTML2_2.0.0_OPER_2020-03-25' ];
+$applicable_processors{'PTM_L2_B'} = [ 'PTML2_2.1.0-SNAPSHOT_OPER_2020-03-25' ];
 
 # Selection rules for PTM L3
 # Expected time coverage of the L3 products is 4 hours
@@ -347,7 +347,7 @@ $product_processor_class{'PTM_L3'} = 'PTML3';
 $selection_rules{'PTM_L3'} = '
     FOR PTM_L2_A SELECT ValIntersect(0, 0) MINCOVER(90);
     FOR PTM_L2_B SELECT ValIntersect(0, 0) MINCOVER(90)';
-$applicable_processors{'PTM_L3'} = [ 'PTML3_2.0.0_OPER_2020-03-25' ];
+$applicable_processors{'PTM_L3'} = [ 'PTML3_2.1.0-SNAPSHOT_OPER_2020-03-25' ];
 
 
 # --- Output creation script ---

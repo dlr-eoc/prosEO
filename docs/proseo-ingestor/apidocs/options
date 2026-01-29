@@ -18,7 +18,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'prosEO Data Product Ingestor 2.0.0 API'
+'prosEO Data Product Ingestor 2.1.0-SNAPSHOT API'
 -linkoffline
 'https://github.com/dlr-eoc/prosEO/logging/apidocs' '/Users/katharina/Documents/Arbeit/prosEO/prosEO/logging/target/site/apidocs'
 -linkoffline
@@ -29,4 +29,4 @@
 -use
 -version
 -windowtitle
-'prosEO Data Product Ingestor 2.0.0 API'
+'prosEO Data Product Ingestor 2.1.0-SNAPSHOT API'

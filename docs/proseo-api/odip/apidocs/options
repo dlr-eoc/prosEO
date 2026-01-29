@@ -18,7 +18,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'prosEO On-Demand Production Interface Delivery Point API 2.0.0 API'
+'prosEO On-Demand Production Interface Delivery Point API 2.1.0-SNAPSHOT API'
 -linkoffline
 'https://github.com/dlr-eoc/prosEO/logging/apidocs' '/Users/katharina/Documents/Arbeit/prosEO/prosEO/logging/target/site/apidocs'
 -linkoffline
@@ -31,4 +31,4 @@
 -use
 -version
 -windowtitle
-'prosEO On-Demand Production Interface Delivery Point API 2.0.0 API'
+'prosEO On-Demand Production Interface Delivery Point API 2.1.0-SNAPSHOT API'
