@@ -5,7 +5,8 @@
         "missionCode": "S5P",
         "name": "trigger_1",
         "type": "DataDriven",
-        "workflowName": "wf_1"
+        "workflowName": "wf_1",
+        "workflowVersion": "1.0"
     },    
     {
         "id": 890456231,
@@ -13,6 +14,7 @@
         "missionCode": "S5P",
         "name": "trigger_1",
         "type": "DataDriven",
-        "workflowName": "wf_1"
+        "workflowName": "wf_1",
+        "workflowVersion": "1.0"
     }
 ]

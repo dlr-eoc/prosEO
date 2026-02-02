@@ -580,14 +580,12 @@ public class OrderCreator {
 		try {
 			restOrder = createOrder(restOrder);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(OrderGenMessage.CREATE_ORDER_FAILED, e.getMessage());
 		}
 		try {
 			restOrder = planAndReleaseOrder(restOrder);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(OrderGenMessage.PLAN_RELEASE_ORDER_FAILED, e.getMessage());
 		}
 		return restOrder;
 	}

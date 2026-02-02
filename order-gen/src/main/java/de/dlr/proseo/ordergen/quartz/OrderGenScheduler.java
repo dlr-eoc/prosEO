@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.OrderGenMessage;
 import de.dlr.proseo.model.CalendarOrderTrigger;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
@@ -186,7 +187,8 @@ public class OrderGenScheduler {
 						try {
 							transactionTemplate.setReadOnly(false);
 							Object o = transactionTemplate.execute((status) -> {
-								OrbitOrderTrigger trigger = RepositoryService.getOrbitOrderTriggerRepository().findByMissionCodeAndName(orderTrigger.getMission().getCode(), orderTrigger.getName());
+								OrbitOrderTrigger trigger = RepositoryService.getOrbitOrderTriggerRepository()
+										.findByMissionCodeAndName(orderTrigger.getMission().getCode(), orderTrigger.getName());
 								Orbit orbit = trigger.getLastOrbit();
 								if (orbit != null) {
 									// calculate start time using orbit
@@ -200,8 +202,10 @@ public class OrderGenScheduler {
 										trigger.setLastOrbit(nextOrbit);
 										triggerUtil.save(trigger);
 										Instant startTime = nextOrbit.getStopTime().plus(trigger.getDeltaTime());
-										JobDetail quartzJob = newJob(OrbitTriggerJob.class).withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Orbit.name()).build();
-										SimpleTrigger quartzTrigger = (SimpleTrigger)newTrigger().withIdentity(trigger.getName(), trigger.getMission().getCode() + "/" + TriggerType.Orbit.name())
+										JobDetail quartzJob = newJob(OrbitTriggerJob.class).withIdentity(trigger.getName(), 
+												trigger.getMission().getCode() + "/" + TriggerType.Orbit.name()).build();
+										SimpleTrigger quartzTrigger = (SimpleTrigger)newTrigger().withIdentity(trigger.getName(), 
+												trigger.getMission().getCode() + "/" + TriggerType.Orbit.name())
 												.startAt(Date.from(startTime))						
 												.build();
 
@@ -210,8 +214,7 @@ public class OrderGenScheduler {
 											sched.deleteJob(quartzJob.getKey());
 											sched.scheduleJob(quartzJob, quartzTrigger);
 										} catch (SchedulerException e) {
-											// TODO Auto-generated catch block
-											e.printStackTrace();
+											logger.log(OrderGenMessage.CREATE_ORBIT_TRIGGER_FAILED, e.getMessage());
 										}
 									} else {
 										// Error

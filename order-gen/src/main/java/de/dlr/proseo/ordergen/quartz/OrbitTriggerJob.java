@@ -11,6 +11,7 @@ import org.quartz.JobExecutionException;
 import org.quartz.SchedulerException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.OrderGenMessage;
 import de.dlr.proseo.model.OrbitOrderTrigger;
 import de.dlr.proseo.ordergen.OrderGenerator;
 
@@ -38,12 +39,14 @@ public class OrbitTriggerJob implements Job {
 			logger.trace("--- trigger fired ({}, {})", context.getJobDetail().getKey(), workflowName);
 		}
 
-		OrderGenerator.orderCreator.createAndStartFromTrigger(trigger, context.getPreviousFireTime(), context.getFireTime(), context.getNextFireTime(), null);
+		OrderGenerator.orderCreator.createAndStartFromTrigger(trigger, context.getPreviousFireTime(), 
+				context.getFireTime(), context.getNextFireTime(), null);
 		try {
 			OrderGenerator.scheduler.buildNextOrbitTriggerFor(trigger);
 		} catch (SchedulerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(OrderGenMessage.CREATE_ORBIT_TRIGGER_FAILED, e.getMessage());
+		} catch (Exception e) {
+			logger.log(OrderGenMessage.EXCEPTION, e.getMessage());
 		}
 	}
 
