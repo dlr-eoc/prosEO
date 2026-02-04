@@ -40,9 +40,11 @@ proseo:
         url: http://proseo-archive-mgr:8080/proseo/archive-mgr/v0.1
     grafana:
         url: http://192.168.20.155:3000/
+    orderGenerator:
+        url: http://proseo-order-generator:8080/proseo/order-generator/v0.1
 
     # Connection timeout for asynchronous requests in ms
     gui.timeout: 600000
-        
+
     # Connection timeout for synchronous requests in ms
     http.timeout: 10000
