@@ -54,8 +54,6 @@ public class OrderManager {
 	public List<RestOrder> generateForProduct(Long productId) throws NoSuchElementException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> generateForProduct({})", productId);
 
-		// TODO Auto-generated method stub
-
 		// Find the input product
 		Optional<Product> inputProduct = RepositoryService.getProductRepository().findById(productId);
 		if (inputProduct.isEmpty()) {
@@ -81,7 +79,7 @@ public class OrderManager {
 		for (DataDrivenOrderTrigger trigger : triggerList) {
 			if (trigger.getWorkflow().isEnabled()) {
 				
-				// TODO Generate processing order from product data and workflow (analogous to ODIP with input product)
+				// Generate processing order from product data and workflow (analogous to ODIP with input product)
 				RestOrder order = 
 						OrderGenerator.orderCreator.createAndStartFromTrigger(trigger, null, null, null, productId);
 				if (order != null) {

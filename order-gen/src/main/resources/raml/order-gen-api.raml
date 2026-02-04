@@ -110,7 +110,7 @@ resourceTypes:
   type: standard
   get:
     description: |
-      List of all triggers filtered by mission, name, type
+      List of triggers filtered by mission, name, type, workflow, inputProductClass, outputProductClass
     displayName: getTriggers
     queryParameters:
       mission?: 
@@ -122,6 +122,26 @@ resourceTypes:
       type?: 
         description: the trigger type
         type: string
+      workflow?:
+        description: the trigger workflow
+        type: string
+      inputProductClass?:
+        description: the trigger workflow input product class
+        type: string
+      outputProductClass?:
+        description: the trigger workflow output product class
+        type: string
+      recordFrom?: 
+        type: integer
+        format: int32
+        description: first record of filtered and ordered result to return
+      recordTo?:
+        type: integer
+        format: int32
+        description: last record of filtered and ordered result to return
+      orderBy?:
+        type: string[]
+        description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
     responses:
       200:
         body:
@@ -172,6 +192,34 @@ resourceTypes:
         type: string
     responses:
       204:
+  /count:
+    get:
+      description: |
+        count the triggers filtered by mission, name, type, workflow, inputProductClass, outputProductClass
+      displayName: countTriggers
+      queryParameters:
+        mission?: 
+          description: the mission code
+          type: string
+        name?: 
+          description: the unique name
+          type: string
+        type?: 
+          description: the trigger type
+          type: string
+        workflow?:
+          description: the trigger workflow
+          type: string
+        inputProductClass?:
+          description: the trigger workflow input product class
+          type: string
+        outputProductClass?:
+          description: the trigger workflow output product class
+          type: string
+      responses:
+        200:
+          body:
+            text/plain:
   /byproducttype:
     type: standard
     get:

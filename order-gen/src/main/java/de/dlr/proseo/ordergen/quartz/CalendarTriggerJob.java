@@ -35,7 +35,8 @@ public class CalendarTriggerJob implements Job {
 			logger.trace("--- trigger fired ({}, {})", context.getJobDetail().getKey(), workflowName);
 		}
 
-		OrderGenerator.orderCreator.createAndStartFromTrigger(trigger, context.getPreviousFireTime(), context.getFireTime(), context.getNextFireTime(), null);
+		OrderGenerator.orderCreator.createAndStartFromTrigger(trigger, context.getPreviousFireTime(), 
+				context.getFireTime(), context.getNextFireTime(), null);
 	}
 
 }

@@ -47,7 +47,7 @@ import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
-import de.dlr.proseo.logging.messages.OdipMessage;
+import de.dlr.proseo.logging.messages.OrderGenMessage;
 import de.dlr.proseo.ordergen.OrderGenConfiguration;
 
 /**
@@ -63,7 +63,7 @@ public class ServiceConnection {
 	private static ProseoLogger logger = new ProseoLogger(ServiceConnection.class);
 
 	/** HTTP utility class */
-	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.ODIP);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.ORDERGEN);
 
 	/** REST template builder */
 	@Autowired
@@ -105,18 +105,18 @@ public class ServiceConnection {
 			entity = restTemplate.getForEntity(requestUrl, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			String message = http.createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
-			logger.log(OdipMessage.EXTRACTED_MESSAGE, message);
+			logger.log(OrderGenMessage.EXTRACTED_MESSAGE, message);
 			throw new HttpClientErrorException(e.getStatusCode(), message);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
 			if (warningMessage == null)
-				logger.log(OdipMessage.EXTRACTED_MESSAGE, warningMessage);
+				logger.log(OrderGenMessage.EXTRACTED_MESSAGE, warningMessage);
 			else
-				logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
+				logger.log(OrderGenMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
 			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
 		} catch (RestClientResponseException e) {
-			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
-			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
+			logger.log(OrderGenMessage.HTTP_REQUEST_FAILED, e.getMessage());
+			logger.log(OrderGenMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
 			throw e;
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
@@ -126,7 +126,7 @@ public class ServiceConnection {
 		// All GET requests should return HTTP status OK
 		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
 			String message = http.createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
-			logger.log(OdipMessage.EXTRACTED_MESSAGE, message);
+			logger.log(OrderGenMessage.EXTRACTED_MESSAGE, message);
 			throw new RuntimeException(message);
 		}
 
@@ -166,18 +166,18 @@ public class ServiceConnection {
 			entity = restTemplate.exchange(requestEntity, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			String message = http.createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
-			logger.log(OdipMessage.EXTRACTED_MESSAGE, message);
+			logger.log(OrderGenMessage.EXTRACTED_MESSAGE, message);
 			throw new HttpClientErrorException(e.getStatusCode(), message);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
 			if (warningMessage == null)
-				logger.log(OdipMessage.EXTRACTED_MESSAGE, warningMessage);
+				logger.log(OrderGenMessage.EXTRACTED_MESSAGE, warningMessage);
 			else
-				logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
+				logger.log(OrderGenMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
 			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
 		} catch (RestClientResponseException e) {
-			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
-			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
+			logger.log(OrderGenMessage.HTTP_REQUEST_FAILED, e.getMessage());
+			logger.log(OrderGenMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
 			throw e;
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
@@ -187,7 +187,7 @@ public class ServiceConnection {
 		// All PUT requests should return HTTP status OK (for updates) or CREATED (for newly created items)
 		if (!HttpStatus.OK.equals(entity.getStatusCode()) && !HttpStatus.CREATED.equals(entity.getStatusCode())) {
 			String message = http.createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
-			logger.log(OdipMessage.EXTRACTED_MESSAGE, message);
+			logger.log(OrderGenMessage.EXTRACTED_MESSAGE, message);
 			throw new RuntimeException(message);
 		}
 
@@ -228,18 +228,18 @@ public class ServiceConnection {
 			entity = restTemplate.postForEntity(requestUrl, restObject, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			String message = http.createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
-			logger.log(OdipMessage.EXTRACTED_MESSAGE, message);
+			logger.log(OrderGenMessage.EXTRACTED_MESSAGE, message);
 			throw new HttpClientErrorException(e.getStatusCode(), message);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
 			if (warningMessage == null)
-				logger.log(OdipMessage.EXTRACTED_MESSAGE, warningMessage);
+				logger.log(OrderGenMessage.EXTRACTED_MESSAGE, warningMessage);
 			else
-				logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
+				logger.log(OrderGenMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
 			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
 		} catch (RestClientResponseException e) {
-			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
-			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
+			logger.log(OrderGenMessage.HTTP_REQUEST_FAILED, e.getMessage());
+			logger.log(OrderGenMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
 			throw e;
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
@@ -256,7 +256,7 @@ public class ServiceConnection {
 		// All successful POST requests should return HTTP status CREATED
 		if (!HttpStatus.CREATED.equals(entity.getStatusCode())) {
 			String message = http.createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
-			logger.log(OdipMessage.EXTRACTED_MESSAGE, message);
+			logger.log(OrderGenMessage.EXTRACTED_MESSAGE, message);
 			throw new RuntimeException(message);
 		}
 
@@ -310,7 +310,7 @@ public class ServiceConnection {
 				logger.trace("... serialized Json object: " + jsonObject);
 			req.setEntity (new StringEntity(jsonObject));
 		} catch (Exception e) {
-			String message = logger.log(OdipMessage.SERIALIZATION_FAILED, e.getMessage());
+			String message = logger.log(OrderGenMessage.SERIALIZATION_FAILED, e.getMessage());
 			throw new RuntimeException(message, e);
 		}
 		// Execute the HTTP request
@@ -341,26 +341,26 @@ public class ServiceConnection {
 					if (null != httpResponse.getEntity())
 						httpResponse.getEntity().getContent().close();
 					if (proseoMessage == null)
-						logger.log(OdipMessage.EXTRACTED_MESSAGE, proseoMessage);
+						logger.log(OrderGenMessage.EXTRACTED_MESSAGE, proseoMessage);
 					else
-						logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
+						logger.log(OrderGenMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
 					throw new HttpClientErrorException(HttpStatus.UNAUTHORIZED, proseoMessage);
 				} else if (HttpStatus.NOT_FOUND.value() == httpStatusCode || HttpStatus.BAD_REQUEST.value() == httpStatusCode) {
 					if (null != httpResponse.getEntity())
 						httpResponse.getEntity().getContent().close();
-					logger.log(OdipMessage.EXTRACTED_MESSAGE, message);
+					logger.log(OrderGenMessage.EXTRACTED_MESSAGE, message);
 					throw new HttpClientErrorException(HttpStatus.valueOf(httpStatusCode), message);
 				} else if (HttpStatus.NOT_MODIFIED.value() == httpStatusCode) {
 					if (null != httpResponse.getEntity())
 						httpResponse.getEntity().getContent().close();
-					logger.log(OdipMessage.NOT_MODIFIED);
+					logger.log(OrderGenMessage.NOT_MODIFIED);
 					throw new RestClientResponseException(message, httpStatusCode, HttpStatus.NOT_MODIFIED.getReasonPhrase(), null,
 							null, null);
 				} else if (300 <= httpStatusCode) {
 					String reasonPhrase = httpResponse.getReasonPhrase();
 					if (null != httpResponse.getEntity())
 						httpResponse.getEntity().getContent().close();
-					logger.log(OdipMessage.HTTP_REQUEST_FAILED, reasonPhrase);
+					logger.log(OrderGenMessage.HTTP_REQUEST_FAILED, reasonPhrase);
 					throw new HttpClientErrorException(HttpStatus.valueOf(httpStatusCode), reasonPhrase);
 				}
 				return IOUtils.toString(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8);
@@ -370,12 +370,12 @@ public class ServiceConnection {
 			return mapper.readValue(responseContent, clazz);
 
 		} catch (IOException e) {
-			String message = logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
-			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e);
+			String message = logger.log(OrderGenMessage.HTTP_REQUEST_FAILED, e.getMessage());
+			logger.log(OrderGenMessage.HTTP_REQUEST_FAILED, e);
 			throw new RestClientException(message, e);
 		} catch (RestClientResponseException e) {
-			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
-			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
+			logger.log(OrderGenMessage.HTTP_REQUEST_FAILED, e.getMessage());
+			logger.log(OrderGenMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
 			throw e;
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
@@ -410,22 +410,22 @@ public class ServiceConnection {
 			entity = restTemplate.exchange(requestUrl, HttpMethod.DELETE, null, Object.class);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			String message = http.createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
-			logger.log(OdipMessage.EXTRACTED_MESSAGE, message);
+			logger.log(OrderGenMessage.EXTRACTED_MESSAGE, message);
 			throw new RestClientResponseException(message, e.getStatusCode(), e.getStatusText(),
 					e.getResponseHeaders(), e.getResponseBodyAsByteArray(), StandardCharsets.UTF_8);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
 			if (warningMessage == null)
-				logger.log(OdipMessage.EXTRACTED_MESSAGE, warningMessage);
+				logger.log(OrderGenMessage.EXTRACTED_MESSAGE, warningMessage);
 			else
-				logger.log(OdipMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
+				logger.log(OrderGenMessage.NOT_AUTHORIZED_FOR_SERVICE, username);
 			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
 		} catch (RestClientResponseException e) {
-			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getMessage());
-			logger.log(OdipMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
+			logger.log(OrderGenMessage.HTTP_REQUEST_FAILED, e.getMessage());
+			logger.log(OrderGenMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
 			throw e;
 		} catch (IllegalArgumentException e) {
-			String message = logger.log(OdipMessage.INVALID_URL, serviceUrl + requestPath, e.getMessage());
+			String message = logger.log(OrderGenMessage.INVALID_URL, serviceUrl + requestPath, e.getMessage());
 			throw new RuntimeException(message, e);
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
@@ -435,12 +435,12 @@ public class ServiceConnection {
 		// Check for deletion failure indicated by 304 NOT_MODIFIED
 		if (HttpStatus.NOT_MODIFIED.equals(entity.getStatusCode())) {
 			String message = http.createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
-			logger.log(OdipMessage.EXTRACTED_MESSAGE, message);
+			logger.log(OrderGenMessage.EXTRACTED_MESSAGE, message);
 			throw new RestClientResponseException(message, entity.getStatusCode(),"",
 					entity.getHeaders(), null, StandardCharsets.UTF_8);
 		} else if (!HttpStatus.NO_CONTENT.equals(entity.getStatusCode())) {
 			// Ignore unexpected status code, but log it as warning
-			logger.log(OdipMessage.WARN_UNEXPECTED_STATUS, entity.getStatusCode());
+			logger.log(OrderGenMessage.WARN_UNEXPECTED_STATUS, entity.getStatusCode());
 		}
 
 		if (logger.isTraceEnabled())

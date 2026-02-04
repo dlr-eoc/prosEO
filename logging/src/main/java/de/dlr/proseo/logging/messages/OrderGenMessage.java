@@ -38,6 +38,18 @@ public enum OrderGenMessage implements ProseoMessage {
 	WORKFLOW_NOT_ENABLED    				(4726, Level.ERROR, false, "Workflow referenced by name {0} is disabled (not useable)", ""),
 	WORKFLOW_NOT_FOUND	    				(4727, Level.ERROR, false, "Workflow referenced by id {0} not found", ""),
 	MSG_WORKFLOW_OPTION_NO_TYPE_MATCH 		(4728, Level.ERROR, false, "Workflow option {0} does not match type: {1}, value: {2}", ""),
+	TRIGGERS_COUNTED						(4729, Level.INFO, true, "Triggers counted: {0}", ""),
+	CREATE_ORBIT_TRIGGER_FAILED				(4730, Level.ERROR, false, "Create next orbit trigger failed (cause: {0})", ""),
+	CREATE_ORDER_FAILED						(4731, Level.ERROR, false, "Create order failed (cause: {0})", ""),
+	PLAN_RELEASE_ORDER_FAILED				(4732, Level.ERROR, false, "Plan and release order failed (cause: {0})", ""),
+	EXTRACTED_MESSAGE						(4733, Level.ERROR, false, "Extraced message: {0}", ""),
+	NOT_AUTHORIZED_FOR_SERVICE				(4734, Level.ERROR, false, "User {0} not authorized for requested service", ""),
+	MSG_HTTP_REQUEST_FAILED 				(4735, Level.ERROR, false, "HTTP request failed (cause: {0})", ""),
+	SERIALIZATION_FAILED					(4736, Level.ERROR, false, "Cannot convert object to Json (cause: {0})", ""),
+	NOT_MODIFIED							(4737, Level.INFO, true, "Data not modified", ""),
+	INVALID_URL								(4738, Level.ERROR, false, "Invalid request URL {0} (cause: {1})", ""),
+	WARN_UNEXPECTED_STATUS					(4739, Level.ERROR, false, "Unexpected HTTP status {0} received", ""),
+	HTTP_REQUEST_FAILED						(4740, Level.ERROR, false, "HTTP request failed (cause: {0})", ""),
 	
 	;
 	

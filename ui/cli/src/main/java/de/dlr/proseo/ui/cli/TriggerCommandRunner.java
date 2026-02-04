@@ -62,6 +62,7 @@ public class TriggerCommandRunner {
 	private static final String PROMPT_TRIGGER_DELTA_TIME = "Trigger delta time (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_TIMEINTERVAL = "Trigger time interval (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_NAME = "Trigger workflow name (empty field cancels): ";
+	private static final String PROMPT_WORKFLOW_VERSION = "Trigger workflow version (empty field cancels): ";
 	private static final String URI_PATH_TRIGGERS = "/triggers";
 	private static final String URI_PATH_RELOAD = "/reload";
 	private static final String TRIGGERS = "triggers";
@@ -264,6 +265,15 @@ public class TriggerCommandRunner {
 			}
 			restTrigger.setWorkflowName(response);
 		}
+		if (StringUtils.isNullOrEmpty(restTrigger.getWorkflowVersion())) {
+			System.out.print(PROMPT_WORKFLOW_VERSION);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+				return;
+			}
+			restTrigger.setWorkflowVersion(response);
+		}
 		switch (type) {
 		case Calendar:
 			if (StringUtils.isNullOrEmpty(restTrigger.getCronExpression())) {
@@ -425,7 +435,7 @@ public class TriggerCommandRunner {
 				requestURI += "&name=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
 			}
 		}
-		
+		requestURI += "&orderBy=type%20ASC,name%20ASC";
 
 		/* Get the trigger information from the Trigger Manager service */
 		List<?> resultList = null;
@@ -468,14 +478,14 @@ public class TriggerCommandRunner {
 			}
 		} else {
 			// Must be a list of triggers
-			String listFormat = "%-20s %-18s %-8s %s";
+			String listFormat = "%-16s %-22s %-8s %-22s %-18s";
 			System.out
-				.println(String.format(listFormat, "Trigger name", "Type", "Priority", "Workflow"));
+				.println(String.format(listFormat, "Type", "Trigger name", "Priority", "Workflow", "Workflow version"));
 			for (Object resultObject : (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
 					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
-					System.out.println(String.format(listFormat, resultMap.get("name"), resultMap.get("type"),
-							resultMap.get("priority"), resultMap.get("workflowName")));
+					System.out.println(String.format(listFormat, resultMap.get("type"), resultMap.get("name"),
+							resultMap.get("priority"), resultMap.get("workflowName"), resultMap.get("workflowVersion")));
 				}
 			}
 		}
@@ -611,6 +621,9 @@ public class TriggerCommandRunner {
 		// No modification of ID, version, mission code, trigger name or type
 		if (null != updatedTrigger.getWorkflowName()) {
 			restTrigger.setWorkflowName(updatedTrigger.getWorkflowName());
+		}
+		if (null != updatedTrigger.getWorkflowVersion()) {
+			restTrigger.setWorkflowVersion(updatedTrigger.getWorkflowVersion());
 		}
 		if (isDeleteAttributes || null != updatedTrigger.getExecutionDelay()) {
 			restTrigger.setExecutionDelay(updatedTrigger.getExecutionDelay());

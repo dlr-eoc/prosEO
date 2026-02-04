@@ -55,6 +55,7 @@ import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.rest.model.RestProduct;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -1049,7 +1050,9 @@ public class JobStepUtil {
 						// Execute the product query
 						if (productQueryService.executeQuery(productQuery, false)) {
 							// If the query is successfully executed, update its state and save
-							if (js.getJob().getProcessingOrder().getOrderSource() == OrderSource.ODIP) {
+							
+							if (js.getJob().getProcessingOrder().getProductionType() == ProductionType.ON_DEMAND_DEFAULT
+									|| js.getJob().getProcessingOrder().getProductionType() == ProductionType.ON_DEMAND_NON_DEFAULT) {
 								if (!productQuery.getInDownload() && productQuery.getSatisfyingProducts().isEmpty()) {
 									// An optional query will be satisfied, even if there are no input products (locally)
 									// Try to fetch more input products from some external archive
@@ -1075,7 +1078,8 @@ public class JobStepUtil {
 						} else {
 							// If query execution fails, set the flag and start download if necessary
 							hasUnsatisfiedInputQueries = true;
-							if (js.getJob().getProcessingOrder().getOrderSource() == OrderSource.ODIP) {
+							if (js.getJob().getProcessingOrder().getProductionType() == ProductionType.ON_DEMAND_DEFAULT
+									|| js.getJob().getProcessingOrder().getProductionType() == ProductionType.ON_DEMAND_NON_DEFAULT) {
 								// call aip client to download possible files
 								if (!productQuery.getInDownload()) {
 									productQuery.setInDownload(true);

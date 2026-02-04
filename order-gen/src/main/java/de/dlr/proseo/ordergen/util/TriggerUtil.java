@@ -77,6 +77,13 @@ public class TriggerUtil {
 		}	
 		if (null != trigger.getWorkflow()) {
 			restTrigger.setWorkflowName(trigger.getWorkflow().getName());
+			restTrigger.setWorkflowVersion(trigger.getWorkflow().getWorkflowVersion());	
+			if (null != trigger.getWorkflow().getInputProductClass()) {
+				restTrigger.setInputProduct(trigger.getWorkflow().getInputProductClass().getProductType());
+			}		
+			if (null != trigger.getWorkflow().getOutputProductClass()) {
+				restTrigger.setOutputProduct(trigger.getWorkflow().getOutputProductClass().getProductType());
+			}	
 		}	
 		if (null != trigger.getExecutionDelay()) {
 			restTrigger.setExecutionDelay(trigger.getExecutionDelay().getSeconds());
@@ -169,10 +176,12 @@ public class TriggerUtil {
 		if (!StringUtils.isNullOrEmpty(restTrigger.getMissionCode())) {
 			trigger.setMission(RepositoryService.getMissionRepository().findByCode(restTrigger.getMissionCode()));
 		}		
-		if (!StringUtils.isNullOrEmpty(restTrigger.getWorkflowName()) && !StringUtils.isNullOrEmpty(restTrigger.getMissionCode())) {
-			List<Workflow> wfl = RepositoryService.getWorkflowRepository().findByMissionCodeAndName(restTrigger.getMissionCode(), restTrigger.getWorkflowName());
-			if (wfl.size() > 0) {
-				trigger.setWorkflow(wfl.get(0));
+		if (!StringUtils.isNullOrEmpty(restTrigger.getWorkflowName()) && !StringUtils.isNullOrEmpty(restTrigger.getMissionCode())
+				 && !StringUtils.isNullOrEmpty(restTrigger.getWorkflowVersion())) {
+			Workflow wfl = RepositoryService.getWorkflowRepository().findByMissionCodeAndNameAndVersion(
+					restTrigger.getMissionCode(), restTrigger.getWorkflowName(), restTrigger.getWorkflowVersion());
+			if (wfl != null) {
+				trigger.setWorkflow(wfl);
 			}
 		}		
 		if (!StringUtils.isNullOrEmpty(restTrigger.getName())) {

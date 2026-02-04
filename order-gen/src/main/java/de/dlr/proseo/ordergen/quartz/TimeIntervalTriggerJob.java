@@ -24,8 +24,6 @@ public class TimeIntervalTriggerJob implements Job {
 	
 	@Override
 	public void execute(JobExecutionContext context) throws JobExecutionException {
-		// TODO Auto-generated method stub
-
 		Object object = context.getJobDetail().getJobDataMap().get("orderTrigger");
 		String workflowName = null;
 		TimeIntervalOrderTrigger trigger = null;
@@ -37,7 +35,8 @@ public class TimeIntervalTriggerJob implements Job {
 			logger.trace("--- trigger fired ({}, {})", context.getJobDetail().getKey(), workflowName);
 		}
 
-		OrderGenerator.orderCreator.createAndStartFromTrigger(trigger, context.getPreviousFireTime(), context.getFireTime(), context.getNextFireTime(), null);
+		OrderGenerator.orderCreator.createAndStartFromTrigger(trigger, context.getPreviousFireTime(), 
+				context.getFireTime(), context.getNextFireTime(), null);
 	}
 
 }

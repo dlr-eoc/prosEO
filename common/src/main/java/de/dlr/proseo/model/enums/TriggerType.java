@@ -12,14 +12,14 @@ package de.dlr.proseo.model.enums;
  * 
  */
 public enum TriggerType {
-	// Instance of DataDrivenOrderTrigger
-	DataDriven, 
-	// Instance of TimeIntervalOrderTrigger
-	TimeInterval, 
 	// Instance of CalendarOrderTrigger
 	Calendar, 
+	// Instance of DataDrivenOrderTrigger
+	DataDriven, 
+	// Instance of DatatakeOrderTrigger
+	Datatake, 
 	// Instance of OrbitOrderTrigger
 	Orbit, 
-	// Instance of DatatakeOrderTrigger
-	Datatake
+	// Instance of TimeIntervalOrderTrigger
+	TimeInterval
 }
