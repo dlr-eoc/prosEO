@@ -161,7 +161,7 @@
             <!-- Area with "New Order" link and the orders table -->
             <div th:unless="${errormsg != null}">
                <div class="container-fluid">
-                  <h5>
+                  <h5 style="display: flex; align-items: center; gap: 0.5em;">
                      <span th:text="#{order}"></span>
                      <span>&nbsp;</span>
                      <!-- Link to create a new order (id=0 -> new) -->
@@ -170,6 +170,8 @@
                         th:title="#{neworder}"
                         href="/order-edit?id=0"
                         ><span class="feather-l" data-feather="plus-circle"></span></a>
+                     <!-- Handle all selected orders -->
+                     <div th:insert="~{fragments/ordermenu.html :: orderMenu('button')}" ></div>
                   </h5>
                   <div id="orderscontent" name="orderscontent">
                      <!-- Orders table: header + body populated server-side or via AJAX -->
@@ -283,7 +285,7 @@
                               </td>
                               <!-- Per-row action menu included from fragment -->
                               <td>
-                                 <div th:insert="~{fragments/ordermenu.html :: orderMenu}"></div>
+                                 <div th:insert="~{fragments/ordermenu.html :: orderMenu('icon')}"></div>
                               </td>
                            </tr>
                         </tbody>
