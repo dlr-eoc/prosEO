@@ -644,6 +644,10 @@ public class XbipMonitor extends BaseMonitor {
 
 			// Parse DSIB file of channel 1 for time stamps
 			Path dsibFilePath = transferSession.getDsibFileForChannel("ch_1");
+			if (null == dsibFilePath) {
+				// Try channel 2 – one at least must exist, because otherwise we were'nt here
+				dsibFilePath = transferSession.getDsibFileForChannel("ch_2");
+			}
 			DataSessionInformationBlock dsib = null;
 			try {
 				dsib = (new XmlMapper()).readValue(dsibFilePath.toFile(), DataSessionInformationBlock.class);

@@ -57,12 +57,12 @@ public class TriggerCommandRunner {
 	private static final String PROMPT_TRIGGER_TYPE = "Trigger type (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_NAME = "Trigger name (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_CRON_EXP = "Trigger cron expression (empty field cancels): ";
+	private static final String PROMPT_TRIGGER_INPUT_TYPE = "Trigger input product type (empty field cancels); ";
 	private static final String PROMPT_TRIGGER_SPACECRAFT = "Trigger spacecarft code (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_LAST_ORBIT = "Trigger last orbit number (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_DELTA_TIME = "Trigger delta time (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_TIMEINTERVAL = "Trigger time interval (empty field cancels): ";
 	private static final String PROMPT_WORKFLOW_NAME = "Trigger workflow name (empty field cancels): ";
-	private static final String PROMPT_WORKFLOW_VERSION = "Trigger workflow version (empty field cancels): ";
 	private static final String URI_PATH_TRIGGERS = "/triggers";
 	private static final String URI_PATH_RELOAD = "/reload";
 	private static final String TRIGGERS = "triggers";
@@ -256,23 +256,14 @@ public class TriggerCommandRunner {
 			}
 			restTrigger.setName(response);
 		}
-		if (StringUtils.isNullOrEmpty(restTrigger.getWorkflowName())) {
+		if (StringUtils.isNullOrEmpty(restTrigger.getOrderTemplateName())) {
 			System.out.print(PROMPT_WORKFLOW_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
 				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
 				return;
 			}
-			restTrigger.setWorkflowName(response);
-		}
-		if (StringUtils.isNullOrEmpty(restTrigger.getWorkflowVersion())) {
-			System.out.print(PROMPT_WORKFLOW_VERSION);
-			String response = System.console().readLine();
-			if (response.isBlank()) {
-				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
-				return;
-			}
-			restTrigger.setWorkflowVersion(response);
+			restTrigger.setOrderTemplateName(response);
 		}
 		switch (type) {
 		case Calendar:
@@ -287,7 +278,15 @@ public class TriggerCommandRunner {
 			}
 			break;
 		case DataDriven:
-			// no special mandatory attributes
+			if (StringUtils.isNullOrEmpty(restTrigger.getInputProductType())) {
+				System.out.print(PROMPT_TRIGGER_INPUT_TYPE);
+				String response = System.console().readLine();
+				if (response.isBlank()) {
+					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+					return;
+				}
+				restTrigger.setInputProductType(response);
+			}
 			break;
 		case Datatake:
 
@@ -619,11 +618,8 @@ public class TriggerCommandRunner {
 
 		/* Update attributes of database trigger */
 		// No modification of ID, version, mission code, trigger name or type
-		if (null != updatedTrigger.getWorkflowName()) {
-			restTrigger.setWorkflowName(updatedTrigger.getWorkflowName());
-		}
-		if (null != updatedTrigger.getWorkflowVersion()) {
-			restTrigger.setWorkflowVersion(updatedTrigger.getWorkflowVersion());
+		if (null != updatedTrigger.getOrderTemplateName()) {
+			restTrigger.setOrderTemplateName(updatedTrigger.getOrderTemplateName());
 		}
 		if (isDeleteAttributes || null != updatedTrigger.getExecutionDelay()) {
 			restTrigger.setExecutionDelay(updatedTrigger.getExecutionDelay());
@@ -853,7 +849,6 @@ public class TriggerCommandRunner {
 			logger.trace(">>> reloadTrigger({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
 
 		/* reload and restart */
-		List<?> resultList = null;
 		try {
 			serviceConnection.getFromService(serviceConfig.getOrderGenUrl(),
 					URI_PATH_TRIGGERS + URI_PATH_RELOAD + "?mission=" + loginManager.getMission(),

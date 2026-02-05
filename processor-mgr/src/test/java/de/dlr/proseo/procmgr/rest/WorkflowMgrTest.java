@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.UUID;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,7 +69,7 @@ public class WorkflowMgrTest {
 	/** A REST template builder for this class */
 	@MockitoBean
 	RestTemplateBuilder rtb;
-
+	
 	// Test data
 	private static String[] testMissionData =
 			// code, name, processing_mode, file_class, product_file_template
@@ -93,7 +92,7 @@ public class WorkflowMgrTest {
 	@Before
 	public void setUp() throws Exception {
 		logger.trace(">>> Starting to create test data in the database");
-
+		
 		Mission testMission = fillDatabase();
 
 		createTestWorkflow(testMission, testWorkflowData[0], testWorkflowOptions[0]);
@@ -244,6 +243,8 @@ public class WorkflowMgrTest {
 		assertEquals("Wrong workflow count.", "1",
 				workflowMgr.countWorkflows("UTM", null, null, null, testWorkflowData[0][5], null));
 		assertEquals("Wrong workflow count.", "2", workflowMgr.countWorkflows("UTM", null, null, null, null, true));
+
+		logger.trace("<<< testCountWorkflows()");
 	}
 
 	/**
@@ -254,11 +255,21 @@ public class WorkflowMgrTest {
 	public final void testCreateWorkflow() {
 		logger.trace(">>> testCreateWorkflow()");
 
+		assertEquals("Wrong workflow count.", "2", workflowMgr.countWorkflows("UTM", null, null, null, null, true));
+		
+		List<Workflow> workflowList = RepositoryService.getWorkflowRepository().findAll();
+		for (Workflow wf: workflowList) {
+			logger.debug("... found workflow {} / {} / {}", wf.getMission().getCode(), wf.getName(), wf.getWorkflowVersion());
+		}
+		
+		logger.debug("... looking for workflow {} / {} / {}", testMissionData[0], testWorkflowData[0][0], testWorkflowData[0][2]);
+		Workflow modelWorkflow = RepositoryService.getWorkflowRepository().findByMissionCodeAndNameAndVersion(
+				testMissionData[0], testWorkflowData[0][0], testWorkflowData[0][2]);
+		assertNotNull("Test workflow not found", modelWorkflow);
+		
 		// Get a valid sample workflow and workflow option from which deviations can be
 		// tested.
-		RestWorkflow testWorkflow = WorkflowUtil
-			.toRestWorkflow(RepositoryService.getWorkflowRepository().findByMissionCodeAndNameAndVersion(
-					testMissionData[0], testWorkflowData[0][0], testWorkflowData[0][2]));
+		RestWorkflow testWorkflow = WorkflowUtil.toRestWorkflow(modelWorkflow);
 		RestWorkflowOption testWorkflowOption = testWorkflow.getWorkflowOptions().get(0);
 
 		logger.trace("testWorkflow is " + testWorkflow);
@@ -494,6 +505,8 @@ public class WorkflowMgrTest {
 		testWorkflow.getWorkflowOptions().clear();
 		testWorkflow.getWorkflowOptions().add(testWorkflowOption);
 		workflowMgr.createWorkflow(testWorkflow);
+
+		logger.trace("<<< testCreateWorkflow()");
 	}
 
 	/**
@@ -511,6 +524,8 @@ public class WorkflowMgrTest {
 		workflowMgr.deleteWorkflowById(testWorkflow.getId());
 		assertTrue("The workflow was not deleted.",
 				RepositoryService.getWorkflowRepository().findById(testWorkflow.getId()).isEmpty());
+
+		logger.trace("<<< testDeleteWorkflowById()");
 	}
 
 	/**
@@ -526,6 +541,8 @@ public class WorkflowMgrTest {
 
 		// Retrieve workflow and assert success.
 		assertNotNull("No workflow was retrieved.", workflowMgr.getWorkflowById(testWorkflow.getId()));
+
+		logger.trace("<<< testGetWorkflowById()");
 	}
 
 	/**
@@ -767,6 +784,8 @@ public class WorkflowMgrTest {
 		// No exception is thrown if nothing was modified.
 		workflowMgr.modifyWorkflow(testWorkflow.getId(),
 				WorkflowUtil.toRestWorkflow(RepositoryService.getWorkflowRepository().findById(originalWorkflow.getId()).get()));
+
+		logger.trace("<<< testModifyWorkflow()");
 	}
 
 	/**
@@ -798,6 +817,8 @@ public class WorkflowMgrTest {
 					.size() == 1);
 		assertTrue("More or less workflows retrieved than expected.",
 				workflowMgr.getWorkflows(null, null, null, null, null, true, null, null, null).size() == 2);
+
+		logger.trace("<<< testGetWorkflows()");
 	}
 
 }

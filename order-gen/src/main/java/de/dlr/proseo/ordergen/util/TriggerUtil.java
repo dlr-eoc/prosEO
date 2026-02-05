@@ -21,10 +21,10 @@ import de.dlr.proseo.model.CalendarOrderTrigger;
 import de.dlr.proseo.model.DataDrivenOrderTrigger;
 import de.dlr.proseo.model.DatatakeOrderTrigger;
 import de.dlr.proseo.model.OrbitOrderTrigger;
+import de.dlr.proseo.model.OrderTemplate;
 import de.dlr.proseo.model.OrderTrigger;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.TimeIntervalOrderTrigger;
-import de.dlr.proseo.model.Workflow;
 import de.dlr.proseo.model.enums.TriggerType;
 import de.dlr.proseo.model.rest.model.RestTrigger;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -75,15 +75,8 @@ public class TriggerUtil {
 		if (null != trigger.getPriority()) {
 			restTrigger.setPriority(trigger.getPriority().longValue());
 		}	
-		if (null != trigger.getWorkflow()) {
-			restTrigger.setWorkflowName(trigger.getWorkflow().getName());
-			restTrigger.setWorkflowVersion(trigger.getWorkflow().getWorkflowVersion());	
-			if (null != trigger.getWorkflow().getInputProductClass()) {
-				restTrigger.setInputProduct(trigger.getWorkflow().getInputProductClass().getProductType());
-			}		
-			if (null != trigger.getWorkflow().getOutputProductClass()) {
-				restTrigger.setOutputProduct(trigger.getWorkflow().getOutputProductClass().getProductType());
-			}	
+		if (null != trigger.getOrderTemplate()) {
+			restTrigger.setOrderTemplateName(trigger.getOrderTemplate().getName());
 		}	
 		if (null != trigger.getExecutionDelay()) {
 			restTrigger.setExecutionDelay(trigger.getExecutionDelay().getSeconds());
@@ -91,9 +84,18 @@ public class TriggerUtil {
 		if (trigger instanceof DataDrivenOrderTrigger) {
 			DataDrivenOrderTrigger triggerLoc = (DataDrivenOrderTrigger) trigger;
 			restTrigger.setType(TriggerType.DataDriven.name());
+			if (null != triggerLoc.getInputFileClass()) {
+				restTrigger.setInputFileClass(triggerLoc.getInputFileClass());
+			}
+			if (null != triggerLoc.getInputProcessingMode()) {
+				restTrigger.setInputProcessingMode(triggerLoc.getInputProcessingMode());
+			}
 			if (null != triggerLoc.getParametersToCopy()) {
 				restTrigger.getParametersToCopy().addAll(triggerLoc.getParametersToCopy());
 			}
+			if (null != triggerLoc.getInputProductClass()) {
+				restTrigger.setInputProductType(triggerLoc.getInputProductClass().getProductType());
+			}		
 		} else if (trigger instanceof TimeIntervalOrderTrigger) {
 			TimeIntervalOrderTrigger triggerLoc = (TimeIntervalOrderTrigger) trigger;
 			restTrigger.setType(TriggerType.TimeInterval.name());
@@ -176,12 +178,11 @@ public class TriggerUtil {
 		if (!StringUtils.isNullOrEmpty(restTrigger.getMissionCode())) {
 			trigger.setMission(RepositoryService.getMissionRepository().findByCode(restTrigger.getMissionCode()));
 		}		
-		if (!StringUtils.isNullOrEmpty(restTrigger.getWorkflowName()) && !StringUtils.isNullOrEmpty(restTrigger.getMissionCode())
-				 && !StringUtils.isNullOrEmpty(restTrigger.getWorkflowVersion())) {
-			Workflow wfl = RepositoryService.getWorkflowRepository().findByMissionCodeAndNameAndVersion(
-					restTrigger.getMissionCode(), restTrigger.getWorkflowName(), restTrigger.getWorkflowVersion());
-			if (wfl != null) {
-				trigger.setWorkflow(wfl);
+		if (!StringUtils.isNullOrEmpty(restTrigger.getOrderTemplateName()) && !StringUtils.isNullOrEmpty(restTrigger.getMissionCode())) {
+			OrderTemplate orderTemplate = RepositoryService.getOrderTemplateRepository().findByMissionCodeAndName(
+					restTrigger.getMissionCode(), restTrigger.getOrderTemplateName());
+			if (orderTemplate != null) {
+				trigger.setOrderTemplate(orderTemplate);
 			}
 		}		
 		if (!StringUtils.isNullOrEmpty(restTrigger.getName())) {
@@ -195,6 +196,17 @@ public class TriggerUtil {
 		}
 
 		if (restTrigger.getType().equals(TriggerType.DataDriven.name())) {
+			if (null != restTrigger.getInputProductType()) {
+				ProductClass productClass = RepositoryService.getProductClassRepository()
+						.findByMissionCodeAndProductType(restTrigger.getMissionCode(), restTrigger.getInputProductType());
+				((DataDrivenOrderTrigger)trigger).setInputProductClass(productClass);
+			}
+			if (null != restTrigger.getInputFileClass()) {
+				((DataDrivenOrderTrigger)trigger).setInputFileClass(restTrigger.getInputFileClass());
+			}
+			if (null != restTrigger.getInputProcessingMode()) {
+				((DataDrivenOrderTrigger)trigger).setInputProcessingMode(restTrigger.getInputProcessingMode());
+			}
 			if (null != restTrigger.getParametersToCopy()) {
 				((DataDrivenOrderTrigger)trigger).getParametersToCopy().addAll(restTrigger.getParametersToCopy());
 			}

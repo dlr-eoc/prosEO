@@ -12,6 +12,10 @@ import jakarta.persistence.Table;
 
 /**
  * Trigger for the generation of processing orders per spacecraft orbit
+ * 
+ * @since prosEO 2.1.0
+ * 
+ * @author Dr. Thomas Bassler
  */
 @Entity
 @Table(indexes = { 

@@ -20,18 +20,18 @@
       type:
         type: string
         description: The trigger type (one of "DataDriven", "TimeInterval", "Calendar", "Orbit", "Datatake")
-      workflowName:
+      orderTemplateName:
         type: string
-        description: Short name of the workflow
-      workflowVersion:
+        description: Short name of the order template
+      inputProductType?:
         type: string
-        description: Version of the workflow
-      inputProduct?:
+        description: Product type of the input product class (mandatory for DataDrivenOrderTrigger)
+      inputFileClass?:
         type: string
-        description: Input product type
-      outputProduct?:
+        description: The file class of the input product (optional)
+      inputProcessingMode?:
         type: string
-        description: Output product type
+        description: The processing mode of the input product (optional)
       executionDelay?:
         type: integer
         format: long

@@ -77,7 +77,7 @@ public class OrderManager {
 		List<RestOrder> orderList = new ArrayList<>();
 		
 		for (DataDrivenOrderTrigger trigger : triggerList) {
-			if (trigger.getWorkflow().isEnabled()) {
+			if (trigger.isEnabled() && trigger.getOrderTemplate().isEnabled()) {
 				
 				// Generate processing order from product data and workflow (analogous to ODIP with input product)
 				RestOrder order = 

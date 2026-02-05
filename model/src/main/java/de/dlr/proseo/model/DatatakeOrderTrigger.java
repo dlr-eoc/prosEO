@@ -17,6 +17,9 @@ import jakarta.persistence.Table;
 
 /**
  * Trigger to create a processing order for an expected datatake.
+ * 
+ * @since prosEO 2.1.0
+ * 
  * @author Dr. Thomas Bassler
  */
 @Entity

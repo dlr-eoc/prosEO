@@ -4,7 +4,6 @@
     "missionCode": "S5P",
     "name": "trigger_1",
     "type": "DataDriven",
-    "workflowName": "wf_1",
-    "workflowVersion": "1.0"
+    "orderTemplateName": "ot_1"
 }
     

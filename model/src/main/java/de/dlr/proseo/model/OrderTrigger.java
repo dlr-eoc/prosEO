@@ -14,6 +14,8 @@ import jakarta.persistence.MappedSuperclass;
 /**
  * Base class for all order generation triggers
  * 
+ * @since prosEO 2.1.0
+ * 
  * @author Dr. Thomas Bassler
  */
 @MappedSuperclass
@@ -26,16 +28,19 @@ public abstract class OrderTrigger extends PersistentObject {
 	private Mission mission;
 
     /**
-     * The workflow associated with this trigger
-     */
-	@ManyToOne
-    private Workflow workflow;
-
-    /**
      * An identifier for the trigger (unique within the mission)
      */
     private String name;
     
+	/** Flag indicating whether this trigger is available for use (disabled triggers cannot be used for order generation) */
+	private Boolean enabled;
+	
+    /**
+     * The order template associated with this trigger
+     */
+	@ManyToOne
+    private OrderTemplate orderTemplate;
+
     /**
      * Delay between order generation time (= trigger firing time) and earliest order execution (release) time; default 0
      */
@@ -64,24 +69,6 @@ public abstract class OrderTrigger extends PersistentObject {
 		this.mission = mission;
 	}
 
-	/**
-	 * Gets the associated workflow
-	 * 
-	 * @return the workflow associated with this trigger
-	 */
-	public Workflow getWorkflow() {
-		return workflow;
-	}
-
-	/**
-	 * Sets the associated workflow
-	 * 
-	 * @param workflow the workflow to set
-	 */
-	public void setWorkflow(Workflow workflow) {
-		this.workflow = workflow;
-	}
-
     /**
      * Gets the trigger name
      * 
@@ -99,6 +86,51 @@ public abstract class OrderTrigger extends PersistentObject {
     public void setName(String name) {
         this.name = name;
     }
+
+	/**
+	 * Gets the status of the "enabled" flag
+	 * 
+	 * @return the enabled flag
+	 */
+	public Boolean getEnabled() {
+		return enabled;
+	}
+
+	/**
+	 * Indicates, whether the workflow is available for use
+	 * 
+	 * @return the enabled flag
+	 */
+	public Boolean isEnabled() {
+		return getEnabled();
+	}
+
+	/**
+	 * Sets the status of the "enabled" flag
+	 * 
+	 * @param enabled the status of the enabled flag to set
+	 */
+	public void setEnabled(Boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	/**
+	 * Gets the associated order template
+	 * 
+	 * @return the order template
+	 */
+	public OrderTemplate getOrderTemplate() {
+		return orderTemplate;
+	}
+
+	/**
+	 * Sets the associated order template
+	 * 
+	 * @param orderTemplate the order template to set
+	 */
+	public void setOrderTemplate(OrderTemplate orderTemplate) {
+		this.orderTemplate = orderTemplate;
+	}
 
     /**
      * Gets the processing order execution delay relative to the trigger firing time
@@ -159,8 +191,8 @@ public abstract class OrderTrigger extends PersistentObject {
 
 	@Override
 	public String toString() {
-		return "OrderTrigger [mission=" + (null == mission ? "null" : mission.getCode()) 
-				+ ", workflow=" + (null == workflow ? "null" : workflow.getName()) + ", name=" + name 
+		return "OrderTrigger [mission=" + (null == mission ? "null" : mission.getCode()) + ", name=" + name
+				+ ", orderTemplate=" + (null == orderTemplate ? "null" : orderTemplate.getName()) 
 				+ ", executionDelay=" + executionDelay + ", priority=" + priority + "]";
 	}
 

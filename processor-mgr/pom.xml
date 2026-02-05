@@ -150,7 +150,7 @@
 					<commandlineArgs>-i ${raml-path} -o src/site/resources/${project.artifactId}.html</commandlineArgs>
 				</configuration>
 			</plugin>
-
+			
 			<!-- Build Docker image -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

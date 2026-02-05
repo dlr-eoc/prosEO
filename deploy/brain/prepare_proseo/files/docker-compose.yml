@@ -163,6 +163,17 @@ services:
       options:
         max-size: 100m
     restart: unless-stopped
+  proseo-order-gen:
+    image: ${REGISTRY_URL}/proseo-order-gen:${VERSION}-proseo
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8094:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
   proseo-pgadmin:
     image: ${REGISTRY_URL}/dpage/pgadmin4:latest-proseo
     environment:

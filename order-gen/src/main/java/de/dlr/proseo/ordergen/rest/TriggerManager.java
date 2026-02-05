@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.OrderGenMessage;
-import de.dlr.proseo.logging.messages.ProcessorMgrMessage;
 import de.dlr.proseo.model.CalendarOrderTrigger;
 import de.dlr.proseo.model.DataDrivenOrderTrigger;
 import de.dlr.proseo.model.DatatakeOrderTrigger;
@@ -29,7 +28,6 @@ import de.dlr.proseo.model.TimeIntervalOrderTrigger;
 import de.dlr.proseo.model.enums.TriggerType;
 import de.dlr.proseo.model.rest.model.RestTrigger;
 import de.dlr.proseo.model.service.SecurityService;
-import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ordergen.util.TriggerUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -243,7 +241,7 @@ public class TriggerManager {
 		} else if (sort[0].equalsIgnoreCase("name")) {
 			return first.getName().compareTo(second.getName()) * dir;
 		} else if (sort[0].equalsIgnoreCase("workflow.name")) {
-			return first.getWorkflowName().compareTo(second.getWorkflowName()) * dir;
+			return first.getOrderTemplateName().compareTo(second.getOrderTemplateName()) * dir;
 		}
 		return 0;
 	}
@@ -465,9 +463,9 @@ public class TriggerManager {
 		OrderTrigger changedTrigger = triggerUtil.toModelTrigger(trigger);
 		Boolean triggerChanged = false;
 
-		if (!Objects.equals(modelTrigger.getWorkflow(), changedTrigger.getWorkflow())) {
+		if (!Objects.equals(modelTrigger.getOrderTemplate(), changedTrigger.getOrderTemplate())) {
 			triggerChanged = true;
-			modelTrigger.setWorkflow(changedTrigger.getWorkflow());
+			modelTrigger.setOrderTemplate(changedTrigger.getOrderTemplate());
 		}
 		if (!Objects.equals(modelTrigger.getExecutionDelay(), changedTrigger.getExecutionDelay())) {
 			triggerChanged = true;
