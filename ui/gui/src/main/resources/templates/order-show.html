@@ -17,41 +17,52 @@
       <link rel="stylesheet" href="../static/fragments/bootstrap-multiselect.css" th:href="@{/fragments/bootstrap-multiselect.css}" type="text/css"/>
    </head>
    <body>
+      <!-- Header / top navigation -->
       <header>
          <nav id="proseo-nav"
             class="navbar navbar-expand-lg bg-body-tertiary bg-light fixed-top shadow no-padding">
             <div class="container-fluid no-padding">
+               <!-- Brand / logo linking to home -->
                <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
                   href="/"><img src="proseo_logo.png" class="rounded" width="50"
                   height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+               <!-- Mobile toggle for the sidebar (Bootstrap hamburger) -->
                <button class="navbar-toggler position-absolute d-md-none collapsed"
                   type="button" data-toggle="collapse" data-target="#sidebarMenu"
                   aria-controls="sidebarMenu" aria-expanded="false"
                   aria-label="Toggle navigation">
                <span class="navbar-toggler-icon"></span>
                </button>
+               <!-- Simple breadcrumb area (left side) -->
                <ul class="navbar-nav mr-auto navbar-left">
                   <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
                      th:text="${missioncode}">mission</span></a></li>
                   <li class="p-breadcrumb-item" aria-current="page"><span
                      th:text="#{order-show}">order-show</span></li>
                </ul>
+               <!-- Right-hand navbar content is included from a Thymeleaf fragment -->
                <div th:replace="~{fragments/navbar.html :: navbarRight}"></div>
             </div>
          </nav>
       </header>
+      <!-- Global loading overlay (hidden by default) -->
       <div style="display: none;" class="loading">
          <div class="loader"></div>
       </div>
+      <!-- Sidebar is inserted from a fragment -->
       <div th:replace="~{fragments/sidebar.html :: sidebarMenu}"></div>
+      <!-- Main container for page content -->
       <div class="container-fluid bg-body proseo-body">
+         <!-- If user does NOT have ORDER_READER role, show an access message -->
          <main th:unless="${hasroleorderreader}" role="main"
             class="col-auto px-md-4">
             <h5 class="FAILED">
                <br> <span th:text="#{noroleright}"></span> (ORDER_READER) <br>&nbsp;
             </h5>
          </main>
+         <!-- Main page when user has ORDER_READER role -->
          <main th:if="${hasroleorderreader}" role="main" class="col-auto px-md-4">
+            <!-- Optional warning and error messages rendered by server -->
             <div th:if="${warnmsg != null}" id="warnmsg" name="warnmsg">
                <h5>
                   <br> <span th:text="${warnmsg}"></span>
@@ -62,19 +73,25 @@
                   <br> <span th:text="${errormsg}"></span>
                </h5>
             </div>
+            <!-- Search / filter form. If there is an error message, the form is hidden -->
             <form th:unless="${errormsg != null}" class="needs-validation" name="ord-shw" id="ord-shw" action="javascript:retrieveDataPrim();">
+               <!-- First row of filters -->
                <div class="row py-lg-1">
+                  <!-- Identifier label -->
                   <div class="col-1 pe-lg-0" th:title="#{selectNamePattern}">
                      <p class="input-group-text word-wrap"
                         th:text="#{name}"></p>
                   </div>
+                  <!-- Identifier input text box -->
                   <div class="col-2 ps-lg-0" th:title="#{selectNamePattern}">
                      <input type="text" class="form-control" id="identifier">
                   </div>
+                  <!-- Order state label -->
                   <div class="col-1 pe-lg-0" th:title="#{selectOrderState}">
                      <p class="input-group-text word-wrap"
                         th:text="#{state}"></p>
                   </div>
+                  <!-- Multi-select for order states. Multiple selection allowed -->
                   <div class="col-3 ps-lg-0" th:title="#{selectOrderState}">
                      <select name="orderStates" id="orderStates"  th:title="#{selectOrderState}" multiple="multiple" class="form-select" data-placeholder="&nbsp;">
                         <option>INITIAL</option>
@@ -91,10 +108,12 @@
                         <option>CLOSED</option>
                      </select>
                   </div>
+                  <!-- Product class label -->
                   <div class="col-1 pe-lg-0" th:title="#{selectProductClass}">
                      <p class="input-group-text word-wrap"
                         th:text="#{product}"></p>
                   </div>
+                  <!-- Product classes multi-select. Options are populated from server-side list -->
                   <div class="col-3 ps-lg-0" th:title="#{selectProductClass}">
                      <select name="products" id="products" multiple="multiple" class="form-select" data-placeholder="&nbsp;">
                         <option th:each="prod : ${productclassnames}" th:text="${prod}"
@@ -102,7 +121,9 @@
                      </select>
                   </div>
                </div>
+               <!-- Second row: search button + date range filters -->
                <div class="row py-lg-1">
+                  <!-- Search button (calls retrieveDataPrim with parameter true) -->
                   <div class="col-2">
                      <button id="orderselect" type="button"
                         onclick="retrieveDataPrim(true);"
@@ -110,10 +131,12 @@
                      <span th:text="#{order-show}"></span>
                      </button>
                   </div>
+                  <!-- Start time label -->
                   <div class="col-2 pe-lg-0" th:title="#{selectTime}">
                      <p class="input-group-text word-wrap"
                         th:text="#{starttimebetween}"></p>
                   </div>
+                  <!-- From date input with validation pattern. Uses a custom ProseoDate helper in JS -->
                   <div class="col-3 ps-lg-0" th:title="#{selectTime}">
                      <input type="text" class="form-control" autocomplete="on"
                         pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
@@ -125,6 +148,7 @@
                      <p class="input-group-text word-wrap"
                         th:text="#{and}"></p>
                   </div>
+                  <!-- To date input (same validation as From) -->
                   <div class="col-3 ps-lg-0" th:title="#{selectTime}">
                      <input type="text" class="form-control" autocomplete="on"
                         pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
@@ -134,11 +158,13 @@
                   </div>
                </div>
             </form>
+            <!-- Area with "New Order" link and the orders table -->
             <div th:unless="${errormsg != null}">
                <div class="container-fluid">
                   <h5>
                      <span th:text="#{order}"></span>
                      <span>&nbsp;</span>
+                     <!-- Link to create a new order (id=0 -> new) -->
                      <a id="neworder" type="button"
                         class="bread-link"
                         th:title="#{neworder}"
@@ -146,10 +172,13 @@
                         ><span class="feather-l" data-feather="plus-circle"></span></a>
                   </h5>
                   <div id="orderscontent" name="orderscontent">
+                     <!-- Orders table: header + body populated server-side or via AJAX -->
                      <table class="table table-hover" id="orderTable">
                         <thead class="thead-proseo" id="proseo-thead">
                            <tr>
+                              <!-- select all checkbox in header -->
                               <th><input type="checkbox" id="selectAllOrders" onclick="toggleSelectAll(this)"></th>
+                              <!-- Sortable column headers: clicking triggers selectSort() and toggles classes -->
                               <th onclick="selectSort('select-id')"
                                  class="cursorpointer"><span id="select-id" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" th:text="#{id}">id</span></th>
                               <th onclick="selectSort('select-identifier')"
@@ -163,6 +192,7 @@
                               <th><span>&nbsp;</span></th>
                            </tr>
                         </thead>
+                        <!-- Table body: iterates over server-side orders variable -->
                         <tbody th:unless="${orders} == null">
                            <!-- 				  table-danger   - dark rose -->
                            <!-- 				  table-info     - light blue -->
@@ -170,13 +200,20 @@
                            <!-- 				  table-success  - light green -->
                            <tr th:each="ord : ${orders}"
                               th:id="${ord?.id}">
+                              <!-- Row checkbox (used by the select-all behavior) -->
                               <td><input type="checkbox" class="order-checkbox" th:value="${ord?.id}"></td>
+                              <!-- ID column: link to order detail if user has reader role -->
                               <td><a th:if="${hasroleorderreader}" th:href="'/order?id=' + ${ord?.id}"
                                  th:text="${ord?.id}"></a><span th:unless="${hasroleorderreader}"
                                  th:text="${ord?.id}"></span></td>
+                              <!-- Identifier column -->
                               <td><a th:if="${hasroleorderreader}" th:href="'/order?id=' + ${ord?.id}"
                                  th:text="${ord?.identifier}"></a><span th:unless="${hasroleorderreader}"
                                  th:text="${ord?.identifier}"></span></td>
+                              <!-- Order state column:
+                                 - For PLANNING / RELEASING show a progress bar with number of created jobs
+                                 - Otherwise just show the state name (and FAILED styling if job steps failed)
+                                 -->
                               <td th:if="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')" style="padding: 0px;">
                                  <div th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
                                     th:text="${ord?.orderState}" style="padding: 0.25rem;">
@@ -187,15 +224,19 @@
                                     </div>
                                  </div>
                               </td>
+                              <!-- Non-progress state rendering (simple text with possible FAILED class) -->
                               <td th:unless="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')"
                                  th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
                                  th:text="${ord?.orderState}"></td>
+                              <!-- Start / Stop times -->
                               <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
+                              <!-- Requested product classes: linkable if user has productclassreader role -->
                               <td><a th:if="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}"
                                  class="proseo-list-item"
                                  th:href="'/productclass-show?productClass=' + ${comp}" th:text="' ' + ${comp}"></a><span th:unless="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}"
                                  class="proseo-list-item"
                                  th:text="' ' + ${comp}"></span></td>
+                              <!-- Job step state icons: each span shows if a certain state is present in ord.jobStepStates -->
                               <td>
                                  <span title="READY" th:class="${#lists.contains(ord?.jobStepStates, 'READY')} == true?'READY-c':'jobstepstate'">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
@@ -223,6 +264,7 @@
                                     </svg>
                                  </span>
                               </td>
+                              <!-- Progress bar for percent completed/failed/running -->
                               <td>
                                  <div th:title="${ord?.percentCompleted + ord?.percentFailed} + '% finished'" class="progress">
                                     <div class="progress-bar COMPLETED" role="progressbar" th:style="'width: ' + ${ord?.percentCompleted} + '%;'"
@@ -239,20 +281,24 @@
                                        th:title="${ord?.percentRunning} + '% running'"></div>
                                  </div>
                               </td>
+                              <!-- Per-row action menu included from fragment -->
                               <td>
                                  <div th:insert="~{fragments/ordermenu.html :: orderMenu}"></div>
                               </td>
                            </tr>
                         </tbody>
                      </table>
+                     <!-- Pagination controls (alternatePageNav fragment) -->
                      <div th:replace="~{fragments/navbar.html :: alternatePageNav}"></div>
                   </div>
                </div>
             </div>
+            <!-- Page footer fragment -->
             <div th:insert="~{fragments/footer.html :: footer}"></div>
          </main>
       </div>
    </body>
+   <!-- External scripts: feather icons, jQuery, popper, Chart.js -->
    <script src="https://unpkg.com/feather-icons"></script>
    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
    <script src="https://code.jquery.com/jquery-3.5.1.js"
@@ -264,10 +310,12 @@
       crossorigin="anonymous"></script>
    <script
       src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+   <!-- Local JS fragments (Thymeleaf-resolved paths) -->
    <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
    <script src="../static/fragments/proseo-date.js" th:src="@{/fragments/proseo-date.js}" type="text/javascript"></script>
    <script src="../static/fragments/bootstrap-multiselect.js" th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
    <script src="../static/fragments/jquery.serialize-object.js" th:src="@{/fragments/jquery.serialize-object.js}" type="text/javascript"></script>
+   <!-- Small script: Enter on identifier triggers the search button -->
    <script>
       var input = document.getElementById("identifier");
       input.addEventListener("keyup", function(event) {
@@ -277,15 +325,18 @@
       }
       });
    </script>
+   <!-- Main page-specific JavaScript. This block is Thymeleaf inlined to allow server boolean substitution -->
    <script type="text/javascript" th:inline="javascript">
+      // Opens the wiki page in a new window (helper)
       function wikiPage() {
        window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Order#order');
       }
-      // Global variables
+
+      // ---------- Global variables used by retrieval / pagination / filtering ----------
       var currentPage = 1; // Current page number
       var pageSize = 20; // Maximum objects per page
 
-      // order filters
+      // order filters (these are populated from URL params or the UI)
       var identifier = null;
       var products = null;
       var orderStates = null;
@@ -297,11 +348,14 @@
       var sortCol = "id";
       var upText = "true";
 
+      // Attach change handlers for the date inputs to run validation when changed
       function addEventHandler() {
           $("input[name='fromDate']").change(checkTime);
           $("input[name='toDate']").change(checkTime);
       };
 
+      // Attempts to parse the provided value into a ProseoDate with the given fallback types.
+      // ProseoDate is defined in proseo-date.js and wraps date parsing/normalization logic.
       function getDate(val, up) {
         var start = new ProseoDate(val, 'TIME');
         if (start == null || !start.isValid()) {
@@ -310,12 +364,14 @@
         if (start == null || !start.isValid()) {
           start = new ProseoDate(val, 'DAY');
           if (up && start.isValid()) {
+            // If "up" is true, shift to the end of the day (norm(-1) presumably adjusts bounds)
             start.norm(-1);
           }
         }
         return start;
       }
 
+      // Return a normalized date string or null if invalid
       function getDateString(val, up) {
         var date = getDate(val, up);
         if (date != null && date.isValid()) {
@@ -325,14 +381,16 @@
         }
       }
 
+      // Helper bound to an input that allows pressing Enter to confirm page-size change
       function inputSetPageSize() {
        if (event.key === "Enter") {
-          // Cancel the default action, if needed
+          // Prevent default enter behaviour and trigger the page size button click
           event.preventDefault();
           document.getElementById("pageSizeButton").click();
         }
       }
 
+      // Validate the time input; uses HTML5 input validity and ProseoDate parsing
       function checkTime(elem) {
           var startElem = null;
           if (elem != null && $(elem).is('input')) {
@@ -349,15 +407,19 @@
           if (startElem.val() == '' || (start != null && start.isValid())) {
             startElem[0].setCustomValidity('');
           } else {
+            // If invalid, set a localized custom validity message (Thymeleaf resolves #{invaliddate})
             startElem[0].setCustomValidity([[#{invaliddate}]]);
           }
           startElem[0].form.classList.add('was-validated')
       }
 
+      // Shortcut to trigger planning for an order (wrapper)
       function plan(oId, state, facility) {
       doPlan(oId, facility);
       };
 
+      // Performs AJAX POST to set order state to PLAN for a given order id and facility.
+      // Only runs if the user has the planner role (server fills [[${hasroleorderplanner}]])
       function doPlan(oId, facility) {
         if ([[${hasroleorderplanner}]]) {
           showLoader();
@@ -370,24 +432,26 @@
       		    method : "POST",
       		    success : function(res, textStatus, jqXHR) {
                 hideLoader();
+                // Server may respond with custom headers to indicate warnings
                 if (jqXHR.getResponseHeader("warnstatus") != null && jqXHR.getResponseHeader("warnstatus") == 'productfound') {
                      alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
                      retrieveDataPrim(false);
                  } else if (jqXHR.getResponseHeader("warnstatus") != null) {
-      		    		  alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
-      		    	} else {
-      		    		retrieveDataPrim(false);
-      				  }
+      				  alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
+      			} else {
+      				retrieveDataPrim(false);
+      			  }
       		    },
       		    error : function(jqXHR, textStatus, errorThrown) {
-      				    hideLoader();
-      				    console.log(errorThrown);
-      				    alert("Error: " + errorThrown);
+      			    hideLoader();
+      			    console.log(errorThrown);
+      			    alert("Error: " + errorThrown);
       		    }
           });
         }
       };
 
+      // Generic function to set an order state via AJAX (POST)
       function setState(oId, state) {
         if ([[${hasroleorderreader}]]) {
           showLoader();
@@ -415,10 +479,11 @@
         }
       };
 
+      // Sets UI controls based on the current parameters (used after reading URL params)
       function setSelected() {
       // identifier
       $('#identifier').val(getURLParam('identifier'));
-      // states
+      // states -> use bootstrap-multiselect API to select existing values
       $('#orderStates').multiselect('deselectAll', false);
       if (orderStates != null && orderStates.length > 0) {
         $('#orderStates').multiselect('select', orderStates);
@@ -434,6 +499,7 @@
       }
       }
 
+      // Build the querystring from the current parameters and push to browser history
       function setHTMLParams() {
         // build parameter string
         var paramString = "";
@@ -450,6 +516,7 @@
         }
       }
 
+      // Read parameters from URL and map to variables
       function readHTMLParams() {
        readPageHTMLParams();
        readSortHTMLParams();
@@ -460,6 +527,7 @@
        toDate = getURLParam('toDate');
       }
 
+      // Consolidate UI values into the parameter state and detect changes
       function setParams(ele, selup, newPage, newPageSize) {
        var newIdentifier = "";
        var newProducts = null;
@@ -495,6 +563,7 @@
         	hasChanged = true;
         }
 
+        // Save new values into global variables
         identifier = newIdentifier;
         products = newProducts;
         orderStates = newOrderStates;
@@ -506,10 +575,12 @@
         }
       }
 
+      // Triggered when the user clicks the search button or presses Enter - validates and optionally sets params
       function retrieveDataPrim(setPar) {
       if (!$('#ord-shw')[0].checkValidity()) {
         //event.preventDefault();
         //event.stopPropagation();
+        // If HTML5 validation fails, mark form as validated so invalid-feedback appears
         $('#ord-shw')[0].classList.add('was-validated');
       } else {
         $('#ord-shw')[0].classList.add('was-validated');
@@ -526,6 +597,7 @@
       }
       }
 
+      // Page navigation helpers (delegates to retrieveData)
       function updateTable(newPage, newPageSize) {
       retrieveDataPage(newPage, newPageSize);
       }
@@ -535,10 +607,12 @@
       retrieveData();
       }
 
+      // Main AJAX retrieval function: builds URL from params and requests HTML partial to fill #orderscontent
       function retrieveData() {
         if ([[${hasroleorderreader}]]) {
       		showLoader();
       		setParams(null, null, null, null);
+            // Initialize bootstrap-multiselect widgets with desired options
             $('#orderStates').multiselect({
                 buttonWidth : '99%',
                 enableFiltering : true,
@@ -614,6 +688,7 @@
       			  url : url,
       			  method : "GET",
       			  success : function(res, textStatus, jqXHR) {
+        			    // replace the orders content with returned HTML
       				    $("#orderscontent").html(res);
       				    readHTMLParams();
       				    hideLoader();
@@ -634,6 +709,7 @@
       }
       };
 
+      // -------------------- Utility: Select All Toggle --------------------
       /**
       * Toggles selection of all order checkboxes in the table.
       *
@@ -670,6 +746,7 @@
         }
       });
    </script>
+   <!-- Final window load / popstate handling: initialize page -->
    <script>
       // Read the HTML parameters from URI and retrieve the corresponding data
       function loadWindow() {
@@ -690,7 +767,7 @@
           };
       };
 
-      // re-load window to read and set all HTML parameters
+      // re-load window to read and set all HTML parameters when the history changes (back/forward)
       $(window).on('popstate', function (e) {
         loadWindow();
       });
