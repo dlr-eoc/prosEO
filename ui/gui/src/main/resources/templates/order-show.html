@@ -1,644 +1,698 @@
 <!doctype html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
-  <head>
-    <meta charset="utf-8">
+   <head>
+      <meta charset="utf-8">
       <meta name="viewport"
-        content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <title th:text="#{order} + ' | ' + #{proseo}">proseo</title>
-        <!-- Bootstrap core CSS -->
-        <link
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-          rel="stylesheet">
-        <script
-          src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-        <!-- Custom styles for prosEO -->
-        <link href="../static/fragments/proseo.css"
-          th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css">
-          <link rel="stylesheet" href="../static/fragments/bootstrap-multiselect.css" th:href="@{/fragments/bootstrap-multiselect.css}" type="text/css"/>
-  </head>
-
-  <body>
-  <header>
-    <nav id="proseo-nav"
-      class="navbar navbar-expand-lg bg-body-tertiary bg-light fixed-top shadow no-padding">
-      <div class="container-fluid no-padding">
-        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
-          href="/"><img src="proseo_logo.png" class="rounded" width="50"
-          height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
-        <button class="navbar-toggler position-absolute d-md-none collapsed"
-          type="button" data-toggle="collapse" data-target="#sidebarMenu"
-          aria-controls="sidebarMenu" aria-expanded="false"
-          aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <ul class="navbar-nav mr-auto navbar-left">
-          <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
-              th:text="${missioncode}">mission</span></a></li>
-          <li class="p-breadcrumb-item" aria-current="page"><span
-            th:text="#{order-show}">order-show</span></li>
-        </ul>
-        <div th:replace="~{fragments/navbar.html :: navbarRight}"></div>
+         content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <title th:text="#{order} + ' | ' + #{proseo}">proseo</title>
+      <!-- Bootstrap core CSS -->
+      <link
+         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+         rel="stylesheet">
+      <script
+         src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+      <!-- Custom styles for prosEO -->
+      <link href="../static/fragments/proseo.css"
+         th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css">
+      <link rel="stylesheet" href="../static/fragments/bootstrap-multiselect.css" th:href="@{/fragments/bootstrap-multiselect.css}" type="text/css"/>
+   </head>
+   <body>
+      <header>
+         <nav id="proseo-nav"
+            class="navbar navbar-expand-lg bg-body-tertiary bg-light fixed-top shadow no-padding">
+            <div class="container-fluid no-padding">
+               <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+                  href="/"><img src="proseo_logo.png" class="rounded" width="50"
+                  height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+               <button class="navbar-toggler position-absolute d-md-none collapsed"
+                  type="button" data-toggle="collapse" data-target="#sidebarMenu"
+                  aria-controls="sidebarMenu" aria-expanded="false"
+                  aria-label="Toggle navigation">
+               <span class="navbar-toggler-icon"></span>
+               </button>
+               <ul class="navbar-nav mr-auto navbar-left">
+                  <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
+                     th:text="${missioncode}">mission</span></a></li>
+                  <li class="p-breadcrumb-item" aria-current="page"><span
+                     th:text="#{order-show}">order-show</span></li>
+               </ul>
+               <div th:replace="~{fragments/navbar.html :: navbarRight}"></div>
+            </div>
+         </nav>
+      </header>
+      <div style="display: none;" class="loading">
+         <div class="loader"></div>
       </div>
-    </nav>
-  </header>
-  <div style="display: none;" class="loading">
-    <div class="loader"></div>
-  </div>
-
-  <div th:replace="~{fragments/sidebar.html :: sidebarMenu}"></div>
-  <div class="container-fluid bg-body proseo-body">
-      <main th:unless="${hasroleorderreader}" role="main"
-        class="col-auto px-md-4">
-        <h5 class="FAILED">
-          <br> <span th:text="#{noroleright}"></span> (ORDER_READER) <br>&nbsp;
-        </h5>
-      </main>
-      <main th:if="${hasroleorderreader}" role="main" class="col-auto px-md-4">
-        <div th:if="${warnmsg != null}" id="warnmsg" name="warnmsg">
-          <h5>
-            <br> <span th:text="${warnmsg}"></span></h5>
-        </div>
-        <div th:if="${errormsg != null}" id="errormsg" name="errormsg" class="FAILED">
-          <h5>
-            <br> <span th:text="${errormsg}"></span></h5>
-        </div>
-
-				<form th:unless="${errormsg != null}" class="needs-validation" name="ord-shw" id="ord-shw" action="javascript:retrieveDataPrim();">
-          <div class="row py-lg-1">
-            <div class="col-1 pe-lg-0" th:title="#{selectNamePattern}">
-              <p class="input-group-text word-wrap"
-                th:text="#{name}"></p>
+      <div th:replace="~{fragments/sidebar.html :: sidebarMenu}"></div>
+      <div class="container-fluid bg-body proseo-body">
+         <main th:unless="${hasroleorderreader}" role="main"
+            class="col-auto px-md-4">
+            <h5 class="FAILED">
+               <br> <span th:text="#{noroleright}"></span> (ORDER_READER) <br>&nbsp;
+            </h5>
+         </main>
+         <main th:if="${hasroleorderreader}" role="main" class="col-auto px-md-4">
+            <div th:if="${warnmsg != null}" id="warnmsg" name="warnmsg">
+               <h5>
+                  <br> <span th:text="${warnmsg}"></span>
+               </h5>
             </div>
-            <div class="col-2 ps-lg-0" th:title="#{selectNamePattern}">
-              <input type="text" class="form-control" id="identifier">
+            <div th:if="${errormsg != null}" id="errormsg" name="errormsg" class="FAILED">
+               <h5>
+                  <br> <span th:text="${errormsg}"></span>
+               </h5>
             </div>
-            <div class="col-1 pe-lg-0" th:title="#{selectOrderState}">
-              <p class="input-group-text word-wrap"
-                th:text="#{state}"></p>
-            </div>
-            <div class="col-3 ps-lg-0" th:title="#{selectOrderState}">
-              <select name="orderStates" id="orderStates"  th:title="#{selectOrderState}" multiple="multiple" class="form-select" data-placeholder="&nbsp;">
-                <option>INITIAL</option>
-                <option>APPROVED</option>
-                <option>PLANNING</option>
-                <option>PLANNING_FAILED</option>
-                <option>PLANNED</option>
-                <option>RELEASING</option>
-                <option>RELEASED</option>
-                <option>RUNNING</option>
-                <option>SUSPENDING</option>
-                <option>COMPLETED</option>
-                <option>FAILED</option>
-                <option>CLOSED</option>
-              </select>
-            </div>
-            <div class="col-1 pe-lg-0" th:title="#{selectProductClass}">
-              <p class="input-group-text word-wrap"
-                th:text="#{product}"></p>
-            </div>
-            <div class="col-3 ps-lg-0" th:title="#{selectProductClass}">
-              <select name="products" id="products" multiple="multiple" class="form-select" data-placeholder="&nbsp;">
-                  <option th:each="prod : ${productclassnames}" th:text="${prod}"
-                    th:label="${prod}"></option>
-              </select>
-            </div>
-          </div>
-          <div class="row py-lg-1">
-            <div class="col-2">
-              <button id="orderselect" type="button"
-                    onclick="retrieveDataPrim(true);"
-                    class="btn btn-sm btn-outline-secondary">
-                    <span th:text="#{order-show}"></span>
-                  </button>
-            </div>
-            <div class="col-2 pe-lg-0" th:title="#{selectTime}">
-              <p class="input-group-text word-wrap"
-                th:text="#{starttimebetween}"></p>
-            </div>
-            <div class="col-3 ps-lg-0" th:title="#{selectTime}">
-                    <input type="text" class="form-control" autocomplete="on"
-                      pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
-                      th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
-                      name="fromDate" id="fromDate" data-type="TIME">
-                    <div class="invalid-feedback" th:text="#{invaliddate}"></div>
-            </div>
-            <div class="col-1 pe-lg-0" th:title="#{selectTime}">
-              <p class="input-group-text word-wrap"
-                th:text="#{and}"></p>
-            </div>
-            <div class="col-3 ps-lg-0" th:title="#{selectTime}">
-                    <input type="text" class="form-control" autocomplete="on"
-                      pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
-                      th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
-                      name="toDate" id="toDate" data-type="TIME">
-                    <div class="invalid-feedback" th:text="#{invaliddate}"></div>
-            </div>
-          </div>
-				</form>
-
-          <div th:unless="${errormsg != null}">
-            <div class="container-fluid">
-              <h5>
-                <span th:text="#{order}"></span>
-                <span>&nbsp;</span>
-                <a id="neworder" type="button"
+            <form th:unless="${errormsg != null}" class="needs-validation" name="ord-shw" id="ord-shw" action="javascript:retrieveDataPrim();">
+               <div class="row py-lg-1">
+                  <div class="col-1 pe-lg-0" th:title="#{selectNamePattern}">
+                     <p class="input-group-text word-wrap"
+                        th:text="#{name}"></p>
+                  </div>
+                  <div class="col-2 ps-lg-0" th:title="#{selectNamePattern}">
+                     <input type="text" class="form-control" id="identifier">
+                  </div>
+                  <div class="col-1 pe-lg-0" th:title="#{selectOrderState}">
+                     <p class="input-group-text word-wrap"
+                        th:text="#{state}"></p>
+                  </div>
+                  <div class="col-3 ps-lg-0" th:title="#{selectOrderState}">
+                     <select name="orderStates" id="orderStates"  th:title="#{selectOrderState}" multiple="multiple" class="form-select" data-placeholder="&nbsp;">
+                        <option>INITIAL</option>
+                        <option>APPROVED</option>
+                        <option>PLANNING</option>
+                        <option>PLANNING_FAILED</option>
+                        <option>PLANNED</option>
+                        <option>RELEASING</option>
+                        <option>RELEASED</option>
+                        <option>RUNNING</option>
+                        <option>SUSPENDING</option>
+                        <option>COMPLETED</option>
+                        <option>FAILED</option>
+                        <option>CLOSED</option>
+                     </select>
+                  </div>
+                  <div class="col-1 pe-lg-0" th:title="#{selectProductClass}">
+                     <p class="input-group-text word-wrap"
+                        th:text="#{product}"></p>
+                  </div>
+                  <div class="col-3 ps-lg-0" th:title="#{selectProductClass}">
+                     <select name="products" id="products" multiple="multiple" class="form-select" data-placeholder="&nbsp;">
+                        <option th:each="prod : ${productclassnames}" th:text="${prod}"
+                           th:label="${prod}"></option>
+                     </select>
+                  </div>
+               </div>
+               <div class="row py-lg-1">
+                  <div class="col-2">
+                     <button id="orderselect" type="button"
+                        onclick="retrieveDataPrim(true);"
+                        class="btn btn-sm btn-outline-secondary">
+                     <span th:text="#{order-show}"></span>
+                     </button>
+                  </div>
+                  <div class="col-2 pe-lg-0" th:title="#{selectTime}">
+                     <p class="input-group-text word-wrap"
+                        th:text="#{starttimebetween}"></p>
+                  </div>
+                  <div class="col-3 ps-lg-0" th:title="#{selectTime}">
+                     <input type="text" class="form-control" autocomplete="on"
+                        pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
+                        th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
+                        name="fromDate" id="fromDate" data-type="TIME">
+                     <div class="invalid-feedback" th:text="#{invaliddate}"></div>
+                  </div>
+                  <div class="col-1 pe-lg-0" th:title="#{selectTime}">
+                     <p class="input-group-text word-wrap"
+                        th:text="#{and}"></p>
+                  </div>
+                  <div class="col-3 ps-lg-0" th:title="#{selectTime}">
+                     <input type="text" class="form-control" autocomplete="on"
+                        pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
+                        th:title="#{selectTime}" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
+                        name="toDate" id="toDate" data-type="TIME">
+                     <div class="invalid-feedback" th:text="#{invaliddate}"></div>
+                  </div>
+               </div>
+            </form>
+            <div th:unless="${errormsg != null}">
+               <div class="container-fluid">
+                  <h5>
+                     <span th:text="#{order}"></span>
+                     <span>&nbsp;</span>
+                     <a id="neworder" type="button"
                         class="bread-link"
                         th:title="#{neworder}"
                         href="/order-edit?id=0"
-                      ><span class="feather-l" data-feather="plus-circle"></span></a>
-              </h5>
-
-              <div id="orderscontent" name="orderscontent">
-                <table class="table table-hover" id="orderTable">
-                  <thead class="thead-proseo" id="proseo-thead">
-                    <tr>
-                      <th onclick="selectSort('select-id')"
-                        class="cursorpointer"><span id="select-id" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" th:text="#{id}">id</span></th>
-                      <th onclick="selectSort('select-identifier')"
-                        class="cursorpointer"><span id="select-identifier" th:class="((${selcol} == 'identifier' ? ${selorder} : ''))" th:text="#{name}">name</span></th>
-                      <th onclick="selectSort('select-orderState')"
-                        class="cursorpointer"><span id="select-orderState" th:class="((${selcol} == 'orderState' ? ${selorder} : ''))" th:text="#{state}">state</span></th>
-                      <th><span th:text="#{startstoptime}">startstoptime</span></th>
-                      <th><span th:text="#{product}">product</span></th>
-                      <th><span th:text="#{jobstepstates}">jobstepstates</span></th>
-                      <th><span th:text="#{percentcomplete}">jobstepstates</span></th>
-                      <th><span>&nbsp;</span></th>
-                    </tr>
-                  </thead>
-                  <tbody th:unless="${orders} == null">
-                    <!-- 				  table-danger   - dark rose -->
-                    <!-- 				  table-info     - light blue -->
-                    <!-- 				  table-warning  - light sand -->
-                    <!-- 				  table-success  - light green -->
-                    <tr th:each="ord : ${orders}"
-                      th:id="${ord?.id}">
-                      <td><a th:if="${hasroleorderreader}" th:href="'/order?id=' + ${ord?.id}"
-                          th:text="${ord?.id}"></a><span th:unless="${hasroleorderreader}"
-                          th:text="${ord?.id}"></span></td>
-                      <td><a th:if="${hasroleorderreader}" th:href="'/order?id=' + ${ord?.id}"
-                          th:text="${ord?.identifier}"></a><span th:unless="${hasroleorderreader}"
-                          th:text="${ord?.identifier}"></span></td>
-
-                      <td th:if="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')" style="padding: 0px;">
-                        <div th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
-                             th:text="${ord?.orderState}" style="padding: 0.25rem;">
-                        </div>
-                        <div th:title="${ord?.createdJobs} + ' jobs of ' + ${ord?.expectedJobs}" class="progress" style="min-height: 10px; border-radius: 0px;">
-                          <div th:class="'progress-bar ' + ${ord?.orderState}" role="progressbar" th:style="'width: ' + ${#numbers.formatInteger((100.0 / ord?.expectedJobs * ord?.createdJobs),1)} + '%;'"
-                               th:aria-valuenow="${ord?.createdJobs}" aria-valuemin="0" th:aria-valuemax="${ord?.expectedJobs}">
-                          </div>
-                        </div>
-                      </td>
-                      <td th:unless="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')"
-                          th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
-                          th:text="${ord?.orderState}"></td>
-                      <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
-                      <td><a th:if="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}"
-                       class="proseo-list-item"
-                       th:href="'/productclass-show?productClass=' + ${comp}" th:text="' ' + ${comp}"></a><span th:unless="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}"
-                       class="proseo-list-item"
-                       th:text="' ' + ${comp}"></span></td>
-                      <td>
-                        <span title="READY" th:class="${#lists.contains(ord?.jobStepStates, 'READY')} == true?'READY-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
-                        <span title="WAITING_INPUT" th:class="${#lists.contains(ord?.jobStepStates, 'WAITING_INPUT')} == true?'WAITING_INPUT-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
-                        <span title="RUNNING" th:class="${#lists.contains(ord?.jobStepStates, 'RUNNING')} == true?'RUNNING-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
-                        <span title="FAILED" th:class="${#lists.contains(ord?.jobStepStates, 'FAILED')} == true?'FAILED-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
-                        <span title="COMPLETED" th:class="${#lists.contains(ord?.jobStepStates, 'COMPLETED')} == true?'COMPLETED-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
-                      </td>
-                      <td>
-                      <div th:title="${ord?.percentCompleted + ord?.percentFailed} + '% finished'" class="progress">
-                        <div class="progress-bar COMPLETED" role="progressbar" th:style="'width: ' + ${ord?.percentCompleted} + '%;'"
-                            th:aria-valuenow="${ord?.percentCompleted}" aria-valuemin="0" aria-valuemax="100"
-                            th:text="${ord?.percentCompleted} + '%'"
-                            th:title="${ord?.percentCompleted} + '% completed'"></div>
-                        <div class="progress-bar FAILED" role="progressbar" th:style="'width: ' + ${ord?.percentFailed} + '%;'"
-                            th:aria-valuenow="${ord?.percentFailed}" aria-valuemin="0" aria-valuemax="100"
-                            th:text="${ord?.percentFailed} + '%'"
-                            th:title="${ord?.percentFailed} + '% failed'"></div>
-                        <div class="progress-bar RUNNING" role="progressbar" th:style="'width: ' + ${ord?.percentRunning} + '%;'"
-                            th:aria-valuenow="${ord?.percentRunning}" aria-valuemin="0" aria-valuemax="100"
-                            th:text="${ord?.percentRunning} + '%'"
-                            th:title="${ord?.percentRunning} + '% running'"></div>
-                      </div>
-                      </td>
-                      <td><div th:insert="~{fragments/ordermenu.html :: orderMenu}"></div></td>
-                    </tr>
-                  </tbody>
-                </table>
-                <div th:replace="~{fragments/navbar.html :: alternatePageNav}"></div>
-              </div>
+                        ><span class="feather-l" data-feather="plus-circle"></span></a>
+                  </h5>
+                  <div id="orderscontent" name="orderscontent">
+                     <table class="table table-hover" id="orderTable">
+                        <thead class="thead-proseo" id="proseo-thead">
+                           <tr>
+                              <th><input type="checkbox" id="selectAllOrders" onclick="toggleSelectAll(this)"></th>
+                              <th onclick="selectSort('select-id')"
+                                 class="cursorpointer"><span id="select-id" class="select-up" th:class="((${selcol} == 'id' ? ${selorder} : ''))" th:text="#{id}">id</span></th>
+                              <th onclick="selectSort('select-identifier')"
+                                 class="cursorpointer"><span id="select-identifier" th:class="((${selcol} == 'identifier' ? ${selorder} : ''))" th:text="#{name}">name</span></th>
+                              <th onclick="selectSort('select-orderState')"
+                                 class="cursorpointer"><span id="select-orderState" th:class="((${selcol} == 'orderState' ? ${selorder} : ''))" th:text="#{state}">state</span></th>
+                              <th><span th:text="#{startstoptime}">startstoptime</span></th>
+                              <th><span th:text="#{product}">product</span></th>
+                              <th><span th:text="#{jobstepstates}">jobstepstates</span></th>
+                              <th><span th:text="#{percentcomplete}">jobstepstates</span></th>
+                              <th><span>&nbsp;</span></th>
+                           </tr>
+                        </thead>
+                        <tbody th:unless="${orders} == null">
+                           <!-- 				  table-danger   - dark rose -->
+                           <!-- 				  table-info     - light blue -->
+                           <!-- 				  table-warning  - light sand -->
+                           <!-- 				  table-success  - light green -->
+                           <tr th:each="ord : ${orders}"
+                              th:id="${ord?.id}">
+                              <td><input type="checkbox" class="order-checkbox" th:value="${ord?.id}"></td>
+                              <td><a th:if="${hasroleorderreader}" th:href="'/order?id=' + ${ord?.id}"
+                                 th:text="${ord?.id}"></a><span th:unless="${hasroleorderreader}"
+                                 th:text="${ord?.id}"></span></td>
+                              <td><a th:if="${hasroleorderreader}" th:href="'/order?id=' + ${ord?.id}"
+                                 th:text="${ord?.identifier}"></a><span th:unless="${hasroleorderreader}"
+                                 th:text="${ord?.identifier}"></span></td>
+                              <td th:if="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')" style="padding: 0px;">
+                                 <div th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
+                                    th:text="${ord?.orderState}" style="padding: 0.25rem;">
+                                 </div>
+                                 <div th:title="${ord?.createdJobs} + ' jobs of ' + ${ord?.expectedJobs}" class="progress" style="min-height: 10px; border-radius: 0px;">
+                                    <div th:class="'progress-bar ' + ${ord?.orderState}" role="progressbar" th:style="'width: ' + ${#numbers.formatInteger((100.0 / ord?.expectedJobs * ord?.createdJobs),1)} + '%;'"
+                                       th:aria-valuenow="${ord?.createdJobs}" aria-valuemin="0" th:aria-valuemax="${ord?.expectedJobs}">
+                                    </div>
+                                 </div>
+                              </td>
+                              <td th:unless="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')"
+                                 th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
+                                 th:text="${ord?.orderState}"></td>
+                              <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
+                              <td><a th:if="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}"
+                                 class="proseo-list-item"
+                                 th:href="'/productclass-show?productClass=' + ${comp}" th:text="' ' + ${comp}"></a><span th:unless="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}"
+                                 class="proseo-list-item"
+                                 th:text="' ' + ${comp}"></span></td>
+                              <td>
+                                 <span title="READY" th:class="${#lists.contains(ord?.jobStepStates, 'READY')} == true?'READY-c':'jobstepstate'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                                       <circle cx="12" cy="12" r="10"></circle>
+                                    </svg>
+                                 </span>
+                                 <span title="WAITING_INPUT" th:class="${#lists.contains(ord?.jobStepStates, 'WAITING_INPUT')} == true?'WAITING_INPUT-c':'jobstepstate'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                                       <circle cx="12" cy="12" r="10"></circle>
+                                    </svg>
+                                 </span>
+                                 <span title="RUNNING" th:class="${#lists.contains(ord?.jobStepStates, 'RUNNING')} == true?'RUNNING-c':'jobstepstate'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                                       <circle cx="12" cy="12" r="10"></circle>
+                                    </svg>
+                                 </span>
+                                 <span title="FAILED" th:class="${#lists.contains(ord?.jobStepStates, 'FAILED')} == true?'FAILED-c':'jobstepstate'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                                       <circle cx="12" cy="12" r="10"></circle>
+                                    </svg>
+                                 </span>
+                                 <span title="COMPLETED" th:class="${#lists.contains(ord?.jobStepStates, 'COMPLETED')} == true?'COMPLETED-c':'jobstepstate'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                                       <circle cx="12" cy="12" r="10"></circle>
+                                    </svg>
+                                 </span>
+                              </td>
+                              <td>
+                                 <div th:title="${ord?.percentCompleted + ord?.percentFailed} + '% finished'" class="progress">
+                                    <div class="progress-bar COMPLETED" role="progressbar" th:style="'width: ' + ${ord?.percentCompleted} + '%;'"
+                                       th:aria-valuenow="${ord?.percentCompleted}" aria-valuemin="0" aria-valuemax="100"
+                                       th:text="${ord?.percentCompleted} + '%'"
+                                       th:title="${ord?.percentCompleted} + '% completed'"></div>
+                                    <div class="progress-bar FAILED" role="progressbar" th:style="'width: ' + ${ord?.percentFailed} + '%;'"
+                                       th:aria-valuenow="${ord?.percentFailed}" aria-valuemin="0" aria-valuemax="100"
+                                       th:text="${ord?.percentFailed} + '%'"
+                                       th:title="${ord?.percentFailed} + '% failed'"></div>
+                                    <div class="progress-bar RUNNING" role="progressbar" th:style="'width: ' + ${ord?.percentRunning} + '%;'"
+                                       th:aria-valuenow="${ord?.percentRunning}" aria-valuemin="0" aria-valuemax="100"
+                                       th:text="${ord?.percentRunning} + '%'"
+                                       th:title="${ord?.percentRunning} + '% running'"></div>
+                                 </div>
+                              </td>
+                              <td>
+                                 <div th:insert="~{fragments/ordermenu.html :: orderMenu}"></div>
+                              </td>
+                           </tr>
+                        </tbody>
+                     </table>
+                     <div th:replace="~{fragments/navbar.html :: alternatePageNav}"></div>
+                  </div>
+               </div>
             </div>
-          </div>
-          <div th:insert="~{fragments/footer.html :: footer}"></div>
-        </main>
+            <div th:insert="~{fragments/footer.html :: footer}"></div>
+         </main>
       </div>
-  </body>
-<script src="https://unpkg.com/feather-icons"></script>
-  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.5.1.js"
-    integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
-    crossorigin="anonymous"></script>
-  <script
-    src="sha384-sha384-G/EV+4j2dNv+tEPo3+https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-    integrity="sha384-sha384-G/EV+4j2dNvsha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-    crossorigin="anonymous"></script>
-  <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
-  <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
-  <script src="../static/fragments/proseo-date.js" th:src="@{/fragments/proseo-date.js}" type="text/javascript"></script>
-  <script src="../static/fragments/bootstrap-multiselect.js" th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
-  <script src="../static/fragments/jquery.serialize-object.js" th:src="@{/fragments/jquery.serialize-object.js}" type="text/javascript"></script>
-
-<script>
-var input = document.getElementById("identifier");
-input.addEventListener("keyup", function(event) {
-if (event.key === "Enter") {
-    event.preventDefault();
-    document.getElementById("orderselect").click();
-}
-});
-</script>
-  <script type="text/javascript" th:inline="javascript">
-  function wikiPage() {
-	  window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Order#order');
-  }
-  // Global variables
-  var currentPage = 1; // Current page number
-  var pageSize = 20; // Maximum objects per page
-
-  // order filters
-  var identifier = null;
-  var products = null;
-	var orderStates = null;
-  var fromDate = null;
-  var toDate = null;
-
-  // sorting
-  var sortCols = ['select-id', 'select-identifier', 'select-orderState'];
-  var sortCol = "id";
-  var upText = "true";
-
-  function addEventHandler() {
-      $("input[name='fromDate']").change(checkTime);
-      $("input[name='toDate']").change(checkTime);
-  };
-
-  function getDate(val, up) {
-    var start = new ProseoDate(val, 'TIME');
-    if (start == null || !start.isValid()) {
-      start = new ProseoDate(val, 'DAYHOURS');
-    }
-    if (start == null || !start.isValid()) {
-      start = new ProseoDate(val, 'DAY');
-      if (up && start.isValid()) {
-        start.norm(-1);
+   </body>
+   <script src="https://unpkg.com/feather-icons"></script>
+   <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+   <script src="https://code.jquery.com/jquery-3.5.1.js"
+      integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+      crossorigin="anonymous"></script>
+   <script
+      src="sha384-sha384-G/EV+4j2dNv+tEPo3+https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+      integrity="sha384-sha384-G/EV+4j2dNvsha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+      crossorigin="anonymous"></script>
+   <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
+   <script src="../static/fragments/proseo-date.js" th:src="@{/fragments/proseo-date.js}" type="text/javascript"></script>
+   <script src="../static/fragments/bootstrap-multiselect.js" th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
+   <script src="../static/fragments/jquery.serialize-object.js" th:src="@{/fragments/jquery.serialize-object.js}" type="text/javascript"></script>
+   <script>
+      var input = document.getElementById("identifier");
+      input.addEventListener("keyup", function(event) {
+      if (event.key === "Enter") {
+          event.preventDefault();
+          document.getElementById("orderselect").click();
       }
-    }
-    return start;
-  }
-
-  function getDateString(val, up) {
-    var date = getDate(val, up);
-    if (date != null && date.isValid()) {
-      return (date.toString())
-    } else {
-      return null;
-    }
-  }
-
-  function inputSetPageSize() {
-	  if (event.key === "Enter") {
-		    // Cancel the default action, if needed
-		    event.preventDefault();
-		    document.getElementById("pageSizeButton").click();
-		  }
-  }
-
-  function checkTime(elem) {
-      var startElem = null;
-      if (elem != null && $(elem).is('input')) {
-          startElem = $(elem);
-      } else {
-          startElem = $(this);
+      });
+   </script>
+   <script type="text/javascript" th:inline="javascript">
+      function wikiPage() {
+       window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Order#order');
       }
-      var type = startElem.attr('data-type');
-      if (type == null) return;
-      var start = null;
-      if (startElem.val() != '' && startElem[0].checkValidity()) {
-        start = getDate(startElem.val());
+      // Global variables
+      var currentPage = 1; // Current page number
+      var pageSize = 20; // Maximum objects per page
+
+      // order filters
+      var identifier = null;
+      var products = null;
+      var orderStates = null;
+      var fromDate = null;
+      var toDate = null;
+
+      // sorting
+      var sortCols = ['select-id', 'select-identifier', 'select-orderState'];
+      var sortCol = "id";
+      var upText = "true";
+
+      function addEventHandler() {
+          $("input[name='fromDate']").change(checkTime);
+          $("input[name='toDate']").change(checkTime);
+      };
+
+      function getDate(val, up) {
+        var start = new ProseoDate(val, 'TIME');
+        if (start == null || !start.isValid()) {
+          start = new ProseoDate(val, 'DAYHOURS');
+        }
+        if (start == null || !start.isValid()) {
+          start = new ProseoDate(val, 'DAY');
+          if (up && start.isValid()) {
+            start.norm(-1);
+          }
+        }
+        return start;
       }
-      if (startElem.val() == '' || (start != null && start.isValid())) {
-        startElem[0].setCustomValidity('');
-      } else {
-        startElem[0].setCustomValidity([[#{invaliddate}]]);
+
+      function getDateString(val, up) {
+        var date = getDate(val, up);
+        if (date != null && date.isValid()) {
+          return (date.toString())
+        } else {
+          return null;
+        }
       }
-      startElem[0].form.classList.add('was-validated')
-  }
 
-function plan(oId, state, facility) {
-	doPlan(oId, facility);
-};
+      function inputSetPageSize() {
+       if (event.key === "Enter") {
+          // Cancel the default action, if needed
+          event.preventDefault();
+          document.getElementById("pageSizeButton").click();
+        }
+      }
 
-function doPlan(oId, facility) {
-    if ([[${hasroleorderplanner}]]) {
-		    showLoader();
-		    var url = "/order-state/post?id=" + oId
-				    + "&state=PLAN&facility=" + facility;
-		    var row = document.getElementById(oId);
+      function checkTime(elem) {
+          var startElem = null;
+          if (elem != null && $(elem).is('input')) {
+              startElem = $(elem);
+          } else {
+              startElem = $(this);
+          }
+          var type = startElem.attr('data-type');
+          if (type == null) return;
+          var start = null;
+          if (startElem.val() != '' && startElem[0].checkValidity()) {
+            start = getDate(startElem.val());
+          }
+          if (startElem.val() == '' || (start != null && start.isValid())) {
+            startElem[0].setCustomValidity('');
+          } else {
+            startElem[0].setCustomValidity([[#{invaliddate}]]);
+          }
+          startElem[0].form.classList.add('was-validated')
+      }
 
-		    $.ajax({
-				    url : url,
-				    method : "POST",
-				    success : function(res, textStatus, jqXHR) {
-		          hideLoader();
-		          if (jqXHR.getResponseHeader("warnstatus") != null && jqXHR.getResponseHeader("warnstatus") == 'productfound') {
-	                alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
-	                retrieveDataPrim(false);
-	            } else if (jqXHR.getResponseHeader("warnstatus") != null) {
-				    		  alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
-				    	} else {
-				    		retrieveDataPrim(false);
-						  }
-				    },
-				    error : function(jqXHR, textStatus, errorThrown) {
-						    hideLoader();
-						    console.log(errorThrown);
-						    alert("Error: " + errorThrown);
-				    }
-		    });
-    }
-};
+      function plan(oId, state, facility) {
+      doPlan(oId, facility);
+      };
 
-function setState(oId, state) {
-    if ([[${hasroleorderreader}]]) {
-		    showLoader();
-		    var url = "/order-state/post?id=" + oId + "&state=" + state;
-		    var row = document.getElementById(oId);
+      function doPlan(oId, facility) {
+        if ([[${hasroleorderplanner}]]) {
+          showLoader();
+          var url = "/order-state/post?id=" + oId
+      		    + "&state=PLAN&facility=" + facility;
+          var row = document.getElementById(oId);
 
-		    var method = 'POST';
-		    $.ajax({
-				    url : url,
-				    method : method,
-            success : function(res, textStatus, jqXHR) {
+          $.ajax({
+      		    url : url,
+      		    method : "POST",
+      		    success : function(res, textStatus, jqXHR) {
                 hideLoader();
-                if (jqXHR.getResponseHeader("warnstatus") != null && jqXHR.getResponseHeader("warnstatus") != 'nocontent') {
-                    alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
-                } else {
-                    retrieveDataPrim(false);
-                }
-              },
-              error : function(jqXHR, textStatus, errorThrown) {
-                  hideLoader();
-                  console.log(errorThrown);
-                  alert("Error: " + errorThrown);
-              }
-		    });
-    }
-};
-
-function setSelected() {
-	// identifier
-  $('#identifier').val(getURLParam('identifier'));
-	// states
-	$('#orderStates').multiselect('deselectAll', false);
-  if (orderStates != null && orderStates.length > 0) {
-    $('#orderStates').multiselect('select', orderStates);
-  }
-	// start date from, to
-
-  $('#fromDate').val(fromDate);
-  $('#toDate').val(toDate);
-	// product classes
-  $('#products').multiselect('deselectAll', false);
-  if (products != null && products.length > 0) {
-    $('#products').multiselect('select', products);
-  }
-}
-
-function setHTMLParams() {
-    // build parameter string
-    var paramString = "";
-    paramString = addURLParamValuePrim('identifier', identifier, paramString);
-    paramString = addURLParamValuesPrim('products', products, paramString);
-    paramString = addURLParamValuesPrim('orderStates', orderStates, paramString);
-    paramString = addURLParamValuePrim('fromDate', fromDate, paramString);
-    paramString = addURLParamValuePrim('toDate', toDate, paramString);
-    paramString = setPageHTMLParams(paramString);
-    paramString = setSortHTMLParams(paramString);
-    var newHref = location.origin + location.pathname + paramString;
-    if (newHref != location.href) {
-    	  history.pushState({}, null, newHref);
-    }
-}
-
-function readHTMLParams() {
-	  readPageHTMLParams();
-	  readSortHTMLParams();
-	  identifier = getURLParam('identifier');
-	  products = getURLParams('products');
-	  orderStates = getURLParams('orderStates');
-	  fromDate = getURLParam('fromDate');
-	  toDate = getURLParam('toDate');
-}
-
-function setParams(ele, selup, newPage, newPageSize) {
-	  var newIdentifier = "";
-	  var newProducts = null;
-	  var newOrderStates = null;
-	  var newFromDate = null;
-	  var newToDate = null;
-
-	  var hasChanged = false;
-
-	  hasChanged |= setPageParams(newPage, newPageSize);
-	  hasChanged |= setSortParams(ele, selup);
-
-    newIdentifier = $('#identifier').val();
-    if (isEmpty(newIdentifier)) {
-        newIdentifier = null;
-    }
-    if (isEmpty(identifier)) {
-        identifier = null;
-    }
-    newFromDate = getDateString($('#fromDate').val());
-    newToDate= getDateString($('#toDate').val());
-    newOrderStates = $('#orderStates').val();
-    newProducts = $('#products').val();
-
-    if (   identifier != newIdentifier
-    		|| fromDate != newFromDate
-    		|| toDate != newToDate
-        || !arrayEquals(orderStates, newOrderStates)
-        || !arrayEquals(products, newProducts)) {
-    	// table size may be changed, go to first page
-      currentPage = 1;
-      newPage = 1;
-    	hasChanged = true;
-    }
-
-    identifier = newIdentifier;
-    products = newProducts;
-    orderStates = newOrderStates;
-    fromDate = newFromDate;
-    toDate = newToDate;
-
-    if (hasChanged) {
-    	setHTMLParams();
-    }
-}
-
-function retrieveDataPrim(setPar) {
-  if (!$('#ord-shw')[0].checkValidity()) {
-    //event.preventDefault();
-    //event.stopPropagation();
-    $('#ord-shw')[0].classList.add('was-validated');
-  } else {
-    $('#ord-shw')[0].classList.add('was-validated');
-    if (setPar) {
-    	setParams(null, null, null, null);
-    }
-		var from = getFromRow();
-		var to = getToRow();
-		if (from == null || to == null) {
-		  currentPage = 1;
-		  pageSize = 20;
-		}
-		retrieveData();
-	}
-}
-
-function updateTable(newPage, newPageSize) {
-	retrieveDataPage(newPage, newPageSize);
-}
-
-function retrieveDataPage(newPage, newPageSize) {
-	setParams(null, null, newPage, newPageSize);
-	retrieveData();
-}
-
-function retrieveData() {
-    if ([[${hasroleorderreader}]]) {
-				showLoader();
-				setParams(null, null, null, null);
-        $('#orderStates').multiselect({
-            buttonWidth : '99%',
-            enableFiltering : true,
-            numberDisplayed : 0,
-            maxHeight : 400,
-            enableCaseInsensitiveFiltering : true,
-            nonSelectedText : ''
-        });
-        $('#products').multiselect({
-            buttonWidth : '99%',
-            enableFiltering : true,
-            numberDisplayed : 0,
-            maxHeight : 400,
-            enableCaseInsensitiveFiltering : true,
-            nonSelectedText : ''
-        });
-        setSelected();
-				var tableRows = $("orderTable").rows;
-				if (tableRows > 1 && tableRows != null) {
-					  $("orderTable > tbody").empty();
-				}
-
-			  var from = getFromRow();
-			  var to = getToRow();
-				var url = "/order-show/get"
-				var divider = "?";
-				var elem = $("#select-identifier");
-				setSort();
-		    var sort = getSort();
-		    var sortCol = sort.split(":")[0];
-		    if (sortCol == null) {
-		      sortCol = "id";
-		    }
-		    var up = false;
-		    if (sort.split(":")[1] == "true") {
-		      up = true;
-		    }
-				if (parameterHasValue(identifier)) {
-					  url = url + divider + "identifier=" + identifier.trim();
-					  divider = "&";
-				}
-				// <select>.selectedOptions does not work for IE, loop over options instead
-				if (orderStates != null && orderStates.length > 0) {
-						url = url + divider + "states=" + joinStrings(orderStates, ":");
-			      divider = "&";
-				}
-
-				if (parameterHasValue(fromDate)) {
-					  url = url + divider + "from=" + fromDate.trim();
-					  divider = "&";
-				}
-        if (parameterHasValue(toDate)) {
-            url = url + divider + "to=" + toDate.trim();
-            divider = "&";
+                if (jqXHR.getResponseHeader("warnstatus") != null && jqXHR.getResponseHeader("warnstatus") == 'productfound') {
+                     alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
+                     retrieveDataPrim(false);
+                 } else if (jqXHR.getResponseHeader("warnstatus") != null) {
+      		    		  alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
+      		    	} else {
+      		    		retrieveDataPrim(false);
+      				  }
+      		    },
+      		    error : function(jqXHR, textStatus, errorThrown) {
+      				    hideLoader();
+      				    console.log(errorThrown);
+      				    alert("Error: " + errorThrown);
+      		    }
+          });
         }
-        if (products != null && products.length > 0) {
-            url = url + divider + "products=" + joinStrings(products, ":");
-            divider = "&";
+      };
+
+      function setState(oId, state) {
+        if ([[${hasroleorderreader}]]) {
+          showLoader();
+          var url = "/order-state/post?id=" + oId + "&state=" + state;
+          var row = document.getElementById(oId);
+
+          var method = 'POST';
+          $.ajax({
+      		    url : url,
+      		    method : method,
+                success : function(res, textStatus, jqXHR) {
+                    hideLoader();
+                    if (jqXHR.getResponseHeader("warnstatus") != null && jqXHR.getResponseHeader("warnstatus") != 'nocontent') {
+                        alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
+                    } else {
+                        retrieveDataPrim(false);
+                    }
+                  },
+                  error : function(jqXHR, textStatus, errorThrown) {
+                      hideLoader();
+                      console.log(errorThrown);
+                      alert("Error: " + errorThrown);
+                  }
+          });
         }
-        if (from != null && to != null) {
-            url = url + divider + "recordFrom=" + from.toString();
-            divider = "&";
-            url = url + divider + "recordTo=" + to.toString();
-            divider = "&";
+      };
+
+      function setSelected() {
+      // identifier
+      $('#identifier').val(getURLParam('identifier'));
+      // states
+      $('#orderStates').multiselect('deselectAll', false);
+      if (orderStates != null && orderStates.length > 0) {
+        $('#orderStates').multiselect('select', orderStates);
+      }
+      // start date from, to
+
+      $('#fromDate').val(fromDate);
+      $('#toDate').val(toDate);
+      // product classes
+      $('#products').multiselect('deselectAll', false);
+      if (products != null && products.length > 0) {
+        $('#products').multiselect('select', products);
+      }
+      }
+
+      function setHTMLParams() {
+        // build parameter string
+        var paramString = "";
+        paramString = addURLParamValuePrim('identifier', identifier, paramString);
+        paramString = addURLParamValuesPrim('products', products, paramString);
+        paramString = addURLParamValuesPrim('orderStates', orderStates, paramString);
+        paramString = addURLParamValuePrim('fromDate', fromDate, paramString);
+        paramString = addURLParamValuePrim('toDate', toDate, paramString);
+        paramString = setPageHTMLParams(paramString);
+        paramString = setSortHTMLParams(paramString);
+        var newHref = location.origin + location.pathname + paramString;
+        if (newHref != location.href) {
+        	  history.pushState({}, null, newHref);
+        }
+      }
+
+      function readHTMLParams() {
+       readPageHTMLParams();
+       readSortHTMLParams();
+       identifier = getURLParam('identifier');
+       products = getURLParams('products');
+       orderStates = getURLParams('orderStates');
+       fromDate = getURLParam('fromDate');
+       toDate = getURLParam('toDate');
+      }
+
+      function setParams(ele, selup, newPage, newPageSize) {
+       var newIdentifier = "";
+       var newProducts = null;
+       var newOrderStates = null;
+       var newFromDate = null;
+       var newToDate = null;
+
+       var hasChanged = false;
+
+       hasChanged |= setPageParams(newPage, newPageSize);
+       hasChanged |= setSortParams(ele, selup);
+
+        newIdentifier = $('#identifier').val();
+        if (isEmpty(newIdentifier)) {
+            newIdentifier = null;
+        }
+        if (isEmpty(identifier)) {
+            identifier = null;
+        }
+        newFromDate = getDateString($('#fromDate').val());
+        newToDate= getDateString($('#toDate').val());
+        newOrderStates = $('#orderStates').val();
+        newProducts = $('#products').val();
+
+        if (   identifier != newIdentifier
+        		|| fromDate != newFromDate
+        		|| toDate != newToDate
+            || !arrayEquals(orderStates, newOrderStates)
+            || !arrayEquals(products, newProducts)) {
+        	// table size may be changed, go to first page
+          currentPage = 1;
+          newPage = 1;
+        	hasChanged = true;
         }
 
-				url = url + divider + "sortby=" + sortCol.replace("select-", "");
-				divider = "&";
-				url = url + divider + "up=" + up.toString();
-				divider = "&";
+        identifier = newIdentifier;
+        products = newProducts;
+        orderStates = newOrderStates;
+        fromDate = newFromDate;
+        toDate = newToDate;
 
-				$.ajax({
-					  url : url,
-					  method : "GET",
-					  success : function(res, textStatus, jqXHR) {
-						    $("#orderscontent").html(res);
-						    readHTMLParams();
-						    hideLoader();
-			          feather.replace();
-		            addEventHandler();
-		            setSort();
-						    document.title = [[#{order}]] + " | " + [[#{proseo}]];
-					  },
-					  error : function(jqXHR, textStatus, errorThrown) {
-			          readHTMLParams();
-                hideLoader();
-                feather.replace();
-                addEventHandler();
-                console.log(textStatus + errorThrown);
-                alert("Error: " + errorThrow);
+        if (hasChanged) {
+        	setHTMLParams();
+        }
+      }
+
+      function retrieveDataPrim(setPar) {
+      if (!$('#ord-shw')[0].checkValidity()) {
+        //event.preventDefault();
+        //event.stopPropagation();
+        $('#ord-shw')[0].classList.add('was-validated');
+      } else {
+        $('#ord-shw')[0].classList.add('was-validated');
+        if (setPar) {
+        	setParams(null, null, null, null);
+        }
+      var from = getFromRow();
+      var to = getToRow();
+      if (from == null || to == null) {
+        currentPage = 1;
+        pageSize = 20;
+      }
+      retrieveData();
+      }
+      }
+
+      function updateTable(newPage, newPageSize) {
+      retrieveDataPage(newPage, newPageSize);
+      }
+
+      function retrieveDataPage(newPage, newPageSize) {
+      setParams(null, null, newPage, newPageSize);
+      retrieveData();
+      }
+
+      function retrieveData() {
+        if ([[${hasroleorderreader}]]) {
+      		showLoader();
+      		setParams(null, null, null, null);
+            $('#orderStates').multiselect({
+                buttonWidth : '99%',
+                enableFiltering : true,
+                numberDisplayed : 0,
+                maxHeight : 400,
+                enableCaseInsensitiveFiltering : true,
+                nonSelectedText : ''
+            });
+            $('#products').multiselect({
+                buttonWidth : '99%',
+                enableFiltering : true,
+                numberDisplayed : 0,
+                maxHeight : 400,
+                enableCaseInsensitiveFiltering : true,
+                nonSelectedText : ''
+            });
+            setSelected();
+      		var tableRows = $("orderTable").rows;
+      		if (tableRows > 1 && tableRows != null) {
+      			  $("orderTable > tbody").empty();
+      		}
+
+      	  var from = getFromRow();
+      	  var to = getToRow();
+      		var url = "/order-show/get"
+      		var divider = "?";
+      		var elem = $("#select-identifier");
+      		setSort();
+          var sort = getSort();
+          var sortCol = sort.split(":")[0];
+          if (sortCol == null) {
+            sortCol = "id";
+          }
+          var up = false;
+          if (sort.split(":")[1] == "true") {
+            up = true;
+          }
+      		if (parameterHasValue(identifier)) {
+      			  url = url + divider + "identifier=" + identifier.trim();
+      			  divider = "&";
+      		}
+      		// <select>.selectedOptions does not work for IE, loop over options instead
+      		if (orderStates != null && orderStates.length > 0) {
+      				url = url + divider + "states=" + joinStrings(orderStates, ":");
+      	      divider = "&";
+      		}
+
+      		if (parameterHasValue(fromDate)) {
+      			  url = url + divider + "from=" + fromDate.trim();
+      			  divider = "&";
+      		}
+            if (parameterHasValue(toDate)) {
+                url = url + divider + "to=" + toDate.trim();
+                divider = "&";
             }
-				});
-		}
-};
-</script>
-<script>
-    // Read the HTML parameters from URI and retrieve the corresponding data
-    function loadWindow() {
-    	activateSidebarElem('sb-order');
-        feather.replace();
-        readHTMLParams();
-        retrieveDataPrim(false);
-        setSelected();
-    };
+            if (products != null && products.length > 0) {
+                url = url + divider + "products=" + joinStrings(products, ":");
+                divider = "&";
+            }
+            if (from != null && to != null) {
+                url = url + divider + "recordFrom=" + from.toString();
+                divider = "&";
+                url = url + divider + "recordTo=" + to.toString();
+                divider = "&";
+            }
 
-    window.onload = function () {
+      		url = url + divider + "sortby=" + sortCol.replace("select-", "");
+      		divider = "&";
+      		url = url + divider + "up=" + up.toString();
+      		divider = "&";
+
+      		$.ajax({
+      			  url : url,
+      			  method : "GET",
+      			  success : function(res, textStatus, jqXHR) {
+      				    $("#orderscontent").html(res);
+      				    readHTMLParams();
+      				    hideLoader();
+      	          feather.replace();
+                  addEventHandler();
+                  setSort();
+      				    document.title = [[#{order}]] + " | " + [[#{proseo}]];
+      			  },
+      			  error : function(jqXHR, textStatus, errorThrown) {
+      	          readHTMLParams();
+                    hideLoader();
+                    feather.replace();
+                    addEventHandler();
+                    console.log(textStatus + errorThrown);
+                    alert("Error: " + errorThrow);
+                }
+      		});
+      }
+      };
+
+      /**
+      * Toggles selection of all order checkboxes in the table.
+      *
+      * @param {HTMLInputElement} sourceCheckbox
+      *        The "Select All" checkbox from the table header.
+      */
+      function toggleSelectAll(sourceCheckbox) {
+        // Get the checked state of the header checkbox (true / false)
+        var isChecked = sourceCheckbox.checked;
+
+        // Select all row checkboxes inside the order table
+        var checkboxes = document.querySelectorAll('#orderTable .order-checkbox');
+
+        // Loop through each checkbox and apply the same checked state
+        checkboxes.forEach(function (checkbox) {
+            checkbox.checked = isChecked;
+        });
+      }
+
+      /**
+      * Keeps the header checkbox in sync if a user manually selects or deselects individual row checkboxes.
+      */
+      document.addEventListener("change", function (event) {
+        // Only react when an order row checkbox changes
+        if (event.target.classList.contains("order-checkbox")) {
+
+            var allCheckboxes = document.querySelectorAll('#orderTable .order-checkbox');
+            var checkedCheckboxes = document.querySelectorAll('#orderTable .order-checkbox:checked');
+            var selectAllCheckbox = document.getElementById("selectAllOrders");
+
+            // If all row checkboxes are checked, mark header as checked
+            // Otherwise, uncheck header checkbox
+            selectAllCheckbox.checked = (allCheckboxes.length === checkedCheckboxes.length);
+        }
+      });
+   </script>
+   <script>
+      // Read the HTML parameters from URI and retrieve the corresponding data
+      function loadWindow() {
+      	activateSidebarElem('sb-order');
+          feather.replace();
+          readHTMLParams();
+          retrieveDataPrim(false);
+          setSelected();
+      };
+
+      window.onload = function () {
+          loadWindow();
+          // correct scroll due to "sticky" elements
+          var handler = function ( ) {
+              var h = (document.getElementById('proseo-thead').getBoundingClientRect().height
+      			           + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+              window.scrollBy(0, h);
+          };
+      };
+
+      // re-load window to read and set all HTML parameters
+      $(window).on('popstate', function (e) {
         loadWindow();
-        // correct scroll due to "sticky" elements
-        var handler = function ( ) {
-            var h = (document.getElementById('proseo-thead').getBoundingClientRect().height
-    			           + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
-            window.scrollBy(0, h);
-        };
-    };
-
-    // re-load window to read and set all HTML parameters
-    $(window).on('popstate', function (e) {
-      loadWindow();
-    });
-</script>
-
+      });
+   </script>
 </html>
