@@ -61,14 +61,14 @@ public class ProductQuery extends PersistentObject {
 	 * The product query as a JPQL (Java Persistence Query Language) query condition (if set, sqlQueryCondition must not be set)
 	 * Note: The annotated SQL datatype "TEXT" is not a standard SQL datatype (defined for MySQL and PostgreSQL)
 	 */
-	@Column(columnDefinition="TEXT")
+	@Lob
 	private String jpqlQueryCondition;
 	
 	/**
 	 * The product query as a native SQL query condition (if set, jpqlQueryCondition must not be set)
 	 * Note: The annotated SQL datatype "TEXT" is not a standard SQL datatype (defined for MySQL and PostgreSQL)
 	 */
-	@Column(columnDefinition="TEXT")
+	@Lob
 	private String sqlQueryCondition;
 	
 	/**

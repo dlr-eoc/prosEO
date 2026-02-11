@@ -800,10 +800,33 @@ ALTER TABLE public.product_parameters
     CHECK (((parameter_type)::text = ANY ((ARRAY['STRING'::character varying, 'BOOLEAN'::character varying, 
     'INTEGER'::character varying, 'DOUBLE'::character varying, 'INSTANT'::character varying])::text[])));
 
+CREATE TABLE product_query_copy (
+	id BIGINT NOT NULL,
+	version INTEGER NULL DEFAULT NULL,
+	in_download BOOLEAN NULL DEFAULT NULL,
+	is_satisfied BOOLEAN NULL DEFAULT NULL,
+	jpql_query_condition TEXT NULL DEFAULT NULL,
+	minimum_coverage SMALLINT NULL DEFAULT NULL,
+	sql_query_condition TEXT NULL DEFAULT NULL,
+	generating_rule_id BIGINT NULL DEFAULT NULL,
+	job_step_id BIGINT NULL DEFAULT NULL,
+	requested_product_class_id BIGINT NULL DEFAULT NULL
+	);
+	
+insert into product_query_copy (id, jpql_query_condition, sql_query_condition) 
+	SELECT p.id, p.jpql_query_condition, p.sql_query_condition FROM product_query p;
+
+UPDATE product_query p SET jpql_query_condition = NULL, sql_query_condition = NULL;
+
 ALTER TABLE public.product_query
   ALTER COLUMN version DROP NOT NULL,
   ALTER COLUMN jpql_query_condition TYPE oid USING jpql_query_condition::oid,
   ALTER COLUMN sql_query_condition TYPE oid USING sql_query_condition::oid;
+  
+UPDATE product_query p SET jpql_query_condition = lo_from_bytea(0, DECODE (pc.jpql_query_condition, 'escape')), sql_query_condition = lo_from_bytea(0, DECODE (pc.sql_query_condition, 'escape')) 
+  FROM product_query_copy pc WHERE p.id = pc.id;
+  
+DROP TABLE product_query_copy;
 
 ALTER TABLE public.product_query_filter_conditions
   ADD CONSTRAINT product_query_filter_conditions_parameter_type_check 
