@@ -169,21 +169,6 @@ resourceTypes:
           type: RestOrbit
           example:  !include ../../../../../model/src/main/resources/raml/examples/orbit.json
 
-  /ordertemplates:
-    type: standard
-    get:
-      responses:
-        200:
-          body:
-            application/json:
-              type: RestOrderTemplate[]
-              example:  !include ../../../../../model/src/main/resources/raml/examples/ordertemplate-list.json
-    put:
-      body:
-        application/json:
-          type: RestOrderTemplate
-          example:  !include ../../../../../model/src/main/resources/raml/examples/ordertemplate.json
-
   /orders:
     type: standard
     get:
@@ -198,6 +183,21 @@ resourceTypes:
         application/json:
           type: RestOrder
           example:  !include ../../../../../model/src/main/resources/raml/examples/order.json
+
+  /ordertemplates:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestOrderTemplate[]
+              example:  !include ../../../../../model/src/main/resources/raml/examples/ordertemplate-list.json
+    put:
+      body:
+        application/json:
+          type: RestOrderTemplate
+          example:  !include ../../../../../model/src/main/resources/raml/examples/ordertemplate.json
 
   /workflows:
     type: standard

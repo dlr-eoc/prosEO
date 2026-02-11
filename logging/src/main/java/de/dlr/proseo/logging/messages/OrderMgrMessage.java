@@ -96,6 +96,18 @@ public enum OrderMgrMessage implements ProseoMessage {
 	ORDER_CLEANUP_SLEEP					(3580, Level.INFO, true, "Order cleanup cycle completed, sleeping for {0} ms", ""),
 	ORDER_CLEANUP_TERMINATE				(3581, Level.INFO, true, "Order cleanup cycle interrupted - terminating‚", ""),
 	ORDER_NOT_EVICTABLE					(3582, Level.ERROR, false, "Eviction time {1} of order {0} not before requested cutoff time {2}", ""),
+	ORDERTEMPLATE_LIST_RETRIEVED		(3583, Level.INFO, true, "Order template list of size {0} retrieved for mission {1}, name {2}", ""),
+	ORDERTEMPLATE_MISSING				(3584, Level.ERROR, false, "Order template id not set", ""),
+	ORDERTEMPLATE_NOT_FOUND				(3585, Level.ERROR, false, "No order found found for ID {0}", ""),
+	ORDERTEMPLATE_RETRIEVED				(3586, Level.INFO, true, "Order template with ID {0} retrieved", ""),
+	DUPLICATE_ORDERTEMPLATE_NAME		(3587, Level.ERROR, false, "Order template name {0} already exists within mission {1}", ""),
+	ORDERTEMPLATE_CREATED				(3588, Level.INFO, true, "Order template with name {0} created for mission {1}", ""),
+	ORDERTEMPLATE_DELETED				(3589, Level.INFO, true, "Order template with id {0} deleted", ""),
+	MODEL_ORDERTEMPLATE_MISSIONCODE		(3590, Level.INFO, true, "Model order template missioncode {0}", ""),
+	ORDERTEMPLATE_MODIFICATION_FORBIDDEN	(3591, Level.ERROR, false, "Order template modification not allowed for user {0}", ""),
+	ORDERTEMPLATE_MODIFIED				(3592, Level.INFO, true, "Order template with id {0} modified", ""),
+	ORDERTEMPLATE_NOT_MODIFIED			(3593, Level.INFO, true, "Order template with id {0} not modified (no changes)", ""),
+	ORDERTEMPLATE_LIST_EMPTY			(3594, Level.ERROR, false, "No order template found for search criteria", ""),
 	
 	;
 

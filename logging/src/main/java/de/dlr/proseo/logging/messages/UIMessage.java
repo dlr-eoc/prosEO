@@ -310,7 +310,13 @@ public enum UIMessage implements ProseoMessage {
 	INVALID_TRIGGER_TYPE					(6294, Level.ERROR, false, "Invalid trigger type ''{0}'', has to be one of (Calendar, Datatake, DataDriven, Orbit, TimeInterval)", ""),
 	INVALID_NUMBER_FORMAT					(6295, Level.ERROR, false, "Invalid number format", ""),
 	TRIGGERS_RELOADED						(6296, Level.INFO, false, "All triggers reloaded and started", ""),
-	
+	ORDERTEMPLATE_NOT_FOUND					(6297, Level.ERROR, false, "Order template with name {0} not found", ""),
+	ORDERTEMPLATE_DATA_INVALID				(6298, Level.ERROR, false, "Order template data invalid (cause: {0})", ""),
+	ORDERTEMPLATE_CREATED					(6299, Level.INFO, true, "Order template with name {0} created (database ID {1})", ""),
+	NO_ORDERTEMPLATES_FOUND					(6300, Level.ERROR, false, "No order templates found for given search criteria", ""),
+	ORDERTEMPLATE_UPDATED					(6301, Level.INFO, true, "Order template with name {0} updated (new version {1})", ""),
+	ORDERTEMPLATE_DELETED					(6302, Level.INFO, true, "Order template with name {0} deleted", ""),
+	 
 	;
 
 	private final int code;

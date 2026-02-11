@@ -16,10 +16,7 @@
         description: The mission code (e. g. S5P)
       name:
         type: string
-        description: Short name of the workflow
-      enabled:
-        type: boolean
-        description: Flag indicating whether this workflow is available for use (disabled workflows are not visible on the ODIP)
+        description: Short name of the order template
       priority?:
          type: integer
          format: int
@@ -91,3 +88,7 @@
         type: boolean
         default: true
         description: Flag determining whether the order will fail when the input timeout period is reached
+      enabled?:
+        type: boolean
+        default: true
+        description: Flag determining whether the order template is usable

@@ -735,6 +735,18 @@ public class OrderCommandRunner {
 		if (isDeleteAttributes || null != updatedOrder.getWorkflowUuid()) {
 			restOrder.setWorkflowUuid(updatedOrder.getWorkflowUuid());
 			}
+		if(isDeleteAttributes || null != updatedOrder.getInputDataTimeoutPeriod()) {
+			restOrder.setInputDataTimeoutPeriod(updatedOrder.getInputDataTimeoutPeriod());
+		}
+		if (isDeleteAttributes || null != updatedOrder.getOnInputDataTimeoutFail()) {
+			restOrder.setOnInputDataTimeoutFail(updatedOrder.getOnInputDataTimeoutFail());
+		}
+		if (isDeleteAttributes || null != updatedOrder.getAutoRelease()) {
+			restOrder.setAutoRelease(updatedOrder.getAutoRelease());
+		}
+		if (isDeleteAttributes || null != updatedOrder.getAutoClose()) {
+			restOrder.setAutoClose(updatedOrder.getAutoClose());
+		}
 		
 		/* Update order using Order Manager service */
 		try {

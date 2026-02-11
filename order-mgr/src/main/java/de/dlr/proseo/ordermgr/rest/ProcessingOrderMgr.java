@@ -1120,7 +1120,27 @@ public class ProcessingOrderMgr {
 				&& !modelOrder.getNotificationEndpoint().equals(changedOrder.getNotificationEndpoint())) {
 			orderChanged = true;
 			stateChangeOnly = false;
-			changedOrder.setNotificationEndpoint(changedOrder.getNotificationEndpoint());
+			modelOrder.setNotificationEndpoint(changedOrder.getNotificationEndpoint());
+		}
+
+		if ((modelOrder.getInputDataTimeoutPeriod() != null
+				&& !modelOrder.getInputDataTimeoutPeriod().equals(changedOrder.getInputDataTimeoutPeriod()))
+				|| (changedOrder.getInputDataTimeoutPeriod() != null
+						&& !changedOrder.getInputDataTimeoutPeriod().equals(modelOrder.getInputDataTimeoutPeriod()))) {
+			orderChanged = true;
+			modelOrder.setInputDataTimeoutPeriod(changedOrder.getInputDataTimeoutPeriod());
+		}
+		if (modelOrder.isOnInputDataTimeoutFail() != changedOrder.isOnInputDataTimeoutFail()) {
+			modelOrder.setOnInputDataTimeoutFail(changedOrder.isOnInputDataTimeoutFail());
+			orderChanged = true;
+		}
+		if (modelOrder.isAutoRelease() != changedOrder.isAutoRelease()) {
+			modelOrder.setAutoRelease(changedOrder.isAutoRelease());
+			orderChanged = true;
+		}
+		if (modelOrder.isAutoClose() != changedOrder.isAutoClose()) {
+			modelOrder.setAutoClose(changedOrder.isAutoClose());
+			orderChanged = true;
 		}
 
 		// Check for forbidden order data modifications
