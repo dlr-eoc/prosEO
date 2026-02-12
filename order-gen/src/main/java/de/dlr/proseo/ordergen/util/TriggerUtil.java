@@ -454,7 +454,7 @@ public class TriggerUtil {
 	}
 
 	/**
-	 * Get all data driven triggers for workflows having the given product class as input product class
+	 * Get all data driven triggers for orderTemplates having the given product class as input product class
 	 * 
 	 * @param missionCode the code of the mission the product type is for
 	 * @param productType the product type of the requested product class

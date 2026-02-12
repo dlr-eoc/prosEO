@@ -184,10 +184,10 @@ public class TriggerManager {
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
 	public List<RestTrigger> getTriggers(String mission, String name, String type,
-			String workflow, String inputProductClass, String outputProductClass, Integer recordFrom, 
+			String orderTemplate, String inputProductClass, String outputProductClass, Integer recordFrom, 
 			Integer recordTo, String[] orderBy) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getTriggers({}, {}, {}, {}, {}, {})", mission, name, type, workflow, inputProductClass, outputProductClass);
+			logger.trace(">>> getTriggers({}, {}, {}, {}, {}, {})", mission, name, type, orderTemplate, inputProductClass, outputProductClass);
 		
 
 		List<RestTrigger> triggers = new ArrayList<RestTrigger>();
@@ -196,19 +196,19 @@ public class TriggerManager {
 		if (type != null) {
 			triggerType = TriggerType.valueOf(type);
 			triggers.addAll(getTriggersPrim(mission, name, triggerType,
-					workflow, inputProductClass, outputProductClass, null, 
+					orderTemplate, inputProductClass, outputProductClass, null, 
 					null, null));
 		} else {
 			for (TriggerType triggerTypeL : TriggerType.values()) {
 				triggers.addAll(getTriggersPrim(mission, name, triggerTypeL,
-						workflow, inputProductClass, outputProductClass, null, 
+						orderTemplate, inputProductClass, outputProductClass, null, 
 						null, null));
 			}			
 		}
 		// sort
 		if (orderBy != null) {
 			triggers.sort((lhs, rhs) -> {
-				// there are max. three attributes to compare: type, name, workflow.name
+				// there are max. three attributes to compare: type, name, orderTemplate.name
 				int result = 0;
 				if (orderBy.length > 0) {
 					result = sortPrim(lhs, rhs, orderBy[0]);
@@ -240,17 +240,17 @@ public class TriggerManager {
 			return first.getType().compareTo(second.getType()) * dir;
 		} else if (sort[0].equalsIgnoreCase("name")) {
 			return first.getName().compareTo(second.getName()) * dir;
-		} else if (sort[0].equalsIgnoreCase("workflow.name")) {
+		} else if (sort[0].equalsIgnoreCase("orderTemplate.name")) {
 			return first.getOrderTemplateName().compareTo(second.getOrderTemplateName()) * dir;
 		}
 		return 0;
 	}
 	private List<RestTrigger> getTriggersPrim(String mission, String name, TriggerType type,
-			String workflow, String inputProductClass, String outputProductClass, Integer recordFrom, 
+			String orderTemplate, String inputProductClass, String outputProductClass, Integer recordFrom, 
 			Integer recordTo, String[] orderBy) {
 		List<RestTrigger> triggers = new ArrayList<RestTrigger>();
 
-		Query query = createTriggersQuery(mission, name, type, workflow, inputProductClass, outputProductClass, orderBy, false);
+		Query query = createTriggersQuery(mission, name, type, orderTemplate, inputProductClass, outputProductClass, orderBy, false);
 		
 		List<Object> objList = query.getResultList();
 		for (Object obj : objList) {
@@ -274,10 +274,10 @@ public class TriggerManager {
 		
 		return triggers;
 	}
-	public String countTriggers(String mission, String name, String type, String workflow,
+	public String countTriggers(String mission, String name, String type, String orderTemplate,
 			String inputProductClass, String outputProductClass) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countTriggers({}, {}, {}, {}, {}, {})", mission, name, type, workflow, inputProductClass, outputProductClass);
+			logger.trace(">>> countTriggers({}, {}, {}, {}, {}, {})", mission, name, type, orderTemplate, inputProductClass, outputProductClass);
 		if (null == mission) {
 			mission = securityService.getMission();
 		} else {
@@ -292,10 +292,10 @@ public class TriggerManager {
 		TriggerType triggerType = null;
 		if (type != null) {
 			triggerType = TriggerType.valueOf(type);
-			count = countTriggersPrim(mission, name, triggerType, workflow, inputProductClass, outputProductClass);
+			count = countTriggersPrim(mission, name, triggerType, orderTemplate, inputProductClass, outputProductClass);
 		} else {
 			for (TriggerType triggerTypeL : TriggerType.values()) {
-				count += countTriggersPrim(mission, name, triggerTypeL, workflow, inputProductClass, outputProductClass);
+				count += countTriggersPrim(mission, name, triggerTypeL, orderTemplate, inputProductClass, outputProductClass);
 			}
 			
 		}
@@ -305,10 +305,10 @@ public class TriggerManager {
 		return result;
 	}
 	
-	private Long countTriggersPrim(String mission, String name, TriggerType type, String workflow,
+	private Long countTriggersPrim(String mission, String name, TriggerType type, String orderTemplate,
 			String inputProductClass, String outputProductClass) {
 		Long count = 0L;
-		Query query = createTriggersQuery(mission, name, type, workflow, inputProductClass, outputProductClass, null, true);
+		Query query = createTriggersQuery(mission, name, type, orderTemplate, inputProductClass, outputProductClass, null, true);
 
 		Object resultObject = query.getSingleResult();
 
@@ -323,10 +323,10 @@ public class TriggerManager {
 		
 	}
 	
-	private Query createTriggersQuery(String mission, String name, TriggerType type , String workflow,
+	private Query createTriggersQuery(String mission, String name, TriggerType type , String orderTemplate,
 			String inputProductClass, String outputProductClass, String[] orderBy, Boolean count) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> createTriggersQuery({}, {}, {}, {}, {}, {})", mission, name, type.toString(), workflow, inputProductClass, outputProductClass);
+			logger.trace(">>> createTriggersQuery({}, {}, {}, {}, {}, {})", mission, name, type.toString(), orderTemplate, inputProductClass, outputProductClass);
 
 		if (type == null) {
 			// error
@@ -348,8 +348,8 @@ public class TriggerManager {
 			jpqlQuery += andStr + "upper(name) like :name";
 			andStr = " and ";
 		}
-		if (null != workflow) {
-			jpqlQuery += andStr + "upper(workflow.name) like :workflow";
+		if (null != orderTemplate) {
+			jpqlQuery += andStr + "upper(orderTemplate.name) like :orderTemplate";
 			andStr = " and ";
 		}
 		if (null != inputProductClass) {
@@ -381,8 +381,8 @@ public class TriggerManager {
 		if (null != name) {
 			query.setParameter("name", name.toUpperCase());
 		}
-		if (null != workflow) {
-			query.setParameter("workflow", workflow.toUpperCase());
+		if (null != orderTemplate) {
+			query.setParameter("orderTemplate", orderTemplate.toUpperCase());
 		}
 		if (null != inputProductClass) {
 			query.setParameter("inputProductClass", inputProductClass);
@@ -394,7 +394,7 @@ public class TriggerManager {
 	}
 
 	/**
-	 * Get all data driven triggers for workflows having the given product class as input product class
+	 * Get all data driven triggers for order templates having the given product class as input product class
 	 * 
 	 * @param mission the mission code
 	 * @param productType the product type of the requested product class

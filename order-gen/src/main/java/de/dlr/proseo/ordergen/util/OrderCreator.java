@@ -11,6 +11,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,8 @@ import de.dlr.proseo.model.TimeIntervalOrderTrigger;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.TriggerType;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
+import de.dlr.proseo.model.rest.model.RestInputFilter;
+import de.dlr.proseo.model.rest.model.RestNotificationEndpoint;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
@@ -71,7 +74,7 @@ public class OrderCreator {
 	
 
 	private final String ORDER_SLICING_TYPE = "NONE";
-	private final String ORDER_PRODUCTION_TYOE = "SYSTEMATIC";
+	private final String ORDER_PRODUCTION_TYPE = "SYSTEMATIC";
 
 	/** Transaction manager for transaction control */
 	private PlatformTransactionManager txManager;
@@ -408,13 +411,13 @@ public class OrderCreator {
 			Optional<OrderTemplate> optTemplate = RepositoryService.getOrderTemplateRepository()
 					.findById(orderTrigger.getOrderTemplate().getId());
 			if (!optTemplate.isPresent()) {
-				logger.log(OrderGenMessage.WORKFLOW_NOT_FOUND, orderTrigger.getOrderTemplate().getId());
+				logger.log(OrderGenMessage.ORDERTEMPLATE_NOT_FOUND, orderTrigger.getOrderTemplate().getId());
 				return new RestOrder();
 			}
 			OrderTemplate orderTemplate  = optTemplate.get(); 
 			if (!orderTemplate.getEnabled()) {
-				// no workflow reference, return error
-				logger.log(OrderGenMessage.WORKFLOW_NOT_ENABLED, orderTemplate.getName());
+				// no order template reference, return error
+				logger.log(OrderGenMessage.ORDERTEMPLATE_NOT_ENABLED, orderTemplate.getName());
 				return new RestOrder();
 			}
 
@@ -431,7 +434,21 @@ public class OrderCreator {
 			restOrder.setPriority(orderTrigger.getPriority());
 			restOrder.setExecutionTime(Date.from(now.plus(orderTrigger.getExecutionDelay().toMillis(), ChronoUnit.MILLIS)));
 			restOrder.setSubmissionTime(Date.from(now));
-			
+			restOrder.setAutoClose(orderTemplate.isAutoClose());
+			restOrder.setAutoRelease(orderTemplate.isAutoRelease());
+			restOrder.setOnInputDataTimeoutFail(orderTemplate.isOnInputDataTimeoutFail());
+			if (orderTemplate.getNotificationEndpoint() != null) {
+				RestNotificationEndpoint notificationEndpoint = new RestNotificationEndpoint();
+				notificationEndpoint.setUri(orderTemplate.getNotificationEndpoint().getUri());
+				notificationEndpoint.setUsername(orderTemplate.getNotificationEndpoint().getUsername());
+				notificationEndpoint.setPassword(orderTemplate.getNotificationEndpoint().getPassword());
+			}
+			if (orderTemplate.getInputDataTimeoutPeriod() != null) {
+				restOrder.setInputDataTimeoutPeriod(orderTemplate.getInputDataTimeoutPeriod().getSeconds());
+			}
+			if (orderTemplate.getProductRetentionPeriod() != null) {
+				restOrder.setProductRetentionPeriod(orderTemplate.getProductRetentionPeriod().getSeconds());
+			}
 			
 			if (orderTemplate.getProcessingMode() != null && !orderTemplate.getProcessingMode().isEmpty()) {
 				restOrder.setProcessingMode(orderTemplate.getProcessingMode());
@@ -441,10 +458,10 @@ public class OrderCreator {
 			if (orderTemplate.getOutputFileClass() != null && !orderTemplate.getOutputFileClass().isEmpty()) {
 				restOrder.setOutputFileClass(orderTemplate.getOutputFileClass());
 			} else {
-				restOrder.setProcessingMode(orderTrigger.getMission().getFileClasses().toArray()[0].toString());
+				restOrder.setOutputFileClass(orderTrigger.getMission().getFileClasses().toArray()[0].toString());
 			}
-
-			restOrder.setProductionType(ORDER_PRODUCTION_TYOE);
+			
+			restOrder.setProductionType(ORDER_PRODUCTION_TYPE);
 			if (orderTemplate.getSlicingType() != null) {
 				restOrder.setSlicingType(orderTemplate.getSlicingType().toString());
 			} else {
@@ -478,6 +495,61 @@ public class OrderCreator {
 					orderTemplate.getRequestedProductClasses().stream().map(pc -> pc.getProductType()).toList());
 			restOrder.getConfiguredProcessors().addAll(
 					orderTemplate.getRequestedConfiguredProcessors().stream().map(cp -> cp.getIdentifier()).toList());
+			restOrder.getInputProductClasses().addAll(
+					orderTemplate.getInputProductClasses().stream().map(ip -> ip.getProductType()).toList());
+			// parameters
+			if (null != orderTemplate.getDynamicProcessingParameters()
+					& !orderTemplate.getDynamicProcessingParameters().isEmpty()) {
+				List<RestParameter> dynamicProcessingParameters = new ArrayList<>();
+				for (String key : orderTemplate.getDynamicProcessingParameters().keySet()) {
+					Parameter param = orderTemplate.getDynamicProcessingParameters().get(key);
+					RestParameter restParam = new RestParameter(key, param.getParameterType().name(),
+							param.getStringValue());
+					dynamicProcessingParameters.add(restParam);
+				}
+				restOrder.setDynamicProcessingParameters(dynamicProcessingParameters);
+			}
+			if (null != orderTemplate.getInputFilters()) {
+				for (ProductClass sourceClass : orderTemplate.getInputFilters().keySet()) {
+					RestInputFilter restInputFilter = new RestInputFilter();
+					restInputFilter.setProductClass(sourceClass.getProductType());
+					Map<String, Parameter> filterConditions = orderTemplate.getInputFilters().get(sourceClass)
+							.getFilterConditions();
+					for (String paramKey : filterConditions.keySet()) {
+						restInputFilter.getFilterConditions()
+								.add(new RestParameter(paramKey,
+										filterConditions.get(paramKey).getParameterType().toString(),
+										filterConditions.get(paramKey).getParameterValue()));
+					}
+					restOrder.getInputFilters().add(restInputFilter);
+				}
+			}
+
+			if (null != orderTemplate.getClassOutputParameters()) {
+				for (ProductClass targetClass : orderTemplate.getClassOutputParameters().keySet()) {
+					RestClassOutputParameter restClassOutputParameter = new RestClassOutputParameter();
+					restClassOutputParameter.setProductClass(targetClass.getProductType());
+					Map<String, Parameter> outputParameters = orderTemplate.getClassOutputParameters().get(targetClass)
+							.getOutputParameters();
+					for (String paramKey : outputParameters.keySet()) {
+						restClassOutputParameter.getOutputParameters()
+								.add(new RestParameter(paramKey,
+										outputParameters.get(paramKey).getParameterType().toString(),
+										outputParameters.get(paramKey).getParameterValue()));
+					}
+					restOrder.getClassOutputParameters().add(restClassOutputParameter);
+				}
+			}
+			
+			if(null != orderTemplate.getOutputParameters()) {
+				for (String paramKey: orderTemplate.getOutputParameters().keySet()) {
+					restOrder.getOutputParameters().add(
+						new RestParameter(paramKey,
+								orderTemplate.getOutputParameters().get(paramKey).getParameterType().toString(),
+								orderTemplate.getOutputParameters().get(paramKey).getParameterValue()));
+				}
+			}		
+			
 			switch (type) {
 			case DataDriven:
 				DataDrivenOrderTrigger dtTrigger = (DataDrivenOrderTrigger)orderTrigger;

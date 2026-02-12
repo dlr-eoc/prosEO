@@ -110,7 +110,7 @@ resourceTypes:
   type: standard
   get:
     description: |
-      List of triggers filtered by mission, name, type, workflow, inputProductClass, outputProductClass
+      List of triggers filtered by mission, name, type, orderTemplate, inputProductClass, outputProductClass
     displayName: getTriggers
     queryParameters:
       mission?: 
@@ -122,14 +122,14 @@ resourceTypes:
       type?: 
         description: the trigger type
         type: string
-      workflow?:
-        description: the trigger workflow
+      orderTemplate?:
+        description: the trigger orderTemplate
         type: string
       inputProductClass?:
-        description: the trigger workflow input product class
+        description: the trigger orderTemplate input product class
         type: string
       outputProductClass?:
-        description: the trigger workflow output product class
+        description: the trigger orderTemplate output product class
         type: string
       recordFrom?: 
         type: integer
@@ -195,7 +195,7 @@ resourceTypes:
   /count:
     get:
       description: |
-        count the triggers filtered by mission, name, type, workflow, inputProductClass, outputProductClass
+        count the triggers filtered by mission, name, type, orderTemplate, inputProductClass, outputProductClass
       displayName: countTriggers
       queryParameters:
         mission?: 
@@ -207,14 +207,14 @@ resourceTypes:
         type?: 
           description: the trigger type
           type: string
-        workflow?:
-          description: the trigger workflow
+        orderTemplate?:
+          description: the trigger orderTemplate
           type: string
         inputProductClass?:
-          description: the trigger workflow input product class
+          description: the trigger orderTemplate input product class
           type: string
         outputProductClass?:
-          description: the trigger workflow output product class
+          description: the trigger orderTemplate output product class
           type: string
       responses:
         200:
@@ -224,7 +224,7 @@ resourceTypes:
     type: standard
     get:
       description: |
-        Get all data driven triggers for workflows having the given product class as input product class
+        Get all data driven triggers for order templates having the given product class as input product class
       displayName: getByProductType
       queryParameters:
         mission: 

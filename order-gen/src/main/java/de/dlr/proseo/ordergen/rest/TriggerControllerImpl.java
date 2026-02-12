@@ -51,13 +51,13 @@ public class TriggerControllerImpl implements TriggerController {
 	 */
 	@Override
 	public ResponseEntity<List<RestTrigger>> getTriggers(String mission, String name, String type,
-			String workflow, String inputProductClass, String outputProductClass, Integer recordFrom, 
+			String orderTemplate, String inputProductClass, String outputProductClass, Integer recordFrom, 
 			Integer recordTo, String[] orderBy, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getTriggers({}, {}, {}, {}, {}, {})", mission, name, type, workflow, inputProductClass, outputProductClass);
+			logger.trace(">>> getTriggers({}, {}, {}, {}, {}, {})", mission, name, type, orderTemplate, inputProductClass, outputProductClass);
 
 		try {
-			return new ResponseEntity<>(triggerManager.getTriggers(mission, name, type, workflow, inputProductClass, outputProductClass,
+			return new ResponseEntity<>(triggerManager.getTriggers(mission, name, type, orderTemplate, inputProductClass, outputProductClass,
 					 recordFrom, recordTo, orderBy), 
 					HttpStatus.OK);
 		} catch (IllegalArgumentException e) {
@@ -68,13 +68,13 @@ public class TriggerControllerImpl implements TriggerController {
 	}
 
 	@Override
-	public ResponseEntity<?> countTriggers(String mission, String name, String type, String workflow,
+	public ResponseEntity<?> countTriggers(String mission, String name, String type, String orderTemplate,
 			String inputProductClass, String outputProductClass, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countTriggers({}, {}, {}, {}, {}, {})", mission, name, type, workflow, inputProductClass, outputProductClass);
+			logger.trace(">>> countTriggers({}, {}, {}, {}, {}, {})", mission, name, type, orderTemplate, inputProductClass, outputProductClass);
 
 		try {
-			return new ResponseEntity<>(triggerManager.countTriggers(mission, name, type, workflow, inputProductClass, outputProductClass), HttpStatus.OK);
+			return new ResponseEntity<>(triggerManager.countTriggers(mission, name, type, orderTemplate, inputProductClass, outputProductClass), HttpStatus.OK);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {
@@ -164,7 +164,7 @@ public class TriggerControllerImpl implements TriggerController {
 	}
 
 	/**
-	 * Get all data driven triggers for workflows having the given product class as input product class
+	 * Get all data driven triggers for orderTemplates having the given product class as input product class
 	 * 
 	 * @param mission the mission code
 	 * @param productType the product type of the requested product class

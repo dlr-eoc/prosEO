@@ -62,7 +62,7 @@ public class TriggerCommandRunner {
 	private static final String PROMPT_TRIGGER_LAST_ORBIT = "Trigger last orbit number (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_DELTA_TIME = "Trigger delta time (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_TIMEINTERVAL = "Trigger time interval (empty field cancels): ";
-	private static final String PROMPT_WORKFLOW_NAME = "Trigger workflow name (empty field cancels): ";
+	private static final String PROMPT_ORDERTEMPLATE_NAME = "Trigger order template name (empty field cancels): ";
 	private static final String URI_PATH_TRIGGERS = "/triggers";
 	private static final String URI_PATH_RELOAD = "/reload";
 	private static final String TRIGGERS = "triggers";
@@ -257,7 +257,7 @@ public class TriggerCommandRunner {
 			restTrigger.setName(response);
 		}
 		if (StringUtils.isNullOrEmpty(restTrigger.getOrderTemplateName())) {
-			System.out.print(PROMPT_WORKFLOW_NAME);
+			System.out.print(PROMPT_ORDERTEMPLATE_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
 				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
@@ -479,12 +479,12 @@ public class TriggerCommandRunner {
 			// Must be a list of triggers
 			String listFormat = "%-16s %-22s %-8s %-22s %-18s";
 			System.out
-				.println(String.format(listFormat, "Type", "Trigger name", "Priority", "Workflow", "Workflow version"));
+				.println(String.format(listFormat, "Type", "Trigger Name", "Priority", "Order Template"));
 			for (Object resultObject : (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
 					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
 					System.out.println(String.format(listFormat, resultMap.get("type"), resultMap.get("name"),
-							resultMap.get("priority"), resultMap.get("workflowName"), resultMap.get("workflowVersion")));
+							resultMap.get("priority"), resultMap.get("orderTemplateName")));
 				}
 			}
 		}
