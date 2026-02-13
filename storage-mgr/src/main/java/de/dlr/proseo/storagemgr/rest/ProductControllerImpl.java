@@ -235,6 +235,7 @@ public class ProductControllerImpl implements ProductController {
 			String msg = logger.log(StorageMgrMessage.TOKEN_INVALID, token, e.getMessage());
 			return new ResponseEntity<>(http.errorHeaders(msg), HttpStatus.UNAUTHORIZED);
 		}
+		if (logger.isTraceEnabled()) logger.trace("... token contained claims set '{}'", claimsSet);
 
 		if ((new Date()).after(claimsSet.getExpirationTime())) {
 
@@ -250,6 +251,7 @@ public class ProductControllerImpl implements ProductController {
 		try {
 			Storage storage = storageProvider.getStorage(pathInfo);
 			String relativePath = storage.getRelativePath(pathInfo);
+			if (logger.isTraceEnabled()) logger.trace("... created storage {}", storage);
 
 			StorageFile cacheFile = storageProvider.getCacheFile(relativePath);
 			FileCache cache = FileCache.getInstance();
@@ -265,6 +267,8 @@ public class ProductControllerImpl implements ProductController {
 				sourceFile = storage.getStorageFile(relativePath);
 				logger.debug("... no product file in cache - it will be downloaded from storage: {}", sourceFile.getFullPath());
 			}
+			if (logger.isTraceEnabled())
+				logger.trace("... working on source file {} with file name '{}'",  sourceFile, sourceFile.getFileName());
 
 			// token check begin
 			if (!sourceFile.getFileName().equals(claimsSet.getSubject())) {
