@@ -50,6 +50,7 @@ public enum OrderGenMessage implements ProseoMessage {
 	INVALID_URL								(4738, Level.ERROR, false, "Invalid request URL {0} (cause: {1})", ""),
 	WARN_UNEXPECTED_STATUS					(4739, Level.ERROR, false, "Unexpected HTTP status {0} received", ""),
 	HTTP_REQUEST_FAILED						(4740, Level.ERROR, false, "HTTP request failed (cause: {0})", ""),
+	TRIGGER_NOT_ENABLED    					(4741, Level.ERROR, false, "Trigger referenced by name {0} is disabled (not useable)", ""),
 	
 	;
 	

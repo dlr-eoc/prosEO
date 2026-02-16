@@ -303,9 +303,14 @@ public class OrderCreator {
 			logger.log(OrderGenMessage.ORDER_DATA_INVALID, ">>> createAndStartFromTrigger(NULL)");
 			return null;
 		}
+
+		if (!orderTrigger.getEnabled()) {
+			logger.log(OrderGenMessage.TRIGGER_NOT_ENABLED, orderTrigger.getName());
+			return new RestOrder();
+		}
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-
+		
 		TriggerType typeTmp = null;
 		if (orderTrigger instanceof CalendarOrderTrigger) {
 			typeTmp = TriggerType.Calendar;

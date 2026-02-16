@@ -4,6 +4,7 @@
     "missionCode": "S5P",
     "name": "trigger_1",
     "type": "DataDriven",
-    "orderTemplateName": "ot_1"
+    "orderTemplateName": "ot_1",
+    "enabled" : true
 }
     

@@ -127,9 +127,9 @@
                 th:class="((${selcol} == 'id' ? ${selorder} : ''))"
                 th:text="#{name}">name</span></th>
               <th><span th:text="#{priority}">priority</span></th>
-              <th><span th:text="#{workflowname}">workflowname</span></th>
-              <th><span th:text="#{workflowversion}">workflowversion</span></th>
+              <th><span th:text="#{ordertemplatename}">ordertemplatename</span></th>
               <th><span th:text="#{executiondelay}">executiondelay</span></th>
+              <th><span th:text="#{enabled}">enabled</span></th>
             </tr>
           </thead>
 
@@ -218,12 +218,10 @@
                   <td class="first-row" th:text="${trigger.name}"></td>
                   <td class="first-row" th:text="${trigger.priority}"></td>
                   <td class="first-row"><a 
-                    th:href="'/workflow-show?name=' + ${trigger.workflowName} + '&workflowVersion=' + ${trigger.workflowVersion}"
-                    th:text="${trigger.workflowName}"></a></td>
-                  <td class="first-row"><a 
-                    th:href="'/workflow-show?name=' + ${trigger.workflowName} + '&workflowVersion=' + ${trigger.workflowVersion}"
-                    th:text="${trigger.workflowVersion}"></a></td>
+                    th:href="'/order-template-show?name=' + ${trigger.orderTemplateName}"
+                    th:text="${trigger.orderTemplateName}"></a></td>
                   <td class="first-row" th:text="${trigger.executionDelay}"></td>
+                  <td class="first-row" th:text="${trigger.enabled}"></td>
                 </tr>
               </tbody>
 
@@ -231,20 +229,10 @@
                 class="filtercontent" th:id="'wfcontent' + ${trigger.type} + ${trigger.id}">
                 <tr class="th-row">
                   <th class="tr-rowspan"><span>&nbsp;</span></th>
-                  <th><span th:text="#{inputproduct}">inputproduct</span></th>
-                  <th><span th:text="#{outputproduct}">outputproduct</span></th>
                   <th><span th:text="#{cronexpression}">cronexpression</span></th>
                 </tr>
                 <tr class="proseo-row-divider">
                   <td class="tr-rowspan">&nbsp;</td>
-                  <td class="first-row"><a
-                      class="proseo-list-item"
-                      th:href="'/productclass-show?productClass=' + ${trigger.inputProduct}"
-                      th:text="${trigger.inputProduct}"></a></td>
-                  <td class="first-row"><a
-                      class="proseo-list-item"
-                      th:href="'/productclass-show?productClass=' + ${trigger.outputProduct}"
-                      th:text="${trigger.outputProduct}"></a></td>
                   <td class="first-row" th:text="${trigger.cronExpression}"></td>
                 </tr>              
               </tbody>
@@ -254,19 +242,14 @@
                 <tr class="th-row">
                   <th class="tr-rowspan"><span>&nbsp;</span></th>
                   <th><span th:text="#{inputproduct}">inputproduct</span></th>
-                  <th><span th:text="#{outputproduct}">outputproduct</span></th>
                   <th><span th:text="#{parameterstocopy}">parameterstocopy</span></th>
                 </tr>
                 <tr class="proseo-row-divider">
                   <td class="tr-rowspan">&nbsp;</td>
                   <td class="first-row"><a
                       class="proseo-list-item"
-                      th:href="'/productclass-show?productClass=' + ${trigger.inputProduct}"
-                      th:text="${trigger.inputProduct}"></a></td>
-                  <td class="first-row"><a
-                      class="proseo-list-item"
-                      th:href="'/productclass-show?productClass=' + ${trigger.outputProduct}"
-                      th:text="${trigger.outputProduct}"></a></td>
+                      th:href="'/productclass-show?productClass=' + ${trigger.inputProductType}"
+                      th:text="${trigger.inputProductType}"></a></td>
                   <td class="first-row">
 	                  <span th:each="comp : ${trigger.parametersToCopy}"
 			                class="proseo-list-item"
@@ -279,8 +262,6 @@
                 class="filtercontent" th:id="'wfcontent' + ${trigger.type} + ${trigger.id}">
                 <tr class="th-row">
                   <th class="tr-rowspan"><span>&nbsp;</span></th>
-                  <th><span th:text="#{inputproduct}">inputproduct</span></th>
-                  <th><span th:text="#{outputproduct}">outputproduct</span></th>
                   <th><span th:text="#{parameterstocopy}">parameterstocopy</span></th>
                   <th><span th:text="#{datataketype}">datataketype</span></th>
                   <th><span th:text="#{lastdatatakestarttime}">lastdatatakestarttime</span></th>
@@ -288,14 +269,6 @@
                 </tr>
                 <tr class="proseo-row-divider">
                   <td class="tr-rowspan">&nbsp;</td>
-                  <td class="first-row"><a
-                      class="proseo-list-item"
-                      th:href="'/productclass-show?productClass=' + ${trigger.inputProduct}"
-                      th:text="${trigger.inputProduct}"></a></td>
-                  <td class="first-row"><a
-                      class="proseo-list-item"
-                      th:href="'/productclass-show?productClass=' + ${trigger.outputProduct}"
-                      th:text="${trigger.outputProduct}"></a></td>
                   <td class="first-row">
                     <span th:each="comp : ${trigger.parametersToCopy}"
                       class="proseo-list-item"
@@ -311,22 +284,12 @@
                 class="filtercontent" th:id="'wfcontent' + ${trigger.type} + ${trigger.id}">
                 <tr class="th-row">
                   <th class="tr-rowspan"><span>&nbsp;</span></th>
-                  <th><span th:text="#{inputproduct}">inputproduct</span></th>
-                  <th><span th:text="#{outputproduct}">outputproduct</span></th>
                   <th><span th:text="#{spacecraftcode}">spacecraftcode</span></th>
                   <th><span th:text="#{lastorbitnumber}">lastorbitnumber</span></th>
                   <th><span th:text="#{deltatime}">deltatime</span></th>
                 </tr>
                 <tr class="proseo-row-divider">
                   <td class="tr-rowspan">&nbsp;</td>
-                  <td class="first-row"><a
-                      class="proseo-list-item"
-                      th:href="'/productclass-show?productClass=' + ${trigger.inputProduct}"
-                      th:text="${trigger.inputProduct}"></a></td>
-                  <td class="first-row"><a
-                      class="proseo-list-item"
-                      th:href="'/productclass-show?productClass=' + ${trigger.outputProduct}"
-                      th:text="${trigger.outputProduct}"></a></td>
                   <td class="first-row" th:text="${trigger.spacecraftCode}"> 
                   <td class="first-row" th:text="${trigger.lastOrbitNumber}"> 
                   <td class="first-row" th:text="${trigger.deltaTime}"> 
@@ -337,21 +300,11 @@
                 class="filtercontent" th:id="'wfcontent' + ${trigger.type} + ${trigger.id}">
                 <tr class="th-row">
                   <th class="tr-rowspan"><span>&nbsp;</span></th>
-                  <th><span th:text="#{inputproduct}">inputproduct</span></th>
-                  <th><span th:text="#{outputproduct}">outputproduct</span></th>
                   <th><span th:text="#{nexttriggertime}">nexttriggertime</span></th>
                   <th><span th:text="#{triggerinterval}">triggerinterval</span></th>
                 </tr>
                 <tr class="proseo-row-divider">
                   <td class="tr-rowspan">&nbsp;</td>
-                  <td class="first-row"><a
-                      class="proseo-list-item"
-                      th:href="'/productclass-show?productClass=' + ${trigger.inputProduct}"
-                      th:text="${trigger.inputProduct}"></a></td>
-                  <td class="first-row"><a
-                      class="proseo-list-item"
-                      th:href="'/productclass-show?productClass=' + ${trigger.outputProduct}"
-                      th:text="${trigger.outputProduct}"></a></td>
                   <td class="first-row" th:text="${trigger.nextTriggerTime}"></td>
                   <td class="first-row" th:text="${trigger.triggerInterval}"> 
                 </tr>              

@@ -475,12 +475,20 @@ public class TriggerManager {
 			triggerChanged = true;
 			modelTrigger.setPriority(changedTrigger.getPriority());
 		}
+		if (!Objects.equals(modelTrigger.getEnabled(), changedTrigger.getEnabled())) {
+			triggerChanged = true;
+			modelTrigger.setEnabled(changedTrigger.getEnabled());
+		}
 		if (modelTrigger instanceof DataDrivenOrderTrigger && changedTrigger instanceof DataDrivenOrderTrigger) {
 			DataDrivenOrderTrigger modelTriggerLoc = (DataDrivenOrderTrigger) modelTrigger;
 			DataDrivenOrderTrigger changedTriggerLoc = (DataDrivenOrderTrigger) changedTrigger;
 			if (!modelTriggerLoc.getParametersToCopy().equals(changedTriggerLoc.getParametersToCopy())) {
 				triggerChanged = true;			
 				modelTriggerLoc.setParametersToCopy(changedTriggerLoc.getParametersToCopy());
+			}
+			if (!Objects.equals(modelTriggerLoc.getInputProductClass(), changedTriggerLoc.getInputProductClass())) {
+				triggerChanged = true;
+				modelTriggerLoc.setInputProductClass(changedTriggerLoc.getInputProductClass());
 			}
 		} else if (modelTrigger instanceof TimeIntervalOrderTrigger && changedTrigger instanceof TimeIntervalOrderTrigger) {
 			TimeIntervalOrderTrigger modelTriggerLoc = (TimeIntervalOrderTrigger) modelTrigger;

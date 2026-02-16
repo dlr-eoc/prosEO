@@ -63,6 +63,7 @@ public class TriggerCommandRunner {
 	private static final String PROMPT_TRIGGER_DELTA_TIME = "Trigger delta time (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_TIMEINTERVAL = "Trigger time interval (empty field cancels): ";
 	private static final String PROMPT_ORDERTEMPLATE_NAME = "Trigger order template name (empty field cancels): ";
+	private static final String PROMPT_TRIGGER_ENABLED = "Trigger enabled flag (empty field cancels): ";
 	private static final String URI_PATH_TRIGGERS = "/triggers";
 	private static final String URI_PATH_RELOAD = "/reload";
 	private static final String TRIGGERS = "triggers";
@@ -264,6 +265,15 @@ public class TriggerCommandRunner {
 				return;
 			}
 			restTrigger.setOrderTemplateName(response);
+		}
+		if (restTrigger.getEnabled()) {
+			System.out.print(PROMPT_TRIGGER_ENABLED);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+				return;
+			}
+			restTrigger.setEnabled(Boolean.parseBoolean(response));
 		}
 		switch (type) {
 		case Calendar:
@@ -477,14 +487,14 @@ public class TriggerCommandRunner {
 			}
 		} else {
 			// Must be a list of triggers
-			String listFormat = "%-16s %-22s %-8s %-22s %-18s";
+			String listFormat = "%-16s %-22s %-9s %-22s %-9s";
 			System.out
-				.println(String.format(listFormat, "Type", "Trigger Name", "Priority", "Order Template"));
+				.println(String.format(listFormat, "Type", "Trigger Name", "Priority", "Order Template", "Enabled"));
 			for (Object resultObject : (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
 					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
 					System.out.println(String.format(listFormat, resultMap.get("type"), resultMap.get("name"),
-							resultMap.get("priority"), resultMap.get("orderTemplateName")));
+							resultMap.get("priority"), resultMap.get("orderTemplateName"), resultMap.get("enabled")));
 				}
 			}
 		}
@@ -632,6 +642,9 @@ public class TriggerCommandRunner {
 		}
 		if (null != updatedTrigger.getTriggerInterval()) {
 			restTrigger.setTriggerInterval(updatedTrigger.getTriggerInterval());
+		}
+		if (null != updatedTrigger.getInputProductType()) {
+			restTrigger.setInputProductType(updatedTrigger.getInputProductType());
 		}
 		if (null != updatedTrigger.getCronExpression()) {
 			restTrigger.setCronExpression(updatedTrigger.getCronExpression());

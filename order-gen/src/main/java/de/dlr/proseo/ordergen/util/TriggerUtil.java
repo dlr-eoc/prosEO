@@ -75,6 +75,9 @@ public class TriggerUtil {
 		if (null != trigger.getPriority()) {
 			restTrigger.setPriority(trigger.getPriority().longValue());
 		}	
+		if (null != trigger.getEnabled()) {
+			restTrigger.setEnabled(trigger.getEnabled());
+		}	
 		if (null != trigger.getOrderTemplate()) {
 			restTrigger.setOrderTemplateName(trigger.getOrderTemplate().getName());
 		}	
@@ -190,6 +193,9 @@ public class TriggerUtil {
 		}
 		if (null != restTrigger.getPriority()) {
 			trigger.setPriority(restTrigger.getPriority().intValue());
+		}
+		if (null != restTrigger.getEnabled()) {
+			trigger.setEnabled(restTrigger.getEnabled());
 		}
 		if (null != restTrigger.getExecutionDelay()) {
 			trigger.setExecutionDelay(Duration.ofSeconds(restTrigger.getExecutionDelay()));
