@@ -790,18 +790,59 @@
 		  }
 
 		  var selected = getSelectedOrderIds();
+		  let completed = 0;
+		  let successes = 0;
+		  let failures = 0;
 
 		  if (!selected || selected.length === 0) {
 		      alert("Please select at least one order.");
 		      return;
 		  }
 
-		  showLoader();
+			// client-side state validation for actions not prevented elsewhere
+			let allowedStates = null;
+			if (state === 'DELETE') {
+			    allowedStates = ['INITIAL', 'CLOSED'];
+			}
+			if (state === 'SUSPEND' || state === 'SUSPEND_FORCE') {
+			    allowedStates = ['RUNNING'];
+			}
+
+			if (allowedStates !== null) {
+			    let filtered = [];
+
+			    selected.forEach(function(id) {
+
+			        // read state from table row
+			        const row = document.getElementById(id);
+			        if (!row) {
+					    failures++;
+					    return;
+					}
+			        const stateCell = row.children[3]; // 4th column = orderState
+			        const orderState = stateCell.innerText.trim();
+
+			        if (allowedStates.includes(orderState)) {
+			            filtered.push(id);
+			        } else {
+			            failures++;
+			        }
+			    });
+
+				if (filtered.length === 0) {
+			        alert(
+				        state + " is only allowed for orders in state: " + allowedStates.join(", ") + ".\n" +
+				        failures + " order(s) skipped."
+			        );
+			    	return;
+			 	}
+
+			    selected = filtered;
+			}
 
 		  let total = selected.length;
-		  let completed = 0;
-		  let successes = 0;
-		  let failures = 0;
+
+		  showLoader();
 
 			/** Display bulk action result and refresh order table */
 			function requestFinished() {
@@ -856,7 +897,7 @@
 		}
 
 		/** Bulk PLAN on selected facility and show summary popup */
-		function bulkPlan(facilityId) {
+		function bulkPlan(facility) {
 
 		if (![[${hasroleorderplanner}]]) {
 		      return;
