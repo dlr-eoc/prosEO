@@ -42,6 +42,7 @@ types:
   RestNotificationEndpoint: !include ../../../../../model/src/main/resources/raml/types/notificationendpoint.raml
   RestOrbit: !include ../../../../../model/src/main/resources/raml/types/orbit.raml
   RestOrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
+  RestOrderTemplate: !include ../../../../../model/src/main/resources/raml/types/ordertemplate.raml
   RestOrder: !include ../../../../../model/src/main/resources/raml/types/order.raml
   RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
   RestPayload: !include ../../../../../model/src/main/resources/raml/types/payload.raml
@@ -182,6 +183,21 @@ resourceTypes:
         application/json:
           type: RestOrder
           example:  !include ../../../../../model/src/main/resources/raml/examples/order.json
+
+  /ordertemplates:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestOrderTemplate[]
+              example:  !include ../../../../../model/src/main/resources/raml/examples/ordertemplate-list.json
+    put:
+      body:
+        application/json:
+          type: RestOrderTemplate
+          example:  !include ../../../../../model/src/main/resources/raml/examples/ordertemplate.json
 
   /workflows:
     type: standard

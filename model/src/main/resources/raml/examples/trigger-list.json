@@ -5,16 +5,16 @@
         "missionCode": "S5P",
         "name": "trigger_1",
         "type": "DataDriven",
-        "workflowName": "wf_1",
-        "workflowVersion": "1.0"
+        "orderTemplateName": "ot_1",
+        "enabled" : true
     },    
     {
-        "id": 890456231,
+        "id": 890456232,
         "version": 1,
         "missionCode": "S5P",
-        "name": "trigger_1",
+        "name": "trigger_2",
         "type": "DataDriven",
-        "workflowName": "wf_1",
-        "workflowVersion": "1.0"
+        "orderTemplateName": "ot_2",
+        "enabled" : true
     }
 ]

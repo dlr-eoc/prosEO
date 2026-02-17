@@ -12,6 +12,8 @@ import jakarta.persistence.Table;
 /**
  * A cron-style trigger, which is tied to specific times of day/week/month.
  * 
+ * @since prosEO 2.1.0
+ * 
  * @author Dr. Thomas Bassler
  */
 @Entity

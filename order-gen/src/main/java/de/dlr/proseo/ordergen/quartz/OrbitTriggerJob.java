@@ -29,14 +29,14 @@ public class OrbitTriggerJob implements Job {
 	public void execute(JobExecutionContext context) throws JobExecutionException {
 
 		Object object = context.getJobDetail().getJobDataMap().get("orderTrigger");
-		String workflowName = null;
+		String orderTemplateName = null;
 		OrbitOrderTrigger trigger = null;
 		if (object instanceof OrbitOrderTrigger) {
 			trigger = ((OrbitOrderTrigger) object);
-			workflowName = trigger.getWorkflow().getName();
+			orderTemplateName = trigger.getOrderTemplate().getName();
 		}
 		if (logger.isTraceEnabled()) {
-			logger.trace("--- trigger fired ({}, {})", context.getJobDetail().getKey(), workflowName);
+			logger.trace("--- trigger fired ({}, {})", context.getJobDetail().getKey(), orderTemplateName);
 		}
 
 		OrderGenerator.orderCreator.createAndStartFromTrigger(trigger, context.getPreviousFireTime(), 

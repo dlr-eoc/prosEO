@@ -139,4 +139,12 @@ public class S3Configuration {
 	public void setFileCheckWaitTime(Long fileCheckWaitTime) {
 		this.fileCheckWaitTime = fileCheckWaitTime;
 	}
+
+	@Override
+	public String toString() {
+		return "S3Configuration [s3AccessKey=" + s3AccessKey + ", s3SecretAccessKey=" + s3SecretAccessKey + ", s3Region=" + s3Region
+				+ ", s3EndPoint=" + s3EndPoint + ", bucket=" + bucket + ", basePath=" + basePath + ", sourcePath=" + sourcePath
+				+ ", maxRequestAttempts=" + maxRequestAttempts + ", fileCheckWaitTime=" + fileCheckWaitTime + ", defaultEndPoint="
+				+ defaultEndPoint + ", fileTransferManager=" + fileTransferManager + "]";
+	}
 }

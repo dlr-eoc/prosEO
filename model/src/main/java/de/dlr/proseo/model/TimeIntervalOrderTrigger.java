@@ -15,6 +15,8 @@ import jakarta.persistence.Table;
 /**
  * A trigger that fires in certain time intervals.
  *
+ * @since prosEO 2.1.0
+ * 
  * @author Dr. Thomas Bassler
  */
 @Entity

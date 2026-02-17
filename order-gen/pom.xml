@@ -107,7 +107,7 @@
   </dependencies>
 
     <build>
-        <finalName>order-gen</finalName>
+        <finalName>proseo-order-gen</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

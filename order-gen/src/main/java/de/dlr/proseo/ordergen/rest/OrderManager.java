@@ -73,13 +73,13 @@ public class OrderManager {
 		List<DataDrivenOrderTrigger> triggerList = RepositoryService.getDataDrivenOrderTriggerRepository()
 				.findByMissionCodeAndProductClass(missionCode, productClass);
 		
-		// For each trigger: Generate a new processing order from its workflow (if enabled)
+		// For each trigger: Generate a new processing order from its order template (if enabled)
 		List<RestOrder> orderList = new ArrayList<>();
 		
 		for (DataDrivenOrderTrigger trigger : triggerList) {
-			if (trigger.getWorkflow().isEnabled()) {
+			if (trigger.isEnabled() && trigger.getOrderTemplate().isEnabled()) {
 				
-				// Generate processing order from product data and workflow (analogous to ODIP with input product)
+				// Generate processing order from product data and order template (analogous to ODIP with input product)
 				RestOrder order = 
 						OrderGenerator.orderCreator.createAndStartFromTrigger(trigger, null, null, null, productId);
 				if (order != null) {

@@ -32,12 +32,12 @@ public enum OrderGenMessage implements ProseoMessage {
 	PRODUCT_TYPE_INVALID					(4720, Level.ERROR, false, "Product type {1} invalid for mission {0}", ""),
 	PRODUCT_NOT_FOUND						(4721, Level.ERROR, false, "Product with ID {0} not found in database", ""),
 	ORDER_GENERATED							(4722, Level.INFO, true, "Processing Order {0} generated from trigger {1}", ""),
-	NO_ORDER_GENERATED						(4723, Level.WARN, true, "No processing orders generated for product with database ID {0} (no trigger found with enabled workflows)", ""),
+	NO_ORDER_GENERATED						(4723, Level.WARN, true, "No processing orders generated for product with database ID {0} (no trigger found with enabled order templates)", ""),
 	TRIGGERS_RELOADED						(4724, Level.INFO, true, "Triggers of all missions (re-)loaded", ""),
 	NO_TRIGGER 								(4725, Level.ERROR, false, "Trigger is not defined (NULL)", ""),
-	WORKFLOW_NOT_ENABLED    				(4726, Level.ERROR, false, "Workflow referenced by name {0} is disabled (not useable)", ""),
-	WORKFLOW_NOT_FOUND	    				(4727, Level.ERROR, false, "Workflow referenced by id {0} not found", ""),
-	MSG_WORKFLOW_OPTION_NO_TYPE_MATCH 		(4728, Level.ERROR, false, "Workflow option {0} does not match type: {1}, value: {2}", ""),
+	ORDERTEMPLATE_NOT_ENABLED    			(4726, Level.ERROR, false, "Order template referenced by name {0} is disabled (not useable)", ""),
+	ORDERTEMPLATE_NOT_FOUND	    			(4727, Level.ERROR, false, "Order template referenced by id {0} not found", ""),
+	MSG_ORDERTEMPLATE_OPTION_NO_TYPE_MATCH 	(4728, Level.ERROR, false, "Order template option {0} does not match type: {1}, value: {2}", ""),
 	TRIGGERS_COUNTED						(4729, Level.INFO, true, "Triggers counted: {0}", ""),
 	CREATE_ORBIT_TRIGGER_FAILED				(4730, Level.ERROR, false, "Create next orbit trigger failed (cause: {0})", ""),
 	CREATE_ORDER_FAILED						(4731, Level.ERROR, false, "Create order failed (cause: {0})", ""),
@@ -50,6 +50,7 @@ public enum OrderGenMessage implements ProseoMessage {
 	INVALID_URL								(4738, Level.ERROR, false, "Invalid request URL {0} (cause: {1})", ""),
 	WARN_UNEXPECTED_STATUS					(4739, Level.ERROR, false, "Unexpected HTTP status {0} received", ""),
 	HTTP_REQUEST_FAILED						(4740, Level.ERROR, false, "HTTP request failed (cause: {0})", ""),
+	TRIGGER_NOT_ENABLED    					(4741, Level.ERROR, false, "Trigger referenced by name {0} is disabled (not useable)", ""),
 	
 	;
 	

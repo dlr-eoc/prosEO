@@ -16,7 +16,7 @@ management:
     endpoints.web.exposure.include: "health"
 logging:
     #file: 
-    #    name: /proseo/log/proseo-user-mgr.log
+    #    name: /proseo/log/proseo-order-generator.log
     level:
         root: INFO
         de.dlr.proseo: TRACE

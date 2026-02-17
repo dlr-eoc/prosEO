@@ -1,0 +1,44 @@
+{
+    "id": 890456231,
+    "version": 1,
+    "missionCode": "S5P",
+    "name": "CLOUD_to_O3",
+    "enabled": true,
+    "outputFileClass": "RPRO",
+    "processingMode": "OFFL",
+    "slicingType": "NONE",
+    "inputFilters": [
+        {
+            "productClass": "L2__CLOUD_",
+            "filterConditions": [
+                {
+                    "key": "fileClass",
+                    "parameterType": "STRING",
+                    "parameterValue": "OFFL"
+                }
+            ]
+        }
+    ],
+    "classOutputParameters": [
+        {
+            "productClass": "L2__O3____",
+            "outputParameters": [
+                {
+                    "key": "revision",
+                    "parameterType": "INTEGER",
+                    "parameterValue": "02"
+                }
+            ]
+        }
+    ],
+    "outputParameters": [
+        {
+            "key": "baselineCollection",
+            "parameterType": "STRING",
+            "parameterValue": "99"
+        }
+    ],
+    "configuredProcessors": [ "KNMI L2 01.03.02 2019-07-03", "DLR L2 01.01.05 2019-07-03" ],
+    "requestedProductClasses": [ "O3" ],
+    "inputProductClasses": [ "CLOUD" ]
+}

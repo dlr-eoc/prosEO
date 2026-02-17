@@ -442,6 +442,76 @@ commands:
             - name: orderId
               type: string
               description: The order identifier
+    - name: ordertemplate
+      description: Commands for managing processing order templates
+      subcommands:
+        - name: show
+          description: Lists order templates
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give order details, otherwise show only order identifier, UUID, start/stop times, mode and state
+              shortForm: v
+          parameters:
+            - name: name
+              type: string
+              optional: true
+              description: The order template name
+        - name: create
+          description: Create a new order template; if the input is not from a file,
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the order template definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: name
+              type: string
+              optional: true
+              description: The order template name for user reference (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: An order template attribute to update in the form "<attribute name>=<attribute value>",
+                           overrides values given in the order definition file
+        - name: update
+          description: Update an order template
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the order definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the order definition file and/or the command parameters
+          parameters:
+            - name: name
+              type: string
+              optional: true
+              description: The order template name for user reference (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: An order tgemplate attribute to update in the form "<attribute name>=<attribute value>",
+                           overrides values given in the order definition file
+        - name: delete
+          description: Delete the named order template
+          parameters:
+            - name: name
+              type: string
+              description: The order template name
 
     # Commands for the Production Planner
     - name: job

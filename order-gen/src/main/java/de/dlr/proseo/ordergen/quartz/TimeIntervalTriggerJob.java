@@ -25,14 +25,14 @@ public class TimeIntervalTriggerJob implements Job {
 	@Override
 	public void execute(JobExecutionContext context) throws JobExecutionException {
 		Object object = context.getJobDetail().getJobDataMap().get("orderTrigger");
-		String workflowName = null;
+		String orderTemplateName = null;
 		TimeIntervalOrderTrigger trigger = null;
 		if (object instanceof TimeIntervalOrderTrigger) {
 			trigger = ((TimeIntervalOrderTrigger) object);
-			workflowName = trigger.getWorkflow().getName();
+			orderTemplateName = trigger.getOrderTemplate().getName();
 		}
 		if (logger.isTraceEnabled()) {
-			logger.trace("--- trigger fired ({}, {})", context.getJobDetail().getKey(), workflowName);
+			logger.trace("--- trigger fired ({}, {})", context.getJobDetail().getKey(), orderTemplateName);
 		}
 
 		OrderGenerator.orderCreator.createAndStartFromTrigger(trigger, context.getPreviousFireTime(), 

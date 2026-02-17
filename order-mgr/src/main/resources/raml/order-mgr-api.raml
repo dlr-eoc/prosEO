@@ -31,6 +31,7 @@ types:
   RestJobStep: !include ../../../../../model/src/main/resources/raml/types/jobstep.raml
   RestNotificationEndpoint: !include ../../../../../model/src/main/resources/raml/types/notificationendpoint.raml
   RestOrder: !include ../../../../../model/src/main/resources/raml/types/order.raml
+  RestOrderTemplate: !include ../../../../../model/src/main/resources/raml/types/ordertemplate.raml
   RestOrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
   RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
   RestMission: !include ../../../../../model/src/main/resources/raml/types/mission.raml
@@ -296,6 +297,161 @@ resourceTypes:
       responses:
         204:
         
+/ordertemplates:
+  type: standard
+  get:
+    description: |
+      List of all order templates filtered by mission, identifier, productClasses
+    displayName: getOrderTemplates
+    queryParameters:
+      mission?: 
+        description: the mission code
+        type: string
+      name?: 
+        description: the unique order template name string
+        type: string
+      productClasses?: 
+        description: an array of product types
+        type: string[]
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestOrderTemplate[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/ordertemplate-list.json
+  post:
+    description: |
+      Create an order template from the given JSON object
+    displayName: createOrderTemplate
+    body:
+      application/json:
+        type: RestOrderTemplate
+        example: !include ../../../../../model/src/main/resources/raml/examples/ordertemplate.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestOrderTemplate
+            example: !include ../../../../../model/src/main/resources/raml/examples/ordertemplate.json
+  /count:
+    type: standard
+    get:
+      description: |
+        Count order templates filtered by mission, identifier and id not equal nid.
+      displayName: countOrderTemplates
+      queryParameters:
+        mission?: 
+          description: the mission code
+          type: string
+        identifier?: 
+          description: the unique order identifier string
+          type: string
+      responses:
+        200:
+          body:
+            text/plain:
+  /countselect:
+    get:
+      description: |
+        Calculate the amount of order templates satisfying the selection parameters. Mission code is mandatory.
+      displayName: countSelectOrderTemplates
+      queryParameters:
+        mission?: 
+          description: the mission code
+          type: string
+        name?: 
+          description: the unique order template name string
+          type: string
+        productClass?: 
+          description: an array of product types
+          type: string[]
+        recordFrom?: 
+          description: first record of filtered and ordered result to return
+          type: integer
+        recordTo?: 
+          description: last record of filtered and ordered result to return
+          type: integer
+        orderBy?: 
+          description: an array of strings containing a column name and an optional sort direction (ASC/DESC)
+          type: string[]
+      responses:
+        200:
+          body:
+            text/plain:
+  /select:
+    get:
+      description: |
+        Retrieve a list of order templates satisfying the selection parameters
+      displayName: getAndSelectOrderTemplates
+      queryParameters:
+        mission?: 
+          description: the mission code
+          type: string
+        name?: 
+          description: the unique order template name string
+          type: string
+        productClass?: 
+          description: an array of product types
+          type: string[]
+        recordFrom?: 
+          description: first record of filtered and ordered result to return
+          type: integer
+        recordTo?: 
+          description: last record of filtered and ordered result to return
+          type: integer
+        orderBy?: 
+          description: an array of strings containing a column name and an optional sort direction (ASC/DESC)
+          type: string[]
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestOrderTemplate[]
+              example: !include ../../../../../model/src/main/resources/raml/examples/ordertemplate-list.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: |
+        Find the order template with the given ID
+      displayName: getOrderTemplateById
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestOrderTemplate
+              example: !include ../../../../../model/src/main/resources/raml/examples/ordertemplate.json
+        404:
+          description: The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+    patch:
+      description: |
+        Update the order template with the given ID with the attribute values of the given JSON object.
+      displayName: modifyOrderTemplate
+      body:
+        application/json:
+          type: RestOrderTemplate
+          example: !include ../../../../../model/src/main/resources/raml/examples/ordertemplate.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestOrderTemplate
+              example: !include ../../../../../model/src/main/resources/raml/examples/ordertemplate.json
+        304:
+          description: The resource was not modified.
+          headers:
+            Warning: !include types/error.raml
+    delete:
+      description: |
+        Delete an order template by ID
+      displayName: deleteOrderTemplateById
+      responses:
+        204:
+         
 /orderjobs:
   type: standard
   get:

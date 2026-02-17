@@ -10,7 +10,11 @@ import java.time.Duration;
 import jakarta.persistence.MappedSuperclass;
 
 /**
- * Base class for triggers which fire upon reaching start time of a mission planning object plus a given deltaTime (may be negative, which means that the event fires before the start time of the object)
+ * Base class for triggers which fire upon reaching start time of a mission planning object plus a given deltaTime (may be negative,
+ * which means that the event fires before the start time of the object)
+ * 
+ * @since prosEO 2.1.0
+ * 
  * @author Dr. Thomas Bassler
  */
 

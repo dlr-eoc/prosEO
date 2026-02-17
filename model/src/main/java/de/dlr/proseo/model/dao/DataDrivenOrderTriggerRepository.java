@@ -30,6 +30,7 @@ public interface DataDrivenOrderTriggerRepository extends JpaRepository<DataDriv
 
 	/**
 	 * Get trigger within a mission with the given name
+	 * 
 	 * @param missionCode the mission code
 	 * @param name the name of the workflow
 	 * 
@@ -40,11 +41,12 @@ public interface DataDrivenOrderTriggerRepository extends JpaRepository<DataDriv
 
 	/**
 	 * Get all triggers within a mission with a workflow having the given product class as input
-	 * @param missionCode the mission code
-	 * @param productClass the input product class of the trigger's workflow
 	 * 
-	 * @return the list of triggers for this mission using the given product class as workflow input
+	 * @param missionCode the mission code
+	 * @param productClass the input product class of the trigger
+	 * 
+	 * @return the list of triggers for this mission using the given product class as input
 	 */
-	@Query("select t from DataDrivenOrderTrigger t where t.mission.code = ?1 and t.workflow.inputProductClass = ?2")
+	@Query("select t from DataDrivenOrderTrigger t where t.mission.code = ?1 and t.inputProductClass = ?2")
 	public List<DataDrivenOrderTrigger> findByMissionCodeAndProductClass(String missionCode, ProductClass productclass);
 }

@@ -194,4 +194,9 @@ public class PosixStorageFile implements StorageFile {
 
 		return (relativePath.endsWith("/") || relativePath.endsWith("\\")) ? true : false;
 	}
+
+	@Override
+	public String toString() {
+		return "PosixStorageFile [basePath=" + basePath + ", bucket=" + bucket + ", relativePath=" + relativePath + "]";
+	}
 }

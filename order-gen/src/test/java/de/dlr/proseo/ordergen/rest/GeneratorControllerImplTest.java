@@ -33,7 +33,7 @@ import de.dlr.proseo.model.DataDrivenOrderTrigger;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
-import de.dlr.proseo.model.Workflow;
+import de.dlr.proseo.model.OrderTemplate;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.ordergen.OrderGenerator;
 import de.dlr.proseo.model.rest.model.RestOrder;
@@ -50,6 +50,8 @@ import de.dlr.proseo.model.rest.model.RestOrder;
 public class GeneratorControllerImplTest {
 
 	private static final String TEST_CODE_1 = "UTM";
+	private static final String TEST_PROCESSING_MODE_1 = "NRT";
+	private static final String TEST_FILE_CLASS_1 = "OPER";
 	private static final String TEST_PRODUCT_CLASS_1 = "$PC1$";
 	private static final String TEST_WORKFLOW_1 = "$WF1$";
 	private static final String TEST_TRIGGER_1 = "$TR1$";
@@ -97,6 +99,8 @@ public class GeneratorControllerImplTest {
 	public final void test() {
 		Mission mission1 = new Mission();
 		mission1.setCode(TEST_CODE_1);
+		mission1.getProcessingModes().add(TEST_PROCESSING_MODE_1);
+		mission1.getFileClasses().add(TEST_FILE_CLASS_1);
 		mission1 = RepositoryService.getMissionRepository().save(mission1);
 		
 		ProductClass productClass1 = new ProductClass();
@@ -104,19 +108,18 @@ public class GeneratorControllerImplTest {
 		productClass1.setProductType(TEST_PRODUCT_CLASS_1);
 		productClass1 = RepositoryService.getProductClassRepository().save(productClass1);
 		
-		Workflow workflow1 = new Workflow();
-		workflow1.setMission(mission1);
-		workflow1.setName(TEST_WORKFLOW_1);
-		workflow1.setUuid(UUID.randomUUID());
-		workflow1.setWorkflowVersion("1");
-		workflow1.setInputProductClass(productClass1);
-		workflow1.setEnabled(true);
-		workflow1 = RepositoryService.getWorkflowRepository().save(workflow1);
+		OrderTemplate orderTemplate1 = new OrderTemplate();
+		orderTemplate1.setMission(mission1);
+		orderTemplate1.setName(TEST_WORKFLOW_1);
+		orderTemplate1.setEnabled(true);
+		orderTemplate1 = RepositoryService.getOrderTemplateRepository().save(orderTemplate1);
 		
 		DataDrivenOrderTrigger trigger1 = new DataDrivenOrderTrigger();
 		trigger1.setMission(mission1);
 		trigger1.setName(TEST_TRIGGER_1);
-		trigger1.setWorkflow(workflow1);
+		trigger1.setEnabled(true);
+		trigger1.setOrderTemplate(orderTemplate1);
+		trigger1.setInputProductClass(productClass1);
 		trigger1 = RepositoryService.getDataDrivenOrderTriggerRepository().save(trigger1);
 
 		Product product1 = new Product();

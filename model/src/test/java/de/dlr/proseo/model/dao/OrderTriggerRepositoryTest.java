@@ -32,7 +32,7 @@ import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.OrbitOrderTrigger;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.TimeIntervalOrderTrigger;
-import de.dlr.proseo.model.Workflow;
+import de.dlr.proseo.model.OrderTemplate;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -122,49 +122,43 @@ public class OrderTriggerRepositoryTest {
 		productClass3.setProductType(TEST_PRODUCT_CLASS_3);
 		productClass3 = RepositoryService.getProductClassRepository().save(productClass3);
 		
-		Workflow workflow1 = new Workflow();
-		workflow1.setMission(mission1);
-		workflow1.setName(TEST_WORKFLOW_1);
-		workflow1.setUuid(UUID.randomUUID());
-		workflow1.setWorkflowVersion("1");
-		workflow1.setInputProductClass(productClass1);
-		workflow1 = RepositoryService.getWorkflowRepository().save(workflow1);
+		OrderTemplate orderTemplate1 = new OrderTemplate();
+		orderTemplate1.setMission(mission1);
+		orderTemplate1.setName(TEST_WORKFLOW_1);
+		orderTemplate1 = RepositoryService.getOrderTemplateRepository().save(orderTemplate1);
 		
-		Workflow workflow2 = new Workflow();
-		workflow2.setMission(mission2);
-		workflow2.setName(TEST_WORKFLOW_2);
-		workflow2.setUuid(UUID.randomUUID());
-		workflow2.setWorkflowVersion("1");
-		workflow2.setInputProductClass(productClass2);
-		workflow2 = RepositoryService.getWorkflowRepository().save(workflow2);
+		OrderTemplate orderTemplate2 = new OrderTemplate();
+		orderTemplate2.setMission(mission2);
+		orderTemplate2.setName(TEST_WORKFLOW_2);
+		orderTemplate2 = RepositoryService.getOrderTemplateRepository().save(orderTemplate2);
 		
-		Workflow workflow3 = new Workflow();
-		workflow3.setMission(mission1);
-		workflow3.setName(TEST_WORKFLOW_3);
-		workflow3.setUuid(UUID.randomUUID());
-		workflow3.setWorkflowVersion("1");
-		workflow3.setInputProductClass(productClass3);
-		workflow3 = RepositoryService.getWorkflowRepository().save(workflow3);
+		OrderTemplate orderTemplate3 = new OrderTemplate();
+		orderTemplate3.setMission(mission1);
+		orderTemplate3.setName(TEST_WORKFLOW_3);
+		orderTemplate3 = RepositoryService.getOrderTemplateRepository().save(orderTemplate3);
 		
 		// Test save
 		DataDrivenOrderTrigger trigger1 = new DataDrivenOrderTrigger();
 		trigger1.setMission(mission1);
 		trigger1.setName(TEST_TRIGGER_1);
-		trigger1.setWorkflow(workflow1);
+		trigger1.setOrderTemplate(orderTemplate1);
+		trigger1.setInputProductClass(productClass1);
 		trigger1 = RepositoryService.getDataDrivenOrderTriggerRepository().save(trigger1);
 		assertNotNull("DataDrivenOrderTrigger 1 not created correctly", trigger1);
 		
 		DataDrivenOrderTrigger trigger2 = new DataDrivenOrderTrigger();
 		trigger2.setMission(mission2);
 		trigger2.setName(TEST_TRIGGER_2);
-		trigger2.setWorkflow(workflow2);
+		trigger2.setOrderTemplate(orderTemplate2);
+		trigger2.setInputProductClass(productClass2);
 		trigger2 = RepositoryService.getDataDrivenOrderTriggerRepository().save(trigger2);
 		assertNotNull("DataDrivenOrderTrigger 2 not created correctly", trigger2);
 		
 		DataDrivenOrderTrigger trigger3 = new DataDrivenOrderTrigger();
 		trigger3.setMission(mission1);
 		trigger3.setName(TEST_TRIGGER_3);
-		trigger3.setWorkflow(workflow3);
+		trigger3.setOrderTemplate(orderTemplate3);
+		trigger3.setInputProductClass(productClass3);
 		trigger3 = RepositoryService.getDataDrivenOrderTriggerRepository().save(trigger3);
 		assertNotNull("DataDrivenOrderTrigger 3 not created correctly", trigger3);
 
@@ -211,7 +205,7 @@ public class OrderTriggerRepositoryTest {
 		CalendarOrderTrigger trigger4 = new CalendarOrderTrigger();
 		trigger4.setMission(mission1);
 		trigger4.setName(TEST_TRIGGER_3);
-		trigger4.setWorkflow(workflow3);
+		trigger4.setOrderTemplate(orderTemplate3);
 		trigger4 = RepositoryService.getCalendarOrderTriggerRepository().save(trigger4);
 		assertNotNull("CalendarOrderTrigger 4 not created correctly", trigger4);
 
@@ -245,7 +239,7 @@ public class OrderTriggerRepositoryTest {
 		DatatakeOrderTrigger trigger5 = new DatatakeOrderTrigger();
 		trigger5.setMission(mission1);
 		trigger5.setName(TEST_TRIGGER_3);
-		trigger5.setWorkflow(workflow3);
+		trigger5.setOrderTemplate(orderTemplate3);
 		trigger5 = RepositoryService.getDatatakeOrderTriggerRepository().save(trigger5);
 		assertNotNull("DatatakeOrderTrigger 5 not created correctly", trigger5);
 
@@ -279,7 +273,7 @@ public class OrderTriggerRepositoryTest {
 		OrbitOrderTrigger trigger6 = new OrbitOrderTrigger();
 		trigger6.setMission(mission1);
 		trigger6.setName(TEST_TRIGGER_3);
-		trigger6.setWorkflow(workflow3);
+		trigger6.setOrderTemplate(orderTemplate3);
 		trigger6 = RepositoryService.getOrbitOrderTriggerRepository().save(trigger6);
 		assertNotNull("OrbitOrderTrigger 6 not created correctly", trigger6);
 
@@ -313,7 +307,7 @@ public class OrderTriggerRepositoryTest {
 		TimeIntervalOrderTrigger trigger7 = new TimeIntervalOrderTrigger();
 		trigger7.setMission(mission1);
 		trigger7.setName(TEST_TRIGGER_3);
-		trigger7.setWorkflow(workflow3);
+		trigger7.setOrderTemplate(orderTemplate3);
 		trigger7 = RepositoryService.getTimeIntervalOrderTriggerRepository().save(trigger7);
 		assertNotNull("TimeIntervalOrderTrigger 7 not created correctly", trigger7);
 

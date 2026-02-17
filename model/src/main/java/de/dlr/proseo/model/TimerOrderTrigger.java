@@ -9,6 +9,9 @@ import jakarta.persistence.MappedSuperclass;
 
 /**
  * Base class for triggers which fire upon reaching a certain point in time
+ * 
+ * @since prosEO 2.1.0
+ * 
  * @author Dr. Thomas Bassler
  */
 @MappedSuperclass

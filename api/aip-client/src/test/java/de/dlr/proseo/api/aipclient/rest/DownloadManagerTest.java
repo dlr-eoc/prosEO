@@ -28,6 +28,7 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpHeaders;
@@ -67,7 +68,7 @@ import de.dlr.proseo.model.service.SecurityService;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = AipClientApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
+@Transactional
 public class DownloadManagerTest {
 	
 	// Database test data
@@ -821,7 +822,7 @@ public class DownloadManagerTest {
 	@Test
 	public final void testDownloadByName() {
 		if (logger.isTraceEnabled()) logger.trace(">>> testDownloadByName()");
-
+		
 		// Correct test data
 		String filename = TEST_FILENAME_1;
 		String facility = TEST_FACILITY;

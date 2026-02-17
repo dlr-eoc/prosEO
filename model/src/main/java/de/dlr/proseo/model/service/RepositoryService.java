@@ -33,6 +33,7 @@ import de.dlr.proseo.model.dao.MonServiceStateRepository;
 import de.dlr.proseo.model.dao.OrbitOrderTriggerRepository;
 import de.dlr.proseo.model.dao.OrbitRepository;
 import de.dlr.proseo.model.dao.OrderRepository;
+import de.dlr.proseo.model.dao.OrderTemplateRepository;
 import de.dlr.proseo.model.dao.ProcessingOrderHistoryRepository;
 import de.dlr.proseo.model.dao.ApiMetricsRepository;
 import de.dlr.proseo.model.dao.CalendarOrderTriggerRepository;
@@ -88,6 +89,10 @@ public class RepositoryService {
 	/** The repository for the Orbit class */
 	@Autowired
     private OrbitRepository orbitRepository;
+	
+	/** The repository for the OrderTemplate class */
+	@Autowired
+    private OrderTemplateRepository orderTemplateRepository;
 	
 	/** The repository for the ProcessingOrder class */
 	@Autowired
@@ -329,6 +334,15 @@ public class RepositoryService {
 	 */
 	public static OrbitRepository getOrbitRepository() {
 		return theRepositoryService.orbitRepository;
+	}
+
+	/**
+	 * Gets the repository for the OrderTemplate class
+	 * 
+	 * @return the orderTemplateRepository
+	 */
+	public static OrderTemplateRepository getOrderTemplateRepository() {
+		return theRepositoryService.orderTemplateRepository;
 	}
 
 	/**
