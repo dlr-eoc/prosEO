@@ -82,6 +82,10 @@
              class="nav-item"><a id="sb-productarchive" class="nav-link"
             href="/productarchive-show"><span th:text="#{productarchive}">product archive</span></a></li>
           <li 
+            th:if="${hasroleorderreader}"
+             class="nav-item"><a id="sb-order-template" class="nav-link"
+            href="/order-template-show"><span th:text="#{orderTemplate}">orderTemplate</span></a></li>
+          <li 
             th:if="${hasroleprocessorreader}"
              class="nav-item"><a id="sb-trigger" class="nav-link"
             href="/trigger-show"><span th:text="#{trigger}">trigger</span></a></li>

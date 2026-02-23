@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport"
+  content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title th:text="#{orderTemplate} + ' | ' + #{proseo}">proseo</title>
+
+
+        <!-- Bootstrap core CSS -->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Custom styles for prosEO -->
+        <link href="../static/fragments/proseo.css"
+          th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
+        <link rel="stylesheet"
+          href="../static/fragments/bootstrap-multiselect.css"
+          th:href="@{/fragments/bootstrap-multiselect.css}" type="text/css" />
+</head>
+
+<body>
+  <header>
+    <nav id="proseo-nav"
+      class="navbar navbar-expand-lg bg-body-tertiary bg-light fixed-top shadow no-padding">
+      <div class="container-fluid no-padding">
+        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+          href="/"><img src="proseo_logo.png" class="rounded" width="50"
+          height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed"
+          type="button" data-toggle="collapse" data-target="#sidebarMenu"
+          aria-controls="sidebarMenu" aria-expanded="false"
+          aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <ul class="navbar-nav mr-auto navbar-left">
+          <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
+              th:text="${missioncode}">mission</span></a></li>
+          <li class="p-breadcrumb-item" aria-current="page"><span
+            th:text="#{orderTemplate}">ordertemplate</span></li>
+        </ul>
+        <div th:replace="~{fragments/navbar.html :: navbarRight}"></div>
+      </div>
+    </nav>
+  </header>
+  <div style="display: none;" class="loading">
+    <div class="loader"></div>
+  </div>
+
+  <div th:replace="~{fragments/sidebar.html :: sidebarMenu}"></div>
+  <div class="container-fluid bg-body proseo-body">
+    <!-- Show an error message if the user is not authorized to view triggers -->
+    <main th:unless="${hasroleprocessorreader}" role="main"
+      class="col-auto px-md-4">
+      <h5 class="FAILED">
+        <br> <span th:text="#{noroleright}"></span> (PROCESSOR_READER)
+        <br>&nbsp;
+      </h5>
+    </main>
+
+    <!-- Show triggers if the user is authorized -->
+    <main th:if="${hasroleprocessorreader}" role="main"
+      class="col-auto px-md-4">
+
+      <div th:if="${errormsg != null}" id="errormsg" class="FAILED">
+        <h5>
+          <br> <span th:text="${errormsg}"></span>
+        </h5>
+      </div>
+
+
+			<!-- Filter triggers -->
+			<div th:unless="${errormsg != null}" class="container-fluid">
+				<form id="orderTemplateFilters" class="needs-validation" action="javascript:submit();">
+					<div class="row py-lg-1">
+
+						<!-- Submit button -->
+						<div class="col-2">
+							<button type="submit" class="btn btn-sm btn-outline-secondary">
+								<span th:text="#{orderTemplate-show}"></span>
+							</button>
+						</div>
+
+						<!-- Filter name -->
+						<div class="col-1 pe-lg-0" th:title="#{selectNamePattern}">
+							<p class="input-group-text word-wrap" th:text="#{name}"></p>
+						</div>
+						<div class="col-3 ps-lg-0" th:title="#{selectNamePattern}">
+							<input type="text" class="form-control" name="name" id="name">
+						</div>
+						<div class="col-1 pe-lg-0" th:title="#{selectProductClass}">
+							<p class="input-group-text word-wrap" th:text="#{product}"></p>
+						</div>
+						<div class="col-3 ps-lg-0" th:title="#{selectProductClass}">
+							<select name="products" id="products" multiple="multiple"
+								class="form-select" data-placeholder="&nbsp;">
+								<option th:each="prod : ${productclassnames}" th:text="${prod}"
+									th:label="${prod}"></option>
+							</select>
+						</div>
+					</div>
+				</form>
+			</div>
+
+			<!-- The actual trigger table -->
+      <div id="ordertemplatescontent" name="ordertemplatescontent">
+        <table class="table" id="orderTemplateTable">
+
+          <!-- Table header (parts that are always visible) -->
+          <thead class="thead-proseo" id="proseo-thead">
+            <tr>
+              <th><span>&nbsp;</span></th>
+              <th onclick="selectSort('select-name')" class="cursorpointer"><span
+                id="select-name" class="select-up"
+                th:class="((${selcol} == 'id' ? ${selorder} : ''))"
+                th:text="#{name}">name</span></th>
+              <th><span th:text="#{slicing}">slicing</span></th>
+              <th><span th:text="#{outputproductclasses}">outputproductclasses</span></th>
+              <th><span th:text="#{outputfileclass}">outputfileclass</span></th>
+              <th><span th:text="#{processingmode}">processingmode</span></th>
+              <th><span th:text="#{processingtype}">productiontype</span></th>
+              <th><span th:text="#{productretentionperiod}">productretentionperiod</span></th>
+              <th><span th:text="#{priority}">priority</span></th>
+              <th><span th:text="#{enabled}">enabled</span></th>
+            </tr>
+          </thead>
+
+					<div th:unless="${ordertemplates} == null">
+						<div th:each="orderTemplate : ${ordertemplates}">
+
+							<!-- Trigger content that is always visible -->
+							<tbody>
+								<tr>
+									<td th:id="'togglewf' + ${orderTemplate.id}"
+										class="cursorpointer first-row no-right-border"
+										th:onclick="'toggleOrderTemplate('+${orderTemplate.id}+')'">
+										<div class="hideordertemplate"
+											th:id="'hidewf' + ${orderTemplate.id}"
+											th:title="#{hideOrderTemplateDetails}"
+											th:style="${'display: none;'}">
+											<span data-feather="minus-circle"></span>
+										</div>
+										<div class="showordertemplate"
+											th:id="'showwf' + ${orderTemplate.id}"
+											th:title="#{showOrderTemplateDetails}"
+											th:style="${'display: block;'}">
+											<span data-feather="plus-circle"></span>
+										</div>
+									</td>
+									<td class="first-row" th:text="${orderTemplate.name}"></td>
+									<td th:if="${orderTemplate?.slicingType} == 'ORBIT'"
+										class="first-row"><span th:text="#{orbit}">orbit</span><span>:
+									</span> <span th:text="#{overlap}">overlap</span><span>: </span> <span
+										th:text="${orderTemplate?.sliceOverlap}">sliceOverlap</span></td>
+									<td th:if="${orderTemplate?.slicingType} == 'NONE'"
+										class="first-row"><span th:text="#{none}">none</span></td>
+									<td th:if="${orderTemplate?.slicingType} == 'TIME_SLICE'"
+										class="first-row"><span th:text="#{timeslice}">timeslice</span>:
+										<span th:text="#{duration}">duration</span>: <span
+										th:text="${orderTemplate?.sliceDuration}">sliceDuration</span>,
+										<span th:text="#{overlap}">overlap</span>: <span
+										th:text="${orderTemplate?.sliceOverlap}">sliceOverlap</span></td>
+									<td th:if="${orderTemplate?.slicingType} == 'CALENDAR_DAY'"
+										class="first-row"><span th:text="#{calendarday}">calendarday</span>:
+										<span th:text="#{overlap}">overlap</span>: <span
+										th:text="${orderTemplate?.sliceOverlap}">sliceOverlap</span></td>
+									<td th:if="${orderTemplate?.slicingType} == 'CALENDAR_MONTH'"
+										class="first-row"><span th:text="#{calendarmonth}">calendarmonth</span>:
+										<span th:text="#{overlap}">overlap</span>: <span
+										th:text="${orderTemplate?.sliceOverlap}">sliceOverlap</span></td>
+									<td th:if="${orderTemplate?.slicingType} == 'CALENDAR_YEAR'"
+										class="first-row"><span th:text="#{calendaryear}">calendaryear</span>:
+										<span th:text="#{overlap}">overlap</span>: <span
+										th:text="${orderTemplate?.sliceOverlap}">sliceOverlap</span></td>
+									<td class="first-row"><a
+										th:if="${hasroleproductclassreader}"
+										th:each="comp : ${orderTemplate?.requestedProductClasses}"
+										class="proseo-list-item"
+										th:href="'/productclass-show?productClass=' + ${comp}"
+										th:text="' ' + ${comp}"></a><span
+										th:unless="${hasroleproductclassreader}"
+										th:each="comp : ${orderTemplate?.requestedProductClasses}"
+										class="proseo-list-item" th:text="' ' + ${comp}"></span></td>
+									<td class="first-row"
+										th:text="${orderTemplate?.outputFileClass}"></td>
+									<td class="first-row"
+										th:text="${orderTemplate?.processingMode}"></td>
+									<td class="first-row"
+										th:text="${orderTemplate?.productionType}"></td>
+									<td class="first-row"
+										th:text="${(orderTemplate?.productRetentionPeriod!=null)?(orderTemplate?.productRetentionPeriod/86400):''}"></td>
+									<td class="first-row"
+										th:text="${(orderTemplate?.priority!=null)?(orderTemplate?.priority):''}"></td>
+									<td class="first-row" th:text="${orderTemplate?.enabled}"></td>
+
+								</tr>
+							</tbody>
+
+							<tbody class="filtercontent"
+								th:id="'wfcontent' + ${orderTemplate.id}">
+								<tr class="th-row">
+									<th class="tr-rowspan"><span>&nbsp;</span></th>
+									<th><span th:text="#{autoRelease}">autoRelease</span></th>
+									<th><span th:text="#{autoClose}">autoClose</span></th>
+									<th><span th:text="#{inputclassesstoplist}">inputproductclasses</span></th>
+									<th colspan="6"><span
+										th:text="#{requestedconfiguredprocessors}">requestedconfiguredprocessors</span></th>
+								</tr>
+								<tr class="proseo-row-divider">
+									<td class="tr-rowspan">&nbsp;</td>
+									<td class="first-row" th:text="${orderTemplate?.autoRelease}"></td>
+									<td class="first-row" th:text="${orderTemplate?.autoClose}"></td>
+									<td class="first-row"><a th:if="${hasroleproductclassreader}"
+										th:each="comp : ${orderTemplate?.inputProductClasses}"
+										class="proseo-list-item"
+										th:href="'/productclass-show?productClass=' + ${comp}"
+										th:text="' ' + ${comp}"></a><span
+										th:unless="${hasroleproductclassreader}"
+										th:each="comp : ${orderTemplate?.inputProductClasses}"
+										class="proseo-list-item" th:text="' ' + ${comp}"></span></td>
+									<td colspan="6" class="first-row"><a th:if="${hasroleconfigurationreader}"
+										th:each="comp : ${orderTemplate?.configuredProcessors}"
+										class="proseo-list-item"
+										th:href="'/configured-processor-show?cp=' + ${comp}"
+										th:text="${comp}"></a><span
+										th:unless="${hasroleconfigurationreader}"
+										th:each="comp : ${orderTemplate?.configuredProcessors}"
+										class="proseo-list-item" th:text="${comp}"></span></td>
+								</tr>
+								<tr class="th-row">
+									<th class="tr-rowspan"><span>&nbsp;</span></th>
+									<th><span th:text="#{inputDataTimeoutPeriod}">inputDataTimeoutPeriod</span></th>
+									<th><span th:text="#{onInputDataTimeoutFail}">onInputDataTimeoutFail</span></th>
+									<th colspan="3"><span th:text="#{notificationUri}">notificationUri</span></th>
+									<th colspan="2"><span th:text="#{user}">user</span></th>
+									<th colspan="2"><span th:text="#{password}">password</span></th>
+								</tr>
+								<tr class="proseo-row-divider">
+									<td class="tr-rowspan">&nbsp;</td>
+									<td class="first-row"
+										th:text="${orderTemplate?.inputDataTimeoutPeriod}"></td>
+									<td class="first-row"
+										th:text="${orderTemplate?.onInputDataTimeoutFail}"></td>
+									<td colspan="3" class="first-row"
+										th:text="${(orderTemplate?.notificationEndpoint!=null)?(orderTemplate?.notificationEndpoint.uri):''}"></td>
+									<td colspan="2" class="first-row"
+										th:text="${(orderTemplate?.notificationEndpoint!=null)?(orderTemplate?.notificationEndpoint.username):''}"></td>
+									<td colspan="2" class="first-row"><input
+										th:id="'pwdi' + ${orderTemplate?.id}"
+										th:value="${(orderTemplate?.notificationEndpoint!=null)?(orderTemplate?.notificationEndpoint.password):''}"
+										type="password" readonly></input> <a class="eye"
+										th:id="'pwda' + ${orderTemplate?.id}"
+										th:onclick="'showPwd(' + ${orderTemplate?.id} + ')'"><span
+											data-feather="eye"></span></a></td>
+                </tr>
+                  <tr class="th-row">
+                  <th class="tr-rowspan">&nbsp;</th>
+                    <th colspan="2"><span th:text="#{filterandparams}">filterandparams</span></th>
+                    <th colspan="2"><span th:text="#{productclass}">productclass</span></th>
+                    <th colspan="2"><span th:text="#{key}">key</span></th>
+                    <th colspan="3"><span th:text="#{value}">value</span></th>
+                  </tr>
+                  <div th:each="ifilt : ${orderTemplate?.inputFilters}">
+                    <div th:each="fcond,iterStat : ${ifilt?.filterConditions}">
+                      <tr th:if="${iterStat.first} == true" class="first-row">
+                  <td class="tr-rowspan">&nbsp;</td>
+                        <td colspan="2" th:rowspan="${#lists.size(ifilt?.filterConditions)}" class="first-row"><span th:text="#{inputfilter}">inputfilter</span></td>
+                        <td colspan="2" th:rowspan="${#lists.size(ifilt?.filterConditions)}" class="first-row"><span th:text="${ifilt?.productClass}"></span></td>
+                        <td colspan="2" class="first-row"><span th:text="${fcond?.key}"></span></td>
+                        <td colspan="3" class="first-row"><span th:text="${fcond?.parameterValue}"></span></td>
+                      </tr>
+                      <tr th:if="${iterStat.first} == false">
+                  <td class="tr-rowspan">&nbsp;</td>
+                        <td colspan="2"><span th:text="${fcond?.key}"></span></td>
+                        <td colspan="3"><span th:text="${fcond?.parameterValue}"></span></td>
+                      </tr>
+                    </div>
+                  </div>
+                  <div th:each="params : ${orderTemplate?.classOutputParameters}">
+                    <div th:each="p,iterStat : ${params?.outputParameters}">
+                      <tr th:if="${iterStat.first} == true" class="first-row">
+                  <td class="tr-rowspan">&nbsp;</td>
+                        <td colspan="2" th:rowspan="${#lists.size(params?.outputParameters)}" class="first-row"><span th:text="#{classoutparams}">classoutparams</span></td>
+                        <td colspan="2" th:rowspan="${#lists.size(params?.outputParameters)}" class="first-row"><span th:text="${params?.productClass}"></span></td>
+                        <td colspan="2" class="first-row"><span th:text="${p?.key}"></span></td>
+                        <td colspan="3" class="first-row"><span th:text="${p?.parameterValue}"></span></td>
+                      </tr>
+                      <tr th:if="${iterStat.first} == false">
+                  <td class="tr-rowspan">&nbsp;</td>
+                        <td colspan="2"><span th:text="${p?.key}"></span></td>
+                        <td colspan="3"><span th:text="${p?.parameterValue}"></span></td>
+                      </tr>
+                    </div>
+                  </div>
+                  <div th:each="p,iterStat : ${orderTemplate?.outputParameters}">
+                    <tr th:if="${iterStat.first} == true" class="first-row">
+                  <td class="tr-rowspan">&nbsp;</td>
+                      <td colspan="2" th:rowspan="${#lists.size(orderTemplate?.outputParameters)}" class="first-row"><span th:text="#{outparams}">outparams</span></td>
+                      <td colspan="2" th:rowspan="${#lists.size(orderTemplate?.outputParameters)}" class="first-row"><span th:text="#{allclasses}">allclasses</span></td>
+                      <td colspan="2" class="first-row"><span th:text="${p?.key}"></span></td>
+                      <td colspan="3" class="first-row"><span th:text="${p?.parameterValue}"></span></td>
+                    </tr>
+                    <tr th:if="${iterStat.first} == false">
+                  <td class="tr-rowspan">&nbsp;</td>
+                      <td colspan="2"><span th:text="${p?.key}"></span></td>
+                      <td colspan="3"><span th:text="${p?.parameterValue}"></span></td>
+                    </tr>
+                  </div>
+                  <div th:each="p,iterStat : ${orderTemplate?.dynamicProcessingParameters}">
+                    <tr th:if="${iterStat.first} == true" class="first-row">
+                  <td class="tr-rowspan">&nbsp;</td>
+                      <td colspan="2" th:rowspan="${#lists.size(orderTemplate?.dynamicProcessingParameters)}" class="first-row"><span th:text="#{dynamicprocessingparameters}">dynamicProcessingParameters</span></td>
+                      <td colspan="2" th:rowspan="${#lists.size(orderTemplate?.dynamicProcessingParameters)}" class="first-row"><span th:text="#{allclasses}">allclasses</span></td>
+                      <td colspan="2" class="first-row"><span th:text="${p?.key}"></span></td>
+                      <td colspan="3" class="first-row"><span th:text="${p?.parameterValue}"></span></td>
+                    </tr>
+                    <tr th:if="${iterStat.first} == false">
+                  <td class="tr-rowspan">&nbsp;</td>
+                      <td colspan="2"><span th:text="${p?.key}"></span></td>
+                      <td colspan="3"><span th:text="${p?.parameterValue}"></span></td>
+                    </tr>
+                  </div>
+							</tbody>
+
+						</div>
+					</div>
+
+        </table>
+
+        <div th:replace="~{fragments/navbar.html :: alternatePageNav}"></div>
+      </div>
+      <div th:insert="~{fragments/footer.html :: footer}"></div>
+    </main>
+
+  </div>
+</body>
+
+<!-- Imports -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://unpkg.com/feather-icons"></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.js"
+  integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+  crossorigin="anonymous"></script>
+<script
+  src="sha384-sha384-G/EV+4j2dNv+tEPo3+https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+  integrity="sha384-sha384-G/EV+4j2dNvsha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+  crossorigin="anonymous"></script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+<script src="../static/fragments/proseo.js"
+  th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
+<script src="../static/fragments/bootstrap-multiselect.js"
+  th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
+
+<script type="text/javascript" th:inline="javascript">
+  function wikiPage() {
+      window.open('https://github.com/dlr-eoc/prosEO/wiki/GUI-Order-Template#order-template');
+  }
+
+    // Global variables
+    var currentPage = 1; // Current page number
+    var pageSize = 20; // Maximum objects per page
+    
+    // Order-Template filters
+    var wname = null;
+    var products = null;
+
+    // sorting
+    var sortCols = ['select-name'];
+    var sortCol = "name";
+    var upText = "true";
+
+    function showPwd(id) {
+        if (document.getElementById('pwdi' + id).type == 'password' ) { 
+            document.getElementById('pwdi' + id).type = 'text';
+            document.getElementById('pwda' + id).innerHTML = '<span data-feather="eye-off"></span>';
+            feather.replace();
+        } else {
+            document.getElementById('pwdi' + id).type = 'password';
+            document.getElementById('pwda' + id).innerHTML = '<span data-feather="eye"></span>';
+            feather.replace();
+        }
+    };
+    
+    function setParams(ele, selup, newPage, newPageSize) {
+        var newName = null;
+        var newProducts = null;
+
+        var hasChanged = false;
+          
+        hasChanged |= setPageParams(newPage, newPageSize);
+        hasChanged |= setSortParams(ele, selup);
+        newName = $('#name').val();
+        if (isEmpty(newName)) {newName = null};
+        newProducts = $('#products').val();
+
+        if (   wname != newName  
+            || !arrayEquals(products, newProducts)) {
+          // table size may be changed, go to first page
+          currentPage = 1;
+          newPage = 1;
+          hasChanged = true;
+        }   
+        wname = newName;
+        products = newProducts;
+        if (hasChanged) {
+            setHTMLParams();
+        }
+    }
+    
+    function setHTMLParams() {
+        var loc = location.search.slice(0);
+        var search = location.search.slice(1);
+        // build parameter string
+        var paramString = "";
+        paramString = addURLParamValuePrim('name', wname, paramString);
+        paramString = addURLParamValuesPrim('products', products, paramString);
+        paramString = setPageHTMLParams(paramString);
+        paramString = setSortHTMLParams(paramString);
+        var newHref = location.origin + location.pathname + paramString;
+        if (newHref != location.href) {
+            history.pushState({}, null, newHref);
+        }
+    }
+
+    function readHTMLParams() {
+        readPageHTMLParams();
+        readSortHTMLParams();
+        wname = getURLParam('name');
+        products = getURLParams('products');
+    }
+    
+    function setSelected() {
+          $('#name').val(wname);
+          // product classes
+          $('#products').multiselect('deselectAll', false);
+          if (products != null && products.length > 0) {
+            $('#products').multiselect('select', products);
+          }
+    }
+
+    function updateTable(newPage, newPageSize) {
+      setParams(null, null, newPage, newPageSize);
+      updateTablePrim(currentPage);
+    }
+
+    function retrieveDataPrim(notUsed) {
+        updateTablePrim(currentPage);
+    }
+    
+    // Function to fetch objects from the REST controller
+    function updateTablePrim(newPage) {
+      $('#products').multiselect({
+          buttonWidth : '99%',
+          enableFiltering : true,
+          numberDisplayed : 0,
+          maxHeight : 400,
+          enableCaseInsensitiveFiltering : true,
+          nonSelectedText : ''
+      });
+      setSelected();
+      currentPage = newPage;
+      
+      var recordFrom = (currentPage - 1) * pageSize;
+      var recordTo = currentPage * pageSize;      
+      
+      var url = "/order-template-show/get?recordFrom=" + recordFrom 
+          + "&recordTo=" + recordTo 
+          + "&pageSize=" + pageSize
+          + "&sortby=" + sortCol.replace("select-", "")
+          + "&up=" + upText;
+      
+      if (parameterHasValue(wname))
+        url += "&name=" + wname;
+
+      if (products != null && products.length > 0) {
+          url = url + "&products=" + joinStrings(products, ":");
+      }
+      console.log(url);
+      
+      fetch(url)
+        .then(response => response.text()) // Extract the response body as text
+        .then(html => {
+          $("#ordertemplatescontent").html(html); // Set the HTML content of the element
+          feather.replace(); // Display the arrows on the buttons
+          readHTMLParams();
+          setSelected();
+          setSort();
+          // document.getElementById("pageSizeField").value = pageSize; //Display correct page size
+        })
+        .catch(console.error);
+    }
+    
+    // Function to fetch and apply filters
+    function setFilters(event) {  
+      // Allow for custom form handling
+      event.preventDefault();
+      // Update the table according to the new filters
+      updateTable(null, null);
+    }
+    
+    // Function to hide or show Order-Template details
+      function toggleOrderTemplate(id) {
+          var content = document.getElementById("wfcontent" + id);
+          var eleshow = document.getElementById("showwf" + id);
+          var elehide = document.getElementById("hidewf" + id);
+          $(content).toggleClass("filtercontent");
+          if ($(content).css("display") === "none") {
+              $(eleshow).show();
+              $(elehide).hide();
+          } else {
+              $(eleshow).hide();
+              $(elehide).show();
+          }}
+    
+  </script>
+
+<script>
+// correct scroll due to "sticky" elements
+var handler = function ( ) {
+   var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+           + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+   window.scrollBy(0, h);
+ };
+ window.addEventListener('hashchange', handler);
+
+ // Read the HTML parameters from URI and retrieve the corresponding data
+ function loadWindow() {
+     activateSidebarElem('sb-order-template');
+     feather.replace();
+     readHTMLParams();
+     setSelected();
+     updateTable(currentPage, pageSize);
+ };
+ 
+ window.onload = function () {
+     loadWindow();
+     // correct scroll due to "sticky" elements
+     var handler = function ( ) {
+         var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+                  + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+         window.scrollBy(0, h);
+     };        
+ };
+//     window.onload = function init() { 
+//         readHTMLParams();
+//         setSelected();
+//         setSort();
+//         // Call the updateTable(currentPage) function initially to populate the table on page load
+//         updateTablePrim(currentPage);
+    
+//         // Add an event listener to the form so that the filters will be applied
+//         document.getElementById("triggerFilters").addEventListener("submit", setFilters);
+//     }
+  </script>
+
+</html>

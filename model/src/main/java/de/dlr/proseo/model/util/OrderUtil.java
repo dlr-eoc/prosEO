@@ -110,6 +110,13 @@ public class OrderUtil {
 		}
 		restOrder.setSliceOverlap(processingOrder.getSliceOverlap().getSeconds());
 
+		restOrder.setAutoClose(processingOrder.isAutoClose());
+		restOrder.setAutoRelease(processingOrder.isAutoRelease());
+		restOrder.setOnInputDataTimeoutFail(processingOrder.isOnInputDataTimeoutFail());
+		if (null != restOrder.getInputDataTimeoutPeriod()) {
+			restOrder.setInputDataTimeoutPeriod(processingOrder.getInputDataTimeoutPeriod().getSeconds());
+		}
+
 		if (null != processingOrder.getInputFilters()) {
 			for (ProductClass sourceClass : processingOrder.getInputFilters().keySet()) {
 				RestInputFilter restInputFilter = new RestInputFilter();
@@ -387,6 +394,12 @@ public class OrderUtil {
 		processingOrder.setOrderState(OrderState.valueOf(restOrder.getOrderState()));
 		processingOrder.setStateMessage(restOrder.getStateMessage());
 		processingOrder.setProcessingMode(restOrder.getProcessingMode());
+		processingOrder.setAutoClose(restOrder.getAutoClose());
+		processingOrder.setAutoRelease(restOrder.getAutoRelease());
+		processingOrder.setOnInputDataTimeoutFail(restOrder.getOnInputDataTimeoutFail());
+		if (null != restOrder.getInputDataTimeoutPeriod()) {
+			processingOrder.setInputDataTimeoutPeriod(Duration.ofSeconds(restOrder.getInputDataTimeoutPeriod()));
+		}
 		OrderSource orderSource = OrderSource.OTHER;
 		try {
 			orderSource = OrderSource.valueOf(restOrder.getOrderSource());

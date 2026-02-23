@@ -11,6 +11,7 @@ import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.NotificationEndpoint;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.OrderTemplate;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
@@ -136,9 +137,13 @@ public class OrderTemplateUtil {
 		if(null != orderTemplate.getOutputFileClass()) {
 			restOrderTemplate.setOutputFileClass(orderTemplate.getOutputFileClass());
 		}
-		
+
 		if(null != orderTemplate.getProcessingMode()) {
 			restOrderTemplate.setProcessingMode(orderTemplate.getProcessingMode());
+		}
+
+		if(null != orderTemplate.getProductionType()) {
+			restOrderTemplate.setProductionType(orderTemplate.getProductionType().toString());
 		}
 		
 		if (null != orderTemplate.getProductRetentionPeriod()) {
@@ -240,6 +245,9 @@ public class OrderTemplateUtil {
 		}
 		if (null != restOrderTemplate.getProcessingMode()) {
 			orderTemplate.setProcessingMode(restOrderTemplate.getProcessingMode());
+		}
+		if (null != restOrderTemplate.getProductionType()) {
+			orderTemplate.setProductionType(ProductionType.valueOf(restOrderTemplate.getProductionType()));
 		}
 		if (null != restOrderTemplate.getProductRetentionPeriod()) {
 			orderTemplate.setProductRetentionPeriod(Duration.ofSeconds(restOrderTemplate.getProductRetentionPeriod()));

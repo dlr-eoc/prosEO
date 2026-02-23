@@ -63,7 +63,6 @@ public class TriggerCommandRunner {
 	private static final String PROMPT_TRIGGER_DELTA_TIME = "Trigger delta time (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_TIMEINTERVAL = "Trigger time interval (empty field cancels): ";
 	private static final String PROMPT_ORDERTEMPLATE_NAME = "Trigger order template name (empty field cancels): ";
-	private static final String PROMPT_TRIGGER_ENABLED = "Trigger enabled flag (empty field cancels): ";
 	private static final String URI_PATH_TRIGGERS = "/triggers";
 	private static final String URI_PATH_RELOAD = "/reload";
 	private static final String TRIGGERS = "triggers";
@@ -266,15 +265,6 @@ public class TriggerCommandRunner {
 			}
 			restTrigger.setOrderTemplateName(response);
 		}
-		if (restTrigger.getEnabled()) {
-			System.out.print(PROMPT_TRIGGER_ENABLED);
-			String response = System.console().readLine();
-			if (response.isBlank()) {
-				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
-				return;
-			}
-			restTrigger.setEnabled(Boolean.parseBoolean(response));
-		}
 		switch (type) {
 		case Calendar:
 			if (StringUtils.isNullOrEmpty(restTrigger.getCronExpression())) {
@@ -326,22 +316,6 @@ public class TriggerCommandRunner {
 					return;					
 				}
 				restTrigger.setLastOrbitNumber(orbitNumber);
-			}
-			if (null == restTrigger.getDeltaTime()) {
-				System.out.print(PROMPT_TRIGGER_DELTA_TIME);
-				String response = System.console().readLine();
-				if (response.isBlank()) {
-					System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
-					return;
-				}
-				Long deltaTime = 0L;
-				try {
-					deltaTime = Long.valueOf(response);
-				} catch (NumberFormatException e) {
-					System.out.println(ProseoLogger.format(UIMessage.INVALID_NUMBER_FORMAT));
-					return;					
-				}
-				restTrigger.setDeltaTime(deltaTime);
 			}
 			break;
 		case TimeInterval:
@@ -532,6 +506,7 @@ public class TriggerCommandRunner {
 		TriggerType type = null;
 		if (null == triggerFile) {
 			updatedTrigger = new RestTrigger();
+			updatedTrigger.setEnabled(null);
 		} else {
 			try {
 				updatedTrigger = CLIUtil.parseObjectFile(triggerFile, triggerFileFormat, RestTrigger.class);
@@ -663,6 +638,9 @@ public class TriggerCommandRunner {
 		}
 		if (null != updatedTrigger.getDeltaTime()) {
 			restTrigger.setDeltaTime(updatedTrigger.getDeltaTime());
+		}
+		if (null != updatedTrigger.getEnabled()) {
+			restTrigger.setEnabled(updatedTrigger.getEnabled());
 		}
 		if (null != updatedTrigger.getParametersToCopy()) {
 			restTrigger.setParametersToCopy(updatedTrigger.getParametersToCopy());

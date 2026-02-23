@@ -185,7 +185,7 @@ public class ProcessingOrderMgr {
 					throw new IllegalArgumentException(logger.log(OrderMgrMessage.DUPLICATE_ORDER_UUID, modelOrder.getUuid()));
 				}
 			}
-
+			
 			// Make sure order identifier is not yet in use
 			if (null != RepositoryService.getOrderRepository()
 				.findByMissionCodeAndIdentifier(order.getMissionCode(), modelOrder.getIdentifier())) {

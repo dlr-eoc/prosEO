@@ -441,12 +441,16 @@ public class OrderCreator {
 			restOrder.setSubmissionTime(Date.from(now));
 			restOrder.setAutoClose(orderTemplate.isAutoClose());
 			restOrder.setAutoRelease(orderTemplate.isAutoRelease());
+			if (orderTemplate.getInputDataTimeoutPeriod() != null) {
+				restOrder.setInputDataTimeoutPeriod(orderTemplate.getInputDataTimeoutPeriod().getSeconds());
+			}
 			restOrder.setOnInputDataTimeoutFail(orderTemplate.isOnInputDataTimeoutFail());
 			if (orderTemplate.getNotificationEndpoint() != null) {
 				RestNotificationEndpoint notificationEndpoint = new RestNotificationEndpoint();
 				notificationEndpoint.setUri(orderTemplate.getNotificationEndpoint().getUri());
 				notificationEndpoint.setUsername(orderTemplate.getNotificationEndpoint().getUsername());
 				notificationEndpoint.setPassword(orderTemplate.getNotificationEndpoint().getPassword());
+				restOrder.setNotificationEndpoint(notificationEndpoint);
 			}
 			if (orderTemplate.getInputDataTimeoutPeriod() != null) {
 				restOrder.setInputDataTimeoutPeriod(orderTemplate.getInputDataTimeoutPeriod().getSeconds());
