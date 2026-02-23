@@ -207,7 +207,7 @@ public class GUIOrderController extends GUIBaseController {
 			.subscribe(entityList -> {
 				logger.trace("Now in Consumer::accept({})", entityList);
 
-				if (entityList.getStatusCode().is2xxSuccessful() 
+				if (entityList.getStatusCode().is2xxSuccessful()
 						|| entityList.getStatusCode().value() ==  HttpStatus.NOT_FOUND.value()) {
 					// orders.addAll(selectOrders(orderList, identifier, states, from, to, products));
 					orders.addAll(entityList.getBody());
@@ -228,7 +228,7 @@ public class GUIOrderController extends GUIBaseController {
 					model.addAttribute("orders", orders);
 					model.addAttribute("selcol", key);
 					model.addAttribute("selorder", (isUp ? "select-up" : "select-down"));
-					
+
 					modelAddAttributes(model, count, pageSize, pages, page);
 
 					logger.trace(model.toString() + "MODEL TO STRING");
@@ -270,7 +270,7 @@ public class GUIOrderController extends GUIBaseController {
 	 * @return The deferred result containing the result.
 	 */
 	@PostMapping("/order-state/post")
-	public DeferredResult<String> setState(@RequestParam(required = true, value = MAPKEY_ID) String id,
+	public DeferredResult<Object> setState(@RequestParam(required = true, value = MAPKEY_ID) String id,
 			@RequestParam(required = true, value = "state") String state,
 			@RequestParam(required = false, value = "facility") String facility, Model model, HttpServletResponse httpResponse) {
 		if (logger.isTraceEnabled())
@@ -278,16 +278,22 @@ public class GUIOrderController extends GUIBaseController {
 
 		ResponseSpec responseSpec = orderService.setState(id, state, facility);
 
-		DeferredResult<String> deferredResult = new DeferredResult<>();
+		// generic object so we can return either a String (view name) or a ResponseEntity (error)
+	    DeferredResult<Object> deferredResult = new DeferredResult<>();
 
 		responseSpec.toEntity(HashMap.class)
 			// Set timeout
 			.timeout(Duration.ofMillis(config.getTimeout()))
 			// Handle errors
 			.doOnError(e -> {
-				model.addAttribute("warnmsg", e.getMessage());
-				// deferredResult.setResult("order-show :: #warnmsg");
-				deferredResult.setErrorResult(model.asMap().get("warnmsg"));
+	            HttpStatus status = null;
+	            // If e is WebClientResponseException (or HttpClientErrorException), extract status:
+	            if (e instanceof org.springframework.web.reactive.function.client.WebClientResponseException) {
+	                status = HttpStatus.valueOf(((org.springframework.web.reactive.function.client.WebClientResponseException) e).getRawStatusCode());
+	            }
+	            String body = e.getMessage();
+	            // set an HTTP error ResponseEntity as error result — prevents Thymeleaf from trying to resolve a view
+	            deferredResult.setErrorResult(ResponseEntity.status(status).body(body));
 			})
 			// Handle successful response
 			.subscribe(clientResponse -> {
@@ -375,7 +381,7 @@ public class GUIOrderController extends GUIBaseController {
 						logger.trace(">>>>MONO" + model.getAttribute("ord").toString());
 						deferredResult.setResult("order-show :: #null");
 						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-//						
+//
 //						ClientResponse successResponse = ClientResponse.create(clientResponse.getStatusCode())
 //							.headers(headers -> headers.addAll(clientResponse.getHeaders()))
 //							.build();
@@ -858,7 +864,7 @@ public class GUIOrderController extends GUIBaseController {
 					model.addAttribute("orderState", orderState);
 
 					modelAddAttributes(model, count, pageSize, pages, page);
-					
+
 					logger.trace(model.toString() + "MODEL TO STRING");
 					deferredResult.setResult("order :: #jobscontent");
 				} else {
@@ -869,7 +875,7 @@ public class GUIOrderController extends GUIBaseController {
 			// Handle successful response
 			.subscribe(entityList -> {
 				logger.trace("Now in Consumer::accept({})", entityList);
-				if (entityList.getStatusCode().is2xxSuccessful() 
+				if (entityList.getStatusCode().is2xxSuccessful()
 						|| entityList.getStatusCode().value() ==  HttpStatus.NOT_FOUND.value()) {
 					jobs.addAll(entityList.getBody());
 					/*
@@ -881,7 +887,7 @@ public class GUIOrderController extends GUIBaseController {
 					model.addAttribute("orderState", orderState);
 
 					modelAddAttributes(model, count, pageSize, pages, page);
-					
+
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + jobs.toString());
 
