@@ -1103,7 +1103,12 @@ public class JobStepUtil {
 								js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
 								saveJS = true;
 								setWaitingInput = false;
-							} 
+							} else {
+								js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
+								js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.FAILED);
+								saveJS = true;
+								setWaitingInput = false;
+							}
 						}
 					}
 					// If there are unsatisfied input queries, set the job step state to WAITING_INPUT

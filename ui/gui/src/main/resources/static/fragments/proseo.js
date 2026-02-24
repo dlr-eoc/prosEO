@@ -1,5 +1,14 @@
 /* globals Chart:false, feather:false */
 
+function getLang() {
+  var x = document.cookie.lastIndexOf("org.springframework.web.servlet.i18n.CookieLocaleResolver.LOCALE=");
+  var lang = "en";
+  if (x >= 0) {
+    x = "org.springframework.web.servlet.i18n.CookieLocaleResolver.LOCALE=".length;
+    lang = document.cookie.substring(x, x + 2);
+  }
+  return lang;
+}
 
 function getURLParam(param) {
     var paramstring = location.search.slice(1);
