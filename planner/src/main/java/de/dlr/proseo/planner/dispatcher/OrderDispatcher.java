@@ -181,7 +181,7 @@ public class OrderDispatcher {
 							// Check for auto close and set times and state message
 							UtilService.getOrderUtil().checkAutoClose(order);
 							UtilService.getOrderUtil().setTimes(order);
-							order.setStateMessage(ProductionPlanner.STATE_MESSAGE_COMPLETED);
+							order.setStateMessage(ProcessingOrder.STATE_MESSAGE_COMPLETED);
 
 							answer.setMessage(PlannerMessage.ORDER_ALREADY_COMPLETED);
 							UtilService.getOrderUtil().setOrderHistory(order);
