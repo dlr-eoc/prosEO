@@ -11,7 +11,7 @@ and PostgreSQL.
 3. Dump the prosEO database (2 alternatives):
    1. To SQL text file: `pg_dump proseo >data/proseo-dump.sql`, or
    2. To PostgreSQL custom dump format: `pg_dump --format=custom proseo >data/proseo-dump.dump`
-4. Logout from database container
+4. Logout from database container and stop it
 5. Back-up the old mount directory if needed. Start the database container (PostgreSQL 17) only, 
    ensuring that the mount directory is empty to avoid version incompatibilities
 6. Transfer dump file `proseo-dump.sql` (or `proseo-dump.dump`) to the target system
@@ -19,7 +19,7 @@ and PostgreSQL.
    copying the files to the new pgdata directory
 8. Login to the database container (as above)
 9. Create the prosEO database (using `template0` to avoid any potential leftovers from an earlier instance, esp. regarding large
-   objects): `dropdb proseo; createdb -T template0 proseo`, as well as the grafana role to ensure the dump imports successfully: `createuser grafana   
+   objects): `dropdb proseo; createdb -T template0 proseo`, as well as the grafana role to ensure the dump imports successfully: `createuser grafana 
 10. Import the database dump file:
    1. From SQL text file: `psql proseo <data/proseo-dump.sql`, or
    2. From custom dump format: `pg_restore -d proseo data/proseo-dump.dumpl`
