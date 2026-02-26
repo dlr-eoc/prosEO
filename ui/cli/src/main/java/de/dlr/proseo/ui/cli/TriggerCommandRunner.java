@@ -621,6 +621,12 @@ public class TriggerCommandRunner {
 		if (null != updatedTrigger.getInputProductType()) {
 			restTrigger.setInputProductType(updatedTrigger.getInputProductType());
 		}
+		if (null != updatedTrigger.getInputFileClass()) {
+			restTrigger.setInputFileClass(updatedTrigger.getInputFileClass());
+		}
+		if (null != updatedTrigger.getInputProcessingMode()) {
+			restTrigger.setInputProcessingMode(updatedTrigger.getInputProcessingMode());
+		}
 		if (null != updatedTrigger.getCronExpression()) {
 			restTrigger.setCronExpression(updatedTrigger.getCronExpression());
 		}

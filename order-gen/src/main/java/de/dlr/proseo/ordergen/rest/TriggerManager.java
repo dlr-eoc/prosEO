@@ -490,6 +490,14 @@ public class TriggerManager {
 				triggerChanged = true;
 				modelTriggerLoc.setInputProductClass(changedTriggerLoc.getInputProductClass());
 			}
+			if (!Objects.equals(modelTriggerLoc.getInputFileClass(), changedTriggerLoc.getInputFileClass())) {
+				triggerChanged = true;
+				modelTriggerLoc.setInputFileClass(changedTriggerLoc.getInputFileClass());
+			}
+			if (!Objects.equals(modelTriggerLoc.getInputProcessingMode(), changedTriggerLoc.getInputProcessingMode())) {
+				triggerChanged = true;
+				modelTriggerLoc.setInputProcessingMode(changedTriggerLoc.getInputProcessingMode());
+			}
 		} else if (modelTrigger instanceof TimeIntervalOrderTrigger && changedTrigger instanceof TimeIntervalOrderTrigger) {
 			TimeIntervalOrderTrigger modelTriggerLoc = (TimeIntervalOrderTrigger) modelTrigger;
 			TimeIntervalOrderTrigger changedTriggerLoc = (TimeIntervalOrderTrigger) changedTrigger;

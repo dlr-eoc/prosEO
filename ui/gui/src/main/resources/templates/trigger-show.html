@@ -242,6 +242,8 @@
                 <tr class="th-row">
                   <th class="tr-rowspan"><span>&nbsp;</span></th>
                   <th><span th:text="#{inputproduct}">inputproduct</span></th>
+                  <th><span th:text="#{inputfileclass}">inputfileclass</span></th>
+                  <th><span th:text="#{inputprocessingmode}">inputprocessingmode</span></th>
                   <th><span th:text="#{parameterstocopy}">parameterstocopy</span></th>
                 </tr>
                 <tr class="proseo-row-divider">
@@ -250,6 +252,8 @@
                       class="proseo-list-item"
                       th:href="'/productclass-show?productClass=' + ${trigger.inputProductType}"
                       th:text="${trigger.inputProductType}"></a></td>
+                  <td class="first-row" th:text="${trigger.inputFileClass}"> 
+                  <td class="first-row" th:text="${trigger.inputProcessingMode}"> 
                   <td class="first-row">
 	                  <span th:each="comp : ${trigger.parametersToCopy}"
 			                class="proseo-list-item"
