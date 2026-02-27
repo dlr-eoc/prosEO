@@ -73,7 +73,8 @@
 
 
       <!-- Filter triggers -->
-      <form id="triggerFilters">
+      <form id="triggerFilters" 
+          action="javascript:retrieveDataPrim();">
         <div class="row py-lg-1">
 
           <!-- Submit button -->
@@ -266,21 +267,21 @@
                 class="filtercontent" th:id="'wfcontent' + ${trigger.type} + ${trigger.id}">
                 <tr class="th-row">
                   <th class="tr-rowspan"><span>&nbsp;</span></th>
-                  <th><span th:text="#{parameterstocopy}">parameterstocopy</span></th>
                   <th><span th:text="#{datataketype}">datataketype</span></th>
-                  <th><span th:text="#{lastdatatakestarttime}">lastdatatakestarttime</span></th>
                   <th><span th:text="#{deltatime}">deltatime</span></th>
+                  <th><span th:text="#{lastdatatakestarttime}">lastdatatakestarttime</span></th>
+                  <th><span th:text="#{parameterstocopy}">parameterstocopy</span></th>
                 </tr>
                 <tr class="proseo-row-divider">
                   <td class="tr-rowspan">&nbsp;</td>
+                  <td class="first-row" th:text="${trigger.datatakeType}"> 
+                  <td class="first-row" th:text="${trigger.deltaTime}"> 
+                  <td class="first-row" th:text="${trigger.lastDatatakeStartTime}"> 
                   <td class="first-row">
                     <span th:each="comp : ${trigger.parametersToCopy}"
                       class="proseo-list-item"
                       th:text="' ' + ${comp}"></span>
                   </td>
-                  <td class="first-row" th:text="${trigger.datatakeType}"> 
-                  <td class="first-row" th:text="${trigger.lastDatatakeStartTime}"> 
-                  <td class="first-row" th:text="${trigger.deltaTime}"> 
                 </tr>              
               </tbody>
               
@@ -424,6 +425,7 @@
     }
 
     function retrieveDataPrim(notUsed) {
+        setParams(null, null, null, null);
         updateTablePrim(currentPage);
     }
     
