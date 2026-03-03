@@ -1,4 +1,4 @@
-FROM openjdk:11
+FROM eclipse-temurin:21
 MAINTAINER Thomas Bassler <thomas.bassler@drbassler.de>
 ENTRYPOINT ["java", "-jar", "/usr/share/proseo-user-mgr/proseo-user-mgr.jar"]
 
