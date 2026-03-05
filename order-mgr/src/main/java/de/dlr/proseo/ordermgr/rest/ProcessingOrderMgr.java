@@ -343,9 +343,13 @@ public class ProcessingOrderMgr {
 			logger.log(OrderMgrMessage.ORDER_CREATED, order.getIdentifier(), order.getMissionCode());
 			
 			// Create and initialize the history element of the processing order.
-			ProcessingOrderHistory orderHistory = new ProcessingOrderHistory();
-			orderHistory.setIdentifier(modelOrder.getIdentifier());
-			orderHistory.setMissionCode(modelOrder.getMission().getCode());
+			ProcessingOrderHistory orderHistory = RepositoryService.getProcessingOrderHistoryRepository()
+					.findByMissionCodeAndIdentifier(modelOrder.getMission().getCode(), modelOrder.getIdentifier());
+			if (orderHistory == null) {
+				orderHistory = new ProcessingOrderHistory();
+				orderHistory.setIdentifier(modelOrder.getIdentifier());
+				orderHistory.setMissionCode(modelOrder.getMission().getCode());
+			}
 			orderHistory.setCreationTime(Instant.now());
 			orderHistory.setOrderState(modelOrder.getOrderState());
 			for (ProductClass pc : modelOrder.getRequestedProductClasses()) {

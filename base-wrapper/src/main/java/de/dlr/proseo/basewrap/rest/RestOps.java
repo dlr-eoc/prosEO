@@ -177,6 +177,9 @@ public class RestOps {
 					if (null != response.getEntity()) {
 						responseInfo.sethttpResponse(EntityUtils.toString(response.getEntity()));
 					}
+					if (null != response.getHeader("Warning")) {
+						responseInfo.setHttpWarning(response.getHeader("Warning").getValue());
+					}
 					return null;
 				});
 
