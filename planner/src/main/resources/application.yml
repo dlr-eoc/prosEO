@@ -54,6 +54,8 @@ proseo:
         jobStepSort: sensingTime
         # Enable (true: default)/disable (false) automatic derivation of job steps to generate required input data
         # autogenerate: true
+        # Enable/disable (default) detection of overlapping job steps (more than one job step producing the same product)
+        # detectOverlappingJobSteps: true
     ingestor:
         # Callback URL for wrapper
         url: http://192.168.20.155:8081/proseo/ingestor/v0.1
