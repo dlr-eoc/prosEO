@@ -491,7 +491,7 @@ public class ProductclassCommandRunner {
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.PRODUCTCLASS_NOT_FOUND_BY_ID, restProductClass.getId());
+				message = ProseoLogger.format(UIMessage.PRODUCTCLASS_NOT_FOUND_BY_ID, restProductClass.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_DATA_INVALID, e.getStatusText());
@@ -549,7 +549,7 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.PRODUCTCLASS_NOT_FOUND_BY_ID, restProductClass.getId());
+				message = ProseoLogger.format(UIMessage.PRODUCTCLASS_NOT_FOUND_BY_ID, restProductClass.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -995,7 +995,7 @@ public class ProductclassCommandRunner {
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.SELECTION_RULE_NOT_FOUND_BY_ID, restSelectionRule.getId());
+				message = ProseoLogger.format(UIMessage.SELECTION_RULE_NOT_FOUND_BY_ID, restSelectionRule.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.SELECTION_RULE_DATA_INVALID,  e.getStatusText());
@@ -1066,7 +1066,7 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.SELECTION_RULE_NOT_FOUND_BY_ID, ruleId);
+				message = ProseoLogger.format(UIMessage.SELECTION_RULE_NOT_FOUND_BY_ID, Long.valueOf(ruleId).toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1075,7 +1075,7 @@ public class ProductclassCommandRunner {
 						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				message = ProseoLogger.format(UIMessage.SELECTION_RULE_DELETE_FAILED, ruleId, targetClass, e.getMessage());
+				message = ProseoLogger.format(UIMessage.SELECTION_RULE_DELETE_FAILED, Long.valueOf(ruleId).toString(), targetClass, e.getMessage());
 				break;
 			default:
 				message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());

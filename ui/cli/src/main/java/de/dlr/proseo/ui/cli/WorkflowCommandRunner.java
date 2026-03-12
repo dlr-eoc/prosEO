@@ -534,7 +534,7 @@ public class WorkflowCommandRunner {
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.WORKFLOW_NOT_FOUND_BY_ID, restWorkflow.getId());
+				message = ProseoLogger.format(UIMessage.WORKFLOW_NOT_FOUND_BY_ID, restWorkflow.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.WORKFLOW_DATA_INVALID, e.getStatusText());
@@ -625,7 +625,7 @@ public class WorkflowCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.WORKFLOW_NOT_FOUND_BY_ID, restWorkflow.getId());
+				message = ProseoLogger.format(UIMessage.WORKFLOW_NOT_FOUND_BY_ID, restWorkflow.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				message = (null == e.getStatusText()

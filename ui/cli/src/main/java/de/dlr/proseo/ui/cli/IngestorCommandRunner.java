@@ -296,7 +296,7 @@ public class IngestorCommandRunner {
 			try {
 				Long.parseLong(productId);
 			} catch (NumberFormatException e) {
-				System.err.println(ProseoLogger.format(UIMessage.INVALID_DATABASE_ID, productId));
+				System.err.println(ProseoLogger.format(UIMessage.INVALID_DATABASE_ID, productId.toString()));
 				return;
 			}
 			requestURI += "/" + productId;
@@ -313,7 +313,7 @@ public class IngestorCommandRunner {
 				RestProduct restProduct = serviceConnection.getFromService(serviceConfig.getIngestorUrl(), requestURI,
 						RestProduct.class, loginManager.getUser(), loginManager.getPassword());
 				if (!restProduct.getProductClass().equals(showCommand.getParameters().get(0).getValue())) {
-					System.err.println(ProseoLogger.format(UIMessage.PRODUCT_CLASS_MISMATCH, restProduct.getId(),
+					System.err.println(ProseoLogger.format(UIMessage.PRODUCT_CLASS_MISMATCH, restProduct.getId().toString(),
 							showCommand.getParameters().get(0).getValue()));
 					return;
 				}
@@ -447,7 +447,7 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, updatedProduct.getId());
+				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, updatedProduct.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -524,7 +524,7 @@ public class IngestorCommandRunner {
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, restProduct.getId());
+				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, restProduct.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.PRODUCT_DATA_INVALID,  e.getStatusText());
@@ -581,7 +581,7 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, productId);
+				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, productId.toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -734,7 +734,7 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, productId);
+				message = ProseoLogger.format(UIMessage.PRODUCT_NOT_FOUND, productId.toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -765,9 +765,9 @@ public class IngestorCommandRunner {
 		}
 		if (resultList.isEmpty()) {
 			if (null == facilityName) {
-				System.err.println(ProseoLogger.format(UIMessage.PRODUCT_HAS_NO_FILES, productId));
+				System.err.println(ProseoLogger.format(UIMessage.PRODUCT_HAS_NO_FILES, productId.toString()));
 			} else {
-				System.err.println(ProseoLogger.format(UIMessage.PRODUCTFILE_NOT_FOUND, productId, facilityName));
+				System.err.println(ProseoLogger.format(UIMessage.PRODUCTFILE_NOT_FOUND, productId.toString(), facilityName));
 			}
 			return;
 		}
@@ -837,7 +837,7 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.PRODUCTFILE_NOT_FOUND, productId, facilityName);
+				message = ProseoLogger.format(UIMessage.PRODUCTFILE_NOT_FOUND, productId.toString(), facilityName);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:

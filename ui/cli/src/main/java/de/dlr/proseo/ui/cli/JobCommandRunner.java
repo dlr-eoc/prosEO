@@ -174,7 +174,7 @@ public class JobCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, jobId);
+				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, jobId.toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -225,7 +225,7 @@ public class JobCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, jobStepId);
+				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, jobStepId.toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -387,7 +387,7 @@ public class JobCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, restJob.getId());
+				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, restJob.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.JOB_DATA_INVALID,  e.getStatusText());
@@ -443,7 +443,7 @@ public class JobCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, restJob.getId());
+				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, restJob.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.JOB_DATA_INVALID,  e.getStatusText());
@@ -499,7 +499,7 @@ public class JobCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, restJob.getId());
+				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, restJob.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.JOB_DATA_INVALID,  e.getStatusText());
@@ -555,7 +555,7 @@ public class JobCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, restJob.getId());
+				message = ProseoLogger.format(UIMessage.JOB_NOT_FOUND, restJob.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.JOB_DATA_INVALID,  e.getStatusText());
@@ -696,7 +696,7 @@ public class JobCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, restJobStep.getId());
+				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, restJobStep.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.JOBSTEP_DATA_INVALID,  e.getStatusText());
@@ -752,7 +752,7 @@ public class JobCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, restJobStep.getId());
+				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, restJobStep.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.JOBSTEP_DATA_INVALID,  e.getStatusText());
@@ -810,7 +810,7 @@ public class JobCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, restJobStep.getId());
+				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, restJobStep.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.JOBSTEP_DATA_INVALID,  e.getStatusText());
@@ -866,7 +866,7 @@ public class JobCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, restJobStep.getId());
+				message = ProseoLogger.format(UIMessage.JOBSTEP_NOT_FOUND, restJobStep.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.JOBSTEP_DATA_INVALID,  e.getStatusText());
