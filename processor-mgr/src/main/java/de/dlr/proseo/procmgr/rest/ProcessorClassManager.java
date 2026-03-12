@@ -161,7 +161,7 @@ public class ProcessorClassManager {
 			query.setParameter("id", id);
 		}
 		if (null != processorName) {
-			query.setParameter("processorName", processorName);
+			query.setParameter("processorName", processorName.toUpperCase());
 		}
 		if (null != productClasses && 0 < productClasses.length) {
 			query.setParameter("missionCode1", mission);

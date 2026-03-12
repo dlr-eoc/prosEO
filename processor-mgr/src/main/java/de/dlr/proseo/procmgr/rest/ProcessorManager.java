@@ -561,10 +561,10 @@ public class ProcessorManager {
 			query.setParameter("id", id);
 		}
 		if (null != processorName) {
-			query.setParameter("processorName", processorName);
+			query.setParameter("processorName", processorName.toUpperCase());
 		}
 		if (null != processorVersion) {
-			query.setParameter("processorVersion", processorVersion);
+			query.setParameter("processorVersion", processorVersion.toUpperCase());
 		}
 
 		// length of record list
