@@ -818,24 +818,57 @@ public class ProductIngestor {
 	public void deleteProductFilesOlderThan(Instant t) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteProductFilesOlderThan({})", t);
-		List<Product> products = RepositoryService.getProductRepository().findByEvictionTimeLessThan(t);
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		transactionTemplate.setReadOnly(true);
+		List<Long> productFileIds = new ArrayList<Long>(); 
+		transactionTemplate.execute((status) -> {
+			List<Product> products = RepositoryService.getProductRepository().findByEvictionTimeLessThan(t);
+			for (Product product : products) {
+				for (ProductFile aProductFile : product.getProductFile()) {
+					productFileIds.add(aProductFile.getId());
+				}
+			}
+			return null;
+		});
+
 		long productFilesDeleted = 0;
-		for (Product product : products) {
-			for (ProductFile aProductFile : product.getProductFile()) {
+		transactionTemplate.setReadOnly(false);
+		for (Long productFileId : productFileIds) {
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
-					deleteProductFile(product, aProductFile.getProcessingFacility(), true);
+					productFilesDeleted += transactionTemplate.execute((status) -> {
+						Optional<ProductFile> opt = RepositoryService.getProductFileRepository().findById(productFileId);
+						if (opt.isPresent()) {
+							ProductFile productFile = opt.get();
+							try {
+								deleteProductFile(productFile.getProduct(), productFile.getProcessingFacility(), true);
+
+								// ignore known exceptions cause already logged
+							} catch (EntityNotFoundException e) {
+								return 0;
+							} catch (ProcessingException e) {
+								return 0;
+							} catch (IllegalArgumentException e) {
+								return 0;
+							} catch (RuntimeException e) {
+								return 0;
+							}
+						}						
+						return 1;
+					});		
+				} catch (CannotAcquireLockException e) {
+					if (logger.isDebugEnabled())
+						logger.debug("... database concurrency issue detected: ", e);
+
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
+					} else {
+						if (logger.isDebugEnabled())
+							logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+						throw e;
+					}
 				}
-				// ignore known exceptions cause already logged
-				catch (EntityNotFoundException e) {
-					break;
-				} catch (ProcessingException e) {
-					break;
-				} catch (IllegalArgumentException e) {
-					break;
-				} catch (RuntimeException e) {
-					break;
-				}
-				productFilesDeleted++;
 			}
 		}
 		logger.log(IngestorMessage.NUMBER_PRODUCT_FILES_DELETED, productFilesDeleted);
