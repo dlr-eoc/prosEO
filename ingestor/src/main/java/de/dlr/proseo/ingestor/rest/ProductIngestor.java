@@ -853,9 +853,10 @@ public class ProductIngestor {
 								return 0;
 							} catch (RuntimeException e) {
 								return 0;
-							}
-						}						
-						return 1;
+							}			
+							return 1;
+						}
+						return 0;			
 					});		
 				} catch (CannotAcquireLockException e) {
 					if (logger.isDebugEnabled())
