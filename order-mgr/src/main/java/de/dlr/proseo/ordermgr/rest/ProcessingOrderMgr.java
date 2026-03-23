@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -1120,8 +1121,7 @@ public class ProcessingOrderMgr {
 		}
 
 		// Check for changes in notificationEndpoint
-		if (null != modelOrder.getNotificationEndpoint()
-				&& !modelOrder.getNotificationEndpoint().equals(changedOrder.getNotificationEndpoint())) {
+		if (!Objects.equals(modelOrder.getNotificationEndpoint(), changedOrder.getNotificationEndpoint())) {
 			orderChanged = true;
 			stateChangeOnly = false;
 			modelOrder.setNotificationEndpoint(changedOrder.getNotificationEndpoint());

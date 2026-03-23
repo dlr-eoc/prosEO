@@ -129,8 +129,92 @@
 									th:value="${(ord?.productRetentionPeriod!=null)?(ord?.productRetentionPeriod/86400):''}"
 									pattern="^([0-9]*)$" title="days" placeholder="">
 							</div>
-							<div class="col-4"></div>
+              <div class="col-2 pe-lg-0">
+                <span class="input-group-text word-wrap"
+                  th:text="#{evictiontime}"></span>
+              </div>
+              <div class="col-2 ps-lg-0">
+                <input type="text" class="form-control" id="evictionTime"
+                  name="evictionTime" th:value="${ord?.evictionTime}"
+                  pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])$"
+                  title="yyyy-mm-ddThh:mm:ss" placeholder="yyyy-mm-ddThh:mm:ss">
+              </div>
 						</div>
+            <div class="row py-lg-1">
+              <div class="col-2">
+							  <label  class="form-control">
+								  <input type="checkbox" th:checked="${ord?.autoRelease}" id="autoRelease" name="autoRelease"/>
+	                <span class="word-wrap"
+	                  th:text="#{autoRelease}">autoRelease</span>
+	              </label>
+              </div>
+              <div class="col-2">
+                <label  class="form-control">
+                  <input type="checkbox" th:checked="${ord?.autoClose}" id="autoClose" name="autoClose"/>
+                  <span class="word-wrap"
+                    th:text="#{autoClose}">autoClose</span>
+                </label>
+              </div>
+              <div class="col-2 pe-lg-0">
+                <span class="input-group-text word-wrap"
+                  th:text="#{inputDataTimeoutPeriod}"></span>
+              </div>
+              <div class="col-2 ps-lg-0">
+                <input type="text" class="form-control"
+                  id="inputDataTimeoutPeriod" name="inputDataTimeoutPeriod"
+                  th:value="${(ord?.inputDataTimeoutPeriod!=null)?(ord?.inputDataTimeoutPeriod):''}"
+                  pattern="^([0-9]*)$" title="seconds" placeholder="">
+              </div>
+              <div class="col-2">
+                <label  class="form-control">
+                  <input type="checkbox" th:checked="${ord?.onInputDataTimeoutFail}" id="onInputDataTimeoutFail" name="onInputDataTimeoutFail"/>
+                  <span class="word-wrap"
+                    th:text="#{onInputDataTimeoutFail}">onInputDataTimeoutFail</span>
+                </label>
+              </div>
+              <div class="col-2"></div>
+            </div>
+            
+            <div class="row py-lg-1">
+              <div class="col-2 pe-lg-0">
+                <span class="input-group-text word-wrap"
+                  th:text="#{notificationUri}">notificationUri</span>
+              </div>
+              <div class="col-2 ps-lg-0">
+                <input type="text" class="form-control"
+                  id="neUri" name="notificationEndpoint[uri]"
+                  th:value="${(ord?.notificationEndpoint!=null)?(ord?.notificationEndpoint.uri):''}"
+                  placeholder="">
+              </div>
+              <div class="col-2 pe-lg-0">
+                <span class="input-group-text word-wrap"
+                  th:text="#{user}">user</span>
+              </div>
+              <div class="col-2 ps-lg-0">
+                <input type="text" class="form-control"
+                  id="neUser" name="notificationEndpoint[username]"
+                  th:value="${(ord?.notificationEndpoint!=null)?(ord?.notificationEndpoint.username):''}"
+                  placeholder="">
+              </div>
+              <div class="col-2 pe-lg-0">
+                <span class="input-group-text word-wrap"
+                  th:text="#{password}">password</span>
+              </div>
+              <div class="col-2 ps-lg-0">
+                <div class="form-control">
+	                <input
+	                  th:id="'pwdi' + ${ord?.id}" name="notificationEndpoint[password]"
+	                  type="password"
+	                  th:value="${(ord?.notificationEndpoint!=null)?(ord?.notificationEndpoint.password):''}"
+	                  placeholder="">
+	                <a class="eye"
+                    th:id="'pwda' + ${ord?.id}"
+                    th:onclick="'showPwd(' + ${ord?.id} + ')'"><span
+                      data-feather="eye"></span></a>
+                </div>
+              </div>
+            </div>
+            
 						<div class="row py-lg-1">
 							<div class="col-12 border"></div>
 						</div>
@@ -1042,7 +1126,7 @@
 					</div>
 			</div>
 			<input id="submitButton" class="btn btn-primary" type="submit"
-				th:value="#{submit}"></input>
+				th:value="#{submit}">
 			</form>
 			<!-- Template for dynamic processing parameter -->
 				<div class="filtercontent"
@@ -2114,6 +2198,18 @@ function hasOrder(identifier, id) {
 		} else {
 		    return false;
 		}
+};
+
+function showPwd(id) {
+    if (document.getElementById('pwdi' + id).type == 'password' ) { 
+        document.getElementById('pwdi' + id).type = 'text';
+        document.getElementById('pwda' + id).innerHTML = '<span data-feather="eye-off"></span>';
+        feather.replace();
+    } else {
+        document.getElementById('pwdi' + id).type = 'password';
+        document.getElementById('pwda' + id).innerHTML = '<span data-feather="eye"></span>';
+        feather.replace();
+    }
 };
 
 function retrieveData(id) {

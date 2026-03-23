@@ -99,7 +99,7 @@ public class NotificationEndpoint {
 		if (!(obj instanceof NotificationEndpoint))
 			return false;
 		NotificationEndpoint other = (NotificationEndpoint) obj;
-		return Objects.equals(uri, other.getUri()) && Objects.equals(username, other.getUsername());
+		return Objects.equals(uri, other.getUri()) && Objects.equals(username, other.getUsername()) && Objects.equals(password, other.getPassword());
 	}
 
 	@Override

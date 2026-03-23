@@ -76,23 +76,6 @@
                     <th><span th:text="#{jobstepstates}">jobstepstates</span></th>
                     <th><span>&nbsp;</span></th>
                   </tr>
-                  <tr>
-                    <th class="tr-rowspan"><span>&nbsp;</span></th>
-                    <th><span th:text="#{uuid}">uuid</span></th>
-                    <th><span th:text="#{processingmode}">processingmode</span></th>
-                    <th><span th:text="#{processingtype}">productiontype</span></th>
-                    <th colspan="1"><span th:text="#{sensingstartstoptime}">sensingstartstoptime</span></th>
-                    <th><span th:text="#{evictiontime}">evictiontime</span></th>
-                    <th><span th:text="#{inputclassesstoplist}">inputproductclasses</span></th>
-                    <th><span th:text="#{percentcomplete}">percentcomplete</span></th>
-                    <th><span>&nbsp;</span></th>
-                  </tr>
-                  <tr th:unless="${#lists.isEmpty(ord?.configuredProcessors)}">
-                    <th class="tr-rowspan"><span>&nbsp;</span></th>
-                    <th><span th:text="#{executiontime}">executiontime</span></th>
-                    <th colspan="5"><span th:text="#{requestedconfiguredprocessors}">requestedconfiguredprocessors</span></th>
-                    <th><span>&nbsp;</span></th>
-                  </tr>
                 </thead>
                 <tbody>
                   <!--          table-danger   - dark rose -->
@@ -104,7 +87,7 @@
                     <td th:text="${ord?.id}"></td>
                     <td id="order-name" th:text="${ord?.identifier}"></td>
                     <!-- <td><span id="orderFacility"></span></td> -->
-                      <td th:if="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')" style="padding: 0px;">
+                      <td class="first-row" th:if="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')" style="padding: 0px;" th:title="${ord?.stateMessage}">
                         <div th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
                              th:text="${ord?.orderState}" style="padding: 0.25rem;">
                         </div>                          
@@ -114,23 +97,23 @@
                           </div>
                         </div>
                       </td>
-                      <td th:unless="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')"
+                      <td class="first-row" th:unless="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')"
                           th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
-                          th:text="${ord?.orderState}"></td>
-                    <td th:text="${ord?.outputFileClass}"></td>
-                    <td th:if="${ord?.slicingType} == 'ORBIT'"><div th:each="orb : ${ord?.orbits}"><p class="p-in-td"><span th:text="#{orbit}">orbit</span>: 
+                          th:text="${ord?.orderState}" th:title="${ord?.stateMessage}"></td>
+                    <td class="first-row" th:text="${ord?.outputFileClass}"></td>
+                    <td class="first-row" th:if="${ord?.slicingType} == 'ORBIT'"><div th:each="orb : ${ord?.orbits}"><p class="p-in-td"><span th:text="#{orbit}">orbit</span>: 
                           <span th:text="#{spacecraft}">spacecraft</span> <span th:text="${orb?.spacecraftCode}">spacecraftCode</span>, 
                           <span th:text="${orb?.orbitNumberFrom}">orbitNumberFrom</span> &ndash; <span th:text="${orb?.orbitNumberTo}">orbitNumberTo</span>, 
                           <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></p></div></td>
-                    <td th:if="${ord?.slicingType} == 'TIME_SLICE'"><span th:text="#{timeslice}">timeslice</span>: 
+                    <td class="first-row" th:if="${ord?.slicingType} == 'TIME_SLICE'"><span th:text="#{timeslice}">timeslice</span>: 
                       <span th:text="#{duration}">duration</span>: <span th:text="${ord?.sliceDuration}">sliceDuration</span>, 
                       <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
-                    <td th:if="${ord?.slicingType} == 'CALENDAR_DAY'"><span th:text="#{calendarday}">calendarday</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
-                    <td th:if="${ord?.slicingType} == 'CALENDAR_MONTH'"><span th:text="#{calendarmonth}">calendarmonth</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
-                    <td th:if="${ord?.slicingType} == 'CALENDAR_YEAR'"><span th:text="#{calendaryear}">calendaryear</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
-                    <td th:if="${ord?.slicingType} == 'NONE'"><span th:text="#{none}">none</span></td>
-                    <td th:text="${(ord?.productRetentionPeriod!=null)?(ord?.productRetentionPeriod/86400):''}"></td>
-                    <td><a 
+                    <td class="first-row" th:if="${ord?.slicingType} == 'CALENDAR_DAY'"><span th:text="#{calendarday}">calendarday</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
+                    <td class="first-row" th:if="${ord?.slicingType} == 'CALENDAR_MONTH'"><span th:text="#{calendarmonth}">calendarmonth</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
+                    <td class="first-row" th:if="${ord?.slicingType} == 'CALENDAR_YEAR'"><span th:text="#{calendaryear}">calendaryear</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
+                    <td class="first-row" th:if="${ord?.slicingType} == 'NONE'"><span th:text="#{none}">none</span></td>
+                    <td class="first-row" th:text="${(ord?.productRetentionPeriod!=null)?(ord?.productRetentionPeriod/86400):''}"></td>
+                    <td class="first-row"><a 
                        th:if="${hasroleproductclassreader}"
                        th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
@@ -139,24 +122,35 @@
                        th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
                        th:text="' ' + ${comp}"></span></td>
-                      <td>
+                      <td class="first-row">
                         <span title="READY" th:class="${#lists.contains(ord?.jobStepStates, 'READY')} == true?'READY-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
                         <span title="WAITING_INPUT" th:class="${#lists.contains(ord?.jobStepStates, 'WAITING_INPUT')} == true?'WAITING_INPUT-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
                         <span title="RUNNING" th:class="${#lists.contains(ord?.jobStepStates, 'RUNNING')} == true?'RUNNING-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
                         <span title="FAILED" th:class="${#lists.contains(ord?.jobStepStates, 'FAILED')} == true?'FAILED-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
                         <span title="COMPLETED" th:class="${#lists.contains(ord?.jobStepStates, 'COMPLETED')} == true?'COMPLETED-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
                       </td>
-                    <td><div th:insert="~{fragments/ordermenu.html :: orderMenu}"></div></td>
+                    <td class="first-row"><div th:insert="~{fragments/ordermenu.html :: orderMenu}"></div></td>
                   </tr>
-                  <tr>
+                  <tr class="th-row">
+                    <th class="tr-rowspan"><span>&nbsp;</span></th>
+                    <th><span th:text="#{uuid}">uuid</span></th>
+                    <th><span th:text="#{processingmode}">processingmode</span></th>
+                    <th><span th:text="#{processingtype}">productiontype</span></th>
+                    <th colspan="1"><span th:text="#{sensingstartstoptime}">sensingstartstoptime</span></th>
+                    <th><span th:text="#{evictiontime}">evictiontime</span></th>
+                    <th><span th:text="#{inputclassesstoplist}">inputproductclasses</span></th>
+                    <th><span th:text="#{percentcomplete}">percentcomplete</span></th>
+                    <td>&nbsp;</td>
+                  </tr>
+                  <tr class="proseo-row-divider">
                     <td class="tr-rowspan">&nbsp;</td>
-                    <td style="hyphens: auto;" th:text="${ord?.uuid}"></td>
-                    <td th:text="${ord?.processingMode}"></td>
-                    <td th:text="${ord?.productionType}"></td>
-                    <td colspan="1"><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
-                    <td th:unless="${ord?.evictionTime}" text=""></td>
-                    <td th:if="${ord?.evictionTime}" th:text="${ord?.evictionTime}"></td>
-                    <td><a 
+                    <td class="first-row" style="hyphens: auto;" th:text="${ord?.uuid}"></td>
+                    <td class="first-row" th:text="${ord?.processingMode}"></td>
+                    <td class="first-row" th:text="${ord?.productionType}"></td>
+                    <td class="first-row" colspan="1"><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
+                    <td class="first-row" th:unless="${ord?.evictionTime}" text=""></td>
+                    <td class="first-row" th:if="${ord?.evictionTime}" th:text="${ord?.evictionTime}"></td>
+                    <td class="first-row"><a 
                        th:if="${hasroleproductclassreader}"
                        th:each="comp : ${ord?.inputProductClasses}" 
                        class="proseo-list-item"  
@@ -165,7 +159,7 @@
                        th:each="comp : ${ord?.inputProductClasses}" 
                        class="proseo-list-item"  
                        th:text="' ' + ${comp}"></span></td>
-                    <td>
+                    <td class="first-row">
                       <div th:title="${ord?.percentCompleted + ord?.percentFailed} + '% finished'" class="progress">
                         <div class="progress-bar COMPLETED" role="progressbar" th:style="'width: ' + ${ord?.percentCompleted} + '%;'" 
                             th:aria-valuenow="${ord?.percentCompleted}" aria-valuemin="0" aria-valuemax="100"
@@ -182,21 +176,62 @@
                       </div></td>
                     <td>&nbsp;</td>
                   </tr>
-                  <tr th:unless="${#lists.isEmpty(ord?.configuredProcessors)}">
-                    <td class="tr-rowspan"><span>&nbsp;</span></td>
-                    <td th:if="${ord?.executionTime}" th:text="${ord?.executionTime}"></td>
-                    <td th:unless="${ord?.executionTime}"><span>&nbsp;</span></td>
-                    <td colspan="5"><a 
-                       th:if="${hasroleconfigurationreader}"
-                       th:each="comp : ${ord?.configuredProcessors}" 
-                       class="proseo-list-item"  
-                       th:href="'/configured-processor-show?cp=' + ${comp}" th:text="${comp}"></a><span 
-                       th:unless="${hasroleconfigurationreader}"
-                       th:each="comp : ${ord?.configuredProcessors}" 
-                       class="proseo-list-item"  
-                       th:text="${comp}"></span></td>
-                    <td><span>&nbsp;</span></td>
-                  </tr>
+                <tr class="th-row">
+                  <th class="tr-rowspan"><span>&nbsp;</span></th>
+                  <th><span th:text="#{autoRelease}">autoRelease</span></th>
+                  <th><span th:text="#{autoClose}">autoClose</span></th>
+                  <th><span th:text="#{executiontime}">executiontime</span></th>
+                  <th colspan="4"><span
+                    th:text="#{requestedconfiguredprocessors}">requestedconfiguredprocessors</span></th>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr class="proseo-row-divider">
+                  <td class="tr-rowspan">&nbsp;</td>
+                  <td class="first-row" th:text="${ord?.autoRelease}"></td>
+                  <td class="first-row" th:text="${ord?.autoClose}"></td>
+                  <td class="first-row" th:if="${ord?.executionTime}" th:text="${ord?.executionTime}"></td>
+                  <td class="first-row" th:unless="${ord?.executionTime}"><span>&nbsp;</span></td>
+                  <td colspan="4" class="first-row"><a th:if="${hasroleconfigurationreader}"
+                    th:each="comp : ${ord?.configuredProcessors}"
+                    class="proseo-list-item"
+                    th:href="'/configured-processor-show?cp=' + ${comp}"
+                    th:text="${comp}"></a><span
+                    th:unless="${hasroleconfigurationreader}"
+                    th:each="comp : ${ord?.configuredProcessors}"
+                    class="proseo-list-item" th:text="${comp}"></span></td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr class="th-row">
+                  <th class="tr-rowspan"><span>&nbsp;</span></th>
+                  <th><span th:text="#{inputDataTimeoutPeriod}">inputDataTimeoutPeriod</span></th>
+                  <th><span th:text="#{onInputDataTimeoutFail}">onInputDataTimeoutFail</span></th>
+                  <th><span th:text="#{priority}">priority</span></th>
+                  <th colspan="2"><span th:text="#{notificationUri}">notificationUri</span></th>
+                  <th><span th:text="#{user}">user</span></th>
+                  <th><span th:text="#{password}">password</span></th>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr class="proseo-row-divider">
+                  <td class="tr-rowspan">&nbsp;</td>
+                  <td class="first-row"
+                    th:text="${ord?.inputDataTimeoutPeriod}"></td>
+                  <td class="first-row"
+                    th:text="${ord?.onInputDataTimeoutFail}"></td>
+                  <td class="first-row"
+                    th:text="${(ord?.priority!=null)?(ord?.priority):''}"></td>
+                  <td colspan="2" class="first-row"
+                    th:text="${(ord?.notificationEndpoint!=null)?(ord?.notificationEndpoint.uri):''}"></td>
+                  <td colspan="1" class="first-row"
+                    th:text="${(ord?.notificationEndpoint!=null)?(ord?.notificationEndpoint.username):''}"></td>
+                  <td class="first-row"><input
+                    th:id="'pwdi' + ${ord?.id}"
+                    th:value="${(ord?.notificationEndpoint!=null)?(ord?.notificationEndpoint.password):''}"
+                    type="password" readonly></input> <a class="eye"
+                    th:id="'pwda' + ${ord?.id}"
+                    th:onclick="'showPwd(' + ${ord?.id} + ')'"><span
+                      data-feather="eye"></span></a></td>
+                  <td>&nbsp;</td>
+                </tr>
                 </tbody>
               </table>
               <table class="table table-hover" id="orderfilters">
@@ -741,6 +776,18 @@ function selectJobState() {
     setHTMLParams();
     retrieveJobs();
 }
+
+function showPwd(id) {
+    if (document.getElementById('pwdi' + id).type == 'password' ) { 
+        document.getElementById('pwdi' + id).type = 'text';
+        document.getElementById('pwda' + id).innerHTML = '<span data-feather="eye-off"></span>';
+        feather.replace();
+    } else {
+        document.getElementById('pwdi' + id).type = 'password';
+        document.getElementById('pwda' + id).innerHTML = '<span data-feather="eye"></span>';
+        feather.replace();
+    }
+};
 
 function retrieveJobs() {
     if ([[${hasroleorderreader}]]) {

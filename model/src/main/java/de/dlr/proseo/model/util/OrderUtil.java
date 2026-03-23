@@ -113,7 +113,7 @@ public class OrderUtil {
 		restOrder.setAutoClose(processingOrder.isAutoClose());
 		restOrder.setAutoRelease(processingOrder.isAutoRelease());
 		restOrder.setOnInputDataTimeoutFail(processingOrder.isOnInputDataTimeoutFail());
-		if (null != restOrder.getInputDataTimeoutPeriod()) {
+		if (null != processingOrder.getInputDataTimeoutPeriod()) {
 			restOrder.setInputDataTimeoutPeriod(processingOrder.getInputDataTimeoutPeriod().getSeconds());
 		}
 
