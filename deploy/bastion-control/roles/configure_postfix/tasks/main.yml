@@ -1,0 +1,23 @@
+---
+- name: Install postfix
+  ansible.builtin.dnf:
+    name: postfix
+    state: present
+
+- name: Configure postfix main settings
+  ansible.builtin.lineinfile:
+    path: /etc/postfix/main.cf
+    regexp: "^{{ item.key }} ="
+    line: "{{ item.key }} = {{ item.value }}"
+  loop:
+    - { key: "myhostname", value: "{{ postfix_host }}" }
+    - { key: "mydomain", value: "{{ postfix_domain }}" }
+    - { key: "myorigin", value: "$mydomain" }
+    - { key: "mynetworks", value: "mynetworks = 127.0.0.0/8 172.16.0.0/12 10.90.104.0/24" }
+    - { key: "inet_interfaces", value: "all" }
+
+- name: Restart postfix
+  ansible.builtin.service:
+    name: postfix
+    state: restarted
+    enabled: true

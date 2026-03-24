@@ -11,6 +11,7 @@
   - configure_nfs
   - install_docker
   - prepare_proseo
+  - prepare_log_collection
   
 # Mount transfer directory on bastion host
 - hosts: bastion_control

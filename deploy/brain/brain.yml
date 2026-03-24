@@ -8,3 +8,4 @@
   - prepare_network
   - install_docker
   - prepare_proseo
+  - prepare_log_collection
