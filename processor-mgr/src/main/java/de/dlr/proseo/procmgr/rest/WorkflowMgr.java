@@ -14,20 +14,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +30,6 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
-import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.logging.messages.ProcessorMgrMessage;
 import de.dlr.proseo.model.ClassOutputParameter;
 import de.dlr.proseo.model.ConfiguredProcessor;
@@ -95,7 +89,6 @@ public class WorkflowMgr {
 
 		// Find using search parameters
 		String jpqlQuery = null;
-		String join = "";
 		if (count) {
 			jpqlQuery = "select count(w) from Workflow w where configuredProcessor.processor.processorClass.mission.code = :missionCode";
 		} else {
@@ -127,13 +120,13 @@ public class WorkflowMgr {
 					jpqlQuery += orderBy[i];
 				}
 			}
-			
+
 		}
 
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", missionCode);
 		if (null != workflowName) {
-			query.setParameter("workflowName", workflowName);
+			query.setParameter("workflowName", workflowName.toUpperCase());
 		}
 		if (null != workflowVersion) {
 			query.setParameter("workflowVersion", workflowVersion);
@@ -149,7 +142,7 @@ public class WorkflowMgr {
 		}
 		return query;
 	}
-	
+
 	/**
 	 * Count the workflows matching the specified workflowName, workflowVersion, inputProductClass, or configured processor.
 	 *
@@ -248,7 +241,7 @@ public class WorkflowMgr {
 		}
 
 		Workflow modelWorkflow = WorkflowUtil.toModelWorkflow(restWorkflow);
-		
+
 		// Set the mission (assuming the mission must exist, since the login succeeded)
 		modelWorkflow.setMission(RepositoryService.getMissionRepository().findByCode(restWorkflow.getMissionCode()));
 
@@ -861,7 +854,7 @@ public class WorkflowMgr {
 		}
 
 		// Check for changes in non-mandatory attributes
-		
+
 		if (null != restWorkflow.getDescription() && !restWorkflow.getDescription().equals(modelWorkflow.getDescription())) {
 			workflowChanged = true;
 			modelWorkflow.setDescription(restWorkflow.getDescription());
@@ -1423,7 +1416,7 @@ public class WorkflowMgr {
 		}
 
 		List<RestWorkflow> result = new ArrayList<>();
-		
+
 		Query query = createWorkflowsQuery(missionCode, workflowName, workflowVersion, inputProductClass, configuredProcessor, enabled, orderBy, false);
 
 		query.setFirstResult(recordFrom);

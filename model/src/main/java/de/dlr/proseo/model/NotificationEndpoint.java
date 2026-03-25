@@ -7,8 +7,8 @@ package de.dlr.proseo.model;
 
 import java.util.Objects;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 
 /**
  * The endpoint to send order completion notifications to

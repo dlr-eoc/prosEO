@@ -1,13 +1,21 @@
+/**
+ * MonExtServiceStateOperation.java
+ *
+ * © 2021 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.model;
 
 import java.time.Instant;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Index;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
+/**
+ * The state of an external service at a given point in time
+ */
 @Entity
 @Table(indexes = {
 		@Index(unique = false, columnList = "datetime"),

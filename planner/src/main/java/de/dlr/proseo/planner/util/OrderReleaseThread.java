@@ -12,8 +12,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.transaction.TransactionDefinition;
@@ -98,6 +98,8 @@ public class OrderReleaseThread extends Thread {
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		PlannerResultMessage answer = new PlannerResultMessage(GeneralMessage.FALSE);
+		this.resultMessage = answer;
+
 		if (order != null && productionPlanner != null && jobUtil != null) {
 			answer = new PlannerResultMessage(GeneralMessage.TRUE);
 			final long orderId = order.getId();
@@ -283,7 +285,7 @@ public class OrderReleaseThread extends Thread {
 
 									if (jobList.get(curJList.get(0)).getJobState() == JobState.PLANNED) {
 										Job locJob = RepositoryService.getJobRepository()
-											.getOne(jobList.get(curJList.get(0)).getId());
+											.getReferenceById(jobList.get(curJList.get(0)).getId());
 
 										try {
 											locAnswer = jobUtil.resume(locJob);
@@ -361,7 +363,9 @@ public class OrderReleaseThread extends Thread {
 										Object jsIdObject = jobStep[1];
 										Object pfNameObject = jobStep[2];
 
-										Long jsId = jsIdObject instanceof BigInteger ? ((BigInteger) jsIdObject).longValue() : null;
+										Long jsId = jsIdObject instanceof BigInteger 
+												? ((BigInteger) jsIdObject).longValue() 
+												: (jsIdObject instanceof Long ? (Long)jsIdObject : null);
 										String pfName = pfNameObject instanceof String ? (String) pfNameObject : null;
 
 										if (null == jsId || null == pfName) {

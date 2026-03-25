@@ -11,15 +11,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -523,7 +519,7 @@ public class ProcessorManager {
 		}
 		return "0";
 	}
-	
+
 	private Query createProcossorsQuery(Long id, String mission, String processorName, String processorVersion, Integer recordFrom,
 			Integer recordTo, String[] orderBy, Boolean count) {
 
@@ -533,7 +529,6 @@ public class ProcessorManager {
 
 		// Find using search parameters
 		String jpqlQuery = null;
-		String join = "";
 		if (count) {
 			jpqlQuery = "select count(p) from Processor p where processorClass.mission.code = :missionCode";
 		} else {
@@ -559,7 +554,7 @@ public class ProcessorManager {
 				jpqlQuery += orderBy[i];
 			}
 		}
-		
+
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", mission);
 		if (null != id) {

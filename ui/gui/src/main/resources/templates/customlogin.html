@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
    <head>
    
       <meta charset="utf-8">
@@ -8,16 +8,18 @@
       <title>prosEO</title>
       
       <!-- jQuery JavaScript functionality -->
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-      <!-- Bootstrap JavaScript functionality -->
-      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-      
-      <!-- Bootstrap stylesheet -->
-      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-      
+
+      <link
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+  rel="stylesheet">
+<script 
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom styles for prosEO -->
+<link href="../static/fragments/proseo.css"
+  th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css">
       <style>
          body {
-            margin-left: 30px;
+            margin-left: 50px;
          
             /* Background image*/
             background-image: url(background.jpg); 
@@ -53,9 +55,11 @@
             You have been logged out.
          </div>
          
+         <input type="hidden" id="username" name="username" required>
+         
          <div style="margin-bottom: 10px;">
-            <label for="username" style="display: inline-block; width: 100px;"><span th:text="#{username}"></label>
-            <input type="text" id="username" name="username" required>
+            <label for="userN" style="display: inline-block; width: 100px;"><span th:text="#{username}"></label>
+            <input type="text" id="userN" name="userN" required>
          </div>
          
          <div style="margin-bottom: 10px;">
@@ -71,11 +75,23 @@
          </div>
          
          <button type="submit" class="btn btn-primary"><span th:text="#{login}"></span></button>
-         
       </form>
       
       <p><span th:text="#{proseo}"></span> - <span th:text="#{missioncontrol}"></span> - <span th:text="#{version}"></span> <span th:text="${proseoversion}"></span> - <span th:text="#{copyright}"></span></p>	
 
    </body>
-   
+  
+   <script type="text/javascript"> 
+			window.onload = function () {
+			    document.getElementById('userN').addEventListener('change', updateUserMission);
+			    document.getElementById('mission').addEventListener('change', updateUserMission);
+			}
+	    function updateUserMission() {
+	          var userN = document.getElementById('userN');
+	          var username = document.getElementById('username');
+	          var mission = document.getElementById('mission');
+	          var name = mission.options[mission.selectedIndex].value +'/' + userN.value;
+	          username.value = name;
+	    }
+	  </script>
 </html>

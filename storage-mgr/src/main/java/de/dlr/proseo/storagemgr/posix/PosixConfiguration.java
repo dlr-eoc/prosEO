@@ -75,4 +75,10 @@ public class PosixConfiguration {
 		this.fileCheckWaitTime = fileCheckWaitTime;
 	}
 
+	@Override
+	public String toString() {
+		return "PosixConfiguration [bucket=" + bucket + ", basePath=" + basePath + ", sourcePath=" + sourcePath
+				+ ", maxRequestAttempts=" + maxRequestAttempts + ", fileCheckWaitTime=" + fileCheckWaitTime + "]";
+	}
+
 }

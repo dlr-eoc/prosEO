@@ -1,5 +1,5 @@
-FROM openjdk:11
-MAINTAINER Thomas Bassler <thomas.bassler@drbassler.de>
+FROM eclipse-temurin:21
+LABEL org.opencontainers.image.authors="Ernst Melchinger <melchinger@prophos.de>"
 ENTRYPOINT ["java", "-jar", "/usr/share/planner/proseo-planner.jar"]
 
 #ADD target/lib /usr/share/planner/lib

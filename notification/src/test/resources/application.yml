@@ -1,0 +1,30 @@
+spring:
+    mvc:
+      async:
+        request-timeout: -1
+    main.allow-bean-definition-overriding: true
+logging:
+    #file:
+    #    name: /proseo/log/proseo-notification.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+        org.hibernate.engine.jdbc.env.internal: WARN
+        #org.springframework.security: TRACE
+management:
+    endpoints.web.exposure.include: "health"
+proseo:
+    http.timeout: 10000
+    notification:
+        subject: "Message from prosEO"
+        contentType: "text/plain"
+        mail:
+            host: "mail.host"
+            port: 587
+            user: "user@proseo.de"
+            password: "secret"
+            auth: true
+            starttls: true
+            timeout: 10000
+            sender: "noreply@proseo.de"
+            

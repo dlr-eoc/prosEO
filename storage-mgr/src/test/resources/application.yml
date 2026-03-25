@@ -1,8 +1,8 @@
 management:
     endpoints.web.exposure.include: "health,info"
 logging:
-    file: 
-        name: /proseo/log/proseo-storage-mgr.log
+    #file: 
+    #    name: /proseo/log/proseo-storage-mgr.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
@@ -11,6 +11,7 @@ logging:
 proseo:
     global:
       storageIdPrefix: proseo
+      
       # Default mount point for files to upload
       sourcePath: target/testdata/source
 

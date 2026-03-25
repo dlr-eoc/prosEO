@@ -79,7 +79,7 @@ public class ServiceConnection {
 
 			// Build the RestTemplate for making the HTTP POST request
 			RestTemplate restTemplate = (null == user ? rtb : rtb.basicAuthentication(user, password))
-				.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+				.readTimeout(Duration.ofSeconds(config.getHttpTimeout()))
 				.build();
 
 			// Create the request URL from the provided endpoint

@@ -406,4 +406,9 @@ public class PosixDAL {
 
 		return new FileUtils(sourceFileOrDir).delete();
 	}
+
+	@Override
+	public String toString() {
+		return "PosixDAL [cfg=" + cfg + "]";
+	}
 }

@@ -28,7 +28,7 @@ import de.dlr.proseo.model.util.ProseoUtil;
 
 /**
  * Represent a microservice to check status
- * 
+ *
  * @author Melchinger
  *
  */
@@ -58,7 +58,7 @@ public class MicroService {
 	 */
 	private String kubernetes;
 	/**
-	 * Service is a prosEO service 
+	 * Service is a prosEO service
 	 */
 	private Boolean isProseo;
 	/**
@@ -69,7 +69,7 @@ public class MicroService {
 	 * State of service (MonServiceStates)
 	 */
 	private Long state = (long) 2;
-		
+
 	/**
 	 * @return the hasActuator
 	 */
@@ -134,8 +134,8 @@ public class MicroService {
 	}
 
 	/**
-	 * Instantiate a micro service 
-	 * 
+	 * Instantiate a micro service
+	 *
 	 * @param service A service defined in monitor configuration (application.yml)
 	 */
 	public MicroService(MonitorConfiguration.Service service) {
@@ -147,10 +147,10 @@ public class MicroService {
 		this.hasActuator = service.getHasActuator();
 		this.state = MonServiceStates.STOPPED_ID;
 	}
-	
+
 	/**
 	 * Check the state of this service
-	 * 
+	 *
 	 * @param monitor The basic Monitor thread
 	 */
 	public void check(MonitorServices monitor) {
@@ -160,8 +160,8 @@ public class MicroService {
 		if (serviceUrl != null) {
 			if (this.getHasActuator()) {
 				RestTemplate restTemplate = MonitorApplication.rtb
-						.setReadTimeout(Duration.ofMillis(MonitorApplication.config.getReadTimeout()))
-						.setConnectTimeout(Duration.ofMillis(MonitorApplication.config.getConnectTimeout()))
+						.readTimeout(Duration.ofMillis(MonitorApplication.config.getReadTimeout()))
+						.connectTimeout(Duration.ofMillis(MonitorApplication.config.getConnectTimeout()))
 						.build();
 				try {
 					ResponseEntity<RestHealth> response = restTemplate.getForEntity(serviceUrl, RestHealth.class);
@@ -188,42 +188,32 @@ public class MicroService {
 				}
 			} else {
 				RestTemplate restTemplate = MonitorApplication.rtb
-						.setReadTimeout(Duration.ofMillis(MonitorApplication.config.getReadTimeout()))
-						.setConnectTimeout(Duration.ofMillis(MonitorApplication.config.getConnectTimeout()))
+						.readTimeout(Duration.ofMillis(MonitorApplication.config.getReadTimeout()))
+						.connectTimeout(Duration.ofMillis(MonitorApplication.config.getConnectTimeout()))
 						.build();
 				try {
 					ResponseEntity<?> response = restTemplate.getForEntity(serviceUrl, String.class);
-					if (response.getStatusCode().is2xxSuccessful() || 
-							response.getStatusCode().is3xxRedirection() || 
-							HttpStatus.BAD_REQUEST.equals(response.getStatusCode()) || 
-							HttpStatus.UNAUTHORIZED.equals(response.getStatusCode()) || 
+					if (response.getStatusCode().is2xxSuccessful() ||
+							response.getStatusCode().is3xxRedirection() ||
+							HttpStatus.BAD_REQUEST.equals(response.getStatusCode()) ||
+							HttpStatus.UNAUTHORIZED.equals(response.getStatusCode()) ||
 							HttpStatus.FORBIDDEN.equals(response.getStatusCode())) {
 						// We got an answer and assume the service is running
 						this.state = MonServiceStates.RUNNING_ID;
 						createEntry(monitor);
 						return;
 					}
-				} catch (HttpClientErrorException.NotFound e) {
-					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
-					// TODO
 				} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 					// We got an answer and assume the service is running
 					this.state = MonServiceStates.RUNNING_ID;
 					createEntry(monitor);
 					return;
-				} catch (RestClientResponseException e) {				
-					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
-					// TODO
-				} catch (RestClientException e) {
-					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
-					// TODO
 				} catch (Exception e) {
 					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
-					// TODO
 				}
 			}
 		}
-		
+
 		// service does not answer or answer unknown state, check further if docker or kubernetes are set, else set to stopped
 		if (monitor.getDockerService(this.getDocker()) == null && monitor.getKubernetes(this.getKubernetes()) == null) {
 			this.state = MonServiceStates.STOPPED_ID;
@@ -246,8 +236,8 @@ public class MicroService {
 	}
 
 	/**
-	 * Create a new database entry of this 
-	 * 
+	 * Create a new database entry of this
+	 *
 	 * @param monitor The basic Monitor thread
 	 */
 	public void createEntry(MonitorServices monitor) {
@@ -258,7 +248,7 @@ public class MicroService {
 			transactionTemplate.setReadOnly(false);
 			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
-					transactionTemplate.execute((status) -> {	
+					transactionTemplate.execute((status) -> {
 						MonServiceStateOperation ms = new MonServiceStateOperation();
 						ms.setMonService(monitor.getMonService(getNameId(), getName()));
 						Optional<MonServiceState> aState = RepositoryService.getMonServiceStateRepository().findById(getState());
@@ -286,7 +276,7 @@ public class MicroService {
 			transactionTemplate.setReadOnly(false);
 			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
-					transactionTemplate.execute((status) -> {	
+					transactionTemplate.execute((status) -> {
 						MonExtServiceStateOperation ms = new MonExtServiceStateOperation();
 						ms.setMonExtService(monitor.getMonExtService(getNameId(), getName()));
 						Optional<MonServiceState> aState = RepositoryService.getMonServiceStateRepository().findById(getState());

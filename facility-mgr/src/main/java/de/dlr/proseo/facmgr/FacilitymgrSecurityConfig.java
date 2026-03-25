@@ -1,6 +1,6 @@
 /**
  * FacilitymgrSecurityConfig.java
- * 
+ *
  * (c) 2020 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.facmgr;
@@ -25,7 +25,7 @@ import de.dlr.proseo.model.enums.UserRole;
 
 /**
  * Security configuration for prosEO Facility Manager module
- * 
+ *
  * @author Ranjitha Vignesh
  */
 @Configuration
@@ -38,28 +38,29 @@ public class FacilitymgrSecurityConfig {
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(FacilitymgrSecurityConfig.class);
-	
+
 	/**
 	 * Set the Facility Manager security options
-	 * 
+	 *
 	 * @param http the HTTP security object
 	 */
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.httpBasic(it -> {})
 			.authorizeHttpRequests(requests -> requests
-			.antMatchers("/**/actuator/health")
+			.requestMatchers("/actuator/health")
 			.permitAll()
-			.antMatchers(HttpMethod.GET)	
-			.hasAnyRole(UserRole.FACILITY_READER.toString())			
+			.requestMatchers(HttpMethod.GET)
+			.hasAnyRole(UserRole.FACILITY_READER.toString())
 			.anyRequest().hasAnyRole(UserRole.FACILITY_MGR.toString()))
-			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+			.csrf((csrf) -> csrf.disable());
+
 		return http.build();
 	}
 
 	/**
 	 * Provides the default password encoder for prosEO (BCrypt)
-	 * 
+	 *
 	 * @return a BCryptPasswordEncoder
 	 */
 	@Bean
@@ -69,7 +70,7 @@ public class FacilitymgrSecurityConfig {
 
 	/**
 	 * Provides the default user details service for prosEO (based on the standard data model for users and groups)
-	 * 
+	 *
 	 * @return a JdbcDaoImpl object
 	 */
 	@Bean
@@ -79,7 +80,7 @@ public class FacilitymgrSecurityConfig {
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
 		jdbcDaoImpl.setDataSource(dataSource);
 		jdbcDaoImpl.setEnableGroups(true);
-		
+
 		return jdbcDaoImpl;
 	}
 }

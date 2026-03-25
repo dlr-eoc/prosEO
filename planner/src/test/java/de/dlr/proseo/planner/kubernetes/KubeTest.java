@@ -18,10 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProductionPlanner.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -36,10 +34,10 @@ public class KubeTest {
 
 //    @Autowired
 //    private JobStepRepository jobSteps;
-//    
+//
 //    @Autowired
 //    private ProductionPlanner productionPlanner;
-    
+
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
@@ -68,10 +66,9 @@ public class KubeTest {
 		Mission m = RepositoryService.getMissionRepository().findByCode("PTM");
 		logger.debug("Mission: {}", m);
 		m.setProductFileTemplate("PTM_${fileClass}_${productClass.productType}_${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(sensingStartTime)}_${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(sensingStopTime)}_${(new java.text.DecimalFormat(\"00000\")).format(null == orbit ? 0 : orbit.orbitNumber)}_${parameters.get(\"revision\").getParameterValue()}_${configuredProcessor.processor.processorVersion.replaceAll(\"\\.\", \"\")}_${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(generationTime)}.nc");
-		String pft = m.getProductFileTemplate();
 		RepositoryService.getMissionRepository().save(m);
 //		JobStep js = new JobStep();
-//		js.setProcessingMode("nix"); 
+//		js.setProcessingMode("nix");
 //		RepositoryService.getJobStepRepository().save(js);
 //		JobDispatcher jd = new JobDispatcher();
 //		try {

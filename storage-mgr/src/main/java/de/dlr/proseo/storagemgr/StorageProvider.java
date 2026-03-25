@@ -195,7 +195,9 @@ public class StorageProvider {
 		PathConverter pcv = new PathConverter(absolutePath);
 		StorageType storageType = pcv.getStorageType();
 		return getStorage(storageType, 
-				StorageType.POSIX.equals(storageType) ? pcv.getPath() : pcv.removeFsPrefix().getFirstFolder().getPath());
+				StorageType.POSIX.equals(storageType) ? 
+						Paths.get(pcv.getPath()).getParent().toString() : // Parent folder is considered base path
+						pcv.removeFsPrefix().getFirstFolder().getPath()); // First path element is bucket name
 	}
 
 	/**

@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.Entity;
@@ -52,6 +52,7 @@ import org.apache.olingo.server.api.uri.queryoption.expression.Expression;
 import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -71,7 +72,7 @@ import de.dlr.proseo.model.enums.UserRole;
  * @author Dr. Thomas Bassler
  */
 @Component
-@Transactional
+@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 public class ProductEntityCollectionProcessor implements EntityCollectionProcessor {
 
 	/* Other string constants */

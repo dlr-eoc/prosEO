@@ -6,18 +6,21 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
+import org.apache.hc.core5.http.Header;
 import org.apache.http.auth.AUTH;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.AuthSchemes;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpPatch;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.auth.StandardAuthScheme;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.classic.methods.HttpPatch;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicHeader;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.http.protocol.HTTP;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -86,14 +89,14 @@ public class ServiceConnection {
 		ResponseEntity<T> entity = null;
 		try {
 			RestTemplate restTemplate = (null == username ? rtb : rtb.basicAuthentication(username, password))
-				.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+				.readTimeout(Duration.ofSeconds(config.getHttpTimeout()))
 				.build();
 			URI requestUrl = URI.create(serviceUrl + requestPath);
 			if (logger.isTraceEnabled())
 				logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			String message = http.createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
+			String message = http.createMessageFromHeaders(HttpStatus.valueOf(e.getStatusCode().value()), e.getResponseHeaders());
 			logger.log(PlannerMessage.EXTRACTED_MESSAGE, message);
 			throw new HttpClientErrorException(e.getStatusCode(), message);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
@@ -119,7 +122,7 @@ public class ServiceConnection {
 
 		// All GET requests should return HTTP status OK
 		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
-			String message = http.createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
+			String message = http.createMessageFromHeaders(HttpStatus.valueOf(entity.getStatusCode().value()), entity.getHeaders());
 			logger.log(PlannerMessage.EXTRACTED_MESSAGE, message);
 			throw new RuntimeException(message);
 		}
@@ -152,14 +155,14 @@ public class ServiceConnection {
 		ResponseEntity<T> entity = null;
 		try {
 			RestTemplate restTemplate = (null == username ? rtb : rtb.basicAuthentication(username, password))
-				.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+				.readTimeout(Duration.ofSeconds(config.getHttpTimeout()))
 				.build();
 			RequestEntity<Void> requestEntity = RequestEntity.put(URI.create(serviceUrl + requestPath)).build();
 			if (logger.isTraceEnabled())
 				logger.trace("... calling service URL {} with GET", requestEntity.getUrl());
 			entity = restTemplate.exchange(requestEntity, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			String message = http.createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
+			String message = http.createMessageFromHeaders(HttpStatus.valueOf(e.getStatusCode().value()), e.getResponseHeaders());
 			logger.log(PlannerMessage.EXTRACTED_MESSAGE, message);
 			throw new HttpClientErrorException(e.getStatusCode(), message);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
@@ -184,7 +187,7 @@ public class ServiceConnection {
 
 		// All PUT requests should return HTTP status OK (for updates) or CREATED (for newly created items)
 		if (!HttpStatus.OK.equals(entity.getStatusCode()) && !HttpStatus.CREATED.equals(entity.getStatusCode())) {
-			String message = http.createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
+			String message = http.createMessageFromHeaders(HttpStatus.valueOf(entity.getStatusCode().value()), entity.getHeaders());
 			logger.log(PlannerMessage.EXTRACTED_MESSAGE, message);
 			throw new RuntimeException(message);
 		}
@@ -218,14 +221,14 @@ public class ServiceConnection {
 		ResponseEntity<T> entity = null;
 		try {
 			RestTemplate restTemplate = (null == username ? rtb : rtb.basicAuthentication(username, password))
-				.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+				.readTimeout(Duration.ofSeconds(config.getHttpTimeout()))
 				.build();
 			URI requestUrl = URI.create(serviceUrl + requestPath);
 			if (logger.isTraceEnabled())
 				logger.trace("... calling service URL {} with POST", requestUrl);
 			entity = restTemplate.postForEntity(requestUrl, restObject, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			String message = http.createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
+			String message = http.createMessageFromHeaders(HttpStatus.valueOf(e.getStatusCode().value()), e.getResponseHeaders());
 			logger.log(PlannerMessage.EXTRACTED_MESSAGE, message);
 			throw new HttpClientErrorException(e.getStatusCode(), message);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
@@ -257,7 +260,7 @@ public class ServiceConnection {
 
 		// All successful POST requests should return HTTP status CREATED
 		if (!HttpStatus.CREATED.equals(entity.getStatusCode())) {
-			String message = http.createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
+			String message = http.createMessageFromHeaders(HttpStatus.valueOf(entity.getStatusCode().value()), entity.getHeaders());
 			logger.log(PlannerMessage.EXTRACTED_MESSAGE, message);
 			throw new RuntimeException(message);
 		}
@@ -293,23 +296,29 @@ public class ServiceConnection {
 		// Build an HTTP request
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setSerializationInclusion(JsonInclude.Include.NON_ABSENT);
-		HttpClient httpclient = HttpClientBuilder.create().build();
-		HttpPatch req = new HttpPatch();
-		req.setConfig(RequestConfig.custom().setConnectTimeout(config.getHttpTimeout().intValue()).build());
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		HttpPatch req = new HttpPatch(URI.create(serviceUrl + requestPath));
+		PoolingHttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
+                .setDefaultConnectionConfig(ConnectionConfig.custom().setConnectTimeout(config.getHttpTimeout().intValue(), TimeUnit.MILLISECONDS).build())
+                .build();
+		builder.setDefaultRequestConfig(RequestConfig.custom().build())
+        		.setConnectionManager(connectionManager);
+        CloseableHttpClient httpclient = builder.build();
+		req.setConfig(RequestConfig.custom().build());
 		try {
-			req.setURI(URI.create(serviceUrl + requestPath));
+			req.setUri(URI.create(serviceUrl + requestPath));
 		} catch (IllegalArgumentException e) {
 			String message = logger.log(PlannerMessage.INVALID_URL, serviceUrl + requestPath, e.getMessage());
 			throw new RuntimeException(message, e);
 		}
-		req.addHeader(new BasicHeader(AUTH.WWW_AUTH_RESP,
-				AuthSchemes.BASIC + " " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes())));
-		req.addHeader(new BasicHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString()));
+		req.addHeader (AUTH.WWW_AUTH_RESP,
+				StandardAuthScheme.BASIC + " " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes()));
+		req.addHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString());
 		try {
 			String jsonObject = mapper.writeValueAsString(restObject);
 			if (logger.isTraceEnabled())
 				logger.trace("... serialized Json object: " + jsonObject);
-			req.setEntity(new StringEntity(jsonObject));
+			req.setEntity (new StringEntity(jsonObject));
 		} catch (Exception e) {
 			String message = logger.log(PlannerMessage.SERIALIZATION_FAILED, e.getMessage());
 
@@ -324,7 +333,7 @@ public class ServiceConnection {
 				logger.trace("... calling service URL {} with PATCH", serviceUrl + requestPath);
 
 			String responseContent = httpclient.execute(req, httpResponse -> {
-				int httpStatusCode = httpResponse.getStatusLine().getStatusCode();
+				int httpStatusCode = httpResponse.getCode();
 				Header warningHeader = httpResponse.getFirstHeader(HttpHeaders.WARNING);
 
 				String message = null;
@@ -362,7 +371,7 @@ public class ServiceConnection {
 					throw new RestClientResponseException(message, httpStatusCode, HttpStatus.NOT_MODIFIED.getReasonPhrase(), null,
 							null, null);
 				} else if (300 <= httpStatusCode) {
-					String reasonPhrase = httpResponse.getStatusLine().getReasonPhrase();
+					String reasonPhrase = httpResponse.getReasonPhrase();
 					if (null != httpResponse.getEntity())
 						httpResponse.getEntity().getContent().close();
 					logger.log(PlannerMessage.HTTP_REQUEST_FAILED, reasonPhrase);
@@ -410,7 +419,7 @@ public class ServiceConnection {
 		ResponseEntity<Object> entity = null;
 		try {
 			RestTemplate restTemplate = (null == username ? rtb : rtb.basicAuthentication(username, password))
-				.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+				.readTimeout(Duration.ofSeconds(config.getHttpTimeout()))
 				.build();
 			URI requestUrl = URI.create(serviceUrl + requestPath);
 			if (logger.isTraceEnabled())
@@ -418,9 +427,9 @@ public class ServiceConnection {
 			// restTemplate.delete(requestUrl);
 			entity = restTemplate.exchange(requestUrl, HttpMethod.DELETE, null, Object.class);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			String message = http.createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
+			String message = http.createMessageFromHeaders(HttpStatus.valueOf(e.getStatusCode().value()), e.getResponseHeaders());
 			logger.log(PlannerMessage.EXTRACTED_MESSAGE, message);
-			throw new RestClientResponseException(message, e.getRawStatusCode(), e.getStatusCode().getReasonPhrase(),
+			throw new RestClientResponseException(message, e.getStatusCode(), e.getStatusText(),
 					e.getResponseHeaders(), e.getResponseBodyAsByteArray(), StandardCharsets.UTF_8);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
@@ -447,13 +456,13 @@ public class ServiceConnection {
 
 		// Check for deletion failure indicated by 304 NOT_MODIFIED
 		if (HttpStatus.NOT_MODIFIED.equals(entity.getStatusCode())) {
-			String message = http.createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
+			String message = http.createMessageFromHeaders(HttpStatus.valueOf(entity.getStatusCode().value()), entity.getHeaders());
 			logger.log(PlannerMessage.EXTRACTED_MESSAGE, message);
-			throw new RestClientResponseException(message, entity.getStatusCodeValue(), entity.getStatusCode().getReasonPhrase(),
-					entity.getHeaders(), null, StandardCharsets.UTF_8);
+			throw new RestClientResponseException(message, entity.getStatusCode(),
+					"", entity.getHeaders(), null, StandardCharsets.UTF_8);
 		} else if (!HttpStatus.NO_CONTENT.equals(entity.getStatusCode())) {
 			// Ignore unexpected status code, but log it as warning
-			logger.log(PlannerMessage.WARN_UNEXPECTED_STATUS, entity.getStatusCode().getReasonPhrase());
+			logger.log(PlannerMessage.WARN_UNEXPECTED_STATUS, entity.getStatusCode());
 		}
 
 		if (logger.isTraceEnabled())

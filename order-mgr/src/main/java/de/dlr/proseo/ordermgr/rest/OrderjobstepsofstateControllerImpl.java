@@ -7,10 +7,9 @@ package de.dlr.proseo.ordermgr.rest;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,14 +24,10 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.model.JobStep;
-import de.dlr.proseo.model.JobStep.JobStepState;
-import de.dlr.proseo.model.rest.OrderjobstepController;
 import de.dlr.proseo.model.rest.OrderjobstepsofstateController;
 import de.dlr.proseo.model.rest.model.RestJobStep;
-import de.dlr.proseo.model.rest.model.Status;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
-import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.rest.model.RestUtil;
 
 /**

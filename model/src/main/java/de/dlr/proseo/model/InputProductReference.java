@@ -8,8 +8,8 @@ package de.dlr.proseo.model;
 import java.time.Instant;
 import java.util.Objects;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 
 /**
  * Identification of the input product to use for On-Demand Production; its intention is to be unambiguous (as per ODPRIP ICD),

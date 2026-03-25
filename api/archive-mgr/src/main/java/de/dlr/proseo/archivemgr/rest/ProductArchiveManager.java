@@ -10,15 +10,11 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -252,8 +248,8 @@ public class ProductArchiveManager {
 		}
 
 		// adds WHERE condition
-		if ((null != id) || (null != name) || (null != archiveType)) {
-			
+		if ((null != id) || (null != code) || (null != name) || (null != archiveType)) {
+
 			jpqlQuery += " where ";
 			String and = " ";
 			if (null != id) {
@@ -302,7 +298,7 @@ public class ProductArchiveManager {
 		return query;
 	}
 
-	
+
 	/**
 	 * Get product archives by name and archive type
 	 *

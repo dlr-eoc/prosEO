@@ -12,17 +12,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.persistence.CascadeType;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.Index;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
+import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,11 +80,11 @@ public class JobStep extends PersistentObject {
 	private Instant processingCompletionTime;
 	
 	/** The standard output of the processing job */
-	@org.hibernate.annotations.Type(type = "materialized_clob")
+	@Lob
 	private String processingStdOut;
 	
 	/** The standard error output of the processing job */
-	@org.hibernate.annotations.Type(type = "materialized_clob")
+	@Lob
 	private String processingStdErr;
 	
 	/** The filename of the Job Order file in the associated processing facility */

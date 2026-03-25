@@ -26,7 +26,7 @@ public interface ProductQueryRepository extends JpaRepository<ProductQuery, Long
 	 * @param productClassId the database id of the product class
 	 * @return a (possibly empty) list of unsatisfied product queries
 	 */
-	@Query("select pq from ProductQuery pq where requested_product_class_id = ?1 and is_satisfied = false")
+	@Query("select pq from ProductQuery pq where pq.requestedProductClass.id = ?1 and pq.isSatisfied = false")
 	public List<ProductQuery> findUnsatisfiedByProductClass(long productClassId);
 
 }

@@ -7,12 +7,13 @@
     <parent>
         <groupId>de.dlr.proseo</groupId>
         <artifactId>proseo</artifactId>
-        <version>1.2.0</version>
+        <version>2.0.0</version>
     </parent>
 
     <artifactId>proseo-planner</artifactId>
     <name>prosEO Production Planner</name>
-    <description>prosEO Production Planner – The prosEO component that manages the data-driven production process
+    <description>prosEO Production Planner – The prosEO component that manages
+        the data-driven production process
     </description>
 
     <url>https://github.com/dlr-eoc/prosEO/planner/</url>
@@ -22,10 +23,11 @@
     </organization>
 
     <properties>
-        <kubernetes.client.version>12.0.1</kubernetes.client.version>
+        <kubernetes.client.version>20.0.1-legacy</kubernetes.client.version>
         <main.basedir>${basedir}/../..</main.basedir>
         <raml-path>src/main/resources/raml/planner-api.raml</raml-path>
         <raml-base-package>de.dlr.proseo.model.rest</raml-base-package>
+        <argLine/><!-- For Mockito configuration -->
     </properties>
 
     <dependencies>
@@ -77,6 +79,7 @@
         <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
+            <version>2.3.1</version>
         </dependency>
         <dependency>
             <groupId>de.dlr.proseo</groupId>
@@ -109,6 +112,11 @@
             <version>${kubernetes.client.version}</version>
         </dependency>
         <dependency>
+            <groupId>io.kubernetes</groupId>
+            <artifactId>client-java-api-fluent</artifactId>
+            <version>${kubernetes.client.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.phoenixnap.oss</groupId>
             <artifactId>springmvc-raml-plugin</artifactId>
             <type>maven-plugin</type>
@@ -116,13 +124,17 @@
         <dependency>
             <groupId>de.dlr.proseo</groupId>
             <artifactId>proseo-common</artifactId>
-            <version>1.2.0</version>
+            <version>2.0.0</version>
         </dependency>
         <dependency>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
             <version>${junit.version}</version>
-          <scope>test</scope>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
         </dependency>
     </dependencies>
 
@@ -173,6 +185,28 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <!-- Add Mockito as a dynamic agent to Maven Surefire as per
+                 https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>@{argLine}
+                        -javaagent:${org.mockito:mockito-core:jar}</argLine>
+                </configuration>
             </plugin>
 
             <!-- Create HTML documentation from RAML files -->

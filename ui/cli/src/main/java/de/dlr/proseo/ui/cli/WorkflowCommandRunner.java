@@ -233,7 +233,7 @@ public class WorkflowCommandRunner {
 					RestWorkflow.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.WORKFLOW_DATA_INVALID, e.getStatusText());
 				break;
@@ -311,7 +311,7 @@ public class WorkflowCommandRunner {
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.NO_WORKFLOWS_FOUND);
 				break;
@@ -435,7 +435,7 @@ public class WorkflowCommandRunner {
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.WORKFLOW_NOT_FOUND, updatedWorkflow.getName(),
 						updatedWorkflow.getWorkflowVersion());
@@ -529,7 +529,7 @@ public class WorkflowCommandRunner {
 					loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
@@ -589,7 +589,7 @@ public class WorkflowCommandRunner {
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.WORKFLOW_NOT_FOUND, name, workflowVersion);
 				break;
@@ -623,7 +623,7 @@ public class WorkflowCommandRunner {
 					URI_PATH_WORKFLOWS + "/" + restWorkflow.getId(), loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = ProseoLogger.format(UIMessage.WORKFLOW_NOT_FOUND_BY_ID, restWorkflow.getId());
 				break;

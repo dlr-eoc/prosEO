@@ -899,4 +899,9 @@ public class S3DAL {
 
 		return new DefaultRetryStrategy<>(inputStream, cfg.getMaxRequestAttempts(), cfg.getFileCheckWaitTime()).execute();
 	}
+
+	@Override
+	public String toString() {
+		return "S3DAL [cfg=" + cfg + ", defaultBucket=" + defaultBucket + ", credentials=" + credentials + "]";
+	}
 }

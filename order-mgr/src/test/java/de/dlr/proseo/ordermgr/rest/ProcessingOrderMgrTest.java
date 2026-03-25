@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -28,9 +28,9 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -75,7 +75,7 @@ public class ProcessingOrderMgrTest {
 	ProcessingOrderMgr pom;
 
 	/** A REST template builder for this class */
-	@MockBean
+	@MockitoBean
 	RestTemplateBuilder rtb;
 
 	// Test data
@@ -616,7 +616,7 @@ public class ProcessingOrderMgrTest {
 		// Stop time must not precede start time
 		testOrder.setStopTime(OrbitTimeFormatter.format(Instant.now()));
 		testOrder.setStartTime(OrbitTimeFormatter.format(Instant.now().plusMillis(1)));
-		
+
 		assertThrows(IllegalArgumentException.class, () -> pom.modifyOrder(testOrder.getId(), testOrder));
 		testOrder.setStartTime(OrbitTimeFormatter.format(Instant.now()));
 		testOrder.setStopTime(OrbitTimeFormatter.format(Instant.now()));
@@ -717,10 +717,10 @@ public class ProcessingOrderMgrTest {
 		assertTrue(pom.getOrders("UTM", null, null, null, null, null, null).size() >= 1);
 		assertTrue(pom.getOrders("UTM", testOrderData[0][3], null, null, null, null, null).size() >= 1);
 		assertTrue(pom.getOrders("UTM", null, testReqProdClass, null, null, null, null).size() >= 1);
-		assertTrue(pom.getOrders("UTM", null, null, Date.from(start), null, null, null).size() >= 1);
-		assertTrue(pom.getOrders("UTM", null, null, null, Date.from(stop), null, null).size() >= 1);
-		assertTrue(pom.getOrders("UTM", null, null, null, null, Date.from(start), null).size() >= 1);
-		assertTrue(pom.getOrders("UTM", null, null, null, null, null, Date.from(stop)).size() >= 1);
+		assertTrue(pom.getOrders("UTM", null, null, OrbitTimeFormatter.format(start), null, null, null).size() >= 1);
+		assertTrue(pom.getOrders("UTM", null, null, null, OrbitTimeFormatter.format(stop), null, null).size() >= 1);
+		assertTrue(pom.getOrders("UTM", null, null, null, null, OrbitTimeFormatter.format(start), null).size() >= 1);
+		assertTrue(pom.getOrders("UTM", null, null, null, null, null, OrbitTimeFormatter.format(stop)).size() >= 1);
 	}
 
 	/**

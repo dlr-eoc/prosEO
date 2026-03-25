@@ -9,7 +9,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -17,13 +19,13 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
+import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.http.client.utils.URIBuilder;
+import org.apache.hc.core5.net.URIBuilder;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.ContextURL.Suffix;
 import org.apache.olingo.commons.api.data.Entity;
@@ -55,6 +57,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
@@ -77,7 +80,7 @@ import de.dlr.proseo.model.enums.UserRole;
  * @author Dr. Thomas Bassler
  */
 @Component
-@Transactional
+@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 public class ProductEntityProcessor implements EntityProcessor, MediaEntityProcessor {
 
 	// Unformatted message
@@ -235,7 +238,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			RestTemplate restTemplate = rtb
 				.basicAuthentication(securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword())
 				.build();
-			String requestUrl = config.getIngestorUrl() + "/products/" + id + "/download/token?fileName=" + productFileName;
+			String requestUrl = config.getIngestorUrl() + "/products/" + id + "/download/token?fileName=" + URLEncoder.encode(productFileName, "UTF-8");
 			if (logger.isTraceEnabled())
 				logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, String.class);
@@ -256,7 +259,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 
 		// All GET requests should return HTTP status OK
 		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
-			String message = logger.log(PripMessage.MSG_SERVICE_REQUEST_FAILED, entity.getStatusCodeValue(),
+			String message = logger.log(PripMessage.MSG_SERVICE_REQUEST_FAILED, entity.getStatusCode().value(),
 					entity.getStatusCode().toString(), entity.getHeaders().getFirst(HTTP_HEADER_WARNING));
 			throw new RuntimeException(message);
 		}
@@ -495,8 +498,8 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		try {
 			downloadToken = retrieveDownloadToken(modelProduct.getId(), productFileName);
 		} catch (HttpClientErrorException e) {
-			response.setContent(serializer.error(LogUtil.oDataServerError(e.getRawStatusCode(), e.getMessage())).getContent());
-			response.setStatusCode(e.getRawStatusCode());
+			response.setContent(serializer.error(LogUtil.oDataServerError(e.getStatusCode().value(), e.getMessage())).getContent());
+			response.setStatusCode(e.getStatusCode().value());
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 			return;
 		} catch (RestClientException e) {

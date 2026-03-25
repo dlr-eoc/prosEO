@@ -1,9 +1,13 @@
+management:
+    endpoints.web.exposure.include: "health"
 logging:
     file:
         name: /proseo/log/proseo-storage-mgr.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
+        org.apache.http: DEBUG
+        org.springframework.web.client: DEBUG
 proseo:
     global:
       storageIdPrefix: proseo
@@ -19,6 +23,10 @@ proseo:
       s3MaxNumberOfBuckets: 50
       s3DefaultBucket: proseo-backend
       s3DefaultEndPoint: false
+      # Maximum number of parallel threads for Transfer Manager uploads
+      maxUploadThreads: 6
+      # Maximum number of parallel threads for Transfer Manager downloads
+      maxDownloadThreads: 6
 
     posix:
       # Mount point for backend storage (must be different from cachePath)

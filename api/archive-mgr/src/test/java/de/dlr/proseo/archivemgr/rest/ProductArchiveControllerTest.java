@@ -7,7 +7,6 @@ package de.dlr.proseo.archivemgr.rest;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -61,21 +60,21 @@ public class ProductArchiveControllerTest {
 
 	/* Test product Archive */
 	private static String[][] testArchiveData = {
-			
-			// id, archiveType(enum), baseUri, clientId, clientSecret, 
-			// code, context, name, password, 
+
+			// id, archiveType(enum), baseUri, clientId, clientSecret,
+			// code, context, name, password,
 			// sendAuthinBody(boolean), tokenRequired(boolean), tokenUri, username
-			
+
 			{ "1", "AIP", "https://www.someurl1.de", "testClientID1", "testClientService1",
-				"testCode1", "testContext1", "testName1", TEST_PASSWORD, 
+				"testCode1", "testContext1", "testName1", TEST_PASSWORD,
 				"true", "true", "https://www.sometokenurl1.de", TEST_USER  },
-			
+
 			{ "2", "AIP", "https://www.someurl2.de", "testClientID2", "testClientService2",
-					"testCode2", "testContext2", "testName2", TEST_PASSWORD, 
+					"testCode2", "testContext2", "testName2", TEST_PASSWORD,
 					"true", "true", "https://www.sometokenurl2.de", TEST_USER  },
-			
+
 			{ "3", "AIP", "https://www.someurl3.de", "testClientID3", "testClientService3",
-						"testCode", "testContext", "testName", TEST_PASSWORD, 
+						"testCode", "testContext", "testName", TEST_PASSWORD,
 						"true", "true", "https://www.sometokenurl3.de", TEST_USER  } };
 
 	/**
@@ -103,22 +102,22 @@ public class ProductArchiveControllerTest {
 	 * @return a product archive with its attributes set to the input data
 	 */
 	private ProductArchive createProductArchive(String[] testData) {
-		
+
 		logger.trace("... creating archive ");
 
 		ProductArchive testArchive = new ProductArchive();
 
 		String archiveCode = testData[5];
-		
+
 		if (null != RepositoryService.getProductArchiveRepository().findByCode(archiveCode)) {
-			
+
 			logger.trace("Found test product archive {}", testArchive.getId());
 			return testArchive = RepositoryService.getProductArchiveRepository().findByCode(archiveCode);
-			
+
 		} else {
 			// testArchive.setId(Long.parseLong(testData[0]));
 			testArchive.setArchiveType(ArchiveType.valueOf(testData[1]));
-			
+
 			testArchive.setBaseUri(testData[2]);
 			testArchive.setClientId(testData[3]);
 			testArchive.setClientSecret(testData[4]);
@@ -130,15 +129,15 @@ public class ProductArchiveControllerTest {
 			testArchive.setTokenRequired(Boolean.valueOf(testData[10]));
 			testArchive.setTokenUri(testData[11]);
 			testArchive.setUsername(testData[12]);
-			
+
 			Set<ProductClass> availableProductClasses = new HashSet<>();
-			
+
 			// availableProductClasses.add
-		
+
 			testArchive.setAvailableProductClasses(availableProductClasses);
 
 			testArchive = RepositoryService.getProductArchiveRepository().save(testArchive);
-			
+
 		}
 		logger.trace("Created test product archive {}", testArchive.getId());
 		return testArchive;
@@ -151,7 +150,7 @@ public class ProductArchiveControllerTest {
 	@Transactional
 	@Test
 	public final void testCreateArchive() {
-		
+
 		logger.trace(">>> testCreateArchive()");
 
 		// Get a test archive from the database
@@ -172,12 +171,12 @@ public class ProductArchiveControllerTest {
 	 */
 	@Test
 	public final void testDeleteArchiveById() {
-		
+
 		logger.trace(">>> testDeleteArchiveById");
 
 		// Get a test product archive from the database
 		ProductArchive testArchive = RepositoryService.getProductArchiveRepository().findAll().get(0);
-		
+
 		System.out.println("Size=" + RepositoryService.getProductArchiveRepository().findAll().size());
 
 		// Delete the test archive with the product archive controller
@@ -191,7 +190,7 @@ public class ProductArchiveControllerTest {
 	 */
 	@Test
 	public final void testGetArchiveById() {
-		
+
 		logger.trace(">>> testGetFacilityById()");
 
 		// Get a test productArchive from the database
@@ -209,27 +208,27 @@ public class ProductArchiveControllerTest {
 	 */
 	@Test
 	public final void testGetArchives() {
-		
+
 		logger.trace(">>> testGetArchives");
 
-		// Get test archives from the database
-		List<ProductArchive> testArchives = RepositoryService.getProductArchiveRepository().findAll();
-
-		// Get archives using different selection criteria
+//		// Get test archives from the database
+//		List<ProductArchive> testArchives = RepositoryService.getProductArchiveRepository().findAll();
+//
+//		// Get archives using different selection criteria
 //		ResponseEntity<List<RestProductArchive>> retrievedArchives = paci.getArchives(null, null, null, null, null);
 //		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedArchives.getStatusCode());
 //		assertEquals("Wrong number of archives retrieved: ", testArchives.size(),
 //				retrievedArchives.getBody().size());
-
+//
 //		retrievedArchives = paci.getArchives("invalid", "invalid", "invalid", null, null);
 //		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_FOUND, retrievedArchives.getStatusCode());
-
-		// TODO:
-		/*
-		retrievedArchives = paci.getArchives(testArchiveData[0][5], testArchiveData[0][6], testArchiveData[0][1]);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedArchives.getStatusCode());
-		assertEquals("Wrong number of archives retrieved: ", 1, retrievedArchives.getBody().size());
-		*/
+//
+//		// TODO:
+//		/*
+//		retrievedArchives = paci.getArchives(testArchiveData[0][5], testArchiveData[0][6], testArchiveData[0][1]);
+//		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedArchives.getStatusCode());
+//		assertEquals("Wrong number of archives retrieved: ", 1, retrievedArchives.getBody().size());
+//		*/
 	}
 
 	/**
@@ -239,7 +238,7 @@ public class ProductArchiveControllerTest {
 	 */
 	@Test
 	public final void testModifyArchive() {
-		
+
 		logger.trace(">>> testModifyArchive()");
 
 		// Modify product archive with product archive controller

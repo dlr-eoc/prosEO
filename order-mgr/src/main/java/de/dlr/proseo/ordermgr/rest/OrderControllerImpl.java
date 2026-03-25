@@ -9,11 +9,11 @@ import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.List;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,8 +91,8 @@ public class OrderControllerImpl implements OrderController {
 	 */
 	@Override
 	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productClasses,
-			@DateTimeFormat Date startTimeFrom, @DateTimeFormat Date startTimeTo, @DateTimeFormat Date executionTimeFrom,
-			@DateTimeFormat Date executionTimeTo) {
+			String startTimeFrom, String startTimeTo, String executionTimeFrom,
+			String executionTimeTo) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productClasses, startTimeFrom, startTimeTo,
 					executionTimeFrom, executionTimeTo);

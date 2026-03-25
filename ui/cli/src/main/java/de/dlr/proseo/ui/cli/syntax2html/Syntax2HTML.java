@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
@@ -52,7 +53,7 @@ public class Syntax2HTML {
 		try (InputStream inputStream = new BufferedInputStream(Files.newInputStream(source))) {
 
 			// Parse YAML source file with syntax to Java object of type CLISyntax
-			Yaml yaml = new Yaml(new Constructor(CLISyntax.class));
+			Yaml yaml = new Yaml(new Constructor(CLISyntax.class, new LoaderOptions()));
 			CLISyntax syntax = yaml.load(inputStream);
 
 			// Generate HTML documentation

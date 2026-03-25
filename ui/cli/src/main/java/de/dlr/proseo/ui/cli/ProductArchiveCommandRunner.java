@@ -110,7 +110,7 @@ public class ProductArchiveCommandRunner {
 			}
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = logger.log(UIMessage.ARCHIVE_NOT_FOUND, archiveCode);
 				break;
@@ -121,7 +121,7 @@ public class ProductArchiveCommandRunner {
 						e.getStatusText());
 				break;
 			default:
-				message = logger.log(UIMessage.EXCEPTION, "(" + e.getRawStatusCode() + ") " + e.getMessage());
+				message = logger.log(UIMessage.EXCEPTION, "(" + e.getStatusCode().value() + ") " + e.getMessage());
 			}
 			System.err.println(message);
 			return null;
@@ -363,7 +363,7 @@ public class ProductArchiveCommandRunner {
 					restArchive, RestProductArchive.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = logger.log(UIMessage.ARCHIVE_DATA_INVALID, e.getStatusText());
 				break;
@@ -450,7 +450,7 @@ public class ProductArchiveCommandRunner {
 					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = logger.log(UIMessage.NO_ARCHIVES_FOUND);
 				break;
@@ -604,7 +604,7 @@ public class ProductArchiveCommandRunner {
 					restArchive, RestProductArchive.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
@@ -665,7 +665,7 @@ public class ProductArchiveCommandRunner {
 			
 		} catch (RestClientResponseException e) {
 			String message = null;
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = logger.log(UIMessage.ARCHIVE_NOT_FOUND_BY_ID, restArchive.getId());
 				break;

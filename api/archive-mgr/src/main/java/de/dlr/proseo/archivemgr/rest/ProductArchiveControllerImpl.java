@@ -8,8 +8,8 @@ package de.dlr.proseo.archivemgr.rest;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 
-import javax.persistence.EntityNotFoundException;
-import javax.persistence.NoResultException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.NoResultException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;

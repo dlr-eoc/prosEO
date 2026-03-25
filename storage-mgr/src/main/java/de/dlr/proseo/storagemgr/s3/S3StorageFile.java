@@ -178,4 +178,9 @@ public class S3StorageFile implements StorageFile {
 	private String addS3Prefix(String path) {
 		return path.startsWith(SLASH) ? S3PREFIX + path : S3PREFIX + SLASH + path;
 	}
+
+	@Override
+	public String toString() {
+		return "S3StorageFile [bucket=" + bucket + ", relativePath=" + relativePath + "]";
+	}
 }

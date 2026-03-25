@@ -665,4 +665,9 @@ public class PosixStorage implements Storage {
 	private String getFullBucketPath() {
 		return bucket.equals(StorageFile.NO_BUCKET) ? cfg.getBasePath() : Paths.get(cfg.getBasePath(), bucket).toString();
 	}
+
+	@Override
+	public String toString() {
+		return "PosixStorage [bucket=" + bucket + ", posixDAL=" + posixDAL + ", cfg=" + cfg + "]";
+	}
 }

@@ -63,7 +63,7 @@ public class ProductQueryServiceTest {
 	private static final String TEST_SOURCE_PRODUCT_TYPE = "L1B________";
 	private static final String TEST_MODE = "OFFL";
 	private static final String TEST_SELECTION_RULE = "FOR L1B________/revision:1,mode:OFFL SELECT ValIntersect(0, 0)";
-	private static final String TEST_SELECTION_RULE_MINCOVER = "FOR L1B________ SELECT ValIntersect(0, 0) MINCOVER(70)";
+	private static final String TEST_SELECTION_RULE_MINCOVER = "FOR L1B________ SELECT ValIntersect(0, 0) MINCOVER(65)";
 	private static final Instant TEST_START_TIME_EARLY = Instant.parse("2009-08-29T23:00:00Z");
 	private static final Instant TEST_STOP_TIME_EARLY = Instant.parse("2009-08-30T01:00:00Z");
 	private static final Instant TEST_START_TIME_LATE = Instant.parse("2009-08-30T01:00:00Z");

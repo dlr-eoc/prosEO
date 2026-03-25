@@ -99,7 +99,7 @@ public class GUIController {
 			resultList = serviceConnection.getFromService(config.getOrderManager(), "/missions", List.class, null, null);
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				// Handle the case when no missions are found
 				logger.log(UIMessage.NO_MISSIONS_FOUND);

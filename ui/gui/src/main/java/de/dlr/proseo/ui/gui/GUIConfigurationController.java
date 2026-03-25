@@ -131,7 +131,7 @@ public class GUIConfigurationController extends GUIBaseController {
 				logger.trace("Now in Consumer::accept({})", entityList);
 
 				if (entityList.getStatusCode().is2xxSuccessful() 
-						|| entityList.getStatusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
+						|| entityList.getStatusCode().value() ==  HttpStatus.NOT_FOUND.value()) {
 					// Process the response body and add the configurations to the model
 					configurations.addAll(entityList.getBody());
 					model.addAttribute("configurations", configurations);
@@ -265,7 +265,7 @@ public class GUIConfigurationController extends GUIBaseController {
 			}
 		} catch (RestClientResponseException e) {
 
-			switch (e.getRawStatusCode()) {
+			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				logger.log(UIMessage.NO_MISSIONS_FOUND);
 				break;

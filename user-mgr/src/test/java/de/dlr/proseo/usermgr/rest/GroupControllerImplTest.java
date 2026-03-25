@@ -118,9 +118,7 @@ public class GroupControllerImplTest {
 	 */
 	@After
 	public void tearDown() throws Exception {
-		groupMemberRepository.deleteAll();
-		groupRepository.deleteAll();
-		userRepository.deleteAll();
+		// Nothing to do, test data will be deleted by automatic rollback of test transaction
 	}
 
 	@Test

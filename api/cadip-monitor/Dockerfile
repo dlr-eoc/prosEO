@@ -1,4 +1,4 @@
-FROM openjdk:11
+FROM eclipse-temurin:21
 
 ADD target/proseo-cadip-monitor.jar /usr/share/proseo-cadip-monitor/proseo-cadip-monitor.jar
 WORKDIR /usr/share/proseo-cadip-monitor

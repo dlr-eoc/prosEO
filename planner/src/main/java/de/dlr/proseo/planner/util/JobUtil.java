@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -147,6 +147,8 @@ public class JobUtil {
 			for (Object o : ol) {
 				if (o instanceof BigInteger) {
 					jobStepIds.add(((BigInteger) o).longValue());
+				} else if (o instanceof Long) {
+					jobStepIds.add((Long)o);
 				}
 			}
 			return null;

@@ -46,33 +46,41 @@ public class OrdermgrSecurityConfig {
 	 */
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		String base ="/proseo/order-mgr/v0.1";
 		http.httpBasic(it -> {})
 		.authorizeHttpRequests(requests -> requests
-			.antMatchers("/**/actuator/health")
+			.requestMatchers("/actuator/health")
 			.permitAll()
-			.antMatchers(HttpMethod.GET, "/**/missions")
+			.requestMatchers(HttpMethod.GET, base + "/missions/**")
 			.permitAll()
-			.antMatchers(HttpMethod.POST, "/**/missions")
+			.requestMatchers(HttpMethod.POST, base + "/missions/**")
 			.hasAnyRole(UserRole.ROOT.toString())
-			.antMatchers(HttpMethod.DELETE, "/**/missions")
+			.requestMatchers(HttpMethod.DELETE, base + "/missions/**")
 			.hasAnyRole(UserRole.ROOT.toString())
-			.antMatchers("/**/missions")
+			.requestMatchers(base + "/missions/**")
 			.hasAnyRole(UserRole.MISSION_MGR.toString())
 
-			.antMatchers(HttpMethod.GET, "/**/orders")
+			.requestMatchers(HttpMethod.GET, base + "/orderjobstepsofstates/**")
 			.hasAnyRole(UserRole.ORDER_READER.toString())
-			.antMatchers(HttpMethod.PATCH, "/**/orders/*")
+			.requestMatchers(HttpMethod.GET, base + "/orderjobsteps/**")
+			.hasAnyRole(UserRole.ORDER_READER.toString())
+			.requestMatchers(HttpMethod.GET, base + "/orderjobs/**")
+			.hasAnyRole(UserRole.ORDER_READER.toString())
+			.requestMatchers(HttpMethod.GET, base + "/orders/**")
+			.hasAnyRole(UserRole.ORDER_READER.toString())
+			.requestMatchers(HttpMethod.PATCH, base + "/orders/**")
 			.hasAnyRole(UserRole.ORDER_MGR.toString(), UserRole.ORDER_APPROVER.toString(), UserRole.ORDER_PLANNER.toString())
-			.antMatchers(HttpMethod.DELETE, "/**/orders/*")
+			.requestMatchers(HttpMethod.DELETE, base + "/orders/**")
 			.hasAnyRole(UserRole.ORDER_MGR.toString())
-			.antMatchers("/**/orders")
+			.requestMatchers(base + "/orders/**")
 			.hasAnyRole(UserRole.ORDER_MGR.toString())
 
-			.antMatchers(HttpMethod.GET, "/**/orbits")
+			.requestMatchers(HttpMethod.GET, base + "/orbits/**")
 			.hasAnyRole(UserRole.MISSION_READER.toString())
-			.antMatchers("/**/orbits")
+			.requestMatchers(base + "/orbits/**")
 			.hasAnyRole(UserRole.MISSION_MGR.toString()))
-			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+		.csrf((csrf) -> csrf.disable());
+
 		return http.build();
 	}
 

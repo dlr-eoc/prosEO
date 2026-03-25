@@ -14,9 +14,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -37,6 +37,7 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -66,7 +67,7 @@ import de.dlr.proseo.model.service.SecurityService;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = AipClientApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-@Transactional
+@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 public class DownloadManagerTest {
 	
 	// Database test data

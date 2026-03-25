@@ -1,10 +1,19 @@
+/**
+ * MonServiceState.java
+ *
+ * © 2021 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Index;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 
+/**
+ * A service state identified by its name
+ * (used for database-based configuration of service monitoring)
+ */
 @Entity
 @Table(indexes = {
 	@Index(unique = true, columnList = "name")
@@ -12,7 +21,7 @@ import javax.persistence.Table;
 public class MonServiceState extends PersistentObject {
 	
 	/**
-	 * The service name
+	 * The service state name
 	 */
 	@Column(nullable = false)
 	private String name;

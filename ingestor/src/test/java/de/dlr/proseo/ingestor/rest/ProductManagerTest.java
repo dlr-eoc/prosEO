@@ -1,6 +1,6 @@
 /**
  * ProductManagerTest.java
- * 
+ *
  * (c) 2021 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ingestor.rest;
@@ -56,9 +56,9 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * Test class for the methods of ProductManager
- * 
+ *
  * This class uses programmatic transaction management
- * 
+ *
  * @author Dr. Thomas Bassler
  */
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -86,40 +86,40 @@ public class ProductManagerTest {
 		// Product file name, ZIP file name, AUX file name, file path
 		{ "product_file_name.nc", "zip_file_name.zip", "aux_file_name.txt", "path-to-file" }
 	};
-	
+
 	/* Other test objects */
 	private static final String PROCESSING_FACILITY_NAME = "testfacility";
 
 	private static final String STORAGE_MGR_URL = "https://localhost:8080/proseo/storage-mgr/v1";
 	private static final long STORAGE_MGR_TEST_TO = 70L;
 	private static final long STORAGE_MGR_TEST_FROM = 20L;
-	
+
 	/** Ingestor configuration */
 	@Autowired
 	IngestorConfiguration ingestorConfig;
-	
+
 	/** The ProductManager class under test */
 	@InjectMocks
 	private ProductManager productManager;
-	
+
 	/** A mock SecurityService */
 	@Mock
 	private SecurityService mockSecurityService;
-	
+
 	/** A mock IngestorConfiguration */
 	@Mock
 	private IngestorConfiguration mockIngestorConfig;
-	 
+
 //	/** Test Entity Manager */
 //	@Autowired
 //	private EntityManager testEm;
-	
+
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerTest.class);
-	
+
 	/**
 	 * Create a product from a data array
-	 * 
+	 *
 	 * @param testData an array of Strings representing the product to create
 	 * @return a Product with its attributes set to the input data
 	 */
@@ -137,15 +137,15 @@ public class ProductManagerTest {
 		testProduct.getParameters().put(
 				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[9])));
 		testProduct = RepositoryService.getProductRepository().save(testProduct);
-		
+
 		logger.info("Created test product {}", testProduct.getId());
-		
+
 		return testProduct;
 	}
-	
+
 	/**
 	 * Create test products in the database
-	 * 
+	 *
 	 * @return a list of test product generated
 	 */
 	private List<Product> createTestProducts(ProductClass productClass, ProcessingFacility testFacility) {
@@ -167,26 +167,26 @@ public class ProductManagerTest {
 		}
 		return testProducts;
 	}
-	
+
 	/**
 	 * Generates a test processing facility
-	 * 
+	 *
 	 * @return the test processing facility
 	 */
 	private ProcessingFacility createTestFacility() {
 		logger.info("Creating test facility");
-		
+
 		ProcessingFacility testFacility = new ProcessingFacility();
 		testFacility.setName(PROCESSING_FACILITY_NAME);
 		testFacility.setStorageManagerUrl(STORAGE_MGR_URL);
 		testFacility = RepositoryService.getFacilityRepository().save(testFacility);
-		
+
 		return testFacility;
 	}
-	
+
 	/**
 	 * Generates a test mission
-	 * 
+	 *
 	 * @return the test mission
 	 */
 	private Mission createTestMission() {
@@ -195,13 +195,13 @@ public class ProductManagerTest {
 		Mission testMission = new Mission();
 		testMission.setCode(TEST_CODE);
 		testMission = RepositoryService.getMissionRepository().save(testMission);
-		
+
 		return testMission;
 	}
-	
+
 	/**
 	 * Generates a test product class
-	 * 
+	 *
 	 * @return the test product class
 	 */
 	private ProductClass createTestProductClass(Mission mission) {
@@ -212,10 +212,10 @@ public class ProductManagerTest {
 		testClass.setProductType(TEST_PRODUCT_TYPE);
 		testClass.setVisibility(ProductVisibility.PUBLIC);
 		testClass = RepositoryService.getProductClassRepository().save(testClass);
-		
+
 		return testClass;
 	}
-	
+
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -235,14 +235,14 @@ public class ProductManagerTest {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		MockitoAnnotations.initMocks(this);
+		MockitoAnnotations.openMocks(this).close();
 
 		when(mockSecurityService.getMission()).thenReturn(TEST_CODE);
 		when(mockSecurityService.isAuthorizedForMission(TEST_CODE)).thenReturn(true);
 		when(mockSecurityService.hasRole(UserRole.PRODUCT_READER)).thenReturn(true);
 		when(mockSecurityService.hasRole(UserRole.PRODUCT_READER_RESTRICTED)).thenReturn(true);
 		when(mockSecurityService.hasRole(UserRole.PRODUCT_READER_ALL)).thenReturn(false);
-		
+
 		// Apparently when using @IngestMocks all @Autowired objects in the class under test need to be mocked,
 		// although we would be fine with the regular Spring configuration object here ...
 		when(mockIngestorConfig.getStorageManagerTokenValidity()).thenReturn(ingestorConfig.getStorageManagerTokenValidity());
@@ -318,11 +318,11 @@ public class ProductManagerTest {
 	@Test
 	public final void testDownloadProductById() {
 		logger.info("Starting test for downloadProductById");
-		
+
 		List<Product> testProducts = createTestProducts(createTestProductClass(createTestMission()), createTestFacility());
 		Product testProduct = testProducts.get(0);
 		ProductFile testProductFile = testProduct.getProductFile().iterator().next();
-		
+
 		String redirectLink = null;
 		try {
 			redirectLink = productManager.downloadProductById(testProduct.getId(), STORAGE_MGR_TEST_FROM, STORAGE_MGR_TEST_TO);
@@ -330,7 +330,7 @@ public class ProductManagerTest {
 			e.printStackTrace();
 			fail("Exception testing 'downloadProductById'");
 		}
-		
+
 		assertTrue("'token' query parameter not found", redirectLink.contains(STORAGE_MGER_LINK_TOKEN));
 		String[] redirectLinkParts = redirectLink.split(STORAGE_MGER_LINK_TOKEN);
 		redirectLink = redirectLinkParts[0];
@@ -349,9 +349,9 @@ public class ProductManagerTest {
 			fail("Exception in 'String.format'");
 		}
 		assertEquals("Incorrect download link", STORAGE_MGR_EXPECTED_LINK, redirectLink);
-		
+
 		JWTClaimsSet claimsSet = extractJwtClaimsSet(redirectLinkParts[1]);
-		
+
 		assertEquals(testProduct.getProductFile().iterator().next().getZipFileName(), claimsSet.getSubject());
 		assertTrue(new Date().before(claimsSet.getExpirationTime()));
 	}
@@ -362,10 +362,10 @@ public class ProductManagerTest {
 	@Test
 	public final void testGetDownloadTokenById() {
 		logger.info("Starting test for getDownloadTokenById");
-		
+
 		List<Product> testProducts = createTestProducts(createTestProductClass(createTestMission()), createTestFacility());
 		Product testProduct = testProducts.get(0);
-		
+
 		// Basic case: ID only
 		String token = null;
 		try {
@@ -374,12 +374,12 @@ public class ProductManagerTest {
 			e1.printStackTrace();
 			fail("Exception in basic case");
 		}
-		
+
 		JWTClaimsSet claimsSet = extractJwtClaimsSet(token);
 
 		assertEquals(testProduct.getProductFile().iterator().next().getZipFileName(), claimsSet.getSubject());
 		assertTrue(new Date().before(claimsSet.getExpirationTime()));
-		
+
 		// Full case: ID and file name
 		try {
 			token = productManager.getDownloadTokenById(testProduct.getId(), testProduct.getProductFile().iterator().next().getProductFileName());
@@ -387,7 +387,7 @@ public class ProductManagerTest {
 			e1.printStackTrace();
 			fail("Exception in full case");
 		}
-		
+
 		claimsSet = extractJwtClaimsSet(token);
 
 		assertEquals(testProduct.getProductFile().iterator().next().getProductFileName(), claimsSet.getSubject());
@@ -396,7 +396,7 @@ public class ProductManagerTest {
 
 /**
  * Check the given token for formal correctness and extract its JWT claims set
- * 
+ *
  * @param token the signed JSON Web Token to check
  * @return the JWT claims set contained in the token
  */
@@ -407,7 +407,7 @@ private JWTClaimsSet extractJwtClaimsSet(String token) {
 	} catch (ParseException e) {
 		fail("Token not parseable");
 	}
-	
+
 	JWSVerifier verifier = null;
 	try {
 		verifier = new MACVerifier(ingestorConfig.getStorageManagerSecret());
@@ -422,7 +422,7 @@ private JWTClaimsSet extractJwtClaimsSet(String token) {
 	} catch (JOSEException e) {
 		fail("The JWS object couldn't be verified");
 	}
-	
+
 	// Retrieve / verify the JWT claims according to the app requirements
 	JWTClaimsSet claimsSet = null;
 	try {

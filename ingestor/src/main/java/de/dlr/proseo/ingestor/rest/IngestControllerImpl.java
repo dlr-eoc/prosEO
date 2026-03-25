@@ -10,8 +10,8 @@ import java.net.URLDecoder;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 
-import javax.persistence.EntityNotFoundException;
-import javax.persistence.NoResultException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.NoResultException;
 import javax.validation.Valid;
 import javax.ws.rs.ProcessingException;
 

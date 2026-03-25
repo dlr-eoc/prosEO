@@ -110,7 +110,7 @@ public class OrbitUtilTest {
 		// Copy a orbit from model to REST
 		modelorbit = createOrbit(testOrbitData[0]);
 		restOrbit = OrbitUtil.toRestOrbit(modelorbit);
-		assertEquals("Unexpected ID: ", modelorbit.getId(), restOrbit.getId().longValue());
+		assertEquals("Unexpected ID: ", modelorbit.getId(), restOrbit.getId());
 		assertEquals("Unexpected orbit number: ", Long.valueOf(modelorbit.getOrbitNumber()),restOrbit.getOrbitNumber());
 		//assertEquals("Unexpected Spacecrafts: ", modelorbit.getSpacecraft().getCode(),restOrbit.getSpacecraftCode());
 		assertEquals("Unexpected start time: ", OrbitTimeFormatter.format(modelorbit.getStartTime()),

@@ -1,5 +1,6 @@
 logging:
-    file: /proseo/log/proseo-xbip-monitor.log
+    #file:
+    #    name: /proseo/log/proseo-xbip-monitor.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
@@ -15,6 +16,8 @@ proseo:
         directory: src/test/resources/xbip/NOMINAL
         # Interval between pickup point checks in milliseconds (e. g. every min) --> every 3 s
         check.interval: 3000
+        # Retrieval delay in milliseconds (to avoid concurrent XBIP access by multiple PDGSs, e. g. 30 min; default 0)
+        #retrieval.delay: 1800000
         
         # Download history
         history:

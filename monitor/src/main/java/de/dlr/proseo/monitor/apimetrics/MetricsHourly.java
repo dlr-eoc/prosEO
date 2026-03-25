@@ -7,7 +7,7 @@ package de.dlr.proseo.monitor.apimetrics;
 
 import java.time.Duration;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import de.dlr.proseo.monitor.MonitorConfiguration;
 
@@ -28,7 +28,7 @@ public class MetricsHourly extends MetricsCycleBase {
 	 */
 	public MetricsHourly(MonitorConfiguration config, PlatformTransactionManager txManager, EntityManager em) {
 		super(config, txManager, em);
-		this.millisToWait = 60 * 60 * 1000; // 10 minutes
+		this.millisToWait = 60 * 60 * 1000; // 60 minutes
 	}
 	
     /**

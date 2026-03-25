@@ -140,7 +140,7 @@ public class RepositoryService {
 	@Autowired
     private MonExtServiceRepository monExtServiceRepository;
 	
-	/** The repository for the MonServiceStates class */
+	/** The repository for the MonServiceState class */
 	@Autowired
     private MonServiceStateRepository monServiceStateRepository;
 
@@ -398,7 +398,7 @@ public class RepositoryService {
 	}
 
 	/**
-	 * Gets the repository for the MonServiceStates class
+	 * Gets the repository for the MonServiceState class
 	 * 
 	 * @return the monServiceRepository
 	 */

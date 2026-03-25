@@ -7,7 +7,7 @@ package de.dlr.proseo.monitor.apimetrics;
 
 import java.time.Duration;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import de.dlr.proseo.monitor.MonitorConfiguration;
 

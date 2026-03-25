@@ -104,7 +104,7 @@ public class MissionUtilTest {
 		// Copy a mission from model to REST
 		modelmission = createMission(testMissionData[0]);
 		restMission = MissionUtil.toRestMission(modelmission);
-		assertEquals("Unexpected ID: ", modelmission.getId(), restMission.getId().longValue());
+		assertEquals("Unexpected ID: ", modelmission.getId(), restMission.getId());
 		assertEquals("Unexpected mission code: ", modelmission.getCode(), restMission.getCode());
 		assertEquals("Unexpected mission name: ", modelmission.getName(), restMission.getName());
 

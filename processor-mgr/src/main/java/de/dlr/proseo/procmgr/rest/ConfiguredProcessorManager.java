@@ -11,15 +11,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +32,6 @@ import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
-import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.procmgr.ProcessorManagerConfiguration;
@@ -85,7 +80,7 @@ public class ConfiguredProcessorManager {
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestConfiguredProcessor> getConfiguredProcessors(String mission, Long id, String identifier,
-			String processorClass[], String processorVersion, String configurationVersion, String[] enabled, 
+			String processorClass[], String processorVersion, String configurationVersion, String[] enabled,
 			Integer recordFrom, Integer recordTo, String[] orderBy)
 			throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -494,8 +489,8 @@ public class ConfiguredProcessorManager {
 		}
 		return "0";
 	}
-	
-	private Query createConfiguredProcessorsQuery(String mission, Long id, String identifier, String[] processorName, 
+
+	private Query createConfiguredProcessorsQuery(String mission, Long id, String identifier, String[] processorName,
 			String processorVersion, String configurationVersion, String enabled[], String[] orderBy, Boolean count) {
 		String jpqlQuery = "";
 		if (count) {
@@ -524,7 +519,7 @@ public class ConfiguredProcessorManager {
 				jpqlQuery += ":processorName" + i;
 			}
 			jpqlQuery += ") ";
-			
+
 		}
 		if (null != enabled && 0 < enabled.length) {
 			Boolean hasTrue = false;
@@ -539,7 +534,7 @@ public class ConfiguredProcessorManager {
 				} else {
 					jpqlQuery += " and pc.enabled is false ";
 				}
-			}			
+			}
 		}
 		if (!count) {
 			// order by
@@ -552,7 +547,7 @@ public class ConfiguredProcessorManager {
 					jpqlQuery += orderBy[i];
 				}
 			}
-			
+
 		}
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", mission);

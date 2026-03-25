@@ -5,7 +5,10 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,14 +21,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 
-import org.apache.http.client.utils.URIBuilder;
+import org.apache.hc.core5.net.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -417,6 +420,7 @@ public class ProductManager {
 
 		// Create a database model product
 		Product modelProduct = ProductUtil.toModelProduct(product);
+		modelProduct.setId(null); // Mark the product object as new
 
 		if (null == modelProduct.getUuid()) {
 			modelProduct.setUuid(UUID.randomUUID());
@@ -1214,8 +1218,16 @@ public class ProductManager {
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
-	public String getDownloadTokenById(Long id, String fileName)
+	public String getDownloadTokenById(Long id, String encodedFileName)
 			throws IllegalArgumentException, NoResultException, SecurityException {
+		
+		String fileName = null;
+		try {
+			fileName = URLDecoder.decode(encodedFileName, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getDownloadTokenById({}, {})", id, fileName);
 

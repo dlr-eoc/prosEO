@@ -1,4 +1,4 @@
-FROM postgres:11
+FROM postgres:17
 
 ADD create_view_product_processing_facilities.sql /proseo/create_view_product_processing_facilities.sql
 ADD populate_mon_service_state.sql /proseo/populate_mon_service_state.sql

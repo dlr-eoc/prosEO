@@ -66,19 +66,21 @@ public class UsermgrSecurityConfig {
 	 */
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		String base ="/proseo/user-mgr/v0.1";
 		http.httpBasic(it -> {})
 			.authorizeHttpRequests(requests -> requests
-			.antMatchers("/**/actuator/health")
+			.requestMatchers("/actuator/health")
 			.permitAll()
-			.antMatchers("/**/login")
+			.requestMatchers(base + "/login/**")
 			.authenticated()
-			.antMatchers(HttpMethod.GET, "/**/users/*")
+			.requestMatchers(HttpMethod.GET, base + "/users/**")
 			.authenticated() // Any user may change their own password
-			.antMatchers(HttpMethod.PATCH, "/**/users/*")
+			.requestMatchers(HttpMethod.PATCH, base + "/users/**")
 			.authenticated() // Any user may change their own password
 			.anyRequest()
 			.hasAnyRole(UserRole.ROOT.toString(), UserRole.USERMGR.toString()))
-			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+			.csrf((csrf) -> csrf.disable());
+
 		return http.build();
 	}
 
@@ -121,8 +123,8 @@ public class UsermgrSecurityConfig {
 
 			TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-			
-			
+
+
 			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
 					restUser = transactionTemplate.execute((status) -> {

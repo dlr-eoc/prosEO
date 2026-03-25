@@ -11,11 +11,11 @@ import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 import java.util.Objects;
 
-import javax.persistence.Basic;
-import javax.persistence.Embeddable;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-
+import jakarta.persistence.Basic;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Lob;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
@@ -47,7 +47,7 @@ public class Parameter {
 	/**
 	 * A string parameter value of more than 255 characters (takes precedence over any value in the parameterValue attribute).
 	 */
-	@org.hibernate.annotations.Type(type = "materialized_clob")
+	@Lob
 	private String parameterClob;
 	
 	/**

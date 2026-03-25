@@ -18,9 +18,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -113,7 +113,7 @@ public class JobStepUtil {
 	/**
 	 * Retrieves job steps with a specific job step state, associated with a given mission code. Results are ordered by processing
 	 * completion time in descending order, limited to a specified number.
-	 * 
+	 *
 	 * @param state   The job step state
 	 * @param mission The mission code
 	 * @param limit   The maximum number of entries to return
@@ -315,11 +315,17 @@ public class JobStepUtil {
 					logger.trace("... found job step info {}", Arrays.asList(jobStep));
 
 				// Extract the job step ID for ordering the result list
-				Long jobStepId = jobStep[1] instanceof BigInteger ? ((BigInteger) jobStep[1]).longValue() : null;
-
-				if (null == jobStepId) {
-					throw new RuntimeException("Invalid query result: " + Arrays.asList(jobStep));
+				Long jobStepId = null;
+				if (jobStep[1] instanceof BigInteger) {
+				    jobStepId = ((BigInteger) jobStep[1]).longValue();
+				} else if (jobStep[1] instanceof Long) {
+				    jobStepId = (Long) jobStep[1];
 				}
+
+				if (jobStepId == null) {
+				    throw new RuntimeException("Invalid query result: " + Arrays.asList(jobStep));
+				}
+
 
 				resultList.add(jobStepId);
 
@@ -333,7 +339,7 @@ public class JobStepUtil {
 
 	/**
 	 * Suspends a job step, either forcefully terminating it or waiting until completion.
-	 * 
+	 *
 	 * @param js    The job step to suspend
 	 * @param force True to forcibly terminate the job step, false to wait until completion
 	 * @return A PlannerResultMessage indicating the outcome of the suspension attempt
@@ -449,7 +455,7 @@ public class JobStepUtil {
 
 	/**
 	 * Cancels a job step.
-	 * 
+	 *
 	 * @param js The job step to cancel
 	 * @return A PlannerResultMessage indicating the outcome of the cancellation attempt
 	 */
@@ -507,7 +513,7 @@ public class JobStepUtil {
 
 	/**
 	 * Closes a job step.
-	 * 
+	 *
 	 * @param id The ID of the job step to close
 	 * @return A PlannerResultMessage indicating the outcome of the closure attempt
 	 */
@@ -574,7 +580,7 @@ public class JobStepUtil {
 
 	/**
 	 * Retries a job step, attempting to re-execute it if it previously failed.
-	 * 
+	 *
 	 * @param js The job step to retry
 	 * @return A PlannerResultMessage indicating the outcome of the retry attempt
 	 */
@@ -653,7 +659,7 @@ public class JobStepUtil {
 
 	/**
 	 * Checks whether a job step has been finished.
-	 * 
+	 *
 	 * @param js The job step to check
 	 * @return true if the job step has finished, false otherwise
 	 */
@@ -700,7 +706,7 @@ public class JobStepUtil {
 
 	/**
 	 * Deletes a job step if it is in a deletable state.
-	 * 
+	 *
 	 * @param js The job step to delete
 	 * @return true if the job step is deleted, false otherwise
 	 */
@@ -798,8 +804,13 @@ public class JobStepUtil {
 					List<?> pqIds = query.getResultList();
 
 					for (Object o : pqIds) {
+						Long pqId = null;
 						if (o instanceof BigInteger) {
-							Long pqId = ((BigInteger) o).longValue();
+							pqId = ((BigInteger) o).longValue();
+						} else if (o instanceof Long) {
+							pqId = (Long)o;
+						}
+						if (pqId != null) {
 							sqlQuery = "delete from product_query_satisfying_products where satisfied_product_queries_id = " + pqId
 									+ ";";
 							query = em.createNativeQuery(sqlQuery);
@@ -839,7 +850,7 @@ public class JobStepUtil {
 
 	/**
 	 * Deletes a job step forcefully, including those that are not finished.
-	 * 
+	 *
 	 * @param js The job step to delete
 	 * @return true if the job step is deleted, false otherwise
 	 */
@@ -954,7 +965,7 @@ public class JobStepUtil {
 
 	/**
 	 * Initiates the execution of a job step on a Kubernetes cluster.
-	 * 
+	 *
 	 * @param js The job step to start
 	 * @return True if the job step was successfully started, false otherwise
 	 */
@@ -1091,7 +1102,7 @@ public class JobStepUtil {
 
 	/**
 	 * Deletes the product tree recursively. This method is used during the deletion of a job step.
-	 * 
+	 *
 	 * @param p The root product of the tree to delete
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -1233,11 +1244,13 @@ public class JobStepUtil {
 									logger.trace("... found job step info {}", Arrays.asList(jobStep));
 
 								// jobStep[0] is only used for ordering the result list
-								Long jsId = jobStep[1] instanceof BigInteger ? ((BigInteger) jobStep[1]).longValue() : null;
 
-								if (null == jsId) {
-									throw new RuntimeException("Invalid query result: " + Arrays.asList(jobStep));
+								Object idCol = jobStep[1];
+								if (!(idCol instanceof Number)) {
+								    throw new RuntimeException("Invalid query result: " + Arrays.asList(jobStep));
 								}
+								Long jsId = ((Number) idCol).longValue();
+
 
 								if (kc.couldJobRun(jsId)) {
 									// Job creation is transactional in KubeJob, therefore removed from transaction above
@@ -1518,7 +1531,7 @@ public class JobStepUtil {
 	/**
 	 * Checks whether all products associated with a completed job step exist. If not, removes any missing products and cleans up
 	 * dependencies.
-	 * 
+	 *
 	 * @param js The job step to be checked
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -1660,7 +1673,7 @@ public class JobStepUtil {
 
 	/**
 	 * Checks whether all products in the list exist and have been generated on the specified processing facility.
-	 * 
+	 *
 	 * @param list The list of products to be checked
 	 * @param pf   The processing facility to check against
 	 * @return True if all products in the list are generated on the specified processing facility, false otherwise
@@ -1756,11 +1769,16 @@ public class JobStepUtil {
 		// Prepare authentication credentials for AIP service
 		String user = "";
 		String pw = "";
-		user = pq.getJobStep().getJob().getProcessingOrder().getMission().getCode() + "-" + config.getAipUser();
-		pw = config.getAipPassword();
-		if (user == null) {
-			user = "";
-			pw = "";
+
+		String missionCode = pq.getJobStep().getJob().getProcessingOrder().getMission().getCode();
+		String aipUser = config.getAipUser();
+
+		if (missionCode == null || aipUser == null) {
+		    user = "";
+		    pw = "";
+		} else {
+		    user = missionCode + "-" + aipUser;
+		    pw = config.getAipPassword();
 		}
 
 		// Determine if retry is needed based on simple policies
@@ -1830,11 +1848,11 @@ public class JobStepUtil {
 						stopTime = stopTime.plus(1, ChronoUnit.DAYS);
 					}
 				} else {
-					String message = logger.log(PlannerMessage.MSG_EXCEPTION, e.getMessage(), e);
+					logger.log(PlannerMessage.MSG_EXCEPTION, e.getMessage(), e);
 					// throw new Exception(message);
 				}
 			} catch (Exception e) {
-				String message = logger.log(PlannerMessage.MSG_EXCEPTION, e.getMessage(), e);
+				logger.log(PlannerMessage.MSG_EXCEPTION, e.getMessage(), e);
 
 				if (logger.isDebugEnabled())
 					logger.debug("... exception stack trace: ", e);

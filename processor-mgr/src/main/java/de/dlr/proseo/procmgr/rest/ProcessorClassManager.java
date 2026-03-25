@@ -12,15 +12,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,7 +74,7 @@ public class ProcessorClassManager {
 	 * @throws NoResultException if no processor classes matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public List<RestProcessorClass> getProcessorClasses(String mission, Long id, String[] productClasses, String processorName, 
+	public List<RestProcessorClass> getProcessorClasses(String mission, Long id, String[] productClasses, String processorName,
 			Integer recordFrom, Integer recordTo, String[] orderBy)
 			throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled())
@@ -154,7 +150,7 @@ public class ProcessorClassManager {
 				jpqlQuery += ":productClasses" + i;
 			}
 			jpqlQuery += ")) ";
-			
+
 		}
 		if (!count) {
 			jpqlQuery += " group by pc, pc.processorName order by pc.processorName ASC";

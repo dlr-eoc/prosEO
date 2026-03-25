@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.Entity;
@@ -67,7 +67,7 @@ import de.dlr.proseo.model.enums.UserRole;
  * @author Dr. Thomas Bassler
  */
 @Component
-@Transactional(isolation = Isolation.REPEATABLE_READ)
+@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 public class OdipEntityCollectionProcessor implements EntityCollectionProcessor {
 
 	/* Other string constants */

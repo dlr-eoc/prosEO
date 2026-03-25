@@ -48,13 +48,14 @@ public class ProductClassSecurityConfig {
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.httpBasic(it -> {})
 			.authorizeHttpRequests(requests -> requests
-			.antMatchers("/**/actuator/health")
+			.requestMatchers("/actuator/health")
 			.permitAll()
-			.antMatchers(HttpMethod.GET)
+			.requestMatchers(HttpMethod.GET)
 			.hasAnyRole(UserRole.PRODUCTCLASS_READER.toString())
 			.anyRequest()
 			.hasAnyRole(UserRole.PRODUCTCLASS_MGR.toString()))
-			.csrf((csrf) -> csrf.disable()); // Required for POST requests (or configure CSRF)
+			.csrf((csrf) -> csrf.disable());
+
 		return http.build();
 	}
 

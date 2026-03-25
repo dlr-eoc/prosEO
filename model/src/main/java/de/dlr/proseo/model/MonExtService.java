@@ -1,10 +1,18 @@
+/**
+ * MonExtService.java
+ *
+ * © 2021 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Index;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 
+/**
+ * External service defined by a caption and an ID
+ */
 @Entity
 @Table(indexes = {
 	@Index(unique = true, columnList = "name")

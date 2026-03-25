@@ -610,4 +610,9 @@ public class S3Storage implements Storage {
 
 		return s3DAL.getInputStream(storageFile.getRelativePath());
 	}
+
+	@Override
+	public String toString() {
+		return "S3Storage [s3DAL=" + s3DAL + "]";
+	}
 }

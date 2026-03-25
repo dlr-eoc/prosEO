@@ -71,7 +71,7 @@ public class FacmgrUtilTest {
 		// Copy a facility from model to REST
 		modelFacility = createFacility(testFacilityData[0]);
 		restFacility = FacmgrUtil.toRestFacility(modelFacility);
-		assertEquals("Unexpected ID: ", modelFacility.getId(), restFacility.getId().longValue());
+		assertEquals("Unexpected ID: ", modelFacility.getId(), restFacility.getId());
 		assertEquals("Unexpected facility description: ", modelFacility.getDescription(), restFacility.getDescription());
 		assertEquals("Unexpected facility name: ", modelFacility.getName(), restFacility.getName());
 		assertEquals("Unexpected  Processing ENgine Url: ", modelFacility.getProcessingEngineUrl(),

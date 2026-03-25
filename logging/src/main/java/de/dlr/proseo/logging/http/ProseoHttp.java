@@ -9,7 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
@@ -99,17 +99,17 @@ public class ProseoHttp {
 	 * prosEO-compliant; if so, returns the error message from the header, otherwise
 	 * generates a generic error message
 	 *
-	 * @param httpStatus  the HTTP status returned by the REST call
+	 * @param httpStatusCode  the HTTP status returned by the REST call
 	 * @param httpHeaders the HTTP headers returned by the REST call
 	 * @return a formatted error message
 	 */
-	public String createMessageFromHeaders(HttpStatus httpStatus, HttpHeaders httpHeaders) {
+	public String createMessageFromHeaders(HttpStatusCode httpStatusCode, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> createMessageFromHeaders({}, httpHeaders)", httpStatus);
+			logger.trace(">>> createMessageFromHeaders({}, httpHeaders)", httpStatusCode);
 
-		if (httpStatus == null | httpHeaders == null) {
+		if (httpStatusCode == null | httpHeaders == null) {
 			if (logger.isTraceEnabled())
-				logger.trace("... no prosEO message found: [header = " + httpHeaders + ", status =" + httpStatus + "]");
+				logger.trace("... no prosEO message found: [header = " + httpHeaders + ", status =" + httpStatusCode + "]");
 			return null;
 		}
 
@@ -117,7 +117,7 @@ public class ProseoHttp {
 		String warningMessage = extractProseoMessage(warningHeader);
 
 		return (null == warningMessage
-				? ProseoLogger.format(UIMessage.SERVICE_REQUEST_FAILED, httpStatus.value(), httpStatus.toString(), warningHeader)
+				? ProseoLogger.format(UIMessage.SERVICE_REQUEST_FAILED, httpStatusCode.value(), httpStatusCode.toString(), warningHeader)
 				: warningMessage);
 	}
 }

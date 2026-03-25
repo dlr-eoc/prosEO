@@ -1,12 +1,20 @@
+/**
+ * MonExtServiceStateOperationMonth.java
+ *
+ * © 2022 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.model;
 
 import java.time.Instant;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Index;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 
+/**
+ * The percentage of uptime of an external service for a given calendar month
+ */
 @Entity
 @Table(indexes = {
 		@Index(unique = false, columnList = "datetime")
@@ -26,7 +34,7 @@ public class MonExtServiceStateOperationMonth extends PersistentObject {
 	private long monExtServiceId;
 
 	/**
-	 * The service up time
+	 * The service up time (in percent)
 	 */
 	@Column(name = "up_time")
 	private double upTime;
