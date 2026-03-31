@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MAIL_TO="somereceiver@example.de otherreceiver@example.de"
+MAIL_TO=("somereceiver@example.de" "otherreceiver@example.de")
 SUBJECT_PREFIX="[CDSE CloudFerro]"
 
 EXCLUDE_PATTERNS=(
@@ -33,5 +33,5 @@ if [ "$count" -gt 0 ]; then
     echo "Note that at most 100 log lines are shown. Please refer to the source logs for more context."
     echo
     echo "$content"
-  } | mail -s "$SUBJECT_PREFIX prosEO errors (last 30m, $count lines)" "$MAIL_TO"
+  } | mail -s "$SUBJECT_PREFIX prosEO errors (last 30m, $count lines)" "${MAIL_TO[@]}"
 fi

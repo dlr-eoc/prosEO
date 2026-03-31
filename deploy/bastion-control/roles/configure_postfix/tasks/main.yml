@@ -13,7 +13,7 @@
     - { key: "myhostname", value: "{{ postfix_host }}" }
     - { key: "mydomain", value: "{{ postfix_domain }}" }
     - { key: "myorigin", value: "$mydomain" }
-    - { key: "mynetworks", value: "mynetworks = 127.0.0.0/8 172.16.0.0/12 10.90.104.0/24" }
+    - { key: "mynetworks", value: "127.0.0.0/8 172.16.0.0/12 10.90.104.0/24" }
     - { key: "inet_interfaces", value: "all" }
 
 - name: Restart postfix
