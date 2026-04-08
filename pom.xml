@@ -212,5 +212,22 @@
                 </plugin>
 			</plugins>
 		</pluginManagement>
+		<plugins>
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>12.2.0</version>
+                <configuration>
+                    <skipProvidedScope>true</skipProvidedScope>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>aggregate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+		</plugins>
 	</build>
 </project>
