@@ -201,13 +201,13 @@
                   th:text="#{password}">password</span>
               </div>
               <div class="col-2 ps-lg-0">
-                <div class="form-control">
-	                <input
+                <div class="input-group">
+	                <input class="form-control"
 	                  th:id="'pwdi' + ${ord?.id}" name="notificationEndpoint[password]"
 	                  type="password"
 	                  th:value="${(ord?.notificationEndpoint!=null)?(ord?.notificationEndpoint.password):''}"
 	                  placeholder="">
-	                <a class="eye"
+	                <a class="eye input-group-text"
                     th:id="'pwda' + ${ord?.id}"
                     th:onclick="'showPwd(' + ${ord?.id} + ')'"><span
                       data-feather="eye"></span></a>
