@@ -261,7 +261,7 @@ public class UserCommandRunner {
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return null;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.GROUP_NOT_FOUND_BY_ID, restGroup.getId());
+				message = ProseoLogger.format(UIMessage.GROUP_NOT_FOUND_BY_ID, restGroup.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.GROUP_DATA_INVALID, e.getStatusText());
@@ -1273,7 +1273,7 @@ public class UserCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.GROUP_NOT_FOUND_BY_ID, restGroup.getId());
+				message = ProseoLogger.format(UIMessage.GROUP_NOT_FOUND_BY_ID, restGroup.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1355,7 +1355,7 @@ public class UserCommandRunner {
 					System.out.println(ProseoLogger.format(UIMessage.ALREADY_MEMBER, username, restGroup.getGroupname()));
 					continue;
 				case org.apache.http.HttpStatus.SC_NOT_FOUND:
-					message = ProseoLogger.format(UIMessage.GROUP_NOT_FOUND_BY_ID, restGroup.getId());
+					message = ProseoLogger.format(UIMessage.GROUP_NOT_FOUND_BY_ID, restGroup.getId().toString());
 					break;
 				case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 					message = ProseoLogger.format(UIMessage.GROUP_DATA_INVALID, e.getStatusText());
@@ -1440,7 +1440,7 @@ public class UserCommandRunner {
 					System.out.println(ProseoLogger.format(UIMessage.NOT_MEMBER, username, restGroup.getGroupname()));
 					continue;
 				case org.apache.http.HttpStatus.SC_NOT_FOUND:
-					message = ProseoLogger.format(UIMessage.GROUP_NOT_FOUND_BY_ID, restGroup.getId());
+					message = ProseoLogger.format(UIMessage.GROUP_NOT_FOUND_BY_ID, restGroup.getId().toString());
 					break;
 				case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 					message = ProseoLogger.format(UIMessage.GROUP_DATA_INVALID, e.getStatusText());

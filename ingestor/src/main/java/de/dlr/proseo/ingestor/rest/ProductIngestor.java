@@ -23,6 +23,7 @@ import javax.ws.rs.ProcessingException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -58,6 +59,7 @@ import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
+import de.dlr.proseo.model.util.ProseoUtil;
 
 /**
  * Services required to ingest products from pickup points into the prosEO
@@ -100,6 +102,11 @@ public class ProductIngestor {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
+	
+	private class IngestResult {
+		public RestProduct restProduct = null;
+		public RestProductFile restProductFile = null;
+	}
 
 	/**
 	 *
@@ -571,52 +578,79 @@ public class ProductIngestor {
 	 *                                  facility already exists)
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
-	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public RestProductFile ingestProductFile(Long productId, ProcessingFacility facility, RestProductFile productFile, String user,
 			String password) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> ingestProductFile({}, {}, {}, {}, PWD)", productId, facility, productFile.getProductFileName(), user);
 
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		transactionTemplate.setReadOnly(false);
+		final IngestResult ingestResult = new IngestResult();
 		// Find the product with the given ID
-		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
+		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+			try {
+				transactionTemplate.execute((status) -> {
+					Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
 
-		if (product.isEmpty()) {
-			throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_NOT_FOUND, productId));
-		}
-		Product modelProduct = product.get();
+					if (product.isEmpty()) {
+						throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_NOT_FOUND, productId));
+					}
+					Product modelProduct = product.get();
 
-		// Ensure user is authorized for the product's mission
-		if (!securityService.isAuthorizedForMission(modelProduct.getProductClass().getMission().getCode())) {
-			throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
-					modelProduct.getProductClass().getMission().getCode(), securityService.getMission()));
-		}
+					// Ensure user is authorized for the product's mission
+					if (!securityService.isAuthorizedForMission(modelProduct.getProductClass().getMission().getCode())) {
+						throw new SecurityException(logger.log(GeneralMessage.ILLEGAL_CROSS_MISSION_ACCESS,
+								modelProduct.getProductClass().getMission().getCode(), securityService.getMission()));
+					}
 
-		// Error, if a database product file for the given facility exists already
-		for (ProductFile modelProductFile : modelProduct.getProductFile()) {
-			if (facility.equals(modelProductFile.getProcessingFacility())) {
-				throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_FILE_EXISTS,
-						modelProductFile.getProductFileName(), facility));
+					// Error, if a database product file for the given facility exists already
+					for (ProductFile modelProductFile : modelProduct.getProductFile()) {
+						if (facility.equals(modelProductFile.getProcessingFacility())) {
+							throw new IllegalArgumentException(logger.log(IngestorMessage.PRODUCT_FILE_EXISTS,
+									modelProductFile.getProductFileName(), facility));
+						}
+					}
+					// OK, not found!
+
+					// Create the database product file
+					ProductFile modelProductFile = ProductFileUtil.toModelProductFile(productFile);
+					modelProductFile.setId(null); // Ensure object is marked as new
+					modelProductFile.setProcessingFacility(facility);
+					modelProductFile.setProduct(product.get());
+					modelProductFile = RepositoryService.getProductFileRepository().save(modelProductFile);
+
+					// Check for first time ingestion (defines publication time)
+					if (null == modelProduct.getPublicationTime()) {
+						modelProduct.setPublicationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
+					}
+					modelProduct.getProductFile().add(modelProductFile); // Autosave with commit
+					RepositoryService.getProductRepository().save(modelProduct);
+					ingestResult.restProduct = ProductUtil.toRestProduct(modelProduct);
+
+					// Return the updated REST product file
+					logger.log(IngestorMessage.PRODUCT_FILE_INGESTED, productFile.getProductFileName(), productId, facility.getName());
+					ingestResult.restProductFile = ProductFileUtil.toRestProductFile(modelProductFile);
+					return null;
+
+				});
+			} catch (CannotAcquireLockException e) {
+				if (logger.isDebugEnabled())
+					logger.debug("... database concurrency issue detected: ", e);
+
+				if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+					ProseoUtil.dbWait();
+				} else {
+					if (logger.isDebugEnabled())
+						logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+					throw e;
+				}
 			}
 		}
-		// OK, not found!
-
-		// Create the database product file
-		ProductFile modelProductFile = ProductFileUtil.toModelProductFile(productFile);
-		modelProductFile.setId(null); // Ensure object is marked as new
-		modelProductFile.setProcessingFacility(facility);
-		modelProductFile.setProduct(product.get());
-		modelProductFile = RepositoryService.getProductFileRepository().save(modelProductFile);
-
-		// Check for first time ingestion (defines publication time)
-		if (null == modelProduct.getPublicationTime()) {
-			modelProduct.setPublicationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		}
-		modelProduct.getProductFile().add(modelProductFile); // Autosave with commit
-
 		// Database updated, notifying Production Planner if requested
-		if (ingestorConfig.getNotifyPlanner()) {
+		if (ingestResult.restProduct != null && ingestorConfig.getNotifyPlanner()) {
 			try {
-				notifyPlanner(user, password, ProductUtil.toRestProduct(modelProduct), facility.getId());
+				notifyPlanner(user, password, ingestResult.restProduct, facility.getId());
 			} catch (Exception e) {
 				// If notification fails, log warning, but otherwise ignore
 				logger.log(IngestorMessage.PLANNER_NOTIFICATION_FAILED, e);
@@ -624,19 +658,15 @@ public class ProductIngestor {
 		}
 
 		// Notifying Order Generator if requested
-		if (ingestorConfig.getNotifyOrderGen()) {
+		if (ingestResult.restProduct != null && ingestorConfig.getNotifyOrderGen()) {
 			try {
-				notifyOrderGenerator(user, password, ProductUtil.toRestProduct(modelProduct));
+				notifyOrderGenerator(user, password, ingestResult.restProduct);
 			} catch (Exception e) {
 				// If notification fails, log warning, but otherwise ignore
 				logger.log(IngestorMessage.ORDERGEN_NOTIFICATION_FAILED, e);
 			}
 		}
-
-		// Return the updated REST product file
-		logger.log(IngestorMessage.PRODUCT_FILE_INGESTED, productFile.getProductFileName(), productId, facility.getName());
-
-		return ProductFileUtil.toRestProductFile(modelProductFile);
+		return ingestResult.restProductFile;
 	}
 
 	/**
@@ -788,24 +818,58 @@ public class ProductIngestor {
 	public void deleteProductFilesOlderThan(Instant t) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteProductFilesOlderThan({})", t);
-		List<Product> products = RepositoryService.getProductRepository().findByEvictionTimeLessThan(t);
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		transactionTemplate.setReadOnly(true);
+		List<Long> productFileIds = new ArrayList<Long>(); 
+		transactionTemplate.execute((status) -> {
+			List<Product> products = RepositoryService.getProductRepository().findByEvictionTimeLessThan(t);
+			for (Product product : products) {
+				for (ProductFile aProductFile : product.getProductFile()) {
+					productFileIds.add(aProductFile.getId());
+				}
+			}
+			return null;
+		});
+
 		long productFilesDeleted = 0;
-		for (Product product : products) {
-			for (ProductFile aProductFile : product.getProductFile()) {
+		transactionTemplate.setReadOnly(false);
+		for (Long productFileId : productFileIds) {
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
-					deleteProductFile(product, aProductFile.getProcessingFacility(), true);
+					productFilesDeleted += transactionTemplate.execute((status) -> {
+						Optional<ProductFile> opt = RepositoryService.getProductFileRepository().findById(productFileId);
+						if (opt.isPresent()) {
+							ProductFile productFile = opt.get();
+							try {
+								deleteProductFile(productFile.getProduct(), productFile.getProcessingFacility(), true);
+
+								// ignore known exceptions cause already logged
+							} catch (EntityNotFoundException e) {
+								return 0;
+							} catch (ProcessingException e) {
+								return 0;
+							} catch (IllegalArgumentException e) {
+								return 0;
+							} catch (RuntimeException e) {
+								return 0;
+							}			
+							return 1;
+						}
+						return 0;			
+					});		
+				} catch (CannotAcquireLockException e) {
+					if (logger.isDebugEnabled())
+						logger.debug("... database concurrency issue detected: ", e);
+
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
+					} else {
+						if (logger.isDebugEnabled())
+							logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+						throw e;
+					}
 				}
-				// ignore known exceptions cause already logged
-				catch (EntityNotFoundException e) {
-					break;
-				} catch (ProcessingException e) {
-					break;
-				} catch (IllegalArgumentException e) {
-					break;
-				} catch (RuntimeException e) {
-					break;
-				}
-				productFilesDeleted++;
 			}
 		}
 		logger.log(IngestorMessage.NUMBER_PRODUCT_FILES_DELETED, productFilesDeleted);

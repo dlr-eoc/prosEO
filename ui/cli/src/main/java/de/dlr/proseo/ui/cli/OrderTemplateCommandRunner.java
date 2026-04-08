@@ -632,7 +632,7 @@ public class OrderTemplateCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.ORDERTEMPLATE_NOT_FOUND, restOrderTemplate.getId());
+				message = ProseoLogger.format(UIMessage.ORDERTEMPLATE_NOT_FOUND, restOrderTemplate.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:

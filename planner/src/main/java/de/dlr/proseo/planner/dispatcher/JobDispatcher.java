@@ -133,6 +133,17 @@ public class JobDispatcher {
 					.add((new ProcessingParameter(processingParameter,
 							dynamicProcessingParameters.get(processingParameter).getParameterValue())));
 			}
+			for (String processingParameter : jobStep.getJob().getProcessingOrder().getDynamicProcessingParameters().keySet()) {
+				for (ProcessingParameter pp : configuration.getDynamicProcessingParameters()) {
+					if (pp.getName().equals(processingParameter)) {
+						configuration.getDynamicProcessingParameters().remove(pp);
+						break;
+					}
+				}
+				configuration.getDynamicProcessingParameters()
+				.add((new ProcessingParameter(processingParameter,
+						jobStep.getJob().getProcessingOrder().getDynamicProcessingParameters().get(processingParameter).getParameterValue())));
+			}
 
 			// Set the configuration of the new job order
 			jobOrder.setConf(configuration);

@@ -284,7 +284,7 @@ public class ProductArchiveManager {
 		}
 
 		if (null != name) {
-			query.setParameter("name", name);
+			query.setParameter("name", name.toUpperCase());
 		}
 
 		try {

@@ -3,15 +3,93 @@
 
 - name: Create working directory for prosEO Monitor and Grafana
   file:
-    path: "/opt/proseo/log/{{ item }}"
+    path: "/opt/prosEO/log/{{ item }}"
     state: directory
     mode: 0775
   loop:
     - monitor
     - grafana
+    - grafana/provisioning
+    - grafana/provisioning/datasources
 
-- name: Copy Docker compose file for prosEO Monitor and Grafana
+- name: Create Loki directories
+  file:
+    path: "/opt/prosEO/log/{{ item }}"
+    state: directory
+    owner: 10001
+    group: 10001
+    mode: '0775'
+  loop:
+    - loki
+    - loki/data
+
+- name: Copy Docker compose file for prosEO Monitor and Grafana (with Loki)
   copy:
-    src: docker-compose-monitor.yml
-    dest: /opt/proseo
+    src: docker-compose.yml
+    dest: /opt/prosEO
     mode: 0644
+
+- name: Copy Loki config
+  copy:
+    src: loki-config.yaml
+    dest: /opt/prosEO/log/loki
+    mode: 0644
+
+- name: Configure Loki datasource in Grafana
+  copy:
+    dest: /opt/prosEO/log/grafana/provisioning/datasources/loki.yml
+    mode: '0644'
+    content: |
+      apiVersion: 1
+
+      datasources:
+        - name: Loki
+          type: loki
+          access: proxy
+          url: http://loki:3100
+          isDefault: false
+          editable: true
+        
+- name: Install prosEO scripts
+  copy:
+    src: "{{ item }}"
+    dest: /opt/prosEO/
+    mode: 0755
+  loop:
+  - alerting.sh
+  - run_containers.sh
+  - stop_containers.sh
+
+- name: Install cron (cronie)
+  dnf:
+    name: cronie
+    state: present
+
+- name: Enable and start cron service
+  systemd:
+    name: crond
+    enabled: true
+    state: started
+  
+- name: Install required packages
+  dnf:
+    name:
+      - rsync
+      - vi
+      - jq
+      - s-nail
+    state: present
+    
+- name: Configure s-nail
+  copy:
+    dest: /etc/s-nail.rc
+    content: |
+      set mta=smtp://{{ groups['bastion_control'][1] }}:25
+      set smtp-auth=none
+      set from=noreply@alerting.proseo-dlr.de
+
+- name: Run prosEO alerting script every 30 minutes
+  cron:
+    name: "prosEO alerting"
+    job: "/opt/prosEO/alerting.sh >> /var/log/proseo-alert.log 2>&1"
+    minute: "*/30"

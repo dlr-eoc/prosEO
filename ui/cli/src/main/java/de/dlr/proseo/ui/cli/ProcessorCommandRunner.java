@@ -382,7 +382,7 @@ public class ProcessorCommandRunner {
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
+				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_DATA_INVALID, e.getMessage());
@@ -469,7 +469,7 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
+				message = ProseoLogger.format(UIMessage.PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				message = (null == e.getStatusText() ?
@@ -893,7 +893,7 @@ public class ProcessorCommandRunner {
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
+				message = ProseoLogger.format(UIMessage.PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.PROCESSOR_DATA_INVALID, e.getMessage());
@@ -982,7 +982,7 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
+				message = ProseoLogger.format(UIMessage.PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				message = (null == e.getStatusText() ?
@@ -1348,7 +1348,7 @@ public class ProcessorCommandRunner {
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				// message = ProseoLogger.format(UIMessage.CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId());
+				// message = ProseoLogger.format(UIMessage.CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId().toString());
 				// other causes possible, so forward original message
 				message = e.getMessage();
 				break;
@@ -1439,7 +1439,7 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId());
+				message = ProseoLogger.format(UIMessage.CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				message = (null == e.getStatusText() ?
@@ -1823,7 +1823,7 @@ public class ProcessorCommandRunner {
 				System.out.println(ProseoLogger.format(UIMessage.NOT_MODIFIED));
 				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID, restConfiguredProcessor.getId());
+				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID, restConfiguredProcessor.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_DATA_INVALID, e.getMessage());
@@ -1910,7 +1910,7 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID, restConfiguredProcessor.getId());
+				message = ProseoLogger.format(UIMessage.CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID, restConfiguredProcessor.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				message = (null == e.getStatusText() ?

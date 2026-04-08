@@ -555,13 +555,13 @@ public class ConfiguredProcessorManager {
 			query.setParameter("id", id);
 		}
 		if (null != configurationVersion) {
-			query.setParameter("configurationVersion", configurationVersion);
+			query.setParameter("configurationVersion", configurationVersion.toUpperCase());
 		}
 		if (null != processorVersion) {
-			query.setParameter("processorVersion", processorVersion);
+			query.setParameter("processorVersion", processorVersion.toUpperCase());
 		}
 		if (null != identifier) {
-			query.setParameter("identifier", identifier);
+			query.setParameter("identifier", identifier.toUpperCase());
 		}
 		if (null != processorName && 0 < processorName.length) {
 			for (int i = 0; i < processorName.length; ++i) {

@@ -1,5 +1,5 @@
 <!doctype html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en" style="hyphens: auto;word-break: break-word;">
 <body>
 	<div th:fragment="sidebarMenuxxx"></div>
 	<aside class="bd-sidebar col-md-3 col-lg-2"  th:fragment="sidebarMenu"> 
@@ -81,6 +81,10 @@
             th:if="${hasroleproductarchivereader}"
              class="nav-item"><a id="sb-productarchive" class="nav-link"
             href="/productarchive-show"><span th:text="#{productarchive}">product archive</span></a></li>
+          <li 
+            th:if="${hasroleorderreader}"
+             class="nav-item"><a id="sb-order-template" class="nav-link"
+            href="/order-template-show"><span th:text="#{orderTemplate}">orderTemplate</span></a></li>
           <li 
             th:if="${hasroleprocessorreader}"
              class="nav-item"><a id="sb-trigger" class="nav-link"

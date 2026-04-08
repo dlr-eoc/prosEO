@@ -6,11 +6,34 @@ services:
     ports:
       - 3000:3000
     volumes:
-      - /opt/proseo/log/grafana:/var/lib/grafana
+      - /opt/prosEO/log/grafana:/var/lib/grafana
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - GF_SECURITY_ADMIN_USER=proseoadmin
       - GF_SECURITY_ADMIN_PASSWORD=TBD
       - GF_SERVER_ROOT_URL=/proseo/grafana/
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=host.docker.internal:25
+      - GF_SMTP_FROM_ADDRESS=grafana@proseo-dlr.de
+      - GF_SMTP_FROM_NAME=Grafana Alerts
+      - GF_SMTP_STARTTLS_POLICY=NoStartTLS
+      - GF_SMTP_SKIP_VERIFY="true"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+
+  loki:
+    hostname: loki
+    image: grafana/loki
+    ports:
+    - 3100:3100
+    volumes:
+    - /opt/prosEO/log/loki/loki-config.yaml:/etc/loki/loki-config.yaml
+    - /opt/prosEO/log/loki/data:/var/lib/loki
+    command: -config.file=/etc/loki/loki-config.yaml
     logging:
       driver: local
       options:
@@ -23,7 +46,7 @@ services:
     ports:
       - 8080:8080
     volumes:
-      - /opt/proseo/log/monitor:/proseo/log
+      - /opt/prosEO/log/monitor:/proseo/log
     logging:
       driver: local
       options:

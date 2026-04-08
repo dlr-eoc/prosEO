@@ -1,5 +1,5 @@
 <!doctype html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en" style="hyphens: auto;word-break: break-word;">
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport"
@@ -363,8 +363,8 @@
 
 		var sortCols = ['select-id', 'select-identifier', 'select-orderState'];
 		var sortCol = "id";
-		var upText = "true";
-
+		var upText = "false";
+		setHTMLParams();
 		// order filters (populated from URL params or the UI)
 		var identifier = null;
 		var products = null;

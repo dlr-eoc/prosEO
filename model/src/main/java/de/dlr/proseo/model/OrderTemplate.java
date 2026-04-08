@@ -97,6 +97,20 @@ public class OrderTemplate extends OrderTemplateBase {
 	private Set<ConfiguredProcessor> requestedConfiguredProcessors = new HashSet<>();
 	
 	/**
+	 * @return the productionType
+	 */
+	public ProductionType getProductionType() {
+		return productionType;
+	}
+
+	/**
+	 * @param productionType the productionType to set
+	 */
+	public void setProductionType(ProductionType productionType) {
+		this.productionType = productionType;
+	}
+
+	/**
 	 * Gets the dynamic processing parameters to be set for the Job Orders in this order
 	 * 
 	 * @return the dynamicProcessingParameters

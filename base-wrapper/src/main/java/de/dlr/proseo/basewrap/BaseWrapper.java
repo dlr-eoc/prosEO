@@ -149,6 +149,7 @@ public class BaseWrapper {
 	private static final String MSG_ERROR_PARSING_PRODUCT = "Error converting HTTP response {} to REST product (cause: {})";
 	private static final String MSG_ERROR_CONVERTING_PRODUCT = "Error converting REST product of class {} to JSON (cause: {})";
 	private static final String MSG_ERROR_UPDATING_PRODUCT = "Error updating product with ID {} in database (HTTP status code: {}, message: {})";
+	private static final String MSG_PRODUCT_ALREADY_INGESTED = "Product with ID {} already ingested";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
@@ -1072,9 +1073,13 @@ public class BaseWrapper {
 					ingestorRestUrl, jsonRequest, null, RestOps.HttpMethod.POST);
 
 			if (null == responseInfo || 201 != responseInfo.gethttpCode()) {
-				logger.error(MSG_ERROR_REGISTERING_PRODUCT, productFile.getProductId(),
-						(null == responseInfo ? 500 : responseInfo.gethttpCode()), extractProseoMessage(responseInfo));
-				throw new WrapperException();
+				if (responseInfo.getHttpWarning() != null && responseInfo.getHttpWarning().contains("E2044")) {
+					logger.info(MSG_PRODUCT_ALREADY_INGESTED, productFile.getProductId());
+				} else {
+					logger.error(MSG_ERROR_REGISTERING_PRODUCT, productFile.getProductId(),
+					(null == responseInfo ? 500 : responseInfo.gethttpCode()), extractProseoMessage(responseInfo));
+					throw new WrapperException();
+				}
 			}
 		}
 

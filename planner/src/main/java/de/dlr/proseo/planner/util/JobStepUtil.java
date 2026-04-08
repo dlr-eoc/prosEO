@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -1103,7 +1104,12 @@ public class JobStepUtil {
 								js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
 								saveJS = true;
 								setWaitingInput = false;
-							} 
+							} else {
+								js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
+								js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.FAILED);
+								saveJS = true;
+								setWaitingInput = false;
+							}
 						}
 					}
 					// If there are unsatisfied input queries, set the job step state to WAITING_INPUT
@@ -1277,18 +1283,18 @@ public class JobStepUtil {
 								Long jsId = ((Number) idCol).longValue();
 
 
-								if (kc.couldJobRun(jsId)) {
+								if (checkJobStepToRun(kc, jsId)) {
 									// Job creation is transactional in KubeJob, therefore removed from transaction above
 									// TODO Add retrying for concurrent updates, taking into account side effect of
 									// Kubernetes job creation
-									try {
-										kc.getJobCreatingList().put(jsId, jsId);
-										kc.createJob(String.valueOf(jsId), null, null);
-									} catch (Exception e) {
-										throw e;
-									} finally {
-										kc.getJobCreatingList().remove(jsId);
-									}
+//									try {
+//										kc.getJobCreatingList().put(jsId, jsId);
+//										kc.createJob(String.valueOf(jsId), null, null);
+//									} catch (Exception e) {
+//										throw e;
+//									} finally {
+//										kc.getJobCreatingList().remove(jsId);
+//									}
 								} else {
 									// at the moment no further job could be started
 									break;
@@ -1499,6 +1505,30 @@ public class JobStepUtil {
 											&& jobStep.getJob().getProcessingOrder().getOrderState() != OrderState.SUSPENDING
 											&& jobStep.getJob().getProcessingOrder().getOrderState() != OrderState.PLANNED) {
 										if (kc.couldJobRun(jobStep.getId())) {
+											if (config.getDetectOverlappingJobSteps()) {
+												Product product = jobStep.getOutputProduct();
+												UUID uuid = product.getUuid();
+												product.setUuid(null);
+												List<JobStep> jsl =RepositoryService.getJobStepRepository().findAllByJobStepState(JobStepState.RUNNING);
+												for (JobStep js : jsl) {
+													if (product.equals(js.getOutputProduct())) {
+														if (logger.isDebugEnabled()) {
+															logger.debug("... job step {} waits for other job step {} producing the product", jobStep.getId(), js.getId());
+														}
+														product.setUuid(uuid);
+														return false;
+													}
+												}
+												product.setUuid(uuid);
+												if (findExistingProduct(jobStep) != null) {
+													// job step done, set to COMPLETED
+													jobStep.setJobStepState(JobStepState.RUNNING);
+													jobStep.setJobStepState(JobStepState.COMPLETED);
+													jobStep.setProcessingCompletionTime(Instant.now());
+													RepositoryService.getJobStepRepository().save(jobStep);
+													return false;
+												}
+											}
 											try {
 												kc.getJobCreatingList().put(jobStep.getId(), jobStep.getId());
 												kc.createJob(String.valueOf(jobStep.getId()), null, null);
@@ -1536,6 +1566,38 @@ public class JobStepUtil {
 		return answer;
 	}
 
+	private Product findExistingProduct(JobStep jobStep) {
+		// Check if the product already exists
+		List<Product> foundProducts = RepositoryService.getProductRepository()
+				.findByProductClassAndConfiguredProcessorAndSensingStartTimeAndSensingStopTime(jobStep.getOutputProduct().getProductClass().getId(),
+						jobStep.getOutputProduct().getConfiguredProcessor().getId(), jobStep.getOutputProduct().getSensingStartTime(), jobStep.getOutputProduct().getSensingStopTime());
+		logger.trace("... found {} products with product class {}, configured processor {}, start time {} and stop time {}",
+				foundProducts.size(), jobStep.getOutputProduct().getProductClass().getId(),
+				jobStep.getOutputProduct().getConfiguredProcessor().getId(), jobStep.getOutputProduct().getSensingStartTime(), jobStep.getOutputProduct().getSensingStopTime());
+
+		UUID uuid = jobStep.getOutputProduct().getUuid();
+		jobStep.getOutputProduct().setUuid(null);
+		for (Product foundProduct : foundProducts) {
+			logger.trace("... testing product with ID {}", foundProduct.getId());
+			if (foundProduct.equals(jobStep.getOutputProduct())) {
+				logger.trace("    ... fulfills 'equals'");
+				if (!foundProduct.getProductFile().isEmpty()) {
+					logger.trace("    ... has product files");
+					for (ProductFile foundFile : foundProduct.getProductFile()) {
+						logger.trace("        ... at facility {} (requested: {})", foundFile.getProcessingFacility().getName(),
+								jobStep.getJob().getProcessingFacility().getName());
+						if (foundFile.getProcessingFacility().equals(jobStep.getJob().getProcessingFacility())) {
+							logger.trace("... skipping job step ('return {}')", foundProduct);
+							jobStep.getOutputProduct().setUuid(uuid);
+							return foundProduct;
+						}
+					}
+				}
+			}
+		}
+		jobStep.getOutputProduct().setUuid(uuid);
+		return null;
+	}
 	/**
 	 * Checks unsatisfied queries of job steps in a job assigned to a processing facility defined in the Kubernetes config and
 	 * starts ready job steps. This method is synchronized to prevent interference between different threads (simultaneous

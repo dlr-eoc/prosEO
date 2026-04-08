@@ -40,7 +40,7 @@ The deployment of a full prosEO environment requires the following steps:
 10. Start the database server (see below).
 11. Start the brain (see below).
 12. Start the Storage Manager (see below).
-13. Start the monitoring services (TBC, maybe already done with deployment).
+13. Start the monitoring services and the Grafana server on the loghost (TBC, maybe already done with deployment).
 
 Note that the Kubernetes cluster is started as part of the deployment (step 3).
 
@@ -102,15 +102,32 @@ cd /opt/prosEO
 
 # Starting the logging and monitoring
 
-Starting the logging and monitoring consists of two tasks:
-- Start the applications (in Docker)
-- Create the required buckets in the InfluxDB
+Start the Docker applications. Convenience scripts (run_containers.sh, stop_containers.sh) are available on the loghost under /opt/prosEO.
 
 
-## Start the logging and monitoring applications
+## Configure Grafana
 
-Log in to the loghost via the control instance bastion host, then create the containers for the prosEO Monitor and Grafana:
+Connect to the Postgres container and switch to the prosEO database:
 ```
-cd /opt/proseo
-docker-compose -p proseo up -d
+docker exec -it proseo_proseo-db_1 su - postgres
+psql
+\c proseo
 ```
+
+Create a dedicated read-only user named "grafana", replacing "password" with a secure password for the new user 
+(to be stored for example in deploy/loghost/prepare-monitoring/files/grafana.cred):
+```
+CREATE USER grafana WITH PASSWORD 'password';
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO grafana;
+```
+**Note:** It may be more secure to limit access to specific tables.
+
+Go to https://<your.bastion.host>/proseo/grafana. There, configure the datasource with the new grafana user. 
+
+Import the dashboards given in the prosEO repository under monitor/src/main/grafana. After import, the datasource must be connected manually to each panel:
+- Open panel edit view
+- Re-select the datasource (even if already selected)
+- Apply changes
+- Save the dashboard
+
+An overview over recent errors is available at https://<your.bastion.host>/proseo/grafana/explore?orgId=1&left={"datasource":"Loki","queries":[{"expr":"{job=\"proseo\"} |= \"ERROR\""}]}.

@@ -1,0 +1,61 @@
+---
+# Install Promtail for log collection with Grafana
+- name: Ensure promtail directory exists
+  file:
+    path: /opt/prosEO/promtail
+    state: directory
+    mode: '0755'
+
+- name: Download Promtail
+  get_url:
+    url: https://github.com/grafana/loki/releases/download/v3.6.8/promtail-linux-amd64.zip
+    dest: /opt/prosEO/promtail/promtail.zip
+    mode: '0644'
+
+- name: Unzip Promtail
+  unarchive:
+    src: /opt/prosEO/promtail/promtail.zip
+    dest: /opt/prosEO/promtail/
+    remote_src: yes
+    creates: /opt/prosEO/promtail/promtail-linux-amd64
+
+- name: Install Promtail binary
+  copy:
+    remote_src: yes
+    src: /opt/prosEO/promtail/promtail-linux-amd64
+    dest: /usr/local/bin/promtail
+    mode: '0755'
+
+- name: Deploy Promtail config
+  template:
+    src: promtail-config.yaml.j2
+    dest: /etc/promtail.yaml
+    mode: '0644'
+  notify: Restart promtail
+
+- name: Create systemd service for Promtail
+  copy:
+    dest: /etc/systemd/system/promtail.service
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Promtail service
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/local/bin/promtail -config.file=/etc/promtail.yaml
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+  notify:
+    - Reload systemd
+    - Restart promtail
+
+- name: Enable and start Promtail
+  systemd:
+    name: promtail
+    enabled: yes
+    state: started
+    daemon_reload: yes

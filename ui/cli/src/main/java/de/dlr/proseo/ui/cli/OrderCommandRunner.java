@@ -816,7 +816,7 @@ public class OrderCommandRunner {
 			String message = null;
 			switch (e.getStatusCode().value()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, restOrder.getId());
+				message = ProseoLogger.format(UIMessage.ORDER_NOT_FOUND, restOrder.getId().toString());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:

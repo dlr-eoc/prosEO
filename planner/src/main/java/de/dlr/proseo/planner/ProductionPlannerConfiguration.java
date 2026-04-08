@@ -91,6 +91,10 @@ public class ProductionPlannerConfiguration {
 	/** Enable (default)/disable automatic derivation of job steps to generate required input data */
 	@Value("${proseo.productionPlanner.autogenerate:true}")
 	private Boolean autogenerate;
+
+	/** Enable/disable (default) detection of overlapping job steps (more than one job step producing the same product) */
+	@Value("${proseo.productionPlanner.detectOverlappingJobSteps:false}")
+	private Boolean detectOverlappingJobSteps;
 	
 
 	/** Timeout for HTTP requests in milliseconds */
@@ -108,6 +112,14 @@ public class ProductionPlannerConfiguration {
 	/** The password of the AIP client */
 	@Value("${proseo.aip.password}")
 	private String aipPassword;
+
+	
+	/**
+	 * @return the detectOverlappingJobSteps
+	 */
+	public Boolean getDetectOverlappingJobSteps() {
+		return detectOverlappingJobSteps;
+	}
 
 	/**
 	 * Gets the job step sorting order.

@@ -1,5 +1,6 @@
 [bastion_control]
 85.215.220.164
+# internal bastion_control_ip needed for log scraping
 
 [bastion_prip]
 85.215.220.165

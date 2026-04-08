@@ -22,6 +22,7 @@
   - configure_kube_api_proxy
   - configure_firewall
   - configure_nginx_proxy
+  - configure_postfix
   
   tasks:
   - name: Set hostname

@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -185,7 +186,7 @@ public class ProcessingOrderMgr {
 					throw new IllegalArgumentException(logger.log(OrderMgrMessage.DUPLICATE_ORDER_UUID, modelOrder.getUuid()));
 				}
 			}
-
+			
 			// Make sure order identifier is not yet in use
 			if (null != RepositoryService.getOrderRepository()
 				.findByMissionCodeAndIdentifier(order.getMissionCode(), modelOrder.getIdentifier())) {
@@ -343,9 +344,13 @@ public class ProcessingOrderMgr {
 			logger.log(OrderMgrMessage.ORDER_CREATED, order.getIdentifier(), order.getMissionCode());
 			
 			// Create and initialize the history element of the processing order.
-			ProcessingOrderHistory orderHistory = new ProcessingOrderHistory();
-			orderHistory.setIdentifier(modelOrder.getIdentifier());
-			orderHistory.setMissionCode(modelOrder.getMission().getCode());
+			ProcessingOrderHistory orderHistory = RepositoryService.getProcessingOrderHistoryRepository()
+					.findByMissionCodeAndIdentifier(modelOrder.getMission().getCode(), modelOrder.getIdentifier());
+			if (orderHistory == null) {
+				orderHistory = new ProcessingOrderHistory();
+				orderHistory.setIdentifier(modelOrder.getIdentifier());
+				orderHistory.setMissionCode(modelOrder.getMission().getCode());
+			}
 			orderHistory.setCreationTime(Instant.now());
 			orderHistory.setOrderState(modelOrder.getOrderState());
 			for (ProductClass pc : modelOrder.getRequestedProductClasses()) {
@@ -1116,8 +1121,7 @@ public class ProcessingOrderMgr {
 		}
 
 		// Check for changes in notificationEndpoint
-		if (null != modelOrder.getNotificationEndpoint()
-				&& !modelOrder.getNotificationEndpoint().equals(changedOrder.getNotificationEndpoint())) {
+		if (!Objects.equals(modelOrder.getNotificationEndpoint(), changedOrder.getNotificationEndpoint())) {
 			orderChanged = true;
 			stateChangeOnly = false;
 			modelOrder.setNotificationEndpoint(changedOrder.getNotificationEndpoint());
