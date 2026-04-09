@@ -5,6 +5,9 @@ nginx_users:
 rkhunter_email: <rkhunter alert email address>
 yumcron_email: <yum-cron alert email address>
 
+postfix_domain: <postfix domain>
+postfix_host: <postifx host>
+
 inner_nodes:
     - { name: brain, ip: "{{ groups['brain'][0] }}" }
     - { name: dbhost, ip: "{{ groups['dbhost'][0] }}" }
