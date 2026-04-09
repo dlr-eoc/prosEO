@@ -4,4 +4,4 @@ set -e
 export REGISTRY_URL=NIL
 export VERSION=NIL
 
-docker compose -p cdse down
+docker compose -p proseo down

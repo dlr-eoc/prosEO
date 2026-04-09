@@ -24,5 +24,5 @@ fi
 export REGISTRY_URL=$1
 export PROSEOVERSION=$2
 
-docker compose -p cdse pull
-docker compose -p cdse up -d
+docker compose -p proseo pull
+docker compose -p proseo up -d
