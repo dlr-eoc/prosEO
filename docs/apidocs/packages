@@ -103,3 +103,8 @@ de.dlr.proseo.notification
 de.dlr.proseo.notification.service
 de.dlr.proseo.notification.rest
 de.dlr.proseo.notification.rest.model
+de.dlr.proseo.ordergen.util
+de.dlr.proseo.ordergen
+de.dlr.proseo.ordergen.quartz
+de.dlr.proseo.ordergen.service
+de.dlr.proseo.ordergen.rest
