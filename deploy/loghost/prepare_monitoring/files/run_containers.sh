@@ -22,7 +22,7 @@ else
 fi
 
 export REGISTRY_URL=$1
-export PROSEOVERSION=$2
+export VERSION=$2
 
 docker compose -p proseo pull
 docker compose -p proseo up -d
