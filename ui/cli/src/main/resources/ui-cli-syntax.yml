@@ -550,6 +550,13 @@ commands:
             - name: jobId
               type: integer
               description: The persistent database ID of the job
+        - name: release
+          description: Release of job steps for the named job (job must be in status Initial,
+                       new status is Released)
+          parameters:
+            - name: jobId
+              type: integer
+              description: The persistent database ID of the job
         - name: resume
           description: Resume starting of job steps for the named job after suspend (job must be in status Initial,
                        new status is Released)
@@ -600,6 +607,13 @@ commands:
                   type: boolean
                   shortForm: F
                   description: Force the suspend by immediately terminating the job step, if it is already running
+              parameters:
+                - name: jobStepId
+                  type: integer
+                  description: The persistent database ID of the job step
+            - name: release
+              description: Release a job step (job step must be in status Initial,
+                           new status is Waiting Input or Ready)
               parameters:
                 - name: jobStepId
                   type: integer
