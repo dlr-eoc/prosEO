@@ -91,6 +91,10 @@
 					<groupId>log4j</groupId>
 					<artifactId>log4j</artifactId>
 				</exclusion>
+				<exclusion><!-- Excluded due to known vulnerabilities in V2.29.52 ; not used anyway -->
+				    <groupId>software.amazon.awssdk</groupId>
+				    <artifactId>grafana</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 
