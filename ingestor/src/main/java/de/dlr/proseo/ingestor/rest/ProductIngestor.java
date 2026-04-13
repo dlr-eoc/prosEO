@@ -588,7 +588,7 @@ public class ProductIngestor {
 		transactionTemplate.setReadOnly(false);
 		final IngestResult ingestResult = new IngestResult();
 		// Find the product with the given ID
-		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY && null == ingestResult.restProductFile; i++) {
 			try {
 				transactionTemplate.execute((status) -> {
 					Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
