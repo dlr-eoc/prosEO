@@ -11,6 +11,12 @@
     url: https://github.com/grafana/loki/releases/download/v3.6.8/promtail-linux-amd64.zip
     dest: /opt/prosEO/promtail/promtail.zip
     mode: '0644'
+    
+- name: Install unzip
+  dnf:
+    name: unzip
+    state: present
+    update_cache: yes
 
 - name: Unzip Promtail
   unarchive:

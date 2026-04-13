@@ -2,6 +2,9 @@ spring:
     jpa:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
+        properties.hibernate:
+            jdbc.time_zone: UTC
+            #id.db_structure_naming_strategy: standard
     datasource:
         url: jdbc:postgresql://10.x.x.c:5432/proseo
         username: postgres
@@ -11,7 +14,9 @@ logging:
         name: /proseo/log/proseo-ui-gui.log
     level:
         root: INFO
-        de.dlr.proseo: TRACE
+        de.dlr.proseo: Tmanagement:
+    endpoints.web.exposure.include: "health"
+RACE
         org.hibernate.engine.jdbc.env.internal: WARN
 proseo:
     user: NONE
@@ -32,6 +37,10 @@ proseo:
         url: http://proseo-facility-mgr:8080/proseo/facility-mgr/v0.1
     archiveManager:
         url: http://proseo-archive-mgr:8080/proseo/archive-mgr/v0.1
+    grafana:
+        url: http://x.x.x.x:3000/
+    orderGenerator:
+        url: http://proseo-order-generator:8080/proseo/order-generator/v0.1
 
     # Connection timeout for asynchronous requests in ms
     gui.timeout: 600000

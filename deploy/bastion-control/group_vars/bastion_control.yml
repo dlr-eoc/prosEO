@@ -5,6 +5,9 @@ nginx_users:
 rkhunter_email: proseo-support@drbassler.de
 yumcron_email: proseo-support@drbassler.de
 
+postfix_domain: proseo-dlr.de
+postfix_host: 
+
 inner_nodes:
     - { name: brain, ip: "{{ groups['brain'][0] }}" }
     - { name: dbhost, ip: "{{ groups['dbhost'][0] }}" }

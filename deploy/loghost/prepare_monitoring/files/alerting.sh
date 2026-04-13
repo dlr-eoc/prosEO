@@ -5,6 +5,8 @@ SUBJECT_PREFIX="[CDSE CloudFerro]"
 
 EXCLUDE_PATTERNS=(
   "CleanupProducts"
+  "LockAcquistionException"
+  "concurrent update"
   "SomeOtherNoise"
 )
 
