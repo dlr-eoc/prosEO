@@ -48,6 +48,7 @@ public class JobCommandRunner {
 	private static final String CMD_STEP = "step";
 	private static final String CMD_SHOW = "show";
 	private static final String CMD_SUSPEND = "suspend";
+	private static final String CMD_RELEASE = "release";
 	private static final String CMD_RESUME = "resume";
 	private static final String CMD_CANCEL = "cancel";
 	private static final String CMD_RETRY = "retry";
@@ -946,6 +947,7 @@ public class JobCommandRunner {
 		switch(subcommand.getName()) {
 		case CMD_SHOW:		showJob(subcommand); break;
 		case CMD_SUSPEND:	suspendJob(subcommand); break;
+		case CMD_RELEASE:	resumeJob(subcommand); break;
 		case CMD_RESUME:	resumeJob(subcommand); break;
 		case CMD_CANCEL:	cancelJob(subcommand); break;
 		case CMD_RETRY:		retryJob(subcommand); break;
@@ -954,6 +956,7 @@ public class JobCommandRunner {
 			switch (subsubcommand.getName()) {
 			case CMD_SHOW:		showJobStep(subsubcommand); break;
 			case CMD_SUSPEND:	suspendJobStep(subsubcommand); break;
+			case CMD_RELEASE:	resumeJobStep(subsubcommand); break;
 			case CMD_RESUME:	resumeJobStep(subsubcommand); break;
 			case CMD_CANCEL:	cancelJobStep(subsubcommand); break;
 			case CMD_RETRY:		retryJobStep(subsubcommand); break;
