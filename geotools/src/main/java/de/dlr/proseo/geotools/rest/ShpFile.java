@@ -13,12 +13,12 @@ import java.util.Map;
 
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.util.factory.GeoTools;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.filter.FilterFactory2;
+import org.geotools.api.filter.FilterFactory;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeotoolsMessage;
@@ -71,7 +71,7 @@ public class ShpFile {
 	/**
 	 * The filter factory used for filtering features in the shape file
 	 */
-	private FilterFactory2 filter;
+	private FilterFactory filter;
 
 	/**
 	 * The geometry factory used for creating geometric objects
@@ -102,7 +102,7 @@ public class ShpFile {
 	/**
 	 * @return the filter
 	 */
-	public FilterFactory2 getFilter() {
+	public FilterFactory getFilter() {
 		return filter;
 	}
 
@@ -137,7 +137,7 @@ public class ShpFile {
 	/**
 	 * @param filter the filter to set
 	 */
-	public void setFilter(FilterFactory2 filter) {
+	public void setFilter(FilterFactory filter) {
 		this.filter = filter;
 	}
 
@@ -196,7 +196,7 @@ public class ShpFile {
 				this.source = store.getFeatureSource();
 
 				// Get the filter factory using the default hints from GeoTools
-				this.filter = CommonFactoryFinder.getFilterFactory2(GeoTools.getDefaultHints());
+				this.filter = CommonFactoryFinder.getFilterFactory(GeoTools.getDefaultHints());
 
 				// Get the geometry factory from JTSFactoryFinder
 				this.geometry = JTSFactoryFinder.getGeometryFactory();
