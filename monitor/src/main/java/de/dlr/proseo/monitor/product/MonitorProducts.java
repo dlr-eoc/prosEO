@@ -34,12 +34,12 @@ import de.dlr.proseo.monitor.MonitorConfiguration;
 
 /**
  * The thread monitoring the products
- * 
+ *
  * @author Melchinger
  *
  */
 public class MonitorProducts extends Thread {
-	private static ProseoLogger logger = new ProseoLogger(MonitorProducts.class);	
+	private static ProseoLogger logger = new ProseoLogger(MonitorProducts.class);
 
 	/** Transaction manager for transaction control */
 
@@ -50,13 +50,13 @@ public class MonitorProducts extends Thread {
 	private EntityManager em;
 
 	/**
-	 * The monitor configuration (application.yml) 
+	 * The monitor configuration (application.yml)
 	 */
 	private MonitorConfiguration config;
 
 	/**
 	 * Instantiate the monitor products thread
-	 * 
+	 *
 	 * @param config The monitor configuration
 	 * @param txManager The transaction manager
 	 */
@@ -70,13 +70,17 @@ public class MonitorProducts extends Thread {
 	 * Collect the monitoring information of production for hour, day and month
 	 */
 	public void checkProducts() {
+		if (logger.isDebugEnabled()) {
+		    logger.debug("Starting product aggregation run.");
+		}
+
 		Instant now = Instant.now();
 		Instant timeFrom;
 		Instant timeTo;
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		transactionTemplate.setReadOnly(true);
-		Instant lastEntryDatetime = transactionTemplate.execute((status) -> {			
+		Instant lastEntryDatetime = transactionTemplate.execute((status) -> {
 			return RepositoryService.getMonProductProductionHourRepository().findLastDatetime();
 		});
 		if (lastEntryDatetime ==  null) {
@@ -88,16 +92,16 @@ public class MonitorProducts extends Thread {
 				} catch (DateTimeParseException ex) {
 					logger.log(MonitorMessage.ILLEGAL_CONFIG_VALUE, config.getAggregationStart());
 				}
-			} 
+			}
 		} else {
 			timeFrom = lastEntryDatetime.truncatedTo(ChronoUnit.HOURS);
 		}
 		Instant timeFromOrig = timeFrom;
 		timeTo = timeFrom.plus(1, ChronoUnit.HOURS);
-		List<Mission> missions = transactionTemplate.execute((status) -> {			
+		List<Mission> missions = transactionTemplate.execute((status) -> {
 			return RepositoryService.getMissionRepository().findAll();
 		});
-		// loop over missions and production types 
+		// loop over missions and production types
 		for (Mission mission : missions) {
 			for (ProductionType mpt : ProductionType.values()) {
 				// ProductionType productionType = monProductionTypes.get(mpt);
@@ -106,16 +110,19 @@ public class MonitorProducts extends Thread {
 				// loop over missing entries
 				transactionTemplate.setReadOnly(false);
 				while (timeFrom.isBefore(now)) {
-					if (logger.isTraceEnabled()) logger.trace(">>> Aggregate Hours for {}, {}, {}", timeFrom, mission.getCode(), mpt.getValue());
+					if (logger.isTraceEnabled()) {
+					    logger.trace("Aggregating HOUR [{} - {}) mission={} type={}",
+					        timeFrom, timeTo, mission.getCode(), mpt.getValue());
+					}
 					transactionTemplate.setReadOnly(false);
 					final Instant timeFromX = timeFrom;
 					final Instant timeToX = timeTo;
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
-							transactionTemplate.execute((status) -> {			
+							transactionTemplate.execute((status) -> {
 								List<Product> products = RepositoryService.getProductRepository()
-										.findByMissionCodeAndProductionTypeAndPublicatedAndPublicationTimeBetween(mission.getCode(), 
-												mpt, 
+										.findByMissionCodeAndProductionTypeAndPublicatedAndPublicationTimeBetween(mission.getCode(),
+												mpt,
 												timeFromX,
 												timeToX
 												);
@@ -123,7 +130,7 @@ public class MonitorProducts extends Thread {
 								List<MonProductProductionHour> mppdList = RepositoryService.getMonProductProductionHourRepository()
 										.findByProductionTypeAndDatetime(mission.getId(), mpt.getValue(), timeFromX);
 								if (mppdList.isEmpty()) {
-									mppd = new MonProductProductionHour();						
+									mppd = new MonProductProductionHour();
 								} else if (mppdList.size() > 1) {
 									// should not be
 									// create a warning
@@ -155,6 +162,10 @@ public class MonitorProducts extends Thread {
 								int totalLatencyMax = 0;
 								// now we have an entry
 								// analyze products and collect aggregation
+
+								logger.trace("Found {} products for mission={} type={} in interval [{} - {})",
+									    products.size(), mission.getCode(), mpt.getValue(), timeFromX, timeToX);
+
 								for (Product product : products) {
 									count++;
 									int totalLatency = (int)Duration.between(product.getSensingStopTime(), product.getPublicationTime()).toSeconds();
@@ -199,12 +210,18 @@ public class MonitorProducts extends Thread {
 									mppd.setTotalLatencyMin(totalLatencyMin);
 									mppd.setTotalLatencyMax(totalLatencyMax);
 								}
-								RepositoryService.getMonProductProductionHourRepository().save(mppd);	
+
+								if (logger.isDebugEnabled()) {
+								    logger.debug("Hour aggregation result mission={} type={} time={} count={} size={}B",
+								        mission.getCode(), mpt.getValue(), timeFromX, count, fileSize);
+								}
+								RepositoryService.getMonProductProductionHourRepository().save(mppd);
 								return null;
 							});
 							break;
 						} catch (CannotAcquireLockException e) {
-							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+							logger.debug("Database lock during hour aggregation. Mission={}, type={}, time={}, attempt {}/{}. Cause: {}",
+								    mission.getCode(), mpt.getValue(), timeFromX, i + 1, ProseoUtil.DB_MAX_RETRY, e);
 
 							if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
 								ProseoUtil.dbWait();
@@ -221,7 +238,7 @@ public class MonitorProducts extends Thread {
 		}
 		// now we have to summarize this into to day table
 		transactionTemplate.setReadOnly(true);
-		lastEntryDatetime = transactionTemplate.execute((status) -> {			
+		lastEntryDatetime = transactionTemplate.execute((status) -> {
 			return RepositoryService.getMonProductProductionDayRepository().findLastDatetime();
 		});
 		if (lastEntryDatetime ==  null) {
@@ -233,14 +250,14 @@ public class MonitorProducts extends Thread {
 				} catch (DateTimeParseException ex) {
 					logger.log(MonitorMessage.ILLEGAL_CONFIG_VALUE, config.getAggregationStart());
 				}
-			} 
+			}
 		} else {
 			timeFrom = lastEntryDatetime.truncatedTo(ChronoUnit.DAYS);
 		}
 		timeFromOrig = timeFrom;
 		timeTo = timeFrom.plus(1, ChronoUnit.DAYS);
 
-		// loop over missions and production types 
+		// loop over missions and production types
 		transactionTemplate.setReadOnly(false);
 		for (Mission mission : missions) {
 			for (ProductionType mpt : ProductionType.values()) {
@@ -249,6 +266,8 @@ public class MonitorProducts extends Thread {
 				timeTo = timeFrom.plus(1, ChronoUnit.DAYS);
 				// loop over missing entries
 				while (timeFrom.isBefore(now)) {
+					logger.trace("Aggregating DAY [{} - {}) mission={} type={}",
+						    timeFrom, timeTo, mission.getCode(), mpt.getValue());
 					//List<Product> products = RepositoryService.getProductRepository()
 					//	.findByMissionCodeAndProductionTypeAndPublicatedAndPublicationTimeBetween(
 					if (logger.isTraceEnabled()) logger.trace(">>> Aggregate Days for {}, {}, {}", timeFrom, mission.getCode(), mpt.getValue());
@@ -257,10 +276,10 @@ public class MonitorProducts extends Thread {
 					final Instant timeToX = timeTo;
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
-							transactionTemplate.execute((status) -> {			
+							transactionTemplate.execute((status) -> {
 								List<MonProductProductionHour> hourList = RepositoryService.getMonProductProductionHourRepository()
 										.findByMissionCodeAndProductionTypeAndDateTimeBetween(mission.getId(),
-												mpt.getValue(), 
+												mpt.getValue(),
 												timeFromX,
 												timeToX
 												);
@@ -268,7 +287,7 @@ public class MonitorProducts extends Thread {
 								List<MonProductProductionDay> mppdList = RepositoryService.getMonProductProductionDayRepository()
 										.findByProductionTypeAndDatetime(mission.getId(), mpt.getValue(), timeFromX);
 								if (mppdList.isEmpty()) {
-									mppd = new MonProductProductionDay();						
+									mppd = new MonProductProductionDay();
 								} else if (mppdList.size() > 1) {
 									// should not be
 									// create a warning
@@ -340,12 +359,18 @@ public class MonitorProducts extends Thread {
 									mppd.setTotalLatencyMin(totalLatencyMin==Integer.MAX_VALUE?0:totalLatencyMin);
 									mppd.setTotalLatencyMax(totalLatencyMax);
 								}
-								RepositoryService.getMonProductProductionDayRepository().save(mppd);		
+								if (logger.isDebugEnabled()) {
+									logger.debug("Day aggregation result mission={} type={} date={} count={} size={}B",
+									    mission.getCode(), mpt.getValue(), timeFromX, count, fileSize);
+								}
+								RepositoryService.getMonProductProductionDayRepository().save(mppd);
 								return null;
 							});
 							break;
 						} catch (CannotAcquireLockException e) {
-							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+							logger.debug("Database lock during day aggregation. Mission={}, type={}, time={}, attempt {}/{}. Cause: {}",
+								    mission.getCode(), mpt.getValue(), timeFromX, i + 1, ProseoUtil.DB_MAX_RETRY, e);
+
 
 							if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
 								ProseoUtil.dbWait();
@@ -354,7 +379,7 @@ public class MonitorProducts extends Thread {
 								throw e;
 							}
 						}
-					}				
+					}
 					timeFrom = timeTo;
 					timeTo = timeTo.plus(1, ChronoUnit.DAYS);
 				}
@@ -363,7 +388,7 @@ public class MonitorProducts extends Thread {
 
 		// now we have to summarize this into to month table
 		transactionTemplate.setReadOnly(true);
-		lastEntryDatetime = transactionTemplate.execute((status) -> {			
+		lastEntryDatetime = transactionTemplate.execute((status) -> {
 			return RepositoryService.getMonProductProductionMonthRepository().findLastDatetime();
 		});
 		if (lastEntryDatetime ==  null) {
@@ -375,7 +400,7 @@ public class MonitorProducts extends Thread {
 				} catch (DateTimeParseException ex) {
 					logger.log(MonitorMessage.ILLEGAL_CONFIG_VALUE, config.getAggregationStart());
 				}
-			} 
+			}
 		} else {
 			timeFrom = lastEntryDatetime.truncatedTo(ChronoUnit.DAYS);
 		}
@@ -386,7 +411,7 @@ public class MonitorProducts extends Thread {
 		timeFromOrig = timeFrom;
 		timeTo = zdt.plusMonths(1).toInstant();
 
-		// loop over missions and production types 
+		// loop over missions and production types
 		transactionTemplate.setReadOnly(false);
 		for (Mission mission : missions) {
 			for (ProductionType mpt : ProductionType.values()) {
@@ -396,6 +421,8 @@ public class MonitorProducts extends Thread {
 				timeTo = zdt.plusMonths(1).toInstant();
 				// loop over missing entries
 				while (timeFrom.isBefore(now)) {
+					logger.trace("Aggregating MONTH [{} - {}) mission={} type={}",
+						    timeFrom, timeTo, mission.getCode(), mpt.getValue());
 					//List<Product> products = RepositoryService.getProductRepository()
 					//	.findByMissionCodeAndProductionTypeAndPublicatedAndPublicationTimeBetween(
 					if (logger.isTraceEnabled()) logger.trace(">>> Aggregate Months for {}, {}, {}", timeFrom, mission.getCode(), mpt.getValue());
@@ -403,10 +430,10 @@ public class MonitorProducts extends Thread {
 					final Instant timeToX = timeTo;
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
-							transactionTemplate.execute((status) -> {			
+							transactionTemplate.execute((status) -> {
 								List<MonProductProductionDay> dayList = RepositoryService.getMonProductProductionDayRepository()
 										.findByMissionCodeAndProductionTypeAndDateTimeBetween(mission.getId(),
-												mpt.getValue(), 
+												mpt.getValue(),
 												timeFromX,
 												timeToX
 												);
@@ -414,7 +441,7 @@ public class MonitorProducts extends Thread {
 								List<MonProductProductionMonth> mppdList = RepositoryService.getMonProductProductionMonthRepository()
 										.findByProductionTypeAndDatetime(mission.getId(), mpt.getValue(), timeFromX);
 								if (mppdList.isEmpty()) {
-									mppd = new MonProductProductionMonth();						
+									mppd = new MonProductProductionMonth();
 								} else if (mppdList.size() > 1) {
 									// should not be
 									// create a warning
@@ -486,12 +513,17 @@ public class MonitorProducts extends Thread {
 									mppd.setTotalLatencyMin(totalLatencyMin==Integer.MAX_VALUE?0:totalLatencyMin);
 									mppd.setTotalLatencyMax(totalLatencyMax);
 								}
-								RepositoryService.getMonProductProductionMonthRepository().save(mppd);			
+								if (logger.isDebugEnabled()) {
+									logger.debug("Month aggregation result mission={} type={} month={} count={} size={}B",
+										    mission.getCode(), mpt.getValue(), timeFromX, count, fileSize);
+								}
+								RepositoryService.getMonProductProductionMonthRepository().save(mppd);
 								return null;
 							});
 							break;
 						} catch (CannotAcquireLockException e) {
-							if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+							logger.debug("Database lock during month aggregation. Mission={}, type={}, time={}, attempt {}/{}. Cause: {}",
+								    mission.getCode(), mpt.getValue(), timeFromX, i + 1, ProseoUtil.DB_MAX_RETRY, e);
 
 							if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
 								ProseoUtil.dbWait();
@@ -500,7 +532,7 @@ public class MonitorProducts extends Thread {
 								throw e;
 							}
 						}
-					}								
+					}
 					timeFrom = timeTo;
 					zdt = ZonedDateTime.ofInstant(timeFrom, ZoneId.of("UTC"));
 					timeTo = zdt.plusMonths(1).toInstant();
@@ -508,13 +540,17 @@ public class MonitorProducts extends Thread {
 			}
 		}
 	}
-	
+
 
     /**
      * Start the monitor thread
      */
     public void run() {
     	Long wait = (long) 100000;
+    	if (logger.isDebugEnabled()) {
+    		logger.debug("MonitorProducts thread started with cycle={} ms", wait);
+    	}
+
     	try {
     		if (config.getProductCycle() != null) {
     			wait = config.getProductCycle();
@@ -528,7 +564,7 @@ public class MonitorProducts extends Thread {
     		// look for job steps to run
 
     		try {
-    			// Transaction to check the delete preconditions			
+    			// Transaction to check the delete preconditions
     			this.checkProducts();
     		} catch (NoResultException e) {
     			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED,e);
@@ -543,8 +579,10 @@ public class MonitorProducts extends Thread {
     			sleep(wait);
     		}
     		catch(InterruptedException e) {
+    			logger.debug("Error during product monitoring cycle: {}", e.getMessage());
+    			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
     			this.interrupt();
     		}
     	}
-    }   
+    }
 }
