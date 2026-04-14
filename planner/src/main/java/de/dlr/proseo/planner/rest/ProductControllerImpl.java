@@ -77,7 +77,7 @@ public class ProductControllerImpl implements ProductController {
 			// If product class ID and facility ID are valid, search for job steps and start them
 			if (productClassID != 0 && facilityId != 0) {
 				transactionTemplate.execute((status) -> {
-					UtilService.getJobStepUtil().searchForJobStepsToRun(facilityId, productClassID, true);
+					UtilService.getJobStepUtil().searchForJobStepsToRun(facilityId, productClassID, false);
 					return null;
 				});
 				
