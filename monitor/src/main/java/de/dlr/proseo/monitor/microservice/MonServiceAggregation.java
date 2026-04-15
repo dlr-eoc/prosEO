@@ -34,29 +34,29 @@ import de.dlr.proseo.monitor.MonitorConfiguration;
 
 /**
  * The thread monitoring KPI01 timeliness
- * 
+ *
  * @author Melchinger
  *
  */
 
 public class MonServiceAggregation extends Thread {
-	private static ProseoLogger logger = new ProseoLogger(MonServiceAggregation.class);	
+	private static ProseoLogger logger = new ProseoLogger(MonServiceAggregation.class);
 
 	/** Transaction manager for transaction control */
 
 	private PlatformTransactionManager txManager;
-	
+
 	/** JPA entity manager */
 	private EntityManager em;
 
 	/**
-	 * The S1 monitor configuration additions (application.yml) 
+	 * The S1 monitor configuration additions (application.yml)
 	 */
 	private MonitorConfiguration config;
 
 	/**
 	 * Instantiate the monitor services thread
-	 * 
+	 *
 	 * @param config The monitor configuration
 	 * @param config The S1 monitor configuration additions
 	 * @param txManager The transaction manager
@@ -82,15 +82,15 @@ public class MonServiceAggregation extends Thread {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		transactionTemplate.setReadOnly(true);
-		ZonedDateTime zdt = transactionTemplate.execute((status) -> {			
+		ZonedDateTime zdt = transactionTemplate.execute((status) -> {
 			return calcBasicStartTime(now, RepositoryService.getMonServiceStateOperationDayRepository().findLastDatetime());
 		});
 		ZonedDateTime zdtOrig = zdt;
 
-		List<MonService> services = transactionTemplate.execute((status) -> {	
+		List<MonService> services = transactionTemplate.execute((status) -> {
 			return RepositoryService.getMonServiceRepository().findAll();
 		});
-		List<MonExtService> extServices = transactionTemplate.execute((status) -> {	
+		List<MonExtService> extServices = transactionTemplate.execute((status) -> {
 			return RepositoryService.getMonExtServiceRepository().findAll();
 		});
 		// loop over missing entries
@@ -105,10 +105,15 @@ public class MonServiceAggregation extends Thread {
 				final Instant timeToX = timeTo;
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
-						transactionTemplate.execute((status) -> {			
+						transactionTemplate.execute((status) -> {
 							int countUp = getServiceStateCount(timeFromX, timeToX, m.getId(), true);
 							int countDown = getServiceStateCount(timeFromX, timeToX, m.getId(), false);
 							double upPercent = (countUp + countDown) == 0 ? 0.0 : 100.0 * countUp / (countUp + countDown);
+
+							if (logger.isDebugEnabled()) {
+								logger.debug("Day KPI service={} time={} up={} down={} uptime={}%",
+									    m.getName(), timeFromX, countUp, countDown, upPercent);
+							}
 
 							MonServiceStateOperationDay tm;
 							try {
@@ -119,27 +124,33 @@ public class MonServiceAggregation extends Thread {
 							tm.setMonServiceId(m.getId());
 							tm.setUpTime(upPercent);
 							tm.setDatetime(timeFromX);
-							RepositoryService.getMonServiceStateOperationDayRepository().save(tm);			
+							RepositoryService.getMonServiceStateOperationDayRepository().save(tm);
 							return null;
 						});
 						break;
 					} catch (CannotAcquireLockException e) {
-						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+						if (logger.isDebugEnabled()) {
+							logger.debug("DB lock during DAY aggregation service={} time={} attempt {}/{}. Cause: {}",
+								    m.getName(), timeFromX, i + 1, ProseoUtil.DB_MAX_RETRY, e);
+						}
 
 						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
 							ProseoUtil.dbWait();
 						} else {
-							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+							if (logger.isDebugEnabled()) {
+								logger.debug("Failed DAY aggregation after {} retries. service={} time={}",
+									    ProseoUtil.DB_MAX_RETRY, m.getName(), timeFromX);
+							}
 							throw e;
 						}
 					}
-				}											
+				}
 				timeFrom = timeTo;
 				timeTo = timeTo.plus(1, ChronoUnit.DAYS);
 			}
 		}
 		transactionTemplate.setReadOnly(true);
-		zdt = transactionTemplate.execute((status) -> {			
+		zdt = transactionTemplate.execute((status) -> {
 			return calcBasicStartTime(now, RepositoryService.getMonExtServiceStateOperationDayRepository().findLastDatetime());
 		});
 		zdtOrig = zdt;
@@ -155,10 +166,14 @@ public class MonServiceAggregation extends Thread {
 				final Instant timeToX = timeTo;
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
-						transactionTemplate.execute((status) -> {	
+						transactionTemplate.execute((status) -> {
 							int countUp = getExtServiceStateCount(timeFromX, timeToX, m.getId(), true);
 							int countDown = getExtServiceStateCount(timeFromX, timeToX, m.getId(), false);
 							double upPercent = (countUp + countDown) == 0 ? 0.0 : 100.0 * countUp / (countUp + countDown);
+							if (logger.isDebugEnabled()) {
+								logger.debug("Day KPI external service={} time={} up={} down={} uptime={}%",
+								    m.getName(), timeFromX, countUp, countDown, upPercent);
+							}
 
 							MonExtServiceStateOperationDay tm;
 							try {
@@ -169,28 +184,34 @@ public class MonServiceAggregation extends Thread {
 							tm.setMonExtServiceId(m.getId());
 							tm.setUpTime(upPercent);
 							tm.setDatetime(timeFromX);
-							RepositoryService.getMonExtServiceStateOperationDayRepository().save(tm);			
+							RepositoryService.getMonExtServiceStateOperationDayRepository().save(tm);
 							return null;
 						});
 						break;
 					} catch (CannotAcquireLockException e) {
-						if (logger.isDebugEnabled()) logger.debug("... database concurrency issue detected: ", e);
+						if (logger.isDebugEnabled()) {
+							logger.debug("DB lock during DAY aggregation service={} time={} attempt {}/{}. Cause: {}",
+							    m.getName(), timeFromX, i + 1, ProseoUtil.DB_MAX_RETRY, e);
+						}
 
 						if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
 							ProseoUtil.dbWait();
 						} else {
-							if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+							if (logger.isDebugEnabled()) {
+								logger.debug("Failed DAY aggregation after {} retries. service={} time={}",
+									    ProseoUtil.DB_MAX_RETRY, m.getName(), timeFromX);
+							}
 							throw e;
 						}
 					}
-				}													
+				}
 				timeFrom = timeTo;
 				timeTo = timeTo.plus(1, ChronoUnit.DAYS);
 			}
 		}
 
 		transactionTemplate.setReadOnly(true);
-		zdt = transactionTemplate.execute((status) -> {			
+		zdt = transactionTemplate.execute((status) -> {
 			return calcBasicStartTime(now, RepositoryService.getMonServiceStateOperationMonthRepository().findLastDatetime());
 		});
 		int d = zdt.getDayOfMonth() - 1;
@@ -207,10 +228,14 @@ public class MonServiceAggregation extends Thread {
 				final Instant timeToX = timeTo;
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
-						transactionTemplate.execute((status) -> {	
+						transactionTemplate.execute((status) -> {
 							int countUp = getServiceStateCount(timeFromX, timeToX, m.getId(), true);
 							int countDown = getServiceStateCount(timeFromX, timeToX, m.getId(), false);
 							double upPercent = (countUp + countDown) == 0 ? 0.0 : 100.0 * countUp / (countUp + countDown);
+							if (logger.isDebugEnabled()) {
+								logger.debug("Month KPI service={} time={} up={} down={} uptime={}%",
+									    m.getName(), timeFromX, countUp, countDown, upPercent);
+							}
 
 							MonServiceStateOperationMonth tm;
 							try {
@@ -221,7 +246,7 @@ public class MonServiceAggregation extends Thread {
 							tm.setMonServiceId(m.getId());
 							tm.setUpTime(upPercent);
 							tm.setDatetime(timeFromX);
-							RepositoryService.getMonServiceStateOperationMonthRepository().save(tm);		
+							RepositoryService.getMonServiceStateOperationMonthRepository().save(tm);
 							return null;
 						});
 						break;
@@ -235,7 +260,7 @@ public class MonServiceAggregation extends Thread {
 							throw e;
 						}
 					}
-				}													
+				}
 				zdt = ZonedDateTime.ofInstant(timeFrom, ZoneId.of("UTC"));
 				timeFrom = zdt.plusMonths(1).toInstant();
 				zdt = ZonedDateTime.ofInstant(timeFrom, ZoneId.of("UTC"));
@@ -243,7 +268,7 @@ public class MonServiceAggregation extends Thread {
 			}
 		}
 		transactionTemplate.setReadOnly(true);
-		zdt = transactionTemplate.execute((status) -> {			
+		zdt = transactionTemplate.execute((status) -> {
 		return calcBasicStartTime(now, RepositoryService.getMonExtServiceStateOperationMonthRepository().findLastDatetime());
 		});
 		d = zdt.getDayOfMonth() - 1;
@@ -260,10 +285,14 @@ public class MonServiceAggregation extends Thread {
 				final Instant timeToX = timeTo;
 				for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 					try {
-						transactionTemplate.execute((status) -> {	
+						transactionTemplate.execute((status) -> {
 							int countUp = getExtServiceStateCount(timeFromX, timeToX, m.getId(), true);
 							int countDown = getExtServiceStateCount(timeFromX, timeToX, m.getId(), false);
 							double upPercent = (countUp + countDown) == 0 ? 0.0 : 100.0 * countUp / (countUp + countDown);
+							if (logger.isDebugEnabled()) {
+								logger.debug("Month KPI external service={} time={} up={} down={} uptime={}%",
+									    m.getName(), timeFromX, countUp, countDown, upPercent);
+							}
 
 							MonExtServiceStateOperationMonth tm;
 							try {
@@ -274,7 +303,7 @@ public class MonServiceAggregation extends Thread {
 							tm.setMonExtServiceId(m.getId());
 							tm.setUpTime(upPercent);
 							tm.setDatetime(timeFromX);
-							RepositoryService.getMonExtServiceStateOperationMonthRepository().save(tm);	
+							RepositoryService.getMonExtServiceStateOperationMonthRepository().save(tm);
 							return null;
 						});
 						break;
@@ -288,7 +317,7 @@ public class MonServiceAggregation extends Thread {
 							throw e;
 						}
 					}
-				}													
+				}
 				zdt = ZonedDateTime.ofInstant(timeFrom, ZoneId.of("UTC"));
 				timeFrom = zdt.plusMonths(1).toInstant();
 				zdt = ZonedDateTime.ofInstant(timeFrom, ZoneId.of("UTC"));
@@ -298,6 +327,11 @@ public class MonServiceAggregation extends Thread {
 	}
 
 	private int getServiceStateCount(Instant from, Instant to, long serviceId, Boolean up) {
+		if (logger.isTraceEnabled()) {
+		    logger.trace("Counting states serviceId={} up={} range=[{} - {})",
+		        serviceId, up, from, to);
+		}
+
 		int count = 0;
 		String sqlString = null;
 		sqlString = "SELECT count(*) FROM mon_service_state_operation d WHERE "
@@ -312,7 +346,7 @@ public class MonServiceAggregation extends Thread {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		transactionTemplate.setReadOnly(true);
-		Object result = transactionTemplate.execute((status) -> {			
+		Object result = transactionTemplate.execute((status) -> {
 			return query.getSingleResult();
 		});
 		if (result != null && result instanceof BigInteger) {
@@ -336,7 +370,7 @@ public class MonServiceAggregation extends Thread {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		transactionTemplate.setReadOnly(true);
-		Object result = transactionTemplate.execute((status) -> {			
+		Object result = transactionTemplate.execute((status) -> {
 			return query.getSingleResult();
 		});
 		if (result != null && result instanceof BigInteger) {
@@ -346,7 +380,7 @@ public class MonServiceAggregation extends Thread {
 	}
 
 	private ZonedDateTime calcBasicStartTime(Instant now, Instant lastEntryDatetime) {
-		Instant timeFrom = null;	
+		Instant timeFrom = null;
 		if (lastEntryDatetime ==  null) {
 			// no entry found, begin at now.
 			timeFrom = now.truncatedTo(ChronoUnit.DAYS);
@@ -356,7 +390,7 @@ public class MonServiceAggregation extends Thread {
 				} catch (DateTimeParseException ex) {
 					logger.log(MonitorMessage.ILLEGAL_CONFIG_VALUE, config.getAggregationStart());
 				}
-			} 
+			}
 		} else {
 			timeFrom = lastEntryDatetime.truncatedTo(ChronoUnit.DAYS);
 		}
@@ -366,9 +400,10 @@ public class MonServiceAggregation extends Thread {
 
     /**
      * Start the monitor thread
-     */	
+     */
     public void run() {
     	Long wait = (long) 100000;
+
     	try {
     		if (config.getServiceAggregationCycle() != null) {
     			wait = config.getServiceAggregationCycle();
@@ -376,6 +411,11 @@ public class MonServiceAggregation extends Thread {
     	} catch (NumberFormatException e) {
     		wait = (long) 100000;
     	}
+
+    	if (logger.isDebugEnabled()) {
+    		logger.debug("MonServiceAggregation thread started with cycle={} ms", wait);
+    	}
+
     	while (!this.isInterrupted()) {
     		// look for job steps to run
     		try {
@@ -396,5 +436,5 @@ public class MonServiceAggregation extends Thread {
     			this.interrupt();
     		}
     	}
-    }   
+    }
 }

@@ -9,18 +9,18 @@ import de.dlr.proseo.model.MonExtService;
 
 /**
  * Data Access Object for the MonService class
- * 
+ *
  * @author Ernst Melchinger
  *
  */
 public interface MonExtServiceRepository extends JpaRepository<MonExtService, Long> {
-	
+
 	/**
 	 * Get the mon service with the given name
-	 * 
+	 *
 	 * @param name the name of the service
 	 * @return the unique mon service identified by the name
 	 */
-	public MonExtService findByNameId(String name);
+	public MonExtService findByName(String name);
 
 }

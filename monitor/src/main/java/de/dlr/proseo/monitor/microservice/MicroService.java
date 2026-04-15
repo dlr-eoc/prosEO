@@ -166,6 +166,9 @@ public class MicroService {
 						.build();
 				try {
 					ResponseEntity<RestHealth> response = restTemplate.getForEntity(serviceUrl, RestHealth.class);
+
+					logger.debug("Service responded with HTTP status " + response.getStatusCode());
+
 					if (HttpStatus.OK.equals(response.getStatusCode())) {
 						// check whether service is running in docker
 						if (response.getBody().getStatus().equalsIgnoreCase("UP")) {
@@ -202,7 +205,7 @@ public class MicroService {
 
 						if (logger.isDebugEnabled()) {
 						    logger.debug("Service '{}' responded with status {}. Treated as RUNNING.",
-						        name, response.getBody());
+						        name, response.getStatusCode());
 						}
 
 						// We got an answer and assume the service is running
@@ -240,6 +243,7 @@ public class MicroService {
 		DockerService ds = monitor.getDockerService(this.getDocker());
 		if (ds != null) {
 			ds.check(this, monitor);
+			createEntry(monitor);
 			return;
 		} else if (monitor.getKubernetes(this.getKubernetes()) != null) {
 			// TODO check for Kubernetes
@@ -278,6 +282,7 @@ public class MicroService {
 						MonServiceStateOperation ms = new MonServiceStateOperation();
 						ms.setMonService(monitor.getMonService(getNameId(), getName()));
 						Optional<MonServiceState> aState = RepositoryService.getMonServiceStateRepository().findById(getState());
+
 						ms.setMonServiceState(aState.get());
 						ms.setDatetime(Instant.now());
 						ms = RepositoryService.getMonServiceStateOperationRepository().save(ms);

@@ -27,7 +27,7 @@ public class MonitorServices extends Thread {
 	private Map<String, MonExtService> monExtServices;
 	private MonitorConfiguration config;
 	private PlatformTransactionManager txManager;
-	
+
 	/**
 	 * @return the txManager
 	 */
@@ -50,8 +50,11 @@ public class MonitorServices extends Thread {
 			dockers.put(d.getName(), new DockerService(d));
 		}
 	}
-	
+
 	public void checkServices() {
+		if (logger.isDebugEnabled()) {
+			logger.debug("Services to be checked: {}", services.stream() .map(MicroService::getName) .toList());
+		}
 		if (services != null) {
 			for (MicroService s : services) {
 				s.check(this);
@@ -62,7 +65,7 @@ public class MonitorServices extends Thread {
 	public DockerService getDockerService(String name) {
 		return dockers.get(name);
 	}
-	
+
 	public DockerService getKubernetes(String name) {
 		return null;
 	}
@@ -75,8 +78,9 @@ public class MonitorServices extends Thread {
 			transactionTemplate.setReadOnly(false);
 			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
-					ms = transactionTemplate.execute((status) -> {	
-						MonService msX = RepositoryService.getMonServiceRepository().findByNameId(nameId);
+					ms = transactionTemplate.execute((status) -> {
+						MonService msX = RepositoryService.getMonServiceRepository().findByName(name);
+
 						if (msX == null) {
 							msX = new MonService();
 							msX.setName(name);
@@ -101,7 +105,7 @@ public class MonitorServices extends Thread {
 		}
 		return ms;
 	}
-	
+
 	public MonExtService getMonExtService(String nameId, String name) {
 		MonExtService ms = monExtServices.get(nameId);
 		if (ms == null) {
@@ -110,8 +114,8 @@ public class MonitorServices extends Thread {
 			transactionTemplate.setReadOnly(false);
 			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
-					ms = transactionTemplate.execute((status) -> {	
-						MonExtService msX = RepositoryService.getMonExtServiceRepository().findByNameId(nameId);
+					ms = transactionTemplate.execute((status) -> {
+						MonExtService msX = RepositoryService.getMonExtServiceRepository().findByName(name);
 						if (msX == null) {
 							msX = new MonExtService();
 							msX.setName(name);
@@ -136,7 +140,7 @@ public class MonitorServices extends Thread {
 		}
 		return ms;
 	}
-	
+
     public void run() {
     	Long wait = (long) 100000;
     	try {
@@ -158,5 +162,5 @@ public class MonitorServices extends Thread {
     			this.interrupt();
     		}
     	}
-    }   
+    }
 }

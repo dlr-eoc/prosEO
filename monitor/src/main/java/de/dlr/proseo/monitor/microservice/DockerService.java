@@ -13,17 +13,21 @@ import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient.Request;
 import com.github.dockerjava.transport.DockerHttpClient.Response;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.model.util.MonServiceStates;
 import de.dlr.proseo.monitor.MonitorConfiguration;
 
 
 /**
  * Represent a docker "machine" to check status of a service
- *  
+ *
  * @author Melchinger
  *
  */
 public class DockerService {
+
+	private static ProseoLogger logger = new ProseoLogger(DockerService.class);
 
 	/**
 	 * The service name
@@ -41,7 +45,7 @@ public class DockerService {
 	 * The docker name
 	 */
 	private String apiVersion;
-	
+
 	/**
 	 * @return the name
 	 */
@@ -72,7 +76,7 @@ public class DockerService {
 
 	/**
 	 * Instantiate the docker service
-	 * 
+	 *
 	 * @param docker A docker machine defined in monitor configuration (application.yml)
 	 */
 	public DockerService(MonitorConfiguration.Docker docker) {
@@ -81,10 +85,10 @@ public class DockerService {
 		this.port = docker.getPort();
 		this.apiVersion = docker.getApiVersion();
 	}
-	
+
 	/**
-	 * Checck whether the service is running on this docker
-	 * 
+	 * Check whether the service is running on this docker
+	 *
 	 * @param ms A micro service
 	 * @param monitor The basic Monitor thread
 	 */
@@ -125,14 +129,15 @@ public class DockerService {
 					ms.setState(MonServiceStates.STOPPED_ID);
 				}
 			} else {
-				ms.setState(MonServiceStates.STOPPED_ID);				
+				ms.setState(MonServiceStates.STOPPED_ID);
 			}
-			ms.createEntry(monitor);
+//			ms.createEntry(monitor);
 			return;
 		} catch (Exception e) {
 			// TODO no connect to docker or something went wrong, set state to stopped
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
 			ms.setState(MonServiceStates.STOPPED_ID);
-			ms.createEntry(monitor);
+//			ms.createEntry(monitor);
 			return;
 		}
 	}
