@@ -291,6 +291,10 @@ public class ProcessingOrderMgr {
 					throw new IllegalArgumentException(
 							logger.log(OrderMgrMessage.INVALID_REQUESTED_CLASS, productType, mission.getCode()));
 				}
+				if (order.getInputProductClasses().contains(productType)) {
+					throw new IllegalArgumentException(
+							logger.log(OrderMgrMessage.INVALID_PRODUCT_CLASS_IN_INPUT, productType));
+				}
 				modelOrder.getRequestedProductClasses().add(productClass);
 			}
 
@@ -991,7 +995,12 @@ public class ProcessingOrderMgr {
 				stateChangeOnly = false;
 			}
 		}
-
+		for (ProductClass pc : newRequestedProductClasses) {
+			if (newInputProductClasses.contains(pc)) {
+				throw new IllegalArgumentException(
+						logger.log(OrderMgrMessage.INVALID_PRODUCT_CLASS_IN_INPUT, pc.getProductType()));
+			}
+		}
 		if (!modelOrder.getOutputFileClass().equals(changedOrder.getOutputFileClass())) {
 			if (!mission.getFileClasses().contains(changedOrder.getOutputFileClass())) {
 				throw new IllegalArgumentException(

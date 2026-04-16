@@ -108,6 +108,7 @@ public enum OrderMgrMessage implements ProseoMessage {
 	ORDERTEMPLATE_MODIFIED				(3592, Level.INFO, true, "Order template with id {0} modified", ""),
 	ORDERTEMPLATE_NOT_MODIFIED			(3593, Level.INFO, true, "Order template with id {0} not modified (no changes)", ""),
 	ORDERTEMPLATE_LIST_EMPTY			(3594, Level.ERROR, false, "No order template found for search criteria", ""),
+	INVALID_PRODUCT_CLASS_IN_INPUT		(3595, Level.ERROR, false, "Input product class stop list must not contain requested product class {0}", ""),
 	
 	;
 
