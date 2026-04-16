@@ -6,8 +6,9 @@ SUBJECT_PREFIX="[CDSE CloudFerro]"
 EXCLUDE_PATTERNS=(
   "CleanupProducts"
   "LockAcquistionException"
-  "concurrent update"
-  "SomeOtherNoise"
+  "concurrent"
+  "E2053"
+  "backend.ServiceConnection"
 )
 
 content=$(curl --max-time 60 --fail --show-error -sG "http://localhost:3100/loki/api/v1/query_range" \
