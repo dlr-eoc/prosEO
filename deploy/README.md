@@ -118,16 +118,21 @@ Create a dedicated read-only user named "grafana", replacing "password" with a s
 (to be stored for example in deploy/loghost/prepare-monitoring/files/grafana.cred):
 ```
 CREATE USER grafana WITH PASSWORD 'password';
+GRANT CONNECT ON DATABASE proseo TO grafana;
+GRANT USAGE ON SCHEMA public TO grafana;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO grafana;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO grafana;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT SELECT ON TABLES TO grafana;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT USAGE, SELECT ON SEQUENCES TO grafana;
+ALTER ROLE grafana SET search_path TO public;
 ```
 **Note:** It may be more secure to limit access to specific tables.
 
-Go to https://<your.bastion.host>/proseo/grafana. There, configure the datasource with the new grafana user. 
-
-Import the dashboards given in the prosEO repository under monitor/src/main/grafana. After import, the datasource must be connected manually to each panel:
-- Open panel edit view
-- Re-select the datasource (even if already selected)
-- Apply changes
-- Save the dashboard
+Go to https://<your.bastion.host>/proseo/grafana. The Grafana datasources and dashboards are configured
+automatically. However, to properly initialize the prosEO database, it must be selected in the datasource
+view and saved and tested with the available "save & test" button. Only then will the dashboards be displayed correctly.
 
 An overview over recent errors is available at https://<your.bastion.host>/proseo/grafana/explore?orgId=1&left={"datasource":"Loki","queries":[{"expr":"{job=\"proseo\"} |= \"ERROR\""}]}.

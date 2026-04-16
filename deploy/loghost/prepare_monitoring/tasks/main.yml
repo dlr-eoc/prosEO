@@ -1,16 +1,33 @@
 ---
 # Prepare startup of prosEO Monitor and Grafana
-
+  
 - name: Create working directory for prosEO Monitor and Grafana
   file:
     path: "/opt/prosEO/log/{{ item }}"
     state: directory
-    mode: 0775
+    mode: '0775'
   loop:
     - monitor
     - grafana
+    - grafana/dashboards
     - grafana/provisioning
     - grafana/provisioning/datasources
+    - grafana/provisioning/dashboards
+
+- name: Copy Grafana datasource config
+  template:
+    src: datasource.yaml
+    dest: /opt/prosEO/log/grafana/provisioning/datasources/datasource.yaml
+
+- name: Copy Grafana dashboard config
+  copy:
+    src: dashboards.yaml
+    dest: /opt/prosEO/log/grafana/provisioning/dashboards/
+    
+- name: Copy Grafana dashboards
+  copy:
+    src: dashboards/
+    dest: /opt/prosEO/log/grafana/dashboards/
 
 - name: Create Loki directories
   file:
@@ -44,6 +61,7 @@
 
       datasources:
         - name: Loki
+          uid: loki-main
           type: loki
           access: proxy
           url: http://loki:3100

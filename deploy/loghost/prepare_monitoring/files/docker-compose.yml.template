@@ -7,6 +7,7 @@ services:
       - 3000:3000
     volumes:
       - /opt/prosEO/log/grafana:/var/lib/grafana
+      - /opt/prosEO/log/grafana/provisioning:/etc/grafana/provisioning
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:

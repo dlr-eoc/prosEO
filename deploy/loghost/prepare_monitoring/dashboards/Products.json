@@ -1,0 +1,239 @@
+{
+	"editable": true,
+	"panels": [
+		{
+			"title": "Products ($var_production_type)",
+			"type": "table",
+			"gridPos": {
+				"h": 21,
+				"w": 24,
+				"x": 0,
+				"y": 0
+			},
+			"fieldConfig": {
+				"defaults": {
+					"color": {
+						"mode": "thresholds"
+					},
+					"custom": {
+						"align": "auto",
+						"displayMode": "auto",
+						"filterable": true
+					},
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [
+							{
+								"color": "green",
+								"value": null
+							}
+						]
+					}
+				},
+				"overrides": [
+					{
+						"matcher": {
+							"id": "byName",
+							"options": "Mission"
+						},
+						"properties": [
+							{
+								"id": "custom.width",
+								"value": 140
+							}
+						]
+					},
+					{
+						"matcher": {
+							"id": "byName",
+							"options": "Product Type"
+						},
+						"properties": [
+							{
+								"id": "custom.width",
+								"value": 160
+							}
+						]
+					},
+					{
+						"matcher": {
+							"id": "byName",
+							"options": "Product File Name"
+						},
+						"properties": [
+							{
+								"id": "custom.width",
+								"value": 220
+							}
+						]
+					},
+					{
+						"matcher": {
+							"id": "byName",
+							"options": "File Size"
+						},
+						"properties": [
+							{
+								"id": "custom.width",
+								"value": 120
+							}
+						]
+					},
+					{
+						"matcher": {
+							"id": "byName",
+							"options": "Production Type"
+						},
+						"properties": [
+							{
+								"id": "custom.width",
+								"value": 190
+							}
+						]
+					},
+					{
+						"matcher": {
+							"id": "byName",
+							"options": "Sensing Start Time"
+						},
+						"properties": [
+							{
+								"id": "custom.width",
+								"value": 175
+							}
+						]
+					},
+					{
+						"matcher": {
+							"id": "byName",
+							"options": "Sensing Stop Time"
+						},
+						"properties": [
+							{
+								"id": "custom.width",
+								"value": 175
+							}
+						]
+					},
+					{
+						"matcher": {
+							"id": "byName",
+							"options": "Raw Data Availability Time"
+						},
+						"properties": [
+							{
+								"id": "custom.width",
+								"value": 185
+							}
+						]
+					},
+					{
+						"matcher": {
+							"id": "byName",
+							"options": "Generation Time"
+						},
+						"properties": [
+							{
+								"id": "custom.width",
+								"value": 175
+							}
+						]
+					},
+					{
+						"matcher": {
+							"id": "byName",
+							"options": "Publication Time"
+						},
+						"properties": [
+							{
+								"id": "custom.width",
+								"value": 175
+							}
+						]
+					},
+					{
+						"matcher": {
+							"id": "byName",
+							"options": "Production Latency"
+						},
+						"properties": [
+							{
+								"id": "custom.width",
+								"value": 160
+							}
+						]
+					},
+					{
+						"matcher": {
+							"id": "byName",
+							"options": "Total Latency"
+						},
+						"properties": [
+							{
+								"id": "custom.width",
+								"value": 160
+							}
+						]
+					}
+				]
+			},
+			"options": {
+				"showHeader": true,
+				"footer": {
+					"show": false
+				}
+			},
+			"targets": [
+				{
+					"refId": "A",
+					"datasource": {
+						"type": "postgres",
+						"uid": "proseo"
+					},
+					"format": "table",
+					"rawQuery": true,
+					"rawSql": "SELECT\n  mission.code AS \"Mission\",\n  product_class.product_type AS \"Product Type\",\n  product_file_name AS \"Product File Name\",\n  file_size AS \"File Size\",\n\n  CASE\n    WHEN production_type = 'SYSTEMATIC' THEN 'Systematic Production'\n    WHEN production_type = 'ON_DEMAND_DEFAULT' THEN 'On-Demand Default'\n    WHEN production_type = 'ON_DEMAND_NON_DEFAULT' THEN 'On-Demand Non-Default'\n    ELSE production_type\n  END AS \"Production Type\",\n\n  sensing_start_time AT TIME ZONE 'UTC' AS \"Sensing Start Time\",\n  sensing_stop_time  AT TIME ZONE 'UTC' AS \"Sensing Stop Time\",\n  raw_data_availability_time AT TIME ZONE 'UTC' AS \"Raw Data Availability Time\",\n  generation_time AT TIME ZONE 'UTC' AS \"Generation Time\",\n  publication_time AT TIME ZONE 'UTC' AS \"Publication Time\",\n\n  CASE\n    WHEN raw_data_availability_time IS NULL\n      THEN publication_time AT TIME ZONE 'UTC' - sensing_stop_time AT TIME ZONE 'UTC'\n    ELSE publication_time AT TIME ZONE 'UTC' - raw_data_availability_time AT TIME ZONE 'UTC'\n  END AS \"Production Latency\",\n\n  publication_time AT TIME ZONE 'UTC' - sensing_stop_time AT TIME ZONE 'UTC' AS \"Total Latency\"\n\nFROM product\nLEFT JOIN product_file ON product.id = product_file.product_id\nINNER JOIN product_class ON product_class.id = product.product_class_id\nINNER JOIN mission ON mission.id = product_class.mission_id\n  AND product_class.processing_level IS NOT NULL\n\nWHERE\n  production_type IN (${var_production_type})\n  AND $__timeFilter(publication_time AT TIME ZONE 'UTC')\n\nORDER BY publication_time AT TIME ZONE 'UTC'"
+				}
+			]
+		}
+	],
+	"templating": {
+		"list": [
+			{
+				"name": "var_mission_id",
+				"type": "textbox",
+				"label": "Mission",
+				"hide": 2
+			},
+			{
+				"name": "var_production_type",
+				"type": "custom",
+				"label": "Production Types",
+				"multi": true,
+				"options": [
+					{
+						"text": "Systematic Production",
+						"value": "SYSTEMATIC",
+						"selected": true
+					},
+					{
+						"text": "On-Demand Default",
+						"value": "ON_DEMAND_DEFAULT"
+					},
+					{
+						"text": "On-Demand Non-Default",
+						"value": "ON_DEMAND_NON_DEFAULT"
+					}
+				],
+				"query": "Systematic Production : SYSTEMATIC, On-Demand Default : ON_DEMAND_DEFAULT, On-Demand Non-Default : ON_DEMAND_NON_DEFAULT"
+			}
+		]
+	},
+	"time": {
+		"from": "now-1h",
+		"to": "now"
+	},
+	"timezone": "utc",
+	"title": "Products",
+	"uid": "uid_products"
+}
