@@ -79,7 +79,7 @@ public class MonitorServices extends Thread {
 			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
 					ms = transactionTemplate.execute((status) -> {
-						MonService msX = RepositoryService.getMonServiceRepository().findByName(name);
+						MonService msX = RepositoryService.getMonServiceRepository().findByNameId(nameId);
 
 						if (msX == null) {
 							msX = new MonService();
@@ -115,7 +115,7 @@ public class MonitorServices extends Thread {
 			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
 					ms = transactionTemplate.execute((status) -> {
-						MonExtService msX = RepositoryService.getMonExtServiceRepository().findByName(name);
+						MonExtService msX = RepositoryService.getMonExtServiceRepository().findByNameId(nameId);
 						if (msX == null) {
 							msX = new MonExtService();
 							msX.setName(name);

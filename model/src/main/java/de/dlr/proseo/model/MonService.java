@@ -15,7 +15,7 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(indexes = {
-	@Index(unique = true, columnList = "name")
+	@Index(unique = true, columnList = "nameId")
 })
 public class MonService extends PersistentObject {
 
@@ -44,7 +44,7 @@ public class MonService extends PersistentObject {
 	public void setNameId(String nameId) {
 		this.nameId = nameId;
 	}
-	
+
 	/**
 	 * @return the name
 	 */
