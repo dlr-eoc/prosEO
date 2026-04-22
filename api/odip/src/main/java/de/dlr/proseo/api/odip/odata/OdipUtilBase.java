@@ -998,6 +998,9 @@ public class OdipUtilBase {
 		}
 		restOrder.setWorkflowUuid(workflow.getUuid().toString());
 		restOrder.setWorkflowName(workflow.getName());
+		restOrder.setOnInputDataTimeoutFail(true);
+		restOrder.setInputDataTimeoutPeriod(config.getInputDataTimeoutPeriod() * 60);
+		restOrder.setOnInputDataTimeoutFail(config.getOnInputDataTimeoutFail());
 		return restOrder;
 	}
 

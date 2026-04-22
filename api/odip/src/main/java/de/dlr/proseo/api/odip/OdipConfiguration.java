@@ -64,6 +64,32 @@ public class OdipConfiguration {
 	@Value("${proseo.odip.executionDelay}")
 	private Long executionDelay;
 	
+	/** Input Data Timeout Period in seconds */
+	@Value("${proseo.odip.inputDataTimeoutPeriod}")
+	private Long inputDataTimeoutPeriod;
+	
+	/**
+     * If true and inputDataTimeoutPeriod is set, the order will fail when the timeout period 
+     * after the release time is expired and the input data is not complete; if false, the order will then be started 
+     * regardless of the availability of its input data.
+     */
+	@Value("${proseo.odip.onInputDataTimeoutFail}")
+	private Boolean onInputDataTimeoutFail;
+	
+	/**
+	 * @return the onInputDataTimeoutFail
+	 */
+	public Boolean getOnInputDataTimeoutFail() {
+		return onInputDataTimeoutFail;
+	}
+
+	/**
+	 * @return the inputDataTimeoutPeriod
+	 */
+	public Long getInputDataTimeoutPeriod() {
+		return inputDataTimeoutPeriod;
+	}
+
 	/**
 	 * @return the executionDelay
 	 */

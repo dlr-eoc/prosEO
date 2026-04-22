@@ -1598,7 +1598,9 @@ public class OrderUtil {
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public void setStateMessage(ProcessingOrder order, String stateMessage) {
 		if (order != null && stateMessage != null) {
-			order.setStateMessage(stateMessage);
+			if (!ProcessingOrder.STATE_MESSAGE_NO_INPUT.equals(order.getStateMessage())) {
+				order.setStateMessage(stateMessage);
+			}
 		}
 	}
 
