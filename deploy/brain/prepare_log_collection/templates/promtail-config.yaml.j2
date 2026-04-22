@@ -20,4 +20,4 @@ scrape_configs:
         labels:
           job: proseo
           host: {{ groups['brain'][0] }}
-          __path__: /opt/prosEO/log/*.log
+          __path__: /opt/prosEO/log/**/*.log
