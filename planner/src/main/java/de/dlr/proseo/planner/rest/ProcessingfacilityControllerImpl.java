@@ -167,7 +167,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 				kubeConfig.sync();
 				try {
 					// Check for job steps to run
-					UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, false, true);
+					UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, false, false);
 				} catch (Exception e) {
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 

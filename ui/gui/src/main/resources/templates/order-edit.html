@@ -1123,10 +1123,16 @@
 								</div>
 							</div>
 						</div>
-					</div>
 			</div>
-			<input id="submitButton" class="btn btn-primary" type="submit"
-				th:value="#{submit}">
+	      <div class="row py-lg-1">
+	        <div class="col-1">
+	          <input id="submitButton" class="btn btn-primary" type="submit"
+	            th:value="#{submit}">
+	        </div>
+	        <div class="col-11 alert-warning" id="output"></div>
+	      </div>
+			</div>
+			
 			</form>
 			<!-- Template for dynamic processing parameter -->
 				<div class="filtercontent"
@@ -1183,7 +1189,6 @@
 					</div>
           </div>
 				</div>
-			</div>
 			<!-- Template for all class parameter -->
 			<div class="filtercontent" id="OutAllClassParameterTemplate"
 				data-name="parameterclass">
@@ -1334,7 +1339,6 @@
 					</div>
 				</div>
 			</div></div>
-      <div class="alert-warning" id="output"></div>
 			<div th:insert="~{fragments/footer.html :: footer}"></div>
         </main>
       </div>
@@ -2324,9 +2328,11 @@ function retrieveData(id) {
 																		            if (myId != null) {
 																			              retrieveData(myId);
 																		            }
+									                              $("#output").text(data.status);
 																	          } else {
 										                            normDateVal($("input[name='startTime']"), 0, true);
 										                            normDateVal($("input[name='stopTime']"), 1, true);
+
 																		            $("#output").text(data.status + ": " + data.message);
 																	          }
 
@@ -2340,8 +2346,10 @@ function retrieveData(id) {
 																	          if (e.state() == 'rejected') {
 																		            // location.href = "/customlogin";
 																		            $("#output").text(e.responseText);
+																		            alert(e.responseText);
 																	          } else {
 																		            $("#output").text(e.responseText);
+									                              alert(e.responseText);
 																		            console.log("ERROR : ", e);
 																	          }
 																        }

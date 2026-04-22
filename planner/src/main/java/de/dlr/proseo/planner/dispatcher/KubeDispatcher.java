@@ -80,7 +80,7 @@ public class KubeDispatcher extends Thread {
 			if (kubeConfig != null) {
 				try {
 					// Check for job steps to run
-					UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, true);
+					UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, false);
 				} catch (Exception e) {
 					if (logger.isDebugEnabled())
 						logger.debug("... exception in checkForJobStepsToRun(" + kubeConfig.getId() + ", " + 0 + ", " + onlyRun + ", true): ", e);

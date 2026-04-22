@@ -9,6 +9,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
@@ -81,6 +83,8 @@ public class JobStepUtil {
 
 	/** Logger of this class */
 	private static ProseoLogger logger = new ProseoLogger(JobStepUtil.class);
+	
+	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd' 'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
 
 	/** Allbytime download path */
 	private final String URI_PATH_DOWNLOAD_ALLBYTIME = "/download/allbytime";
@@ -182,6 +186,7 @@ public class JobStepUtil {
 		}
 		jobStepStates.add(JobStepState.WAITING_INPUT.toString());
 
+		Instant now = Instant.now();
 		// Fetch job steps based on criteria
 		List<Long> allJobSteps = transactionTemplate.execute((status) -> {
 			List<Long> jobSteps = null;
@@ -194,12 +199,15 @@ public class JobStepUtil {
 					List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
 						.findUnsatisfiedByProductClass(pcId);
 					for (ProductQuery pq : productQueries) {
-						if (pq.getJobStep().getJobStepState().equals(JobStepState.WAITING_INPUT)
-								&& pq.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
-							jobSteps.add(pq.getJobStep().getId());
-						} else if (!onlyWaiting && pq.getJobStep().getJobStepState().equals(JobStepState.PLANNED)
-								&& pq.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
-							jobSteps.add(pq.getJobStep().getId());
+						if (pq.getJobStep().getJob().getProcessingOrder().getExecutionTime() != null 
+								? pq.getJobStep().getJob().getProcessingOrder().getExecutionTime().isBefore(now) : true) {
+							if (pq.getJobStep().getJobStepState().equals(JobStepState.WAITING_INPUT)
+									&& pq.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
+								jobSteps.add(pq.getJobStep().getId());
+							} else if (!onlyWaiting && pq.getJobStep().getJobStepState().equals(JobStepState.PLANNED)
+									&& pq.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
+								jobSteps.add(pq.getJobStep().getId());
+							}
 						}
 					}
 
@@ -207,7 +215,7 @@ public class JobStepUtil {
 				} else {
 					// Find all job steps if no product class constraint is provided
 					for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
-						jobSteps.addAll(findAllByProcessingFacilityAndJobStepStateInAndOrderBy(pf.getId(), jobStepStates));
+						jobSteps.addAll(findAllByProcessingFacilityAndJobStepStateInAndOrderBy(pf.getId(), jobStepStates, now));
 					}
 				}
 			} else {
@@ -220,12 +228,15 @@ public class JobStepUtil {
 
 					for (ProductQuery productQuery : productQueries) {
 						if (productQuery.getJobStep().getJob().getProcessingFacility().getId() == pfId) {
-							if (productQuery.getJobStep().getJobStepState().equals(JobStepState.WAITING_INPUT)
-									&& productQuery.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
-								jobSteps.add(productQuery.getJobStep().getId());
-							} else if (!onlyWaiting && productQuery.getJobStep().getJobStepState().equals(JobStepState.PLANNED)
-									&& productQuery.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
-								jobSteps.add(productQuery.getJobStep().getId());
+							if (productQuery.getJobStep().getJob().getProcessingOrder().getExecutionTime() != null 
+									? productQuery.getJobStep().getJob().getProcessingOrder().getExecutionTime().isBefore(now) : true) {
+								if (productQuery.getJobStep().getJobStepState().equals(JobStepState.WAITING_INPUT)
+										&& productQuery.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
+									jobSteps.add(productQuery.getJobStep().getId());
+								} else if (!onlyWaiting && productQuery.getJobStep().getJobStepState().equals(JobStepState.PLANNED)
+										&& productQuery.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
+									jobSteps.add(productQuery.getJobStep().getId());
+								}
 							}
 						}
 					}
@@ -233,7 +244,7 @@ public class JobStepUtil {
 					jobSteps.sort(null);
 				} else {
 					// Find all job steps associated with the given processing facility
-					jobSteps = findAllByProcessingFacilityAndJobStepStateInAndOrderBy(pfId, jobStepStates);
+					jobSteps = findAllByProcessingFacilityAndJobStepStateInAndOrderBy(pfId, jobStepStates, now);
 				}
 			}
 
@@ -278,27 +289,33 @@ public class JobStepUtil {
 	 * @return A list of IDs of job steps meeting the criteria
 	 */
 	private List<Long> findAllByProcessingFacilityAndJobStepStateInAndOrderBy(long processingFacilityId,
-			List<String> jobStepStates) {
+			List<String> jobStepStates, Instant now) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> findAllByProcessingFacilityAndJobStepStateInAndOrderBy({}, {}), sort order: {}", processingFacilityId,
 					jobStepStates, config.getJobStepSort());
 
 		// Determine the native query based on the configured sort order
+		String timeString = formatter.format(now);
 		String nativeQuery;
 		switch (config.getJobStepSort()) {
 		case SUBMISSION_TIME:
 			nativeQuery = "SELECT po.submission_time, js.id " + "FROM job j " + "JOIN job_step js ON j.id = js.job_id "
 					+ "JOIN processing_order po ON po.id = j.processing_order_id " + "WHERE j.processing_facility_id = :pfId "
+					+ "AND job_state IN ('RELEASED', 'RUNNING', 'STARTED') " + "AND (po.execution_time IS NULL OR po.execution_time < '" + timeString + "') "
 					+ "AND js.job_step_state IN :jsStates " + "ORDER BY js.priority desc, po.submission_time, js.id";
 			break;
 		case SENSING_TIME:
 			nativeQuery = "SELECT j.start_time, js.id " + "FROM job j " + "JOIN job_step js ON j.id = js.job_id "
+					+ "JOIN processing_order po ON po.id = j.processing_order_id " 
 					+ "WHERE j.processing_facility_id = :pfId " + "AND js.job_step_state IN :jsStates "
+					+ "AND job_state IN ('RELEASED', 'RUNNING', 'STARTED') " + "AND (po.execution_time IS NULL OR po.execution_time < '" + timeString + "') "
 					+ "ORDER BY js.priority desc, j.start_time, js.id";
 			break;
 		default:
 			nativeQuery = "SELECT j.start_time, js.id " + "FROM job j " + "JOIN job_step js ON j.id = js.job_id "
+					+ "JOIN processing_order po ON po.id = j.processing_order_id " 
 					+ "WHERE j.processing_facility_id = :pfId " + "AND js.job_step_state IN :jsStates "
+					+ "AND job_state IN ('RELEASED', 'RUNNING', 'STARTED') " + "AND (po.execution_time IS NULL OR po.execution_time < '" + timeString + "') "
 					+ "ORDER BY js.priority desc, j.start_time, js.id";
 			break;
 
@@ -331,8 +348,6 @@ public class JobStepUtil {
 				if (jobStepId == null) {
 				    throw new RuntimeException("Invalid query result: " + Arrays.asList(jobStep));
 				}
-
-
 				resultList.add(jobStepId);
 
 			} else {
@@ -1032,6 +1047,7 @@ public class JobStepUtil {
 
 			// Check if the associated job is not null and either force is true or the job is released or started
 			if (js.getJob() != null
+					&& (js.getJob().getProcessingOrder().getExecutionTime() != null ? Instant.now().isAfter(js.getJob().getProcessingOrder().getExecutionTime()) : true)
 					&& (force || js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)) {
 				logger.trace("Looking for product queries of job step: " + js.getId());
 				Boolean saveJS = false;
@@ -1171,7 +1187,7 @@ public class JobStepUtil {
 			if (kubeConfigurations != null) {
 				for (KubeConfig kubeConfig : kubeConfigurations) {
 					kubeConfig.sync();
-					checkForJobStepsToRun(kubeConfig, 0, false, true);
+					checkForJobStepsToRun(kubeConfig, 0, false, false);
 				}
 			}
 		}

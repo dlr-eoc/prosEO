@@ -121,7 +121,7 @@ public class KubeJobFinish extends Thread {
 						if (ProductionPlanner.config.getCheckForFurtherJobStepsToRun()) {
 							// Check for any job steps that can be run based on the finished job and associated product classes
 							for (Long pcId : productClassIds) {
-								UtilService.getJobStepUtil().checkForJobStepsToRun(kubeJob.getKubeConfig(), pcId, false, true);
+								UtilService.getJobStepUtil().checkForJobStepsToRun(kubeJob.getKubeConfig(), pcId, false, false);
 							}
 						}
 
