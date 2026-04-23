@@ -1123,6 +1123,7 @@ public class JobStepUtil {
 							} else {
 								js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.PLANNED);
 								js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.FAILED);
+								js.getJob().getProcessingOrder().setStateMessage(ProcessingOrder.STATE_MESSAGE_NO_INPUT);
 								saveJS = true;
 								setWaitingInput = false;
 							}
