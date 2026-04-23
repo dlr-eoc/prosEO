@@ -1,6 +1,6 @@
 /**
  * FaciltiyMgrMessage.java
- * 
+ *
  * (C) 10 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.logging.messages;
@@ -12,17 +12,17 @@ import org.slf4j.event.Level;
  *
  * @author Katharina Bassler
  * @author Denys Chaykovskiy
- * 
+ *
  */
 public enum ProductArchiveMgrMessage implements ProseoMessage {
-	
+
 	 DELETION_UNSUCCESSFUL		(7500, Level.ERROR, false, "Product Archive deletion unsuccessful for ID {0}", ""),
 	 DUPLICATED_ARCHIVE			(7501, Level.ERROR, false, "Product Archive {0} exists already", ""),
 	 ARCHIVE_CREATED			(7502, Level.INFO,  true,  "Product Archive with identifier {0} created", ""),
-	 ARCHIVE_DELETED			(7503, Level.INFO,  true,  "Product Archive with id {0} deleted", ""),	 
+	 ARCHIVE_DELETED			(7503, Level.INFO,  true,  "Product Archive with id {0} deleted", ""),
 	 ARCHIVE_HAS_PRODUCTS		(7504, Level.ERROR, false, "Cannot delete Product Archive {0} due to existing products", ""),
 	 ARCHIVE_ID_MISSING			(7505, Level.ERROR, false, "Product Archive ID not set", ""),
-	 ARCHIVE_LIST_EMPTY			(7506, Level.ERROR, false, "No Product Archives found for search criteria", ""),
+	 ARCHIVE_LIST_EMPTY			(7506, Level.WARN, false, "No Product Archives found for search criteria", ""),
 	 ARCHIVE_LIST_RETRIEVED		(7507, Level.INFO,  true,  "Product Archive list of size {0} retrieved for archive ''{1}''", ""),
 	 ARCHIVE_MISSING			(7508, Level.ERROR, false, "Product Archive not set", ""),
 	 ARCHIVE_MODIFIED			(7509, Level.INFO,  true,  "Product Archive with id {0} modified", ""),
@@ -53,7 +53,7 @@ public enum ProductArchiveMgrMessage implements ProseoMessage {
 
 	/**
 	 * Get the message's code.
-	 * 
+	 *
 	 * @return The message code.
 	 */
 	public int getCode() {
@@ -62,7 +62,7 @@ public enum ProductArchiveMgrMessage implements ProseoMessage {
 
 	/**
 	 * Get a more detailed description of the message's purpose.
-	 * 
+	 *
 	 * @return A description of the message.
 	 */
 	public String getDescription() {
@@ -71,7 +71,7 @@ public enum ProductArchiveMgrMessage implements ProseoMessage {
 
 	/**
 	 * Get the message's level.
-	 * 
+	 *
 	 * @return The message level.
 	 */
 	public Level getLevel() {
@@ -80,7 +80,7 @@ public enum ProductArchiveMgrMessage implements ProseoMessage {
 
 	/**
 	 * Get the message.
-	 * 
+	 *
 	 * @return The message.
 	 */
 	public String getMessage() {
@@ -89,7 +89,7 @@ public enum ProductArchiveMgrMessage implements ProseoMessage {
 
 	/**
 	 * Get the message's success.
-	 * 
+	 *
 	 * @return The message's success.
 	 */
 	public boolean getSuccess() {

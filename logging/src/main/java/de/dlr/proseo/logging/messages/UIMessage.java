@@ -1,6 +1,6 @@
 /**
  * UIMessage.java
- * 
+ *
  * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.logging.messages;
@@ -284,7 +284,7 @@ public enum UIMessage implements ProseoMessage {
 	WORKFLOW_NOT_FOUND_BY_ID				(6268, Level.ERROR, false, "Workflow with database ID {0} not found", ""),
 	WORKFLOW_UPDATED						(6269, Level.INFO, true, "Workflow with database ID {0} updated (new version {1})", ""),
 	NO_WORKFLOWS_FOUND						(6270, Level.ERROR, false, "No workflows found for given search criteria", ""),
-	NO_WORKFLOW_IDENTIFIER_GIVEN			(6271, Level.ERROR, false, "No workflow name and/or version given", ""),	
+	NO_WORKFLOW_IDENTIFIER_GIVEN			(6271, Level.ERROR, false, "No workflow name and/or version given", ""),
 	ARCHIVE_CREATED							(6272, Level.INFO,  true,  "Product archive {0} created (database ID {1})", ""),
 	ARCHIVE_DATA_INVALID					(6273, Level.ERROR, false, "Product archive data invalid (cause: {0})", ""),
 	ARCHIVE_DELETE_FAILED					(6274, Level.ERROR, false, "Deletion of Product archive {0} failed (cause: {1})", ""),
@@ -293,9 +293,9 @@ public enum UIMessage implements ProseoMessage {
 	ARCHIVE_NOT_FOUND						(6277, Level.ERROR, false, "Product archive {0} not found", ""),
 	ARCHIVE_NOT_FOUND_BY_ID					(6278, Level.ERROR, false, "Product archive with database ID {0} not found", ""),
 	ARCHIVE_NOT_READABLE					(6279, Level.ERROR, false, "Product archive {0} not readable (cause: {1})", ""),
-	ARCHIVE_UPDATED							(6280, Level.INFO,  true,  "Product archive with database ID {0} updated (new version {1})", ""),	
+	ARCHIVE_UPDATED							(6280, Level.INFO,  true,  "Product archive with database ID {0} updated (new version {1})", ""),
 	NO_ARCHIVE_CODE_GIVEN					(6281, Level.ERROR, false, "No product archive code given", ""),
-	NO_ARCHIVES_FOUND						(6282, Level.ERROR, false, "No product archives found", ""),
+	NO_ARCHIVES_FOUND						(6282, Level.WARN, false, "No product archives found", ""),
 	AUTHENTICATION_MISSING					(6283, Level.ERROR, false, "No authentication was provided", ""),
 	TRIGGER_CREATED							(6284, Level.INFO,  true,  "Trigger {0} of type {1} created (database ID {2})", ""),
 	TRIGGER_DATA_INVALID					(6285, Level.ERROR, false, "Trigger data invalid (cause: {0})", ""),
@@ -316,7 +316,7 @@ public enum UIMessage implements ProseoMessage {
 	NO_ORDERTEMPLATES_FOUND					(6300, Level.ERROR, false, "No order templates found for given search criteria", ""),
 	ORDERTEMPLATE_UPDATED					(6301, Level.INFO, true, "Order template with name {0} updated (new version {1})", ""),
 	ORDERTEMPLATE_DELETED					(6302, Level.INFO, true, "Order template with name {0} deleted", ""),
-	 
+
 	;
 
 	private final int code;
@@ -335,7 +335,7 @@ public enum UIMessage implements ProseoMessage {
 
 	/**
 	 * Get the message's code.
-	 * 
+	 *
 	 * @return The message code.
 	 */
 	public int getCode() {
@@ -344,7 +344,7 @@ public enum UIMessage implements ProseoMessage {
 
 	/**
 	 * Get a more detailed description of the message's purpose.
-	 * 
+	 *
 	 * @return A description of the message.
 	 */
 	public String getDescription() {
@@ -353,7 +353,7 @@ public enum UIMessage implements ProseoMessage {
 
 	/**
 	 * Get the message's level.
-	 * 
+	 *
 	 * @return The message level.
 	 */
 	public Level getLevel() {
@@ -362,7 +362,7 @@ public enum UIMessage implements ProseoMessage {
 
 	/**
 	 * Get the message.
-	 * 
+	 *
 	 * @return The message.
 	 */
 	public String getMessage() {
@@ -371,7 +371,7 @@ public enum UIMessage implements ProseoMessage {
 
 	/**
 	 * Get the message's success.
-	 * 
+	 *
 	 * @return The message's success.
 	 */
 	public boolean getSuccess() {

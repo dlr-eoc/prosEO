@@ -347,7 +347,7 @@ public class ProductArchiveManager {
 		}
 
 		if (result.isEmpty()) {
-			throw new NoResultException(logger.log(ProductArchiveMgrMessage.ARCHIVE_NOT_FOUND, name, archiveType));
+			throw new NoResultException(logger.log(ProductArchiveMgrMessage.ARCHIVE_LIST_EMPTY));
 		}
 
 		logger.log(ProductArchiveMgrMessage.ARCHIVE_LIST_RETRIEVED, result.size(), name, archiveType);
