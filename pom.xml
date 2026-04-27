@@ -39,7 +39,9 @@
 		<exec-maven-plugin.version>3.5.1</exec-maven-plugin.version>
 		<junit.version>4.13.2</junit.version>
 		<spring-boot-starter-test.version>3.5.4</spring-boot-starter-test.version> <!-- Not in parent POM! -->
-		<tomcat.version>10.1.50</tomcat.version><!-- REMOVE when upgrading Spring Boot! Addresses CVE-2025-55754 -->
+		<tomcat.version>10.1.53</tomcat.version><!-- REMOVE when upgrading Spring Boot! Addresses CVE-2026-24734 -->
+		<spring-security.version>6.5.10</spring-security.version><!-- Remove when upgrading Spring Boot! Addresses CVE-2026-22748 -->
+		<thymeleaf.version>3.1.4.RELEASE</thymeleaf.version><!-- Remove when upgrading Spring Boot! Addresses CVE-2026-40478 -->
 	</properties>
 
 	<modules>
