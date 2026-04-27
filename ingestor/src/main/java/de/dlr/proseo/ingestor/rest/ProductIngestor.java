@@ -224,7 +224,7 @@ public class ProductIngestor {
 			for (IngestorProduct ingestorProduct: ingestorProducts) {
 				RestProductFile newProductFile = new RestProductFile();
 
-				if (copyFiles || !ingestorProduct.getSourceStorageType().equals(facility.getDefaultStorageType().toString())) {
+				if (copyFiles) {
 					// Ingest product file and auxiliary files to Storage Manager
 					String targetFilePath = ingestToStorageManager(facility, ingestorProduct, copyFiles);
 

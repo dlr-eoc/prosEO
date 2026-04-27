@@ -9,13 +9,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
@@ -26,6 +25,8 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.StorageMgrMessage;
 import de.dlr.proseo.storagemgr.model.AtomicCommand;
 import de.dlr.proseo.storagemgr.model.DefaultRetryStrategy;
 import de.dlr.proseo.storagemgr.utils.PathConverter;
@@ -77,7 +78,7 @@ public class S3DAL {
 	private AwsBasicCredentials credentials;
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(S3DAL.class);
+	private static ProseoLogger logger = new ProseoLogger(S3DAL.class);
 
 	/**
 	 * Constructor
@@ -294,9 +295,9 @@ public class S3DAL {
 	 * @param path the path to check
 	 * @return true if the path represents a file, false otherwise
 	 */
-	public boolean isFile(String path) {
-		return new File(path).isFile();
-	}
+//	public boolean isFile(String path) {
+//		return new File(path).isFile();
+//	}
 
 	/**
 	 * Gets the name of the file from the specified path.
@@ -422,11 +423,17 @@ public class S3DAL {
 	public List<String> uploadFileOrDir(String sourceFileOrDir, String bucket, String targetFileOrDir) throws IOException {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> upload({},{},{})", sourceFileOrDir, bucket, targetFileOrDir);
+			logger.trace(">>> uploadFileOrDir({},{},{})", sourceFileOrDir, bucket, targetFileOrDir);
 
 		List<String> uploadedFiles = new ArrayList<>();
 
-		if (isFile(sourceFileOrDir)) {
+		Path sourceFileOrDirPath = Path.of(sourceFileOrDir);
+		
+		if (!Files.exists(sourceFileOrDirPath)) {
+			throw new IOException(logger.log(StorageMgrMessage.INVALID_PATH, sourceFileOrDirPath));
+		}
+		
+		if (Files.isRegularFile(sourceFileOrDirPath)) {
 			String uploadedFile = uploadFile(sourceFileOrDir, bucket, targetFileOrDir);
 			uploadedFiles.add(uploadedFile);
 			return uploadedFiles;

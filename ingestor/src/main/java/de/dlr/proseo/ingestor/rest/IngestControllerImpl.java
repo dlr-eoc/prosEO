@@ -85,7 +85,7 @@ public class IngestControllerImpl implements IngestController {
 	public ResponseEntity<List<RestProduct>> ingestProducts(String processingFacility, Boolean copyFiles,
 			@Valid List<IngestorProduct> ingestorProducts, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> ingestProducts({}, IngestorProduct[{}])", processingFacility, ingestorProducts.size());
+			logger.trace(">>> ingestProducts({}, {}, IngestorProduct[{}])", processingFacility, copyFiles, ingestorProducts.size());
 
 		// Check whether the given processing facility is valid
 		try {
