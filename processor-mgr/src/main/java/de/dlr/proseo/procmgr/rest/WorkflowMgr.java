@@ -865,7 +865,7 @@ public class WorkflowMgr {
 		} else {
 			newOverlap = Duration.ofSeconds(0L);
 		}
-		if (modelWorkflow.getSliceOverlap() == null 
+		if (modelWorkflow.getSliceOverlap() == null
 				|| !modelWorkflow.getSliceOverlap().equals(newOverlap)) {
 			workflowChanged = true;
 			modelWorkflow.setSliceOverlap(newOverlap);
@@ -1447,7 +1447,7 @@ public class WorkflowMgr {
 
 		if (result.isEmpty()) {
 			throw new NoResultException(logger.log(ProcessorMgrMessage.NO_WORKFLOW_FOUND, missionCode, workflowName,
-					workflowVersion, inputProductClass, configuredProcessor));
+					workflowVersion, inputProductClass, configuredProcessor, enabled));
 		}
 
 		logger.log(ProcessorMgrMessage.WORKFLOW_LIST_RETRIEVED, result.size(), missionCode, workflowName, workflowVersion,

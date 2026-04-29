@@ -283,7 +283,7 @@ public enum UIMessage implements ProseoMessage {
 	WORKFLOW_NOT_FOUND						(6267, Level.ERROR, false, "Workflow {0} with version {1} not found", ""),
 	WORKFLOW_NOT_FOUND_BY_ID				(6268, Level.ERROR, false, "Workflow with database ID {0} not found", ""),
 	WORKFLOW_UPDATED						(6269, Level.INFO, true, "Workflow with database ID {0} updated (new version {1})", ""),
-	NO_WORKFLOWS_FOUND						(6270, Level.ERROR, false, "No workflows found for given search criteria", ""),
+	NO_WORKFLOWS_FOUND						(6270, Level.WARN, false, "No workflows found for given search criteria", ""),
 	NO_WORKFLOW_IDENTIFIER_GIVEN			(6271, Level.ERROR, false, "No workflow name and/or version given", ""),
 	ARCHIVE_CREATED							(6272, Level.INFO,  true,  "Product archive {0} created (database ID {1})", ""),
 	ARCHIVE_DATA_INVALID					(6273, Level.ERROR, false, "Product archive data invalid (cause: {0})", ""),

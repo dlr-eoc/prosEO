@@ -1,6 +1,6 @@
 /**
  * ProcessorMgrMessage.java
- * 
+ *
  * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.logging.messages;
@@ -90,7 +90,7 @@ public enum ProcessorMgrMessage implements ProseoMessage {
 	WORKFLOW_DELETED								(4574, Level.INFO, true, "Workflow with id {0} deleted", ""),
 	WORKFLOW_DELETION_UNSUCCESSFUL					(4575, Level.ERROR, false, "Workflow deletion unsuccessful for ID {0}", ""),
 	WORKFLOW_RETRIEVED								(4576, Level.INFO, true, "Workflow with ID {0} retrieved", ""),
-	NO_WORKFLOW_FOUND								(4577, Level.ERROR, false, "No workflow found for mission {0}, name {1}, version {2}, input product class {3}, configured processor {4}, and enabled = {5}", ""),
+	NO_WORKFLOW_FOUND								(4577, Level.WARN, false, "No workflow found for mission {0}, name {1}, version {2}, input product class {3}, configured processor {4}, and enabled = {5}", ""),
 	WORKFLOW_NAME_MISSING							(4578, Level.ERROR, false, "Workflow name not set", ""),
 	DUPLICATE_WORKFLOW								(4579, Level.ERROR, false, "Duplicate workflow for mission {0}, workflow name {1}, workflow version {2}, uuid {3}", ""),
 	WORKFLOW_CREATED								(4580, Level.INFO, true, "Workflow {0}, version {1} created for mission {2}", ""),
@@ -110,7 +110,7 @@ public enum ProcessorMgrMessage implements ProseoMessage {
 	PROCESSOR_CLASSES_COUNTED						(4594, Level.INFO, true, "{0} processor classe(s) found for mission {1}, processor name {2}", ""),
 	ILLEGAL_OPTION_TYPE								(4595, Level.ERROR, false, "{0} is not a legal WorkflowOptionType (must be STRING, NUMBER, or DATENUMBER)", ""),
 	PRODUCT_CLASS_NOT_FOUND							(4596, Level.ERROR, false, "Product class {0} was not found during input filter creation", "")
-	
+
 	;
 
 	private final int code;
@@ -166,10 +166,10 @@ public enum ProcessorMgrMessage implements ProseoMessage {
 	public String getDescription() {
 		return description;
 	}
-	
+
 	/**
 	 * Get the message's success.
-	 * 
+	 *
 	 * @return The message's success.
 	 */
 	public boolean getSuccess() {
