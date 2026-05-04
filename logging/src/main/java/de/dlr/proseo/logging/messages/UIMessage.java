@@ -96,7 +96,7 @@ public enum UIMessage implements ProseoMessage {
 	INVALID_SLICING_TYPE					(6079, Level.ERROR, false, "Invalid order slicing type {0}", ""),
 	INVALID_TIME							(6080, Level.ERROR, false, "Time format {0} not parseable", ""),
 	INVALID_URL								(6081, Level.ERROR, false, "Invalid request URL {0} (cause: {1})", ""),
-	INVALID_USERNAME						(6082, Level.ERROR, false, "Invalid Username (mission missing?): {0} {1} {2} {3} ...",""),
+	INVALID_USERNAME						(6082, Level.ERROR, false, "Invalid Username: {0}",""),
 	INVALID_VISIBILITY						(6083, Level.ERROR, false, "Invalid product visibility {0}", ""),
 	JOB_CANCELLED							(6084, Level.INFO, true, "Job with database ID {0} cancelled (new version {1})", ""),
 	JOB_DATA_INVALID						(6085, Level.ERROR, false, "Job data invalid (cause: {0})", ""),

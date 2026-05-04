@@ -6,6 +6,7 @@
 package de.dlr.proseo.ui.gui;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -27,7 +28,7 @@ import de.dlr.proseo.ui.backend.LoginManager;
 /**
  * Implementation of the AuthenticationProvider interface provided by Spring Security, handling the authentication process for the
  * GUI users.
- * 
+ *
  * @author David Mazo
  */
 @Component
@@ -52,13 +53,13 @@ public class GUIAuthenticationProvider implements AuthenticationProvider {
 		Object principal = authentication.getPrincipal();
 
 		if (principal instanceof String) {
-			
+
 			// Split the username into mission and username parts
 			String[] userNameParts = ((String) principal).split("/");
 
 			if (userNameParts.length != 2) {
-				logger.log(UIMessage.INVALID_USERNAME, (Object[]) userNameParts);
-				throw new BadCredentialsException("Invalid Username (mission missing?)");
+				logger.log(UIMessage.INVALID_USERNAME, Arrays.toString(userNameParts));
+				throw new BadCredentialsException("Invalid username");
 			}
 
 			String mission = userNameParts[0];
@@ -67,7 +68,7 @@ public class GUIAuthenticationProvider implements AuthenticationProvider {
 
 			// Perform login and role validation
 			if (loginManager.doLogin(userName, password, mission, false) && loginManager.hasRole(UserRole.GUI_USER)) {
-				
+
 				// Create a new authenticated GUIAuthenticationToken
 				GUIAuthenticationToken newAuthentication = new GUIAuthenticationToken();
 				UserDetails newPrincipal = new User(userName, password, authentication.getAuthorities());
