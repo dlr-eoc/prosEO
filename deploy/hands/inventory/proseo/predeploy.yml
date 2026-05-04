@@ -24,3 +24,32 @@
     yum:
       name: nfs-utils
       state: present
+
+  - name: Configure chrony
+    copy:
+      dest: /etc/chrony.conf
+      owner: root
+      group: root
+      mode: '0644'
+      content: |
+        {% for server in ntp_servers %}
+        server {{ server }} iburst
+        {% endfor %}
+    
+        driftfile /var/lib/chrony/drift
+        rtcsync
+        makestep 1.0 3
+        logdir /var/log/chrony
+    register: chrony_conf
+    vars:
+      ntp_servers:
+        - 0.pool.ntp.org
+        - 1.pool.ntp.org
+        - 2.pool.ntp.org
+        - 3.pool.ntp.org
+  
+  - name: Restart chronyd if config changed
+    service:
+      name: chronyd
+      state: restarted
+    when: chrony_conf.changed

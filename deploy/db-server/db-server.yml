@@ -8,3 +8,4 @@
   - prepare_network
   - install_docker
   - prepare_db
+  - configure_ntp

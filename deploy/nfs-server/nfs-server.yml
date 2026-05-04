@@ -12,6 +12,7 @@
   - install_docker
   - prepare_proseo
   - prepare_log_collection
+  - configure_ntp
   
 # Mount transfer directory on bastion host
 - hosts: bastion_control

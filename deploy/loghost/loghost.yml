@@ -8,4 +8,5 @@
   - install_docker
   - prepare_log_collection
   - prepare_monitoring
+  - configure_ntp
   

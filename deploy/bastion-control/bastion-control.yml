@@ -23,6 +23,7 @@
   - configure_firewall
   - configure_nginx_proxy
   - configure_postfix
+  - configure_ntp
   
   tasks:
   - name: Set hostname
