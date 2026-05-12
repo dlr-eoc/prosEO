@@ -24,7 +24,22 @@ schema_config:
         prefix: index_
         period: 24h
 
+storage_config:
+  tsdb_shipper:
+    active_index_directory: /var/lib/loki/tsdb-shipper-active
+    cache_location: /var/lib/loki/tsdb-shipper-cache
+
 limits_config:
-  retention_period: 168h  # 7 Tage
+  retention_period: 168h
   ingestion_rate_mb: 16
   ingestion_burst_size_mb: 32
+
+compactor:
+  working_directory: /var/lib/loki/compactor
+  retention_enabled: true
+  delete_request_store: filesystem
+
+ingester:
+  wal:
+    enabled: true
+    dir: /var/lib/loki/wal

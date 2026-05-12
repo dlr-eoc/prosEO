@@ -1,1 +1,8 @@
+---
+# Loghost disks
+loghost_disk:
+  name: /dev/vdb1
+  devices: /dev/vdb1
+
+# Grafana Password
 grafana_password: put_password_here

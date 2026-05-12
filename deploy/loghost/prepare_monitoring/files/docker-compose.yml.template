@@ -32,8 +32,8 @@ services:
     ports:
     - 3100:3100
     volumes:
-    - /opt/prosEO/log/loki/loki-config.yaml:/etc/loki/loki-config.yaml
-    - /opt/prosEO/log/loki/data:/var/lib/loki
+    - /opt/prosEO/loki/loki-config.yaml:/etc/loki/loki-config.yaml
+    - /logs/loki:/var/lib/loki
     command: -config.file=/etc/loki/loki-config.yaml
     logging:
       driver: local

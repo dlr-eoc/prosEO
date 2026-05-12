@@ -1,7 +1,42 @@
 ---
+- name: Ensure log volume filesystem exists
+  filesystem:
+    fstype: ext4
+    dev: "{{ loghost_disk.name }}"
+
+- name: Create mount point
+  file:
+    path: /logs
+    state: directory
+    mode: "0755"
+
+- name: Mount log volume
+  mount:
+    path: /logs
+    src: "{{ loghost_disk.name }}"
+    fstype: ext4
+    opts: defaults
+    state: mounted
+
+- name: Create Loki directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: 10001
+    group: 10001
+    mode: "0775"
+  loop:
+    - /logs/loki
+    - /logs/loki/chunks
+    - /logs/loki/rules
+    - /logs/loki/compactor
+    - /logs/loki/wal
+    - /logs/loki/tsdb-shipper-active
+    - /logs/loki/tsdb-shipper-cache
+
 # Prepare startup of prosEO Monitor and Grafana
   
-- name: Create working directory for prosEO Monitor and Grafana
+- name: Create prosEO and Grafana directories
   file:
     path: "/opt/prosEO/log/{{ item }}"
     state: directory
@@ -29,16 +64,19 @@
     src: dashboards/
     dest: /opt/prosEO/log/grafana/dashboards/
 
-- name: Create Loki directories
+- name: Create base Loki directory
   file:
-    path: "/opt/prosEO/log/{{ item }}"
+    path: /opt/prosEO/loki
     state: directory
     owner: 10001
     group: 10001
     mode: '0775'
-  loop:
-    - loki
-    - loki/data
+
+- name: Create Loki data symlink
+  file:
+    src: /logs/loki
+    dest: /opt/prosEO/loki/data
+    state: link
 
 - name: Copy Docker compose file for prosEO Monitor and Grafana (with Loki)
   copy:
@@ -49,7 +87,7 @@
 - name: Copy Loki config
   copy:
     src: loki-config.yaml
-    dest: /opt/prosEO/log/loki
+    dest: /opt/prosEO/loki
     mode: 0644
 
 - name: Configure Loki datasource in Grafana

@@ -10,7 +10,8 @@ In the directory `prepare_monitoring/files` copy `docker-compose.yml.template` i
 - `<password from bastion nginx config>`: Copy the password of the bastion host user for Grafana from `bastion-control/group-vars/bastion_control.yml`
 
 Under prepare_monitoring/files, adapt alerting.sh to the project's needs. Most importantly, the e-mail address and the exclusions need to be adapted.
-Adapt the postfix domain and host under group:vars/loghost.yaml
+
+Adapt the disks and devices under group_vars/loghost.yaml
 
 Note that Grafana is pre-configured so that the native alerting system can be used as well.
 
