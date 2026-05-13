@@ -147,5 +147,5 @@
 - name: Run prosEO alerting script every 30 minutes
   cron:
     name: "prosEO alerting"
-    job: "/opt/prosEO/alerting.sh >> /var/log/proseo-alert.log 2>&1"
+    job: "/bin/bash /opt/prosEO/alerting.sh >> /var/log/proseo-alert.log 2>&1"
     minute: "*/30"
