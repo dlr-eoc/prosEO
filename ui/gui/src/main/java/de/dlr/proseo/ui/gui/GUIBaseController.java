@@ -5,8 +5,12 @@
  */
 package de.dlr.proseo.ui.gui;
 
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -14,17 +18,28 @@ import java.util.Properties;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.apache.hc.core5.net.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.ClientResponse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.ParameterType;
@@ -49,6 +64,10 @@ public class GUIBaseController {
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(GUIBaseController.class);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.UI);
+
+	/* Other string constants */
+	private static final String HTTP_HEADER_WARNING = "Warning";
 
 	/** The connector service to the prosEO backend services */
 	@Autowired
@@ -57,6 +76,10 @@ public class GUIBaseController {
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
+
+	/** REST template builder */
+	@Autowired
+	private RestTemplateBuilder rtb;
 
 	/** The configuration object for the GUI */
 	@Autowired
@@ -1196,4 +1219,156 @@ public class GUIBaseController {
 		List<Long> showPages = calcShowPages(page, pages);
 		model.addAttribute("showPages", showPages);
 	}
+
+	/**
+	 * Retrieve a download token for the requested product ID and file name from the Ingestor service
+	 *
+	 * @param id              the product ID
+	 * @param productFileName the product file name
+	 * @return download token string
+	 * @throws HttpClientErrorException if an error is returned from the Ingestor service
+	 * @throws RestClientException      if the request to the Ingestor fails for some other reason
+	 * @throws RuntimeException         if any other exception occurs
+	 * @throws SecurityException        if the logged in user is not authorized to access the requested product
+	 */
+	protected String retrieveDownloadToken(long id, String productFileName)
+			throws HttpClientErrorException, RestClientException, RuntimeException, SecurityException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> retrieveDownloadToken({}, {})", id, productFileName);
+
+
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		
+		// Attempt connection to service
+		ResponseEntity<String> entity = null;
+		try {
+			RestTemplate restTemplate = rtb
+				.basicAuthentication(auth.getProseoName(), auth.getPassword())
+				.build();
+			String requestUrl = serviceConfig.getIngestorUrl() + "/products/" + id + "/download/token?fileName=" + URLEncoder.encode(productFileName, "UTF-8");
+			if (logger.isTraceEnabled())
+				logger.trace("... calling service URL {} with GET", requestUrl);
+			entity = restTemplate.getForEntity(requestUrl, String.class);
+		} catch (HttpClientErrorException.Unauthorized e) {
+			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
+			if (warningMessage == null)
+				logger.log(UIMessage.EXTRACTED_MESSAGE, warningMessage);
+			else
+				logger.log(UIMessage.NOT_AUTHORIZED_FOR_SERVICE, auth.getProseoName());
+			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
+		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
+			String message = http.createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
+			logger.log(UIMessage.EXTRACTED_MESSAGE, message);
+			throw new HttpClientErrorException(e.getStatusCode(), message);
+		} catch (RestClientException e) {
+			String message = logger.log(UIMessage.HTTP_REQUEST_FAILED, e);
+			throw new RestClientException(message, e);
+		} catch (Exception e) {
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
+			throw new RuntimeException(e);
+		}
+
+		// All GET requests should return HTTP status OK
+		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
+			String message = http.createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
+			logger.log(UIMessage.EXTRACTED_MESSAGE, message);
+			throw new RuntimeException(message);
+		}
+
+		String downloadToken = entity.getBody();
+		if (logger.isDebugEnabled())
+			logger.debug("... token generated: " + downloadToken);
+		return downloadToken;
+	}
+	
+	/**
+	 * Build redirect response to download a file from prip.
+	 * 
+	 * @param storageManagerUrl The storage manager url
+	 * @param productFilePath   The file path in storage
+	 * @param productFileName   The product file name
+	 * @param downloadToken     The token for this file
+	 * @return The response entity for download
+	 * @throws RuntimeException
+	 */
+	protected ResponseEntity<?> downloadProductFromStorageMgr(String storageManagerUrl, String productFilePath, String productFileName, String downloadToken)
+			throws RuntimeException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> downloadProductFromStorageMgr({}, {}, {}, token)", storageManagerUrl, productFilePath, productFileName);
+
+
+		URIBuilder uriBuilder = null;
+		try {
+			uriBuilder = new URIBuilder(storageManagerUrl + "/products/download");
+			uriBuilder.addParameter("pathInfo", productFilePath + "/" + productFileName);
+			uriBuilder.addParameter("token", downloadToken);
+		} catch (URISyntaxException e) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("An exception occurred. Cause: ", e);
+			}
+			throw new RuntimeException(logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e));
+		}
+
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.add(HttpHeaders.LOCATION, URI.create(uriBuilder.toString()).toASCIIString());
+		responseHeaders.set(HttpHeaders.CONTENT_TYPE, "application/octet-stream");
+		responseHeaders.setContentDisposition(ContentDisposition.builder("attachment").filename(productFileName).build());
+		return new ResponseEntity<>(responseHeaders, HttpStatus.TEMPORARY_REDIRECT);
+	}
+	
+	/**
+	 * Retrieve the storage manager url of facility
+	 *
+	 * @param facilityName              The external storage manager url of facility
+	 * @return url string
+	 * @throws HttpClientErrorException if an error is returned from the Ingestor service
+	 * @throws RestClientException      if the request to the Ingestor fails for some other reason
+	 * @throws RuntimeException         if any other exception occurs
+	 * @throws SecurityException        if the logged in user is not authorized to access the requested product
+	 */
+	protected String getStorageMgrUrl(String facilityName)
+			throws HttpClientErrorException, RestClientException, RuntimeException, SecurityException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getStorageMgrUrl({})", facilityName);
+
+
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+		auth.getDataCache().setFacilities(new ArrayList<String>());
+		List<?> resultList = null;
+
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getFacilityManagerUrl(), "/facilities?name=" + facilityName, List.class,
+					auth.getProseoName(), auth.getPassword());
+		} catch (RestClientResponseException e) {
+
+			switch (e.getStatusCode().value()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
+			}
+
+			return null;
+		} catch (RuntimeException e) {
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
+			return null;
+		}
+
+		if (resultList != null) {
+			ObjectMapper mapper = new ObjectMapper();
+			for (Object object : resultList) {
+				RestProcessingFacility restFacility = mapper.convertValue(object, RestProcessingFacility.class);
+				return restFacility.getExternalStorageManagerUrl();
+			}
+		}
+
+		return null;
+	}
+	
 }

@@ -6,32 +6,46 @@
 package de.dlr.proseo.ui.gui;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.PripMessage;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -57,6 +71,9 @@ public class GUIProductController extends GUIBaseController {
 	@Autowired
 	private ServiceConnection serviceConnection;
 
+	/** HTTP utility class */
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.UI);
+
 	/**
 	 * Show the product view
 	 *
@@ -77,6 +94,36 @@ public class GUIProductController extends GUIBaseController {
 		return "productfile-show";
 	}
 
+
+	
+	/**
+	 * Download the file 
+	 * 
+	 * @param productId     The product id of the file
+	 * @param filePath      The file path
+	 * @param fileName      The file name
+	 * @param facilityName  The facility name
+	 * 
+	 * @return The ResponseEntity to download the file
+	 */
+	@GetMapping("/productfile/download")
+	public ResponseEntity<?> downloadFile(@RequestParam(required = true, value = "productId") Long productId,
+			@RequestParam(required = true, value = "filePath") String filePath,
+			@RequestParam(required = true, value = "fileName") String fileName,
+			@RequestParam(required = true, value = "facilityName") String facilityName) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getProducs({}, {}, {}, {})", productId, filePath, fileName, facilityName);
+		
+		// get facility for storageMgr URL
+		String storageMgrUrl = getStorageMgrUrl(facilityName);
+		
+		// get download token
+		String downloadToken = retrieveDownloadToken(productId, fileName);		
+		
+		return downloadProductFromStorageMgr(storageMgrUrl, filePath, fileName, downloadToken);
+	}
+			
 	/**
 	 * Retrieve products matching the provided parameters
 	 *
