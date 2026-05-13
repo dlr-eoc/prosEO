@@ -9,4 +9,5 @@
   - prepare_log_collection
   - prepare_monitoring
   - configure_ntp
+  - configure_dnf_automatic
   

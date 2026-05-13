@@ -13,6 +13,7 @@
   - prepare_proseo
   - prepare_log_collection
   - configure_ntp
+  - configure_dnf_automatic
   
 # Mount transfer directory on bastion host
 - hosts: bastion_control

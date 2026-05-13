@@ -10,3 +10,4 @@
   - prepare_proseo
   - prepare_log_collection
   - configure_ntp
+  - configure_dnf_automatic

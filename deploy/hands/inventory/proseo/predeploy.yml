@@ -53,3 +53,41 @@
       name: chronyd
       state: restarted
     when: chrony_conf.changed
+
+  - name: Install dnf-automatic
+    ansible.builtin.dnf:
+      name: dnf-automatic
+      state: present
+
+  - name: Configure dnf-automatic
+    ansible.builtin.copy:
+      dest: /etc/dnf/automatic.conf
+      owner: root
+      group: root
+      mode: "0644"
+      content: |
+        [commands]
+        upgrade_type = default
+        download_updates = yes
+        apply_updates = yes
+        reboot = no
+
+        [emitters]
+        emit_via = stdio
+
+        [base]
+        debuglevel = 1
+    notify:
+      - restart dnf-automatic timer
+
+  - name: Enable dnf automatic install timer
+    ansible.builtin.systemd:
+      name: dnf-automatic-install.timer
+      enabled: true
+      state: started
+
+  handlers:
+    - name: restart dnf-automatic timer
+      ansible.builtin.systemd:
+        name: dnf-automatic-install.timer
+        state: restarted

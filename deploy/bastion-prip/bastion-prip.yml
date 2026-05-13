@@ -19,7 +19,8 @@
   - hardening
   - configure_firewall
   - configure_nginx_proxy
-  - configure_ntp
+  - configure_ntp  
+  - configure_dnf_automatic
   
   tasks:
   - name: Set hostname

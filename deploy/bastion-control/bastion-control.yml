@@ -24,6 +24,7 @@
   - configure_nginx_proxy
   - configure_postfix
   - configure_ntp
+  - configure_dnf_automatic
   
   tasks:
   - name: Set hostname
