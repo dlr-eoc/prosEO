@@ -113,7 +113,7 @@ public class GUIProductController extends GUIBaseController {
 			@RequestParam(required = true, value = "facilityName") String facilityName) {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getProducs({}, {}, {}, {})", productId, filePath, fileName, facilityName);
+			logger.trace(">>> download({}, {}, {}, {})", productId, filePath, fileName, facilityName);
 		
 		// get facility for storageMgr URL
 		String storageMgrUrl = getStorageMgrUrl(facilityName);
