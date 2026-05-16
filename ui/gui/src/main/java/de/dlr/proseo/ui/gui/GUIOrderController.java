@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -1053,6 +1054,52 @@ public class GUIOrderController extends GUIBaseController {
 
 		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
 		map.add("Content-Type", "text/plain");
+		map.add("Content-Length", String.valueOf(result.length()));
+		return new ResponseEntity<>(result, map, HttpStatus.OK);
+	}
+
+	@GetMapping("/joborderfile")
+	public ResponseEntity<?> jobOrderFile(
+			@RequestParam(required = true, value = "filePath") String jobOrderFilename,
+			@RequestParam(required = true, value = "facilityName") String facilityName) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> jobOrderFile({}, {})", jobOrderFilename, facilityName);
+		
+		// get facility for storageMgr URL
+		String storageMgrUrl = getStorageMgrUrl(facilityName);
+
+
+		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		String result = "";
+		String jof;
+
+		try {
+			jof = serviceConnection.getFromService(storageMgrUrl, "/joborders?pathInfo=" + jobOrderFilename, String.class,
+					auth.getProseoName(), auth.getPassword());
+			if (jof != null) {
+				result = new String(Base64.getDecoder().decode(jof));
+			}
+		} catch (RestClientResponseException e) {
+
+			switch (e.getStatusCode().value()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				logger.log(UIMessage.NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				logger.log(UIMessage.NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				logger.log(UIMessage.EXCEPTION, e.getMessage());
+			}
+
+		} catch (RuntimeException e) {
+			logger.log(UIMessage.EXCEPTION, e.getMessage());
+		}
+
+		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+		map.add("Content-Type", "application/xml");
 		map.add("Content-Length", String.valueOf(result.length()));
 		return new ResponseEntity<>(result, map, HttpStatus.OK);
 	}
