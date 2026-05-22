@@ -8,7 +8,6 @@ package de.dlr.proseo.api.auxipmon;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -25,8 +24,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.annotation.PostConstruct;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.ConnectionConfig;
@@ -36,7 +33,7 @@ import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.core5.http.ClassicHttpRequest;
-import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.http.client.HttpResponseException;
 import org.apache.olingo.client.api.ODataClient;
@@ -59,6 +56,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.RequestBodySpec;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.api.basemon.BaseMonitor;
@@ -70,6 +68,7 @@ import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.OAuthMessage;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.ProseoUtil;
+import jakarta.annotation.PostConstruct;
 
 /**
  * Monitor for Auxiliary Data Interface Points (AUXIP)
@@ -231,9 +230,9 @@ public class AuxipMonitor extends BaseMonitor {
 	 * Initialize global parameters
 	 */
 	@PostConstruct
-	private void init() {
+	public void init() {
 		// Set parameters in base monitor
-		this.setTransferHistoryFile(Paths.get(config.getAuxipHistoryPath()));
+		super.setTransferHistoryFile(Paths.get(config.getAuxipHistoryPath()));
 		this.setCheckInterval(config.getAuxipCheckInterval());
 		this.setTruncateInterval(config.getAuxipTruncateInterval());
 		this.setHistoryRetentionDuration(Duration.ofMillis(config.getAuxipHistoryRetention()));
@@ -242,8 +241,6 @@ public class AuxipMonitor extends BaseMonitor {
 		this.setMaxDownloadThreads(config.getMaxDownloadThreads());
 		this.setTaskWaitInterval(config.getTaskWaitInterval());
 		this.setMaxWaitCycles(config.getMaxWaitCycles());
-
-		HttpURLConnection.setFollowRedirects(true);
 
 		logger.log(ApiMonitorMessage.AUXIP_START_MESSAGE, config.getAuxipBaseUri(), config.getAuxipContext(),
 				config.getAuxipUseToken(), config.getAuxipProductTypes(), this.getTransferHistoryFile(),
@@ -295,7 +292,8 @@ public class AuxipMonitor extends BaseMonitor {
 			String base64Auth = new String(
 					Base64.getEncoder().encode((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
 			request = request.header(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth);
-			logger.trace("... Auth: '{}'", base64Auth);
+			// TODO Should secret really be visible in the log?
+			// logger.trace("... Auth: '{}'");
 		} else {
 			queryVariables.add("scope", "openid");
 			if (config.getAuxipClientSendInBody()) {
@@ -305,7 +303,8 @@ public class AuxipMonitor extends BaseMonitor {
 				String base64Auth = new String(
 						Base64.getEncoder().encode((config.getAuxipClientId() + ":" + config.getAuxipClientSecret()).getBytes()));
 				request = request.header(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth);
-				logger.trace("... Auth: '{}'", base64Auth);
+				// TODO Should secret really be visible in the log?
+				// logger.trace("... Auth: '{}'");
 			}
 		}
 		if (logger.isTraceEnabled())
@@ -716,6 +715,7 @@ public class AuxipMonitor extends BaseMonitor {
 				RequestConfig requestConfig = RequestConfig.custom()
 						.setConnectionRequestTimeout(config.getAuxipChunkTimeout(), TimeUnit.MILLISECONDS)
 						.setResponseTimeout(config.getAuxipChunkTimeout(), TimeUnit.MILLISECONDS)
+						.setRedirectsEnabled(true)
 						.build();
 
 				File productFile = new File(config.getAuxipDirectoryPath() + File.separator + transferProduct.getName());
@@ -732,26 +732,77 @@ public class AuxipMonitor extends BaseMonitor {
 
 							logger.trace("... starting {}. request for URL '{}'", i + 1, requestUri);
 
-							ClassicHttpRequest httpGet = new HttpGet(requestUri);
+							String currentUrl = requestUri;
 
-							if (config.getAuxipUseToken()) {
-								httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
-							} else {
-								httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder()
-									.encodeToString((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
-							}
+							// Follow up to 5 HTTP redirects manually to resolve the final download URL.
+							// This is needed because the AUXIP endpoint may respond with multiple redirect hops
+							// before serving the actual file content.
+							for (int redirectCount = 0; redirectCount < 5; redirectCount++) {
 
-							httpClient.execute(httpGet, response -> {
-								HttpEntity entity = response.getEntity();
+								// Create a new GET request for the current target URL.
+								ClassicHttpRequest httpGet = new HttpGet(currentUrl);
 
-								if (entity != null) {
-									FileUtils.copyInputStreamToFile(entity.getContent(), productFile);
+								// Configure authentication depending on the selected AUXIP mode.
+								// Either use Bearer token authentication or fallback to Basic auth.
+								if (config.getAuxipUseToken()) {
+									httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
+								} else {
+									httpGet.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder()
+										.encodeToString((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
 								}
 
-								return null;
-							});
+								// Mutable holder used to capture the redirect target URL from inside
+								// the response callback lambda.
+								final String[] redirectTarget = new String[1];
 
-							Boolean success = true;
+								httpClient.execute(httpGet, response -> {
+
+									int code = response.getCode();
+
+									// Handle HTTP redirect responses manually.
+									// If a redirect is returned, extract the Location header
+									// and continue the loop with the new target URL.
+									if (code == 301 || code == 302 || code == 303 || code == 307 || code == 308) {
+
+										Header location = response.getFirstHeader("Location");
+
+										// Redirect responses without a Location header are invalid.
+										if (location == null) {
+											throw new IOException("Redirect without Location header");
+										}
+
+										redirectTarget[0] = location.getValue();
+
+										logger.trace("Following redirect to {}", redirectTarget[0]);
+
+										return null;
+									}
+
+									// At this point we expect the actual file response.
+									HttpEntity entity = response.getEntity();
+
+									// A successful download response must contain a body.
+									if (entity == null) {
+										throw new IOException("No response body");
+									}
+
+									// Stream the response content directly into the target product file.
+									FileUtils.copyInputStreamToFile(entity.getContent(), productFile);
+
+									return null;
+								});
+
+								// No redirect means the file was successfully downloaded
+								// and redirect resolution is complete.
+								if (redirectTarget[0] == null) {
+									break;
+								}
+
+								// Continue with the next redirect target.
+								currentUrl = redirectTarget[0];
+							}
+
+							boolean success = true;
 							// Compare file size with value given by AUXIP
 							Long productFileLength = productFile.length();
 							if (!productFileLength.equals(transferProduct.getSize())) {
@@ -786,7 +837,9 @@ public class AuxipMonitor extends BaseMonitor {
 								break;
 							} else {
 								if (productFile != null && productFile.exists()) {
-									productFile.delete();
+									if (!productFile.delete()) {
+									    logger.log(ApiMonitorMessage.PRODUCT_DELETION_FAILED, productFile.getName());
+									}
 								}
 							}
 							if ((i + 1) < MAX_RETRY) {
