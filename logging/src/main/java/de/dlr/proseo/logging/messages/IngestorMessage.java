@@ -83,6 +83,7 @@ public enum IngestorMessage implements ProseoMessage {
 	PRODUCT_LIST_MISSING				(2070, Level.ERROR, false, "No product list given for ingestion", ""),
 	ORDERGEN_NOTIFICATION_FAILED		(2071, Level.WARN, true, "Notification of Order Generator failed (cause: {0})", ""),
 	ERROR_NOTIFYING_ORDERGEN			(2072, Level.ERROR, false, "Error notifying prosEO Order Generator of new product {0} of type {1} (Production Planner cause: {2})", ""),
+	NUMBER_PRODUCTS_DELETED				(2073, Level.INFO, true, "{0} products deleted", ""),
 	
 	;
 
