@@ -44,6 +44,7 @@ import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.SimpleSelectionRule;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.enums.ThreeValueBool;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.ProseoUtil;
@@ -1212,7 +1213,15 @@ public class OrderDispatcher {
 					if (logger.isDebugEnabled())
 						logger.debug("Product query for rule '{}' already satisfied", pq.getGeneratingRule());
 				} else {
-					if (config.getAutogenerate()) {
+					Boolean autogen = config.getAutogenerate();
+					if (order.getAutoGenerateSteps() == null || order.getAutoGenerateSteps().equals(ThreeValueBool.DEFAULT)) {
+						// do nothing
+					} else if (order.getAutoGenerateSteps().equals(ThreeValueBool.FALSE)) {
+						autogen = false;
+					} else {
+						autogen = true;
+					}
+					if (autogen) {
 						// Create job steps for the unsatisfied product query
 						createProductsAndJobStep(pq.getRequestedProductClass(), job, order, allJobSteps, allProducts,
 								productionPlanner);

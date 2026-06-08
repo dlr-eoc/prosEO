@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.dlr.proseo.model.enums.ProductionType;
+import de.dlr.proseo.model.enums.ThreeValueBool;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
@@ -63,7 +64,12 @@ public class OrderTemplate extends OrderTemplateBase {
 	 * from the mission default value; if that is not present either, no eviction time will be computed for the products.
 	 */
 	private Duration productRetentionPeriod;
-	
+
+	/** Indicates whether automatic job step derivation is done. 
+	 *  If attribute is not set (null), the default as configured for the Production Planner will be used */
+	@Enumerated(EnumType.STRING)
+	private ThreeValueBool autoGenerateSteps = ThreeValueBool.DEFAULT;
+
     /**
      * If set the processing order will be released automatically either immediately after planning or 
      * when its executionTime is reached, whichever comes later.
@@ -278,6 +284,20 @@ public class OrderTemplate extends OrderTemplateBase {
 	 */
 	public Set<ConfiguredProcessor> getRequestedConfiguredProcessors() {
 		return requestedConfiguredProcessors;
+	}
+
+	/**
+	 * @return the autoGenerateSteps
+	 */
+	public ThreeValueBool getAutoGenerateSteps() {
+		return autoGenerateSteps;
+	}
+
+	/**
+	 * @param autoGenerateSteps the autoGenerateSteps to set
+	 */
+	public void setAutoGenerateSteps(ThreeValueBool autoGenerateSteps) {
+		this.autoGenerateSteps = autoGenerateSteps;
 	}
 
 	/**

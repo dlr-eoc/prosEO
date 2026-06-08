@@ -247,7 +247,18 @@
 									</div>
 								</div>
 							</div>
-							<div class="col-4"></div>
+              <div class="col-2 pe-lg-0">
+                <span class="input-group-text word-wrap"
+                  th:text="#{autoGenerate}" th:title="#{autoGenerateHelp}"></span>
+              </div>
+              <div class="col-2 ps-lg-0">
+                <select name="autoGenerateSteps" id="autoGenerateSteps"
+                  class="form-select" th:title="#{autoGenerateHelp}">
+                  <option th:each="obj : ${threeValueBool}" th:text="${obj}"
+                    th:label="${obj}"
+                    th:selected="${obj}==${ord?.autoGenerateSteps}?'true':'false'"></option>
+                </select>
+              </div>
 						</div>
 						<!-- Orbit data -->
 						<div class="row filtercontent" id="ORBIT">

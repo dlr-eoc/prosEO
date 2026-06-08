@@ -500,6 +500,10 @@ public class OrderTemplateMgr {
 			modelOrderTemplate.setAutoClose(changedOrderTemplate.isAutoClose());
 			orderChanged = true;
 		}
+		if (modelOrderTemplate.getAutoGenerateSteps() != changedOrderTemplate.getAutoGenerateSteps()) {
+			modelOrderTemplate.setAutoGenerateSteps(changedOrderTemplate.getAutoGenerateSteps());
+			orderChanged = true;
+		}
 		if (modelOrderTemplate.isEnabled() != changedOrderTemplate.isEnabled()) {
 			modelOrderTemplate.setEnabled(changedOrderTemplate.isEnabled());
 			orderChanged = true;

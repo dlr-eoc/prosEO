@@ -747,6 +747,9 @@ public class OrderCommandRunner {
 		if (isDeleteAttributes || null != updatedOrder.getAutoClose()) {
 			restOrder.setAutoClose(updatedOrder.getAutoClose());
 		}
+		if (isDeleteAttributes || null != updatedOrder.getAutoGenerateSteps()) {
+			restOrder.setAutoGenerateSteps(updatedOrder.getAutoGenerateSteps());
+		}
 		
 		/* Update order using Order Manager service */
 		try {

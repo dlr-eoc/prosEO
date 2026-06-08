@@ -1155,6 +1155,10 @@ public class ProcessingOrderMgr {
 			modelOrder.setAutoClose(changedOrder.isAutoClose());
 			orderChanged = true;
 		}
+		if (modelOrder.getAutoGenerateSteps() != changedOrder.getAutoGenerateSteps()) {
+			modelOrder.setAutoGenerateSteps(changedOrder.getAutoGenerateSteps());
+			orderChanged = true;
+		}
 
 		// Check for forbidden order data modifications
 		if (orderChanged && !stateChangeOnly) {

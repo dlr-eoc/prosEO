@@ -568,6 +568,9 @@ public class OrderTemplateCommandRunner {
 		if (isDeleteAttributes || null != updatedOrderTemplate.getAutoClose()) {
 			restOrderTemplate.setAutoClose(updatedOrderTemplate.getAutoClose());
 		}
+		if (isDeleteAttributes || null != updatedOrderTemplate.getAutoGenerateSteps()) {
+			restOrderTemplate.setAutoGenerateSteps(updatedOrderTemplate.getAutoGenerateSteps());
+		}
 		if (isDeleteAttributes || null != updatedOrderTemplate.getEnabled()) {
 			restOrderTemplate.setEnabled(updatedOrderTemplate.getEnabled());
 		}

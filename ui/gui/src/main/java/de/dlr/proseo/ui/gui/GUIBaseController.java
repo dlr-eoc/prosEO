@@ -47,6 +47,7 @@ import de.dlr.proseo.model.enums.ProcessingLevel;
 import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.enums.ProductionType;
+import de.dlr.proseo.model.enums.ThreeValueBool;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.rest.model.RestConfiguredProcessor;
 import de.dlr.proseo.model.rest.model.RestMission;
@@ -87,6 +88,9 @@ public class GUIBaseController {
 
 	/** List with cached production types */
 	private List<String> productiontypes = null;
+	
+	/** List with cached three value bool types */
+	private List<String> threeValueBool = null;
 
 	/** List with cached product qualities */
 	private List<String> productqualities = null;
@@ -703,6 +707,25 @@ public class GUIBaseController {
 		Comparator<String> c = Comparator.comparing((String x) -> x);
 		productiontypes.sort(c);
 		return productiontypes;
+	}
+
+	/**
+	 * Retrieve the three value bool enum
+	 *
+	 * @return A list of three value bool values in String format
+	 */
+	@ModelAttribute("threeValueBool")
+	public List<String> threeValueBool() {
+		if (threeValueBool != null && !threeValueBool.isEmpty())
+			return threeValueBool;
+
+		threeValueBool = new ArrayList<>();
+		for (ThreeValueBool value : ThreeValueBool.values()) {
+			threeValueBool.add(value.toString());
+		}
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		threeValueBool.sort(c);
+		return threeValueBool;
 	}
 
 	/**

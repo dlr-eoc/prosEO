@@ -181,8 +181,9 @@
                   <th><span th:text="#{autoRelease}">autoRelease</span></th>
                   <th><span th:text="#{autoClose}">autoClose</span></th>
                   <th><span th:text="#{executiontime}">executiontime</span></th>
-                  <th colspan="4"><span
+                  <th colspan="3"><span
                     th:text="#{requestedconfiguredprocessors}">requestedconfiguredprocessors</span></th>
+                  <th><span th:text="#{autoGenerate}" th:title="#{autoGenerateHelp}">autoGenerate</span></th>
                   <td>&nbsp;</td>
                 </tr>
                 <tr class="proseo-row-divider">
@@ -191,7 +192,7 @@
                   <td class="first-row" th:text="${ord?.autoClose}"></td>
                   <td class="first-row" th:if="${ord?.executionTime}" th:text="${ord?.executionTime}"></td>
                   <td class="first-row" th:unless="${ord?.executionTime}"><span>&nbsp;</span></td>
-                  <td colspan="4" class="first-row"><a th:if="${hasroleconfigurationreader}"
+                  <td colspan="3" class="first-row"><a th:if="${hasroleconfigurationreader}"
                     th:each="comp : ${ord?.configuredProcessors}"
                     class="proseo-list-item"
                     th:href="'/configured-processor-show?cp=' + ${comp}"
@@ -199,6 +200,7 @@
                     th:unless="${hasroleconfigurationreader}"
                     th:each="comp : ${ord?.configuredProcessors}"
                     class="proseo-list-item" th:text="${comp}"></span></td>
+                  <td class="first-row" th:text="${ord?.autoGenerateSteps}" th:title="#{autoGenerateHelp}"></td>
                   <td>&nbsp;</td>
                 </tr>
                 <tr class="th-row">
