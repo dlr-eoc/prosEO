@@ -847,14 +847,37 @@ public class GUIBaseController {
 	}
 
 	/**
-	 * Returns the mission code of the authenticated user
+	 * Returns the mission code of the authenticated user and the instance identifier
 	 *
-	 * @return The mission code of the authenticated user
+	 * @return The mission code and identifier
 	 */
 	@ModelAttribute("missioncode")
 	public String missioncode() {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-		return auth.getMission();
+		String text = auth.getMission();
+		text += "@";
+		text += (null == serviceConfig.getInstanceId() ? "no identifier" : serviceConfig.getInstanceId());
+		return text;
+	}
+	
+	/**
+	 * Returns the prosEO instance environment (one of dev, ops, val)
+	 *
+	 * @return the prosEO instance environment
+	 */
+	@ModelAttribute("instanceenv")
+	public String instanceenv() {
+		return null == serviceConfig.getInstanceEnvironment() ? "" : serviceConfig.getInstanceEnvironment();
+	}
+	
+	/**
+	 * Returns the prosEO instance environment (one of dev, ops, val)
+	 *
+	 * @return the prosEO instance environment
+	 */
+	@ModelAttribute("instanceenvcolor")
+	public String instanceenvcolor() {
+		return null == serviceConfig.getInstanceEnvironmentColor() ? "rgb(0,0,0,.25)" : serviceConfig.getInstanceEnvironmentColor();
 	}
 
 	/**

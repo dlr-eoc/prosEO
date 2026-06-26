@@ -30,6 +30,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.ui.backend.LoginManager;
+import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.cli.CLIUtil.Credentials;
 import de.dlr.proseo.ui.cli.parser.CLIParser;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
@@ -53,7 +54,7 @@ public class CommandLineInterface implements CommandLineRunner {
 	/* Message string constants */
 	
 	/* Other string constants */
-	private static final String PROSEO_COMMAND_PROMPT = "prosEO (%s)> ";
+	private static final String PROSEO_COMMAND_PROMPT = "prosEO %s (%s@%s)> ";
 	private static final String CMD_CLEAR = "clear";
 	private static final String CMD_HELP = "help";
 	private static final String CMD_LOGOUT = "logout";
@@ -64,6 +65,10 @@ public class CommandLineInterface implements CommandLineRunner {
 	/** The configuration object for the prosEO CLI */
 	@Autowired
 	private CLIConfiguration config;
+	
+	/** The configuration object for the prosEO backend services */
+	@Autowired
+	private ServiceConfiguration serviceConfig;
 	
 	/** The command line parser */
 	@Autowired
@@ -359,7 +364,11 @@ public class CommandLineInterface implements CommandLineRunner {
 				String commandLine;
 				try {
 					commandLine = userInput.readLine(isInteractiveMode ?
-						String.format(PROSEO_COMMAND_PROMPT, null == loginManager.getMission() ? "no mission" : loginManager.getMission())
+						String.format(PROSEO_COMMAND_PROMPT, 
+								null == serviceConfig.getInstanceEnvironment() ? "ops" : serviceConfig.getInstanceEnvironment(),
+								null == loginManager.getMission() ? "no mission" : loginManager.getMission(),
+								null == serviceConfig.getInstanceId() ? "no identifier" : serviceConfig.getInstanceId()
+						)
 						: "");
 				} catch (UserInterruptException e) {
 					String message = logger.log(UIMessage.USER_INTERRUPT);

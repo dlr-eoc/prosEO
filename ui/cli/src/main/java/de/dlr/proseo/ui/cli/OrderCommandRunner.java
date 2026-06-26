@@ -552,6 +552,7 @@ public class OrderCommandRunner {
 		RestOrder updatedOrder = null;
 		if (null == orderFile) {
 			updatedOrder = new RestOrder();
+			updatedOrder.setSlicingType(null);
 		} else {
 			try {
 				updatedOrder = CLIUtil.parseObjectFile(orderFile, orderFileFormat, RestOrder.class);
