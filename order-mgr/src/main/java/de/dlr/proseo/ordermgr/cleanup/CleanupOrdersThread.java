@@ -63,7 +63,12 @@ public class CleanupOrdersThread extends Thread {
 
 				for (Long orderId : orderIdsToDelete) {
 					// One transaction per delete operation
-					orderMgr.getProcOrderManager().deleteExpiredOrderById(orderId, evictionTime);
+					try {
+						orderMgr.getProcOrderManager().deleteExpiredOrderById(orderId, evictionTime);
+					} catch (Exception e) {
+						logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " / " + e.getMessage());
+						// continue loop anyway
+					}
 				}
 
 				logger.log(OrderMgrMessage.ORDER_CLEANUP_SLEEP, wait);
@@ -73,7 +78,14 @@ public class CleanupOrdersThread extends Thread {
 				break;
 			} catch (Exception e) {
 				logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " / " + e.getMessage());
-				// continue loop anyway
+				// continue loop anyway also mit wait
+				logger.log(OrderMgrMessage.ORDER_CLEANUP_SLEEP, wait);
+				try {
+					sleep(wait);
+				} catch (InterruptedException e1) {
+					logger.log(OrderMgrMessage.ORDER_CLEANUP_TERMINATE);
+					break;
+				}				
 			}
 		}
 	}
