@@ -439,10 +439,12 @@ public class OrderCommandRunner {
 		}
 		
 		/* Prepare request URI */
-		String requestURI = URI_PATH_ORDERS + "?mission=" + loginManager.getMission();
+		String requestURI = URI_PATH_ORDERS + "/select" + "?mission=" + loginManager.getMission();
 		
 		/* Check whether order ID is given (overrides --from and --to options) or --from and/or --to parameters are set */
 		if (showCommand.getParameters().isEmpty()) {
+			String col = "identifier";
+			String dir = " asc";
 			for (ParsedOption option: showCommand.getOptions()) {
 				try {
 					if ("from".equals(option.getName())) {
@@ -454,12 +456,36 @@ public class OrderCommandRunner {
 							startTimeTo = startTimeTo.plusSeconds(1);
 						}
 						requestURI += "&startTimeTo=" + formatter.format(startTimeTo);
+					} else if ("orderState".equals(option.getName())) {
+						requestURI += "&state=" + option.getValue();
+					} else if ("sortBy".equals(option.getName())) {
+						String[] order = option.getValue().split(":");
+						if (order.length == 2) {
+							String col1 = order[0].toLowerCase();
+							String dir1 = order[1].toLowerCase();
+							if (col1.equals("name") || col1.equals("orderid") || col1.equals("identifier")) {
+								col = "identifier";
+							}
+							if (col1.equals("orderstate") || col1.equals("state")) {
+								col = "orderState";
+							}
+							if (col1.equals("id")) {
+								col = "id";
+							}
+							if (dir1.equals("up") || dir1.equals("asc")) {
+								dir = "%20asc";
+							}
+							if (dir1.equals("down") || dir1.equals("desc")) {
+								dir = "%20desc";
+							}
+						}
 					}
 				} catch (DateTimeException e) {
 					System.err.println(ProseoLogger.format(UIMessage.INVALID_TIME, option.getValue()));
 					return;
 				}
 			}
+			requestURI += "&orderBy=" + col + dir;
 		} else {
 			requestURI += "&identifier=" + URLEncoder.encode(showCommand.getParameters().get(0).getValue(), Charset.defaultCharset());  // only one parameter expected
 		}

@@ -297,10 +297,16 @@ commands:
           options:
             - name: from
               type: datetime
-              description: Lower bound of order start time (rounded down to next full second)
+              description: Lower bound of order start time ('yyyy-mm-dd[Thh:mm:ss[.ssssss]]', rounded down to next full second)
             - name: to
               type: datetime
-              description: Upper bound of order start time (rounded up to next full second)
+              description: Upper bound of order start time ('yyyy-mm-dd[Thh:mm:ss[.ssssss]]', rounded up to next full second)
+            - name: orderState
+              type: string
+              description: The job state (one of { INITIAL, APPROVED, PLANNING, PLANNING_FAILED, PLANNED, RELEASING, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED })
+            - name: sortBy
+              type: string
+              description: The sort column (one of { id, orderId|name, orderState|state }) and sort direction (asc or desc) divided by ':'. The default is 'name:asc'
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
@@ -1204,10 +1210,10 @@ commands:
           options:
             - name: from
               type: datetime
-              description: Lower bound of sensing start time (rounded down to next full second)
+              description: Lower bound of sensing start time ('yyyy-mm-dd[Thh:mm:ss[.ssssss]]'', rounded down to next full second)
             - name: to
               type: datetime
-              description: Upper bound of sensing start time (rounded up to next full second)
+              description: Upper bound of sensing start time ('yyyy-mm-dd[Thh:mm:ss[.ssssss]]'', rounded up to next full second)
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
