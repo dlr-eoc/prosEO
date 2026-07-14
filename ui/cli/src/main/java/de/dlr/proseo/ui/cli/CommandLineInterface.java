@@ -110,6 +110,17 @@ public class CommandLineInterface implements CommandLineRunner {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(CommandLineInterface.class);
 	
+	private static CommandLineInterface commandLineInterface = null;
+	
+	/**
+	 * @return the commandLineInterface
+	 */
+	public static CommandLineInterface getCommandLineInterface() {
+		return commandLineInterface;
+	}
+
+
+
 	/**
 	 * Check the program invocation arguments (-i/--identFile, -m/--mission) and remove them from the command line
 	 * 
@@ -150,6 +161,17 @@ public class CommandLineInterface implements CommandLineRunner {
 		return Arrays.asList(commandBuilder.toString(), identFile, mission);
 	}
 	
+	
+	
+	/**
+	 * @return the loginManager
+	 */
+	public LoginManager getLoginManager() {
+		return loginManager;
+	}
+
+
+
 	/**
 	 * Execute the given command (may result in just evaluating the top-level options; "exit" is handled in main command loop)
 	 * 
@@ -283,6 +305,7 @@ public class CommandLineInterface implements CommandLineRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> run({})", args.toString());
 		
 		// Initialize the CLI
+		commandLineInterface = this;
 		try {
 			parser.loadSyntax();
 		} catch (FileNotFoundException e) {
