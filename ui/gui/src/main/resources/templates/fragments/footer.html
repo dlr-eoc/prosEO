@@ -31,7 +31,7 @@
   </head>
 <body>
 <div th:fragment="footer">
-<div class="alert alert-dark" role="alert">
+<div class="alert alert-dark" role="alert" th:style="'background-color: ' + ${instanceenvcolor} + ' !important;'">
 <div class="container-fluid">
 <p><span th:text="#{proseo}"></span> - <span th:text="#{missioncontrol}"></span> - <span th:text="#{version}"></span> <span th:text="${proseoversion}"></span> - <span th:text="#{copyright}"></span></p>	
 	

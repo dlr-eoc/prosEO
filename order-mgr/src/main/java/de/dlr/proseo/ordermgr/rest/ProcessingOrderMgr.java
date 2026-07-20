@@ -431,6 +431,7 @@ public class ProcessingOrderMgr {
 						RepositoryService.getProductQueryRepository().delete(pq);
 					}
 					js.getInputProductQueries().clear();
+					RepositoryService.getJobStepRepository().save(js);
 				}
 			}
 		}
@@ -457,6 +458,12 @@ public class ProcessingOrderMgr {
 			history.setDeletionTime(Instant.now());
 			RepositoryService.getProcessingOrderHistoryRepository().save(history);
 		}
+		// Delete job steps and jobs
+
+		for (Job j : order.getJobs()) {
+			RepositoryService.getJobStepRepository().deleteAll(j.getJobSteps());
+		}
+		RepositoryService.getJobRepository().deleteAll(order.getJobs());
 		RepositoryService.getOrderRepository().delete(order);
 		// Test whether the deletion was successful
 		Optional<ProcessingOrder> modelOrder = RepositoryService.getOrderRepository().findById(id);
@@ -1153,6 +1160,10 @@ public class ProcessingOrderMgr {
 		}
 		if (modelOrder.isAutoClose() != changedOrder.isAutoClose()) {
 			modelOrder.setAutoClose(changedOrder.isAutoClose());
+			orderChanged = true;
+		}
+		if (modelOrder.getAutoGenerateSteps() != changedOrder.getAutoGenerateSteps()) {
+			modelOrder.setAutoGenerateSteps(changedOrder.getAutoGenerateSteps());
 			orderChanged = true;
 		}
 

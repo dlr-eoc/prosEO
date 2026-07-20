@@ -9,11 +9,19 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import de.dlr.proseo.model.enums.UserRole;
+import de.dlr.proseo.ui.backend.LoginManager;
+import de.dlr.proseo.ui.cli.CommandLineInterface;
+
 /**
  * Class representing a prosEO CLI command
  *
  * @author Thomas Bassler
  */
+@Component
 public class CLICommand {
 
 	/** Message indicating that a parameter is optional */
@@ -25,6 +33,8 @@ public class CLICommand {
 	private String name = "";
 	/** Command description (help text) */
 	private String description = "";
+	/** Command right */
+	private String right = "";
 	/** Available subcommands */
 	private List<CLICommand> subcommands = new ArrayList<>();
 	/** Command options */
@@ -66,6 +76,22 @@ public class CLICommand {
 	 */
 	public void setDescription(String description) {
 		this.description = description;
+	}
+	
+	/**
+	 * Sets the command rights
+	 *
+	 * @param rights the rights to set
+	 */
+	public void setRight(String right) {
+		this.right = right;
+	}
+
+	/**
+	 * @return the right
+	 */
+	public String getRight() {
+		return right;
 	}
 
 	/**
@@ -150,12 +176,27 @@ public class CLICommand {
 		}
 
 		out.println("Subcommands:");
-		if (subcommands.isEmpty()) {
-			out.println("    -- none --");
-		} else {
-			for (CLICommand subcommand : subcommands) {
+		Boolean isEmpty = true; 
+		for (CLICommand subcommand : subcommands) {
+			if (!subcommand.getRight().isEmpty()) {
+				if (subcommand.getRight().contains("ROLE_PRODUCT_READER")) {
+					if (CommandLineInterface.getCommandLineInterface().getLoginManager().getAuthorities().contains("ROLE_PRODUCT_READER") ||
+						CommandLineInterface.getCommandLineInterface().getLoginManager().getAuthorities().contains("ROLE_PRODUCT_READER_ALL") ||
+						CommandLineInterface.getCommandLineInterface().getLoginManager().getAuthorities().contains("ROLE_PRODUCT_READER_RESTRICTED")) {
+						out.println(String.format("    %-16s  %s", subcommand.getName(), subcommand.getDescription().replace('\n', ' ')));
+						isEmpty = false;
+					}
+				} else if (CommandLineInterface.getCommandLineInterface().getLoginManager().getAuthorities().contains(subcommand.getRight())) {
+					out.println(String.format("    %-16s  %s", subcommand.getName(), subcommand.getDescription().replace('\n', ' ')));
+					isEmpty = false;
+				}
+			} else {
 				out.println(String.format("    %-16s  %s", subcommand.getName(), subcommand.getDescription().replace('\n', ' ')));
+				isEmpty = false;
 			}
+		}
+		if (isEmpty) {
+			out.println("    -- none --");
 		}
 	}
 

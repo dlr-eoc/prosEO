@@ -26,6 +26,7 @@ import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
+import de.dlr.proseo.model.enums.ThreeValueBool;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestInputReference;
@@ -101,6 +102,12 @@ public class OrderUtil {
 		}
 		if (null != processingOrder.getEvictionTime()) {
 			restOrder.setEvictionTime(Date.from(processingOrder.getEvictionTime()));
+		}
+
+		if (null != processingOrder.getAutoGenerateSteps()) {
+			restOrder.setAutoGenerateSteps(processingOrder.getAutoGenerateSteps().toString());
+		} else {
+			restOrder.setAutoGenerateSteps(ThreeValueBool.DEFAULT.toString());
 		}
 		if(null != processingOrder.getSlicingType()) {
 			restOrder.setSlicingType(processingOrder.getSlicingType().name());
@@ -392,6 +399,11 @@ public class OrderUtil {
 		}
 		processingOrder.setPriority(restOrder.getPriority());
 		processingOrder.setOrderState(OrderState.valueOf(restOrder.getOrderState()));
+		if (restOrder.getAutoGenerateSteps() != null) {
+			processingOrder.setAutoGenerateSteps(ThreeValueBool.valueOf(restOrder.getAutoGenerateSteps()));
+		} else {
+			processingOrder.setAutoGenerateSteps(ThreeValueBool.DEFAULT);
+		}
 		processingOrder.setStateMessage(restOrder.getStateMessage());
 		processingOrder.setProcessingMode(restOrder.getProcessingMode());
 		processingOrder.setAutoClose(restOrder.getAutoClose());

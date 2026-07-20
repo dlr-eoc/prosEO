@@ -25,6 +25,8 @@ proseo:
         notifyPlanner: true
         # Notify Order Generator upon product ingestion? (Set to true for Systematic Production with triggers)
         notifyOrderGen: true
+        # Wait time to delete products with eviction time set automatically in the cleanup cycle.  
+        productDeleteDelay: 90
     productionPlanner:
         # URL for Production Planner (leave as empty string [""] if no Planner is installed)
         url: http://proseo-prodplanner:8080/proseo/planner/v0.1

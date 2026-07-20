@@ -69,7 +69,7 @@
          
          <div style="margin-bottom: 10px;">
             <label for="mission" style="display: inline-block; width: 100px;"><span th:text="#{missions}"></label>
-            <select id="mission" name="mission">
+            <select id="mission"  th:style="'background-color: ' + ${instanceenvcolor} + ' !important;'" name="mission">
                <option th:each="miss : ${missions}" th:text="${miss}" th:label="${miss}"></option>
             </select>
          </div>

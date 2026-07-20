@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.ingestor.cleanup;
 
+import java.time.Duration;
 import java.time.Instant;
 
 import de.dlr.proseo.ingestor.IngestorApplication;
@@ -64,6 +65,8 @@ public class CleanupProductThread extends Thread {
 			Instant t = Instant.now();
 			// search for products to delete
 			ingestor.getProductIngestor().deleteProductFilesOlderThan(t);
+			
+			ingestor.getProductIngestor().deleteProductsOlderThan(t.minus(Duration.ofDays(ingestor.getIngestorConfig().getProductDeleteDelay())));
 			
 			try {
 				sleep(wait);

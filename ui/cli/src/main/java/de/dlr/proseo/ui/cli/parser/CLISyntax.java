@@ -23,6 +23,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
+import de.dlr.proseo.ui.cli.CommandLineInterface;
 
 /**
  * Representation of the prosEO Command Line Interface syntax
@@ -304,8 +305,27 @@ public class CLISyntax {
 							option.getName(), option.getDescription().replace('\n', ' ')));
 		}
 		out.println("Commands:");
+		Boolean isEmpty = true; 
 		for (CLICommand command : commands) {
-			out.println(String.format("    %-16s  %s", command.getName(), command.getDescription().replace('\n', ' ')));
+			if (!command.getRight().isEmpty()) {
+				if (command.getRight().contains("ROLE_PRODUCT_READER")) {
+					if (CommandLineInterface.getCommandLineInterface().getLoginManager().getAuthorities().contains("ROLE_PRODUCT_READER") ||
+						CommandLineInterface.getCommandLineInterface().getLoginManager().getAuthorities().contains("ROLE_PRODUCT_READER_ALL") ||
+						CommandLineInterface.getCommandLineInterface().getLoginManager().getAuthorities().contains("ROLE_PRODUCT_READER_RESTRICTED")) {
+						out.println(String.format("    %-16s  %s", command.getName(), command.getDescription().replace('\n', ' ')));
+						isEmpty = false;
+					}
+				} else if (CommandLineInterface.getCommandLineInterface().getLoginManager().getAuthorities().contains(command.getRight())) {
+					out.println(String.format("    %-16s  %s", command.getName(), command.getDescription().replace('\n', ' ')));
+					isEmpty = false;
+				}
+			} else {
+				out.println(String.format("    %-16s  %s", command.getName(), command.getDescription().replace('\n', ' ')));
+				isEmpty = false;
+			}
+		}
+		if (isEmpty) {
+			out.println("    -- none --");
 		}
 	}
 

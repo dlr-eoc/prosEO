@@ -148,6 +148,9 @@
         type: boolean
         default: false
         description: Flag determining whether the order will fail when the input timeout period is reached
+      autoGenerateSteps?:    
+        type: string
+        description: Indicates whether automatic job step derivation is done. If attribute is not set (null), the default as configured for the Production Planner will be used.
         
       # The fields below are only needed for order display and will therefore only be returned on "get..." requests
       hasFailedJobSteps?:

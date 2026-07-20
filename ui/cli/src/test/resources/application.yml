@@ -8,7 +8,12 @@ logging:
         de.dlr.proseo: TRACE
     file:
         name: proseo-ui-cli.log
-proseo:
+proseo: 
+    instance:
+        # instance identifier
+        id: local
+        # instance environment is one of dev (development), val (evaluation) or ops (operational)
+        environment: dev
     cli:
         syntaxfile: ui-cli-syntax.yml
     

@@ -290,7 +290,7 @@ public class GUIOrderController extends GUIBaseController {
 	            HttpStatus status = null;
 	            // If e is WebClientResponseException (or HttpClientErrorException), extract status:
 	            if (e instanceof org.springframework.web.reactive.function.client.WebClientResponseException) {
-	                status = HttpStatus.valueOf(((org.springframework.web.reactive.function.client.WebClientResponseException) e).getRawStatusCode());
+	                status = HttpStatus.valueOf(((org.springframework.web.reactive.function.client.WebClientResponseException) e).getStatusCode().value());
 	            }
 	            String body = e.getMessage();
 	            // set an HTTP error ResponseEntity as error result — prevents Thymeleaf from trying to resolve a view

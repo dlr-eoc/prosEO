@@ -8,6 +8,7 @@
         "outputFileClass": "RPRO",
         "processingMode": "OFFL",
         "slicingType": "NONE",
+        "autoGenerateSteps": "DEFAULT",
         "inputFilters": [
             {
                 "productClass": "L2__CLOUD_",
