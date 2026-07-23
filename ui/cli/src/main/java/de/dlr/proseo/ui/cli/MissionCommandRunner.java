@@ -64,6 +64,7 @@ public class MissionCommandRunner {
 	private static final String PROMPT_MISSION_CODE = "Mission code (empty field cancels): ";
 	private static final String PROMPT_MISSION_NAME = "Mission name (empty field cancels): ";
 	private static final String PROMPT_FILE_TEMPLATE = "Product file name template (empty field cancels): ";
+
 	private static final String PROMPT_SPACECRAFT_CODE = "Spacecraft code (empty field cancels): ";
 	private static final String PROMPT_SPACECRAFT_NAME = "Spacecraft name (empty field cancels): ";
 	private static final String PROMPT_ORBIT_NUMBER = "Orbit number (empty field cancels): ";
@@ -91,6 +92,12 @@ public class MissionCommandRunner {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(MissionCommandRunner.class);
 
+	/**
+	 * @return the loginManager
+	 */
+	public LoginManager getLoginManager() {
+		return loginManager;
+	}
 	/**
 	 * Retrieve the mission with the given code, notifying the user of any errors occurring
 	 * 

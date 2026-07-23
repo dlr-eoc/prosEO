@@ -1,6 +1,6 @@
 /**
  * ApiMonitorMessage.java
- * 
+ *
  * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.logging.messages;
@@ -13,12 +13,12 @@ import org.slf4j.event.Level;
  * @author Dr. Thomas Bassler
  */
 public enum ApiMonitorMessage implements ProseoMessage {
-	
+
 	// -- Base Monitor --
 	INTERRUPTED						(7000, Level.INFO, true, "Interrupt received while waiting for next check of pickup point", ""),
 	TRANSFER_FAILED					(7001, Level.ERROR, false, "Transfer of object {0} failed", ""),
 	FOLLOW_ON_ACTION_FAILED			(7002, Level.ERROR, false, "Follow-on action for object {0} failed", ""),
-	HISTORY_READ_FAILED				(7003, Level.ERROR, false, "Failed to read transfer history file {0} (cause: {1})", ""),	 
+	HISTORY_READ_FAILED				(7003, Level.ERROR, false, "Failed to read transfer history file {0} (cause: {1})", ""),
 	HISTORY_WRITE_FAILED			(7004, Level.ERROR, false, "Failed to write transfer history file {0} (cause: {1})", ""),
 	ABORTING_MONITOR				(7005, Level.ERROR, false, "Aborting monitor due to IOException (cause: {0})", ""),
 	ILLEGAL_HISTORY_ENTRY_FORMAT 	(7006, Level.ERROR, false, "Transfer history entry ''{0}'' has illegal format", ""),
@@ -72,12 +72,14 @@ public enum ApiMonitorMessage implements ProseoMessage {
 	PRODUCT_TRANSFER_COMPLETED	(7037, Level.INFO, true, "Transfer completed: |{0}|{1}|{2}|{3}|{4}|", ""),
 	PRODUCT_DOWNLOAD_FAILED_AFTER_RETRIES	(7038, Level.ERROR, false, "Download of product file {0} failed after {1} retries (cause: {2})", ""),
 	PRODUCT_DOWNLOAD_FAILED		(7039, Level.ERROR, false, "Download of product file {0} failed (cause: {2})", ""),
-	
+	PRODUCT_DELETION_FAILED 	(7040, Level.ERROR, false, "Deletion of product {0} failed", ""),
+	UNEXPECTED_STATUS_CODE		(7041, Level.ERROR, false, "Unexpected status: {0}", ""),
+
 	// -- EDIP Monitor --
 	EDIP_NOT_READABLE			(7050, Level.ERROR, false, "EDIP directory {0} not readable (cause: {1})", ""),
 	EDIP_ENTRY_MALFORMED		(7051, Level.WARN, true, "Malformed EDIP directory entry {0} found - skipped", ""),
 	INVALID_EDIP_ID				(7052, Level.ERROR, false, "Invalid EDIP Monitor identifier {0} passed", ""),
-	
+
 	EDIP_START_MESSAGE			(7099, Level.INFO, true, "------  Starting EDIP Monitor  ------\n"
 															+ "EDIP directory . . . . . . : {0}\n"
 															+ "Satellite  . . . . . . . . : {1}\n"
@@ -94,7 +96,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 															+ "File download wait time  . : {12}\n"
 															+ "Max. file wait cycles  . . : {13}"
 															,""),
-	
+
 	// -- XBIP/CADIP Monitor --
 	XBIP_NOT_READABLE			(7100, Level.ERROR, false, "XBIP directory {0} not readable (cause: {1})", ""),
 	TRANSFER_OBJECT_IS_NULL		(7101, Level.ERROR, false, "Transfer object is null - skipped", ""),
@@ -133,7 +135,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 	QUALITY_WAIT_INTERRUPTED	(7135, Level.ERROR, false, "Wait for quality info of session {0} failed due to interrupt", ""),
 	QUALITY_WAIT_TIMEOUT		(7136, Level.ERROR, false, "Timeout after {0} s during wait for quality info of session {1}, session download cancelled", ""),
 	PARALLEL_ACTION_STARTED		(7137, Level.INFO, true, "Parallel action for session {0} started with command {1}", ""),
-	
+
 	CADIP_START_MESSAGE			(7198, Level.INFO, true, "------  Starting CADIP Monitor  ------\n"
 															+ "CADIP base URI . . . . . . : {0}\n"
 															+ "CADIP context. . . . . . . : {1}\n"
@@ -154,7 +156,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 															+ "File download wait time  . : {16}\n"
 															+ "Max. file wait cycles  . . : {17}"
 															,""),
-	
+
 	XBIP_START_MESSAGE			(7199, Level.INFO, true, "------  Starting XBIP Monitor  ------\n"
 															+ "XBIP directory . . . . . . : {0}\n"
 															+ "Satellite  . . . . . . . . : {1}\n"
@@ -171,7 +173,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 															+ "File download wait time  . : {12}\n"
 															+ "Max. file wait cycles  . . : {13}"
 															,""),
-	
+
 	;
 
 	private final int code;
@@ -190,7 +192,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 
 	/**
 	 * Get the message's code.
-	 * 
+	 *
 	 * @return The message code.
 	 */
 	public int getCode() {
@@ -199,7 +201,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 
 	/**
 	 * Get a more detailed description of the message's purpose.
-	 * 
+	 *
 	 * @return A description of the message.
 	 */
 	public String getDescription() {
@@ -208,7 +210,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 
 	/**
 	 * Get the message's level.
-	 * 
+	 *
 	 * @return The message level.
 	 */
 	public Level getLevel() {
@@ -217,7 +219,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 
 	/**
 	 * Get the message.
-	 * 
+	 *
 	 * @return The message.
 	 */
 	public String getMessage() {
@@ -226,7 +228,7 @@ public enum ApiMonitorMessage implements ProseoMessage {
 
 	/**
 	 * Get the message's success.
-	 * 
+	 *
 	 * @return The message's success.
 	 */
 	public boolean getSuccess() {

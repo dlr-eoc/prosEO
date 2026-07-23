@@ -58,6 +58,39 @@ public class ServiceConfiguration {
 	@Value("${proseo.http.timeout}")
 	private Long httpTimeout;
 
+	/** The prosEO instance identifier */
+	@Value("${proseo.instance.id}")
+	private String instanceId = "";
+
+	/** The prosEO instance environment is one of dev (development), val (evaluation) or ops (operational) */
+	@Value("${proseo.instance.environment}")
+	private String instanceEnvironment = "ops";
+
+	/** The prosEO instance environment color for environment setting (background color of left-top and footer) */
+	@Value("${proseo.instance.environmentColor}")
+	private String instanceEnvironmentColor = "gray";
+	
+	/**
+	 * @return the instanceId
+	 */
+	public String getInstanceId() {
+		return instanceId;
+	}
+
+	/**
+	 * @return the instanceEnvironment
+	 */
+	public String getInstanceEnvironment() {
+		return instanceEnvironment;
+	}
+	
+	/**
+	 * @return the instanceEnvironmentColor
+	 */
+	public String getInstanceEnvironmentColor() {
+		return instanceEnvironmentColor;
+	}
+
 	/**
 	 * Gets the URL of the prosEO User Manager component
 	 *

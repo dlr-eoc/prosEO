@@ -823,6 +823,7 @@ public class ProductIngestor {
 		transactionTemplate.setReadOnly(true);
 		List<Long> productFileIds = new ArrayList<Long>(); 
 		transactionTemplate.execute((status) -> {
+			List<Long> productIds = RepositoryService.getProductRepository().findByEvictionTimeLessThanAndWithoutFile(t);
 			List<Product> products = RepositoryService.getProductRepository().findByEvictionTimeLessThan(t);
 			for (Product product : products) {
 				for (ProductFile aProductFile : product.getProductFile()) {
@@ -873,6 +874,131 @@ public class ProductIngestor {
 			}
 		}
 		logger.log(IngestorMessage.NUMBER_PRODUCT_FILES_DELETED, productFilesDeleted);
+	}
+
+	/**
+	 * Delete all products with eviction time older than t and without a file.
+	 *
+	 * @param t The Instant for eviction time
+	 */
+	@Transactional(isolation = Isolation.REPEATABLE_READ)
+	public void deleteProductsOlderThan(Instant t) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteProductsOlderThan({})", t);
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		transactionTemplate.setReadOnly(true);
+		List<Long> productIds = new ArrayList<Long>(); 
+		transactionTemplate.execute((status) -> {
+			productIds.addAll(RepositoryService.getProductRepository().findByEvictionTimeLessThanAndWithoutFile(t));
+			return null;
+		});
+
+		long productsDeleted = 0;
+		transactionTemplate.setReadOnly(false);
+		for (Long productId : productIds) {
+			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
+				try {
+					productsDeleted += transactionTemplate.execute((status) -> {
+						Optional<Product> opt = RepositoryService.getProductRepository().findById(productId);
+						long delCount = 0;
+						if (opt.isPresent()) {
+							Product product = opt.get();
+							try {
+								delCount = deleteProductTree(product);
+
+								// ignore known exceptions cause already logged
+							} catch (EntityNotFoundException e) {
+								return delCount;
+							} catch (ProcessingException e) {
+								return delCount;
+							} catch (IllegalArgumentException e) {
+								return delCount;
+							} catch (RuntimeException e) {
+								return delCount;
+							}			
+							return delCount;
+						}
+						return delCount;			
+					});	
+				} catch (CannotAcquireLockException e) {
+					if (logger.isDebugEnabled())
+						logger.debug("... database concurrency issue detected: ", e);
+
+					if ((i + 1) < ProseoUtil.DB_MAX_RETRY) {
+						ProseoUtil.dbWait();
+					} else {
+						if (logger.isDebugEnabled())
+							logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+						throw e;
+					}
+				}
+			}
+		}
+		logger.log(IngestorMessage.NUMBER_PRODUCTS_DELETED, productsDeleted);
+	}
+
+	/**
+	 * Delete (recursively) the product (tree).
+	 * 
+	 * @param product the product to delete
+	 * @return number of deleted products
+	 */
+	private long deleteProductTree(Product product) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteProductTree({})", product == null ? 0 : product.getId());
+		long delCount = 0;
+
+		List<Product> components = new ArrayList<Product>();
+		components.addAll(product.getComponentProducts());
+		for(Product comp : components) {
+			delCount += deleteProductTree(comp);
+		}
+		
+		try {
+			deleteProduct(product);
+			// ignore known exceptions cause already logged
+		} catch (EntityNotFoundException e) {
+			return delCount;
+		} catch (ProcessingException e) {
+			return delCount;
+		} catch (IllegalArgumentException e) {
+			return delCount;
+		} catch (RuntimeException e) {
+			return delCount;
+		}	
+		delCount++;
+		return delCount;
+	}
+	/**
+	 * Delete a product 
+	 *
+	 * @param id the product to delete
+	 * @throws EntityNotFoundException if the product to delete does not exist in
+	 *                                 the database
+	 * @throws IllegalStateException   if the product to delete still as files at
+	 *                                 some Processing Facility
+	 */
+	private void deleteProduct(Product product)
+			throws EntityNotFoundException, IllegalStateException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteProduct({})",  product == null ? 0 : product.getId());
+
+		// Test whether the product id is valid
+		if (product == null) {
+			throw new EntityNotFoundException(logger.log(IngestorMessage.PRODUCT_NOT_FOUND, product.getId()));
+		}
+
+		// Make sure product (including all component products) does not exist on any
+		// Processing Facility
+		if (!product.getProductFile().isEmpty()) {
+			throw new IllegalStateException(logger.log(IngestorMessage.PRODUCT_HAS_FILES, product.getId()));
+		}
+
+		// Delete the product
+		RepositoryService.getProductRepository().deleteById(product.getId());
+
+		logger.log(IngestorMessage.PRODUCT_DELETED,  product.getId());
 	}
 
 	/**

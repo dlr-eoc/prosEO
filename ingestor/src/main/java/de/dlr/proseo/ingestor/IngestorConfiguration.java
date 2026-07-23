@@ -66,6 +66,10 @@ public class IngestorConfiguration {
 	/** Wait time for cleanup */
 	@Value("${proseo.ingestor.cleanupCycleTime}")
 	private Integer cleanupCycleTime;
+	
+	/** Wait time for product delete in days */
+	@Value("${proseo.ingestor.productDeleteDelay}")
+	private Integer productDeleteDelay;
 
 	/** Notify Production Planner upon product ingestion */
 	@Value("${proseo.ingestor.notifyPlanner:true}")
@@ -233,4 +237,11 @@ public class IngestorConfiguration {
 		return maxResults;
 	}
 
+	/**
+	 * @return the productDeleteDelay
+	 */
+	public Integer getProductDeleteDelay() {
+		return productDeleteDelay;
+	}
+	
 }

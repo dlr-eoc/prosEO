@@ -102,9 +102,11 @@ commands:
     # Order manager commands:
     - name: mission
       description: Commands related to configuring an earth observation mission
+      right: ROLE_MISSION_READER
       subcommands:
         - name: show
           description: List all configured missions or only the given one
+          right: ROLE_MISSION_READER
           options:
             - name: format
               type: string
@@ -120,6 +122,7 @@ commands:
               description: The code of the mission to list
         - name: create
           description: Create a new earth observation mission in prosEO
+          right: ROLE_MISSION_MGR
           options:
             - name: file
               type: string
@@ -141,6 +144,7 @@ commands:
                            overrides values given in the mission definition file
         - name: update
           description: Update the mission attributes
+          right: ROLE_MISSION_MGR
           options:
             - name: file
               type: string
@@ -161,6 +165,7 @@ commands:
                            overrides values given in the mission definition file
         - name: delete
           description: Delete the named mission (optionally including configured items and stored products)
+          right: ROLE_MISSION_MGR
           options:
             - name: force
               type: boolean
@@ -176,10 +181,12 @@ commands:
               description: The code of the mission to delete
         - name: spacecraft
           description: Commands to manage the spacecrafts for a mission
+          right: ROLE_MISSION_MGR
           subcommands:
             - name: add
               description: Add a spacecraft to the mission list of spacecrafts; 
                            the user will be prompted for mandatory attributes not given on the command line
+              right: ROLE_MISSION_MGR
               options:
                 - name: file
                   type: string
@@ -200,15 +207,18 @@ commands:
                   description: A spacecraft attribute to set in the form "<attribute name>=<attribute value>"
             - name: remove
               description: Remove a spacecraft from the mission list of spacecrafts
+              right: MISSION ROLE_MGR
               parameters:
                 - name: spacecraftCode
                   type: string
                   description: The code of the spacecraft to remove
     - name: orbit
       description: Commands for managing orbits for a given spacecraft
+      right: ROLE_MISSION_READER
       subcommands:
         - name: show
           description: Lists orbits, optionally restricted to a given orbit number range
+          right: ROLE_MISSION_READER
           options:
             - name: from
               type: integer
@@ -229,6 +239,7 @@ commands:
               description: The code of the spacecraft the orbits belong to
         - name: create
           description: Add or update a set of orbits for the given spacecraft (existing orbits will be updated)
+          right: ROLE_MISSION_MGR
           options:
             - name: file
               type: string
@@ -250,6 +261,7 @@ commands:
                            only allowed if no orbit file is given (i. e. a single orbit is created)
         - name: update
           description: Update a set of orbits for the given spacecraft
+          right: ROLE_MISSION_MGR
           options:
             - name: file
               type: string
@@ -275,6 +287,7 @@ commands:
                            only allowed if no orbit file is given (i. e. a single orbit is updated)
         - name: delete
           description: Deletes orbits in a given orbit range
+          right: ROLE_MISSION_MGR
           parameters:
             - name: spacecraftCode
               type: string
@@ -291,16 +304,24 @@ commands:
                    Order status sequence is Initial - Approved - Planned - Released - Running - Completed/Failed - Closed.
                    Additionally an order may be in status "Suspending" after issuing a "suspend" command, until all running
                    job steps are finished.
+      right: ROLE_ORDER_READER
       subcommands:
         - name: show
           description: Lists orders, optionally restricted to a given time range or a specific processing order
+          right: ROLE_ORDER_READER
           options:
             - name: from
               type: datetime
-              description: Lower bound of order start time (rounded down to next full second)
+              description: Lower bound of order start time ('yyyy-mm-dd[Thh:mm:ss[.ssssss]]', rounded down to next full second)
             - name: to
               type: datetime
-              description: Upper bound of order start time (rounded up to next full second)
+              description: Upper bound of order start time ('yyyy-mm-dd[Thh:mm:ss[.ssssss]]', rounded up to next full second)
+            - name: orderState
+              type: string
+              description: The order state (one of { INITIAL, APPROVED, PLANNING, PLANNING_FAILED, PLANNED, RELEASING, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED })
+            - name: sortBy
+              type: string
+              description: The sort column (one of { id, orderId|name, orderState|state }) and sort direction (asc or desc) divided by ':'. The default is 'name:asc'
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
@@ -317,6 +338,7 @@ commands:
           description: Create a new processing order (in status Initial); if the input is not from a file,
                        the user will be prompted for mandatory attributes not given on the command line
                        (when prompted for orbits, orbit ranges may be given, e. g. "3000-3003,3005,3009-3011")
+          right: ROLE_ORDER_MGR
           options:
             - name: file
               type: string
@@ -338,6 +360,7 @@ commands:
                            overrides values given in the order definition file
         - name: update
           description: Update a processing order (only allowed in status Initial)
+          right: ROLE_ORDER_MGR
           options:
             - name: file
               type: string
@@ -362,6 +385,7 @@ commands:
                            overrides values given in the order definition file
         - name: approve
           description: Approve the named processing order for planning (must be in status Initial, new status is Approved)
+          right: ROLE_ORDER_APPROVER
           parameters:
             - name: orderId
               type: string
@@ -384,6 +408,7 @@ commands:
         - name: reset
           description: Reset the named processing order to initial state (must be in status Approved or Planned,
                        new status is Initial)
+          right: ROLE_ORDER_MGR
           parameters:
             - name: orderId
               type: string
@@ -393,6 +418,7 @@ commands:
                        new status is Released; order status will change to Running, when execution of the first job step starts;
                        when all job steps are finished, the status will change again to Completed, if all job steps finished
                        successfully, or Failed, if at least one job step failed)
+          right: ROLE_ORDER_MGR
           parameters:
             - name: orderId
               type: string
@@ -400,6 +426,7 @@ commands:
         - name: suspend
           description: Suspend starting of further jobs for the named processing order (must be in status Released or Running, 
                        new status is Suspending, then Planned, when all running job steps are finished)
+          right: ROLE_ORDER_MGR
           options:
             - name: force
               type: boolean
@@ -412,6 +439,7 @@ commands:
         - name: resume
           description: Resume starting of jobs for the named processing order after suspend (order must be in status Planned,
                        new status is Released [actually the same command as "release"])
+          right: ROLE_ORDER_MGR
           parameters:
             - name: orderId
               type: string
@@ -419,6 +447,7 @@ commands:
         - name: cancel
           description: Cancel the named processing order (remaining jobs are not executed, order state changes to Failed;
               order must be in status Planned, i. e. it may be necessary to issue a "suspend" command first)
+          right: ROLE_ORDER_MGR
           parameters:
             - name: orderId
               type: string
@@ -426,27 +455,32 @@ commands:
         - name: retry
           description: Retry the named processing order (failed job steps and jobs are set to status Initial, the order itself
               is set to status Planned, order must be in status Failed)
+          right: ROLE_ORDER_MGR
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: close
           description: Close the named processing order (must be in status Completed or Failed, new status is Closed)
+          right: ROLE_ORDER_MGR
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: delete
           description: Delete the named processing order (only allowed in status Initial or Closed)
+          right: ROLE_ORDER_MGR
           parameters:
             - name: orderId
               type: string
               description: The order identifier
     - name: ordertemplate
       description: Commands for managing processing order templates
+      right: ROLE_ORDER_READER
       subcommands:
         - name: show
           description: Lists order templates
+          right: ROLE_ORDER_READER
           options:
             - name: format
               type: string
@@ -463,6 +497,7 @@ commands:
         - name: create
           description: Create a new order template; if the input is not from a file,
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_ORDER_MGR
           options:
             - name: file
               type: string
@@ -484,6 +519,7 @@ commands:
                            overrides values given in the order definition file
         - name: update
           description: Update an order template
+          right: ROLE_ORDER_MGR
           options:
             - name: file
               type: string
@@ -508,6 +544,7 @@ commands:
                            overrides values given in the order definition file
         - name: delete
           description: Delete the named order template
+          right: ROLE_ORDER_MGR
           parameters:
             - name: name
               type: string
@@ -519,9 +556,11 @@ commands:
                    Job status sequence is Initial - Released - Started - Completed/Failed.
                    Additionally a job may be in status "On Hold" after issuing a "suspend" command, until all running
                    job steps are finished.
+      right: ROLE_ORDER_READER
       subcommands:
         - name: show
           description: Lists jobs for an order, optionally restricted to a specific job state
+          right: ROLE_ORDER_READER
           options:
             - name: format
               type: string
@@ -541,6 +580,7 @@ commands:
         - name: suspend
           description: Suspend starting of further job steps for the named job (must be in status Released or Started, 
                        new status is On Hold, then Initial, when all running job steps are finished)
+          right: ROLE_ORDER_MGR
           options:
             - name: force
               type: boolean
@@ -553,6 +593,7 @@ commands:
         - name: release
           description: Release of job steps for the named job (job must be in status Initial,
                        new status is Released)
+          right: ROLE_ORDER_MGR
           parameters:
             - name: jobId
               type: integer
@@ -560,6 +601,7 @@ commands:
         - name: resume
           description: Resume starting of job steps for the named job after suspend (job must be in status Initial,
                        new status is Released)
+          right: ROLE_ORDER_MGR
           parameters:
             - name: jobId
               type: integer
@@ -567,6 +609,7 @@ commands:
         - name: cancel
           description: Cancel the named job (remaining job steps are not executed, job state changes to Failed;
               job must be in status Initial, i. e. it may be necessary to issue a "suspend" command first)
+          right: ROLE_ORDER_MGR
           parameters:
             - name: jobId
               type: integer
@@ -574,6 +617,7 @@ commands:
         - name: retry
           description: Retry the named job (failed job steps and the job itself are set to status
               Initial, job must be in status Failed)
+          right: ROLE_ORDER_MGR
           parameters:
             - name: jobId
               type: integer
@@ -581,9 +625,11 @@ commands:
         - name: step
           description: Commands for managing job steps; some commands can only be issued, if the job step is in the correct status.
                        Job step status sequence is Initial - [Waiting Input -] Ready - Running - Completed/Failed.
+          right: ROLE_ORDER_READER
           subcommands:
             - name: show
               description: Lists job steps for a job, optionally restricted to a specific job step state
+              right: ROLE_ORDER_READER
               options:
                 - name: format
                   type: string
@@ -602,6 +648,7 @@ commands:
                   description: The job step state (one of { INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED })
             - name: suspend
               description: Suspend the named job step (must be in status Ready or Running)
+              right: ROLE_ORDER_MGR
               options:
                 - name: force
                   type: boolean
@@ -614,6 +661,7 @@ commands:
             - name: release
               description: Release a job step (job step must be in status Initial,
                            new status is Waiting Input or Ready)
+              right: ROLE_ORDER_MGR
               parameters:
                 - name: jobStepId
                   type: integer
@@ -621,6 +669,7 @@ commands:
             - name: resume
               description: Resume a previously suspended job step (job step must be in status Initial,
                            new status is Waiting Input or Ready)
+              right: ROLE_ORDER_MGR
               parameters:
                 - name: jobStepId
                   type: integer
@@ -628,12 +677,14 @@ commands:
             - name: cancel
               description: Cancel the named job step (job step state changes to Failed;
                   job step must be in status Initial or Running, i. e. it may be necessary to issue a "suspend" command first)
+              right: ROLE_ORDER_MGR
               parameters:
                 - name: jobStepId
                   type: integer
                   description: The persistent database ID of the job step
             - name: retry
               description: Retry the named job step (job step state changes to Initial, job step must be in status Failed)
+              right: ROLE_ORDER_MGR
               parameters:
                 - name: jobStepId
                   type: integer
@@ -642,9 +693,11 @@ commands:
     # Commands for the Processor Manager
     - name: processor
       description: Commands for managing processor classes, processors, configurations and configured processors
+      right: ROLE_PROCESSOR_READER
       subcommands:
         - name: class
           description: Commands for managing processor classes
+          right: ROLE_PROCESSOR_READER
           subcommands:
             - name: show
               description: Show all processor classes for the current mission and optionally a given class name
@@ -664,6 +717,7 @@ commands:
             - name: create
               description: Create a new processor class for the current mission; 
                            the user will be prompted for mandatory attributes not given on the command line
+              right: ROLE_PROCESSORCLASS_MGR
               options:
                 - name: file
                   type: string
@@ -685,6 +739,7 @@ commands:
             - name: update
               description: Update a processor class for the current mission; 
                            the user will be prompted for mandatory attributes not given on the command line
+              right: ROLE_PROCESSORCLASS_MGR
               options:
                 - name: file
                   type: string
@@ -705,12 +760,14 @@ commands:
                   description: A processor class attribute to set in the form "<attribute name>=<attribute value>"
             - name: delete
               description: Remove the named processor class from the current mission
+              right: ROLE_PROCESSORCLASS_MGR
               parameters:
                 - name: processorClass
                   type: string
                   description: The name of the processor classes to update (mandatory if not read from file)
         - name: show
           description: Show all processor versions for the current mission or only the selected ones
+          right: ROLE_PROCESSOR_READER
           options:
             - name: format
               type: string
@@ -731,6 +788,7 @@ commands:
         - name: create
           description: Create a new processor version for the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_PROCESSORCLASS_MGR
           options:
             - name: file
               type: string
@@ -756,6 +814,7 @@ commands:
         - name: update
           description: Update a processor version for the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_PROCESSORCLASS_MGR
           options:
             - name: file
               type: string
@@ -783,6 +842,7 @@ commands:
               description: A processor attribute to set in the form "<attribute name>=<attribute value>"
         - name: delete
           description: Delete a processor version from the current mission
+          right: ROLE_PROCESSORCLASS_MGR
           parameters:
             - name: processorClass
               type: string
@@ -792,9 +852,11 @@ commands:
               description: The version of the processor to delete
         - name: configuration
           description: Commands to manage configured processors (combinations of processor versions and processor class configurations)
+          right: ROLE_PROCESSOR_READER
           subcommands:
             - name: show
               description: Show all configured processors for the current mission or only the one identified
+              right: ROLE_PROCESSOR_READER
               options:
                 - name: format
                   type: string
@@ -812,6 +874,7 @@ commands:
             - name: create
               description: Create a new configured processor by combining a processor version and a (processor class) configuration; 
                            the user will be prompted for mandatory attributes not given on the command line
+              right: ROLE_CONFIGURATION_MGR
               options:
                 - name: file
                   type: string
@@ -845,6 +908,7 @@ commands:
             - name: update
               description: Update a configured processor; 
                            the user will be prompted for mandatory attributes not given on the command line
+              right: ROLE_CONFIGURATION_MGR
               options:
                 - name: file
                   type: string
@@ -865,15 +929,18 @@ commands:
                   description: A configured processor attribute to set in the form "<attribute name>=<attribute value>"
             - name: delete
               description: Delete a configured processor
+              right: ROLE_CONFIGURATION_MGR
               parameters:
                 - name: configuredProcessorIdentifier
                   type: string
                   description: The identifier of the configured processor to delete
     - name: configuration
       description: Commands for managing configurations of a specific processor class
+      right: ROLE_PROCESSOR_READER
       subcommands:
         - name: show
           description: Show all configurations for the current mission and optionally the given processor class and configuration version
+          right: ROLE_PROCESSOR_READER
           options:
             - name: format
               type: string
@@ -894,6 +961,7 @@ commands:
         - name: create
           description: Create a new configuration for the given processor class in the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_CONFIGURATION_MGR
           options:
             - name: file
               type: string
@@ -919,6 +987,7 @@ commands:
         - name: update
           description: Update a configuration for the given processor class in the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_CONFIGURATION_MGR
           options:
             - name: file
               type: string
@@ -946,6 +1015,7 @@ commands:
               description: A configuration attribute to set in the form "<attribute name>=<attribute value>"
         - name: delete
           description: Remove a configuration from the given processor class in the current mission
+          right: ROLE_CONFIGURATION_MGR
           parameters:
             - name: processorClass
               type: string
@@ -955,9 +1025,11 @@ commands:
               description: The version of the configuration to delete
     - name: workflow
       description: Commands for managing workflows
+      right: ROLE_ORDER_READER
       subcommands:
         - name: show
           description: Show all workflows for the current mission or only the selected ones
+          right: ROLE_ORDER_READER
           options:
             - name: format
               type: string
@@ -981,6 +1053,7 @@ commands:
         - name: create
           description: Create a new workflow for the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_WORKFLOW_MGR
           options:
             - name: file
               type: string
@@ -1006,6 +1079,7 @@ commands:
         - name: update
           description: Update a workflow for the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_WORKFLOW_MGR
           options:
             - name: file
               type: string
@@ -1033,6 +1107,7 @@ commands:
               description: A workflow attribute to set in the form "<attribute name>=<attribute value>"
         - name: delete
           description: Delete a workflow from the current mission
+          right: ROLE_WORKFLOW_MGR
           parameters:
             - name: workflowClass
               type: string
@@ -1044,9 +1119,11 @@ commands:
     # Commands for the Product Class Manager
     - name: productclass
       description: Commands for managing product classes
+      right: ROLE_PRODUCTCLASS_READER
       subcommands:
         - name: show
           description: Show all product classes for the current mission or only the selected ones
+          right: ROLE_PRODUCTCLASS_READER
           options:
             - name: format
               type: string
@@ -1063,6 +1140,7 @@ commands:
         - name: create
           description: Create a new product class for the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_PRODUCTCLASS_MGR
           options:
             - name: file
               type: string
@@ -1084,6 +1162,7 @@ commands:
         - name: update
           description: Update a product class for the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_PRODUCTCLASS_MGR
           options:
             - name: file
               type: string
@@ -1107,15 +1186,18 @@ commands:
               description: A product class attribute to set in the form "<attribute name>=<attribute value>"
         - name: delete
           description: Delete the named product class from the current mission
+          right: ROLE_PRODUCTCLASS_MGR
           parameters:
             - name: productClass
               type: string
               description: The name of the product class to delete
         - name: rule
           description: Commands for managing selection rules
+          right: ROLE_PRODUCTCLASS_READER
           subcommands:
             - name: show
               description: Show all selection rules for the current mission and the given target and source product classes
+              right: ROLE_PRODUCTCLASS_READER
               options:
                 - name: format
                   type: string
@@ -1137,6 +1219,7 @@ commands:
                            the user will be prompted for mandatory attributes not given on the command line.
                            If no file name is given,
                            the user will be prompted to enter the selection rule in Rule Language.
+              right: ROLE_PRODUCTCLASS_MGR
               options:
                 - name: file
                   type: string
@@ -1157,6 +1240,7 @@ commands:
                   repeatable: true
                   description: A selection rule attribute to set in the form "<attribute name>=<attribute value>"
             - name: update
+              right: ROLE_PRODUCTCLASS_MGR
               description: Update a selection rule for the given target class and configured processor; 
                            the user will be prompted for mandatory attributes not given on the command line.
                            If no file name is given,
@@ -1187,6 +1271,7 @@ commands:
                   description: A selection rule attribute to set in the form "<attribute name>=<attribute value>"
             - name: delete
               description: Delete the selection rule(s) for the given target class
+              right: ROLE_PRODUCTCLASS_MGR
               parameters:
                 - name: targetProductClass
                   type: string
@@ -1198,16 +1283,18 @@ commands:
     # Commands for the Product Ingestor
     - name: product
       description: Commands for managing products
+      right: ROLE_PRODUCT_READER_ALL
       subcommands:
         - name: show
           description: Show products for a mission and product class, optionally restricted to a given time range
+          right: ROLE_PRODUCT_READER
           options:
             - name: from
               type: datetime
-              description: Lower bound of sensing start time (rounded down to next full second)
+              description: Lower bound of sensing start time ('yyyy-mm-dd[Thh:mm:ss[.ssssss]]'', rounded down to next full second)
             - name: to
               type: datetime
-              description: Upper bound of sensing start time (rounded up to next full second)
+              description: Upper bound of sensing start time ('yyyy-mm-dd[Thh:mm:ss[.ssssss]]'', rounded up to next full second)
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
@@ -1228,6 +1315,7 @@ commands:
         - name: create
           description: Create a new product for the given product class in the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_PRODUCT_MGR
           options:
             - name: file
               type: string
@@ -1249,6 +1337,7 @@ commands:
         - name: update
           description: Update a product for the given product class in the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_PRODUCT_MGR
           options:
             - name: file
               type: string
@@ -1272,15 +1361,18 @@ commands:
               description: A product attribute to set in the form "<attribute name>=<attribute value>"
         - name: delete
           description: Delete the product with the given database ID
+          right: ROLE_PRODUCT_MGR
           parameters:
             - name: id
               type: integer
               description: The database ID of the product to delete
         - name: file
           description: Commands for managing individual product files at a processing facility
+          right: ROLE_PRODUCT_READER
           subcommands:
             - name: show
               description: Show the product files for a given product, optionally restricted to a processing facility
+              right: ROLE_PRODUCT_READER
               options:
                 - name: format
                   type: string
@@ -1300,6 +1392,7 @@ commands:
                   description: The processing facility, at which a product file is stored
 #            - name: update
 #              description: Update a product file for a given product and processing facility
+#              right: ROLE_PRODUCT_MGR
 #              options:
 #                - name: file
 #                  type: string
@@ -1320,6 +1413,7 @@ commands:
 #                  description: The processing facility, at which the product file is stored
             - name: delete
               description: Delete a product file for a given product and processing facility
+              right: ROLE_PRODUCT_MGR
               options:
                 - name: noErase
                   type: boolean
@@ -1334,6 +1428,7 @@ commands:
                   description: The processing facility, at which the product file is stored
     - name: ingest
       description: Ingest all products into the storage manager of the given processing facility
+      right: ROLE_PRODUCT_INGESTOR
       options:
         - name: file
           type: string
@@ -1353,9 +1448,11 @@ commands:
 # Commands for Orger Generator
     - name: trigger
       description: Commands for managing order triggers
+      right: ROLE_ORDER_READER
       subcommands:
         - name: show
           description: Lists order triggers, optionally restricted to a given trigger type or specific trigger name.
+          right: ROLE_ORDER_READER
           options:
             - name: format
               type: string
@@ -1376,6 +1473,7 @@ commands:
         - name: create
           description: Create a new trigger, if the input is not from a file,
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_ORDER_MGR
           options:
             - name: file
               type: string
@@ -1401,6 +1499,7 @@ commands:
                            overrides values given in the trigger definition file
         - name: update
           description: Update a processing order (only allowed in status Initial)
+          right: ROLE_ORDER_MGR
           options:
             - name: file
               type: string
@@ -1429,6 +1528,7 @@ commands:
                            overrides values given in the trigger definition file
         - name: delete
           description: Delete the named trigger
+          right: ROLE_ORDER_MGR
           parameters:
             - name: type
               type: string
@@ -1443,9 +1543,11 @@ commands:
     - name: user
       description: Commands for managing users (note that user names are stored with a mission prefix in the user database,
                    but the mission prefix is not used in the command-line interface)
+      right: ROLE_USERMGR
       subcommands:
         - name: show
           description: Show user accounts for the current mission
+          right: ROLE_USERMGR
           options:
             - name: format
               type: string
@@ -1464,6 +1566,7 @@ commands:
           description: Create a new user account within the given mission. Unless the --identFile/-i option is given,
                        the user will be prompted for a password (specifying the password in the user account file or
                        on the command line is not supported for security reasons)
+          right: ROLE_USERMGR
           options:
             - name: file
               type: string
@@ -1498,6 +1601,7 @@ commands:
                        the user will be prompted for mandatory attributes not given on the command line.
                        For security reasons, this command does not support changing passwords,
                        please use the "password" command.
+          right: ROLE_USERMGR
           options:
             - name: file
               type: string
@@ -1521,6 +1625,7 @@ commands:
               description: A user account attribute to set in the form "<attribute name>=<attribute value>"
         - name: delete
           description: Delete the user account with the given name
+          right: ROLE_USERMGR
           options:
             - name: mission
               type: string
@@ -1534,6 +1639,7 @@ commands:
               description: The name of the user account to delete (without mission prefix)
         - name: enable
           description: Enable the user account with the given name
+          right: ROLE_USERMGR
           parameters:
             - name: userName
               type: string
@@ -1541,6 +1647,7 @@ commands:
               description: The name of the user account to enable (without mission prefix)
         - name: disable
           description: Disable the user account with the given name
+          right: ROLE_USERMGR
           parameters:
             - name: userName
               type: string
@@ -1549,6 +1656,7 @@ commands:
         - name: grant
           description: Grant authorities for the current mission directly to the user
                        (not recommended, use of group authorities recommended)
+          right: ROLE_USERMGR
           parameters:
             - name: userName
               type: string
@@ -1562,6 +1670,7 @@ commands:
               description: An authority to grant (multiple authorities allowed)
         - name: revoke
           description: Revoke authorities for the current mission from the user (directly granted authorities only)
+          right: ROLE_USERMGR
           parameters:
             - name: userName
               type: string
@@ -1585,9 +1694,11 @@ commands:
     - name: group
       description: Commands for managing groups (note that group names are stored with a mission prefix in the user database,
                    but the mission prefix is not used in the command-line interface)
+      right: ROLE_USERMGR
       subcommands:
         - name: show
           description: Show user groups for the current mission
+          right: ROLE_USERMGR
           options:
             - name: format
               type: string
@@ -1604,6 +1715,7 @@ commands:
               description: The name of the user group to show (without mission prefix)
         - name: create
           description: Create a new user group within the given mission
+          right: ROLE_USERMGR
           options:
             - name: file
               type: string
@@ -1625,6 +1737,7 @@ commands:
         - name: update
           description: Update the given user group;
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_USERMGR
           options:
             - name: file
               type: string
@@ -1648,6 +1761,7 @@ commands:
               description: A user group attribute to set in the form "<attribute name>=<attribute value>"
         - name: delete
           description: Delete the group account with the given name
+          right: ROLE_USERMGR
           parameters:
             - name: groupName
               type: string
@@ -1655,6 +1769,7 @@ commands:
               description: The name of the user group to delete (without mission prefix)
         - name: grant
           description: Grant authorities for the current mission to the user group
+          right: ROLE_USERMGR
           parameters:
             - name: groupName
               type: string
@@ -1667,6 +1782,7 @@ commands:
               description: An authority to grant (multiple authorities allowed)
         - name: revoke
           description: Revoke authorities for the current mission from the user group
+          right: ROLE_USERMGR
           parameters:
             - name: groupName
               type: string
@@ -1680,6 +1796,7 @@ commands:
         - name: members
           description: List the user accounts of a user group (for the current mission only, users may have different
                        group associations in different missions)
+          right: ROLE_USERMGR
           options:
             - name: format
               type: string
@@ -1696,6 +1813,7 @@ commands:
         - name: add
           description: Add user accounts to the user group (for the current mission only, users may have different
                        group associations in different missions)
+          right: ROLE_USERMGR
           parameters:
             - name: groupName
               type: string
@@ -1708,6 +1826,7 @@ commands:
               description: The name of a user account to add (without mission prefix; multiple user names allowed)
         - name: remove
           description: Remove user accounts from the user group (for the current mission only)
+          right: ROLE_USERMGR
           parameters:
             - name: groupName
               type: string
@@ -1722,9 +1841,11 @@ commands:
     # Commands for the Facility Manager
     - name: facility
       description: Commands for managing processing facilities
+      right: ROLE_FACILITY_READER
       subcommands:
         - name: show
           description: Show all processing facilities or a specific one
+          right: ROLE_FACILITY_READER
           options:
             - name: format
               type: string
@@ -1746,6 +1867,7 @@ commands:
         - name: create
           description: Create a new processing facility; 
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_FACILITY_MGR
           options:
             - name: file
               type: string
@@ -1767,6 +1889,7 @@ commands:
         - name: update
           description: Update a processing facility; 
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_FACILITY_MGR
           options:
             - name: file
               type: string
@@ -1790,6 +1913,7 @@ commands:
               description: A facility attribute to set in the form "<attribute name>=<attribute value>"
         - name: delete
           description: Delete the processing facility with the given name
+          right: ROLE_FACILITY_MGR
           parameters:
             - name: facilityName
               type: string
@@ -1798,9 +1922,11 @@ commands:
     # Commands for the Product Archive
     - name: archive
       description: Commands for managing product archive
+      right: ROLE_ARCHIVE_READER
       subcommands:
         - name: show
           description: Show all product archives or a specific one
+          right: ROLE_ARCHIVE_READER
           options:
             - name: format
               type: string
@@ -1822,6 +1948,7 @@ commands:
         - name: create
           description: Create a new product archive; 
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_ARCHIVE_MGR
           options:
             - name: file
               type: string
@@ -1843,6 +1970,7 @@ commands:
         - name: update
           description: Update a product archive; 
                        the user will be prompted for mandatory attributes not given on the command line
+          right: ROLE_ARCHIVE_MGR
           options:
             - name: file
               type: string
@@ -1866,6 +1994,7 @@ commands:
               description: A archive attribute to set in the form "<attribute name>=<attribute value>"
         - name: delete
           description: Delete the product archive with the given code
+          right: ROLE_ARCHIVE_MGR
           parameters:
             - name: archiveCode
               type: string

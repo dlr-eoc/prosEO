@@ -283,6 +283,10 @@ public class ProductArchiveManager {
 			query.setParameter("id", id);
 		}
 
+		if (null != code) {
+			query.setParameter("code", code);
+		}
+
 		if (null != name) {
 			query.setParameter("name", name.toUpperCase());
 		}

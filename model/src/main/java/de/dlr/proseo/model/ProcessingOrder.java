@@ -36,6 +36,7 @@ import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
+import de.dlr.proseo.model.enums.ThreeValueBool;
 
 /**
  * A customer order to process a specific set of ProductClasses for a specific period of time using a specific set of
@@ -241,6 +242,11 @@ public class ProcessingOrder extends PersistentObject {
 	
 	/** Indicates whether at least one of the job steps for this order is in state FAILED */
 	private Boolean hasFailedJobSteps = false;
+
+	/** Indicates whether automatic job step derivation is done. 
+	 *  If attribute is not set (null), the default as configured for the Production Planner will be used */
+	@Enumerated(EnumType.STRING)
+	private ThreeValueBool autoGenerateSteps = ThreeValueBool.DEFAULT;
 
     /**
      * If set the processing order will be released automatically either immediately after planning or 
@@ -1206,6 +1212,20 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setMonOrderProgress(Set<MonOrderProgress> monOrderProgress) {
 		this.monOrderProgress = monOrderProgress;
+	}
+	
+	/**
+	 * @return the autoGenerateSteps
+	 */
+	public ThreeValueBool getAutoGenerateSteps() {
+		return autoGenerateSteps;
+	}
+
+	/**
+	 * @param autoGenerateSteps the autoGenerateSteps to set
+	 */
+	public void setAutoGenerateSteps(ThreeValueBool autoGenerateSteps) {
+		this.autoGenerateSteps = autoGenerateSteps;
 	}
 
 	@Override

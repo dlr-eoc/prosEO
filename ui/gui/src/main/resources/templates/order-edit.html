@@ -22,9 +22,9 @@
     <nav id="proseo-nav"
       class="navbar navbar-expand-lg bg-body-tertiary bg-light fixed-top shadow no-padding">
       <div class="container-fluid no-padding">
-        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"  th:style="'background-color: ' + ${instanceenvcolor} + ' !important;'"
           href="/"><img src="proseo_logo.png" class="rounded" width="50"
-          height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+          height="50">&nbsp;<span th:text="#{proseo}">proseo</span>&nbsp;<span th:text="${instanceenv}"></span></a>
         <button class="navbar-toggler position-absolute d-md-none collapsed"
           type="button" data-toggle="collapse" data-target="#sidebarMenu"
           aria-controls="sidebarMenu" aria-expanded="false"
@@ -247,7 +247,18 @@
 									</div>
 								</div>
 							</div>
-							<div class="col-4"></div>
+              <div class="col-2 pe-lg-0">
+                <span class="input-group-text word-wrap"
+                  th:text="#{autoGenerate}" th:title="#{autoGenerateHelp}"></span>
+              </div>
+              <div class="col-2 ps-lg-0">
+                <select name="autoGenerateSteps" id="autoGenerateSteps"
+                  class="form-select" th:title="#{autoGenerateHelp}">
+                  <option th:each="obj : ${threeValueBool}" th:text="${obj}"
+                    th:label="${obj}"
+                    th:selected="${obj}==${ord?.autoGenerateSteps}?'true':'false'"></option>
+                </select>
+              </div>
 						</div>
 						<!-- Orbit data -->
 						<div class="row filtercontent" id="ORBIT">

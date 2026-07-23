@@ -10,6 +10,7 @@
         "stopTime": "2019-07-31T12:00:00",
         "slicingType": "ORBIT",
         "sliceOverlap": 0,
+        "autoGenerateSteps": "DEFAULT",
         "inputFilters": [
             {
                 "productClass": "L1B",
@@ -91,6 +92,7 @@
         "slicingType": "TIME_SLICE",
         "sliceDuration": 300,
         "sliceOverlap": 60,
+        "autoGenerateSteps": "DEFAULT",
         "inputFilters": [
             {
                 "productClass": "L1B",

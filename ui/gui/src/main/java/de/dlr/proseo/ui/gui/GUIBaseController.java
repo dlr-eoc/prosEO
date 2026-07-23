@@ -47,6 +47,7 @@ import de.dlr.proseo.model.enums.ProcessingLevel;
 import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.enums.ProductionType;
+import de.dlr.proseo.model.enums.ThreeValueBool;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.rest.model.RestConfiguredProcessor;
 import de.dlr.proseo.model.rest.model.RestMission;
@@ -87,6 +88,9 @@ public class GUIBaseController {
 
 	/** List with cached production types */
 	private List<String> productiontypes = null;
+	
+	/** List with cached three value bool types */
+	private List<String> threeValueBool = null;
 
 	/** List with cached product qualities */
 	private List<String> productqualities = null;
@@ -706,6 +710,25 @@ public class GUIBaseController {
 	}
 
 	/**
+	 * Retrieve the three value bool enum
+	 *
+	 * @return A list of three value bool values in String format
+	 */
+	@ModelAttribute("threeValueBool")
+	public List<String> threeValueBool() {
+		if (threeValueBool != null && !threeValueBool.isEmpty())
+			return threeValueBool;
+
+		threeValueBool = new ArrayList<>();
+		for (ThreeValueBool value : ThreeValueBool.values()) {
+			threeValueBool.add(value.toString());
+		}
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		threeValueBool.sort(c);
+		return threeValueBool;
+	}
+
+	/**
 	 * Retrieve the processing level enum
 	 *
 	 * @return A list of processing levels in String format
@@ -824,14 +847,37 @@ public class GUIBaseController {
 	}
 
 	/**
-	 * Returns the mission code of the authenticated user
+	 * Returns the mission code of the authenticated user and the instance identifier
 	 *
-	 * @return The mission code of the authenticated user
+	 * @return The mission code and identifier
 	 */
 	@ModelAttribute("missioncode")
 	public String missioncode() {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-		return auth.getMission();
+		String text = auth.getMission();
+		text += "@";
+		text += (null == serviceConfig.getInstanceId() ? "no identifier" : serviceConfig.getInstanceId());
+		return text;
+	}
+	
+	/**
+	 * Returns the prosEO instance environment (one of dev, ops, val)
+	 *
+	 * @return the prosEO instance environment
+	 */
+	@ModelAttribute("instanceenv")
+	public String instanceenv() {
+		return null == serviceConfig.getInstanceEnvironment() ? "" : serviceConfig.getInstanceEnvironment();
+	}
+	
+	/**
+	 * Returns the prosEO instance environment (one of dev, ops, val)
+	 *
+	 * @return the prosEO instance environment
+	 */
+	@ModelAttribute("instanceenvcolor")
+	public String instanceenvcolor() {
+		return null == serviceConfig.getInstanceEnvironmentColor() ? "rgb(0,0,0,.25)" : serviceConfig.getInstanceEnvironmentColor();
 	}
 
 	/**

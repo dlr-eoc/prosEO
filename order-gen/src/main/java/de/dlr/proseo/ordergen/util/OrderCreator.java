@@ -37,6 +37,7 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.TimeIntervalOrderTrigger;
 import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.ThreeValueBool;
 import de.dlr.proseo.model.enums.TriggerType;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
@@ -441,6 +442,11 @@ public class OrderCreator {
 			restOrder.setSubmissionTime(Date.from(now));
 			restOrder.setAutoClose(orderTemplate.isAutoClose());
 			restOrder.setAutoRelease(orderTemplate.isAutoRelease());
+			if (orderTemplate.getAutoGenerateSteps() != null) {
+				restOrder.setAutoGenerateSteps(orderTemplate.getAutoGenerateSteps().toString());
+			} else {
+				restOrder.setAutoGenerateSteps(ThreeValueBool.DEFAULT.toString());
+			}
 			if (orderTemplate.getInputDataTimeoutPeriod() != null) {
 				restOrder.setInputDataTimeoutPeriod(orderTemplate.getInputDataTimeoutPeriod().getSeconds());
 			}

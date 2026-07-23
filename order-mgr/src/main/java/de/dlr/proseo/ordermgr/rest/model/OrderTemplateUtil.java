@@ -12,6 +12,7 @@ import de.dlr.proseo.model.NotificationEndpoint;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.enums.ProductionType;
+import de.dlr.proseo.model.enums.ThreeValueBool;
 import de.dlr.proseo.model.OrderTemplate;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
@@ -55,6 +56,12 @@ public class OrderTemplateUtil {
 		if (null != orderTemplate.getPriority()) {
 			restOrderTemplate.setPriority(orderTemplate.getPriority());
 		}	
+		if (null != orderTemplate.getAutoGenerateSteps()) {
+			restOrderTemplate.setAutoGenerateSteps(orderTemplate.getAutoGenerateSteps().toString());
+		} else {
+			restOrderTemplate.setAutoGenerateSteps(ThreeValueBool.DEFAULT.toString());
+		}
+		
 		if(null != orderTemplate.getSlicingType()) {
 			restOrderTemplate.setSlicingType(orderTemplate.getSlicingType().name());
 		}
@@ -217,6 +224,12 @@ public class OrderTemplateUtil {
 		orderTemplate.setName(restOrderTemplate.getName());
 		orderTemplate.setPriority(restOrderTemplate.getPriority());
 		orderTemplate.setProcessingMode(restOrderTemplate.getProcessingMode());
+
+		if (restOrderTemplate.getAutoGenerateSteps() != null) {
+			orderTemplate.setAutoGenerateSteps(ThreeValueBool.valueOf(restOrderTemplate.getAutoGenerateSteps()));
+		} else {
+			orderTemplate.setAutoGenerateSteps(ThreeValueBool.DEFAULT);
+		}
 
 		if (null != restOrderTemplate.getOutputFileClass()) {
 			orderTemplate.setOutputFileClass(restOrderTemplate.getOutputFileClass());
