@@ -59,13 +59,13 @@ public class ProcessingOrder extends PersistentObject {
 	private static final String MSG_SLICING_DURATION_NOT_ALLOWED = "Setting of slicing duration not allowed for slicing type ";
 	private static final String MSG_SLICING_OVERLAP_NOT_ALLOWED = "Setting of slicing overlap not allowed for slicing type ";
 
-	public static String STATE_MESSAGE_COMPLETED = "requested output product is available";
-	public static String STATE_MESSAGE_QUEUED = "request is queued for processing";
-	public static String STATE_MESSAGE_RUNNING = "request is under processing";
-	public static String STATE_MESSAGE_CANCELLED = "request cancelled by user";
-	public static String STATE_MESSAGE_FAILED = "production has failed";
-	public static String STATE_MESSAGE_NO_INPUT_AVAILABLE = "input product currently unavailable";
-	public static String STATE_MESSAGE_NO_INPUT = "input product not found on LTA";
+	public static String STATE_MESSAGE_COMPLETED = "Requested output product is available.";
+	public static String STATE_MESSAGE_QUEUED = "Request is queued for processing.";
+	public static String STATE_MESSAGE_RUNNING = "Request is under processing.";
+	public static String STATE_MESSAGE_CANCELLED = "Order was cancelled by the user or the operations team.";
+	public static String STATE_MESSAGE_FAILED = "Production has failed due to at least one failing job step.";
+//	public static String STATE_MESSAGE_NO_INPUT_AVAILABLE = "input product currently unavailable";
+	public static String STATE_MESSAGE_NO_INPUT = "Required source data for the selected product is incomplete.";
 	
 	/** Mission, to which this order belongs */
 	@ManyToOne
