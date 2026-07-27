@@ -52,7 +52,7 @@ import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 import org.apache.olingo.server.api.uri.queryoption.ExpandOption;
 import org.apache.olingo.server.api.uri.queryoption.SelectOption;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -63,7 +63,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
 import de.dlr.proseo.api.prip.ProductionInterfaceSecurity;
@@ -389,29 +389,23 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		InputStream intermediateContent = serializerResult.getContent();
 		InputStream serializedContent = null;
 
-		try {
-			// Deserialize JSON output
-			ObjectMapper om = new ObjectMapper();
-			Map<?, ?> intermediateMap = om.readValue(intermediateContent, Map.class);
+		// Deserialize JSON output
+		ObjectMapper om = new ObjectMapper();
+		Map<?, ?> intermediateMap = om.readValue(intermediateContent, Map.class);
 
-			// Remove all fields with null values
-			Iterator<?> productMapKeyIter = intermediateMap.keySet().iterator();
-			while (productMapKeyIter.hasNext()) {
-				if (null == intermediateMap.get(productMapKeyIter.next())) {
-					productMapKeyIter.remove();
-				}
+		// Remove all fields with null values
+		Iterator<?> productMapKeyIter = intermediateMap.keySet().iterator();
+		while (productMapKeyIter.hasNext()) {
+			if (null == intermediateMap.get(productMapKeyIter.next())) {
+				productMapKeyIter.remove();
 			}
-
-			// Re-serialize into JSON
-			ByteArrayOutputStream cleanedOutput = new ByteArrayOutputStream();
-			om.writeValue(cleanedOutput, intermediateMap);
-
-			serializedContent = new ByteArrayInputStream(cleanedOutput.toByteArray());
-		} catch (IOException e) {
-			// Highly unlikely given that we transform JSON to Map to JSON using the same ObjectMapper
-			throw new ODataApplicationException(MSG_CANNOT_FILTER_SERIALIZED_OUTPUT, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					Locale.ROOT, e);
 		}
+
+		// Re-serialize into JSON
+		ByteArrayOutputStream cleanedOutput = new ByteArrayOutputStream();
+		om.writeValue(cleanedOutput, intermediateMap);
+
+		serializedContent = new ByteArrayInputStream(cleanedOutput.toByteArray());
 
 		// Finally: configure the response object: set the body, headers and status code
 		response.setContent(serializedContent);

@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.api.prip.OAuth2TokenManager;
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -97,10 +97,6 @@ public class OAuth2TokenController {
 			responseHeaders.set(HttpHeaders.PRAGMA, "no-cache");
 
 			return ResponseEntity.status(HttpStatus.OK).headers(responseHeaders).body(responseBody);
-		} catch (JsonProcessingException e) {
-			String errorString = String.format(ERROR_RESPONSE_FORMAT, ERROR_INTERNAL_SERVER_ERROR, e.getMessage());
-
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(errorHeaders(e.getMessage())).body(errorString);
 		} catch (Exception e) {
 			logger.log(PripMessage.MSG_EXCEPTION, e.getMessage(), e);
 

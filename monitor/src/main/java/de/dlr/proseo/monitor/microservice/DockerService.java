@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.okhttp.OkDockerHttpClient;

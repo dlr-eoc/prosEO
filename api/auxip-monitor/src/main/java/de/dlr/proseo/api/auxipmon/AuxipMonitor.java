@@ -57,7 +57,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.RequestBodySpec;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.api.basemon.BaseMonitor;
 import de.dlr.proseo.api.basemon.TransferObject;
@@ -321,13 +321,9 @@ public class AuxipMonitor extends BaseMonitor {
 		// Analyse the result
 		ObjectMapper om = new ObjectMapper();
 		Map<?, ?> tokenResponseMap = null;
-		try {
-			tokenResponseMap = om.readValue(tokenResponse, Map.class);
-		} catch (IOException e) {
-			logger.log(OAuthMessage.TOKEN_RESPONSE_INVALID, tokenResponse,
-					config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri(), e.getMessage());
-			return null;
-		}
+
+		tokenResponseMap = om.readValue(tokenResponse, Map.class);
+
 		if (null == tokenResponseMap || tokenResponseMap.isEmpty()) {
 			logger.log(OAuthMessage.TOKEN_RESPONSE_EMPTY, tokenResponse,
 					config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri());
