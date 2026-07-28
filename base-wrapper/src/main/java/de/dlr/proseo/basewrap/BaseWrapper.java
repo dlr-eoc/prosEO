@@ -25,8 +25,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.basewrap.rest.HttpResponseInfo;
 import de.dlr.proseo.basewrap.rest.RestOps;
@@ -331,7 +331,7 @@ public class BaseWrapper {
 		String jsonRequest = null;
 		try {
 			jsonRequest = new ObjectMapper().writeValueAsString(productMetadata);
-		} catch (JsonProcessingException e) {
+		} catch (JacksonException e) {
 			logger.error(MSG_ERROR_CONVERTING_PRODUCT, productMetadata.getProductClass(), e.getMessage());
 			throw new WrapperException();
 		}
@@ -400,7 +400,7 @@ public class BaseWrapper {
 		String jsonRequest = null;
 		try {
 			jsonRequest = new ObjectMapper().writeValueAsString(Arrays.asList(product)); // Ingestion expects list of products
-		} catch (JsonProcessingException e) {
+		} catch (JacksonException e) {
 			logger.error(MSG_ERROR_CONVERTING_PRODUCT, product.getProductClass(), e.getMessage());
 			throw new WrapperException();
 		}
@@ -1065,7 +1065,7 @@ public class BaseWrapper {
 			String jsonRequest = null;
 			try {
 				jsonRequest = obj.writeValueAsString(productFile);
-			} catch (JsonProcessingException e) {
+			} catch (JacksonException e) {
 				logger.error(MSG_ERROR_CONVERTING_INGESTOR_PRODUCT, productFile.getProductId(), e.getMessage());
 				throw new WrapperException();
 			}
