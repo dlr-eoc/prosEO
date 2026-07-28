@@ -63,17 +63,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.hamcrest</groupId>
-                    <artifactId>hamcrest-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>de.dlr.proseo</groupId>
             <artifactId>proseo-interfaces</artifactId>
             <version>${project.version}</version>
@@ -103,12 +92,6 @@
             <groupId>com.phoenixnap.oss</groupId>
             <artifactId>springmvc-raml-plugin</artifactId>
             <type>maven-plugin</type>
-        </dependency>
-        <dependency>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-          <scope>test</scope>
         </dependency>
     </dependencies>
 

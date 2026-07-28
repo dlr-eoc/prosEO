@@ -37,12 +37,11 @@
 		<maven-javadoc-plugin.version>3.11.3</maven-javadoc-plugin.version>
 		<maven-project-info-reports-plugin.version>3.9.0</maven-project-info-reports-plugin.version>
 		<exec-maven-plugin.version>3.5.1</exec-maven-plugin.version>
-		<junit.version>4.13.2</junit.version>
 		<spring-boot-starter-test.version>4.1.0</spring-boot-starter-test.version> <!-- Not in parent POM! -->
 		
-		<!-- Version freezing addressing security vulnerabilities - REMOVE when upgrading Spring Boot! -->
-        <tomcat.version>10.1.55</tomcat.version><!-- Addresses CVE-2026-43515 -->
-		<netty.version>4.1.135.Final</netty.version><!-- Addresses CVE-2026-45674 -->
+<!--		 Version freezing addressing security vulnerabilities - REMOVE when upgrading Spring Boot! -->
+<!--        <tomcat.version>10.1.55</tomcat.version> Addresses CVE-2026-43515 -->
+<!--		<netty.version>4.1.135.Final</netty.version> Addresses CVE-2026-45674 -->
 	</properties>
 
 	<modules>

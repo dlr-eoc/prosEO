@@ -33,13 +33,6 @@
         <artifactId>commons-logging</artifactId>
 <!--        <version>1.2</version>-->
     </dependency>
-    <!-- https://mvnrepository.com/artifact/junit/junit -->
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-
     <!-- From Apache HTTP Client documentation -->
     <dependency>
         <groupId>org.apache.httpcomponents.client5</groupId>
