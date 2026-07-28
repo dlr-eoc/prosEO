@@ -5,10 +5,10 @@
  */
 package de.dlr.proseo.logging.logger;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
 import de.dlr.proseo.logging.messages.ProseoMessage;
@@ -39,9 +39,8 @@ public class ProseoLoggerTest {
 		String result2 = logger.log(TestMessage.INFO_TEST, "test", 1);
 		assertEquals(expected2, result2);
 
-		Assert.assertThrows("Please specify the type of the message.", IllegalArgumentException.class, () -> {
-			logger.log(null);
-		});
+		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> logger.log(null));
+		assertEquals("Please specify the type of the message.", exception.getMessage());
 	}
 
 	/**
@@ -66,11 +65,9 @@ public class ProseoLoggerTest {
 		String expected3 = "A message format error occured with message type " + TestMessage.ILLEGAL_FORMAT;
 		String result3 = ProseoLogger.format(TestMessage.ILLEGAL_FORMAT);
 		assertEquals(expected3, result3);
-		
-		Assert.assertThrows("Please specify the type of the message.", IllegalArgumentException.class, () -> {
-			ProseoLogger.format(null);
-		});
-		
+
+		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> ProseoLogger.format(null));
+		assertEquals("Please specify the type of the message.", exception.getMessage());
 	}
 
 	/**
