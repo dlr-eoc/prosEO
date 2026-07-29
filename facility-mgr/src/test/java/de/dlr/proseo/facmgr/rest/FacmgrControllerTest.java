@@ -5,21 +5,18 @@
  */
 package de.dlr.proseo.facmgr.rest;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.facmgr.FacilityManager;
@@ -36,9 +33,7 @@ import de.dlr.proseo.model.service.RepositoryService;
  *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = FacilityManager.class)
-@AutoConfigureTestEntityManager
 @WithMockUser(username = "UTM-testuser")
 @Transactional
 public class FacmgrControllerTest {
@@ -105,7 +100,7 @@ public class FacmgrControllerTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.trace(">>> creating test data in the database");
 
@@ -117,7 +112,7 @@ public class FacmgrControllerTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		logger.trace(">>> clearing test data from the database");
 
@@ -128,7 +123,7 @@ public class FacmgrControllerTest {
 	 * Test method for {@link de.dlr.proseo.facmgr.rest.FacmgrControllerImpl.createFacility(RestFacility)}.
 	 */
 	@Test
-	public final void testCreateFacility() {
+	void testCreateFacility() {
 		logger.trace(">>> testCreateFacility()");
 
 		// Get a test facility from the database
@@ -141,56 +136,56 @@ public class FacmgrControllerTest {
 		// Create a facility with the facility controller
 		restFacility.setId(null);
 		ResponseEntity<RestProcessingFacility> response = fci.createFacility(restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, response.getStatusCode());
+		assertEquals(HttpStatus.CREATED, response.getStatusCode(), "Wrong HTTP status: ");
 		long idToDelete = response.getBody().getId();
 
 		// Attempt to create a duplicate facility
 		response = fci.createFacility(restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 		RepositoryService.getFacilityRepository().deleteById(idToDelete);
 
 		// Attempt creation without storage manager URL
 		restFacility.setStorageManagerUrl(null);
 		response = fci.createFacility(restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 
 		// Attempt creation without storage manager URL
 		restFacility.setStorageManagerUrl("");
 		response = fci.createFacility(restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 		restFacility.setStorageManagerUrl(testFacilityData[0][5]);
 
 		// Attempt creation without storage manager user
 		restFacility.setStorageManagerUser(null);
 		response = fci.createFacility(restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 
 		// Attempt creation without storage manager user
 		restFacility.setStorageManagerUser("");
 		response = fci.createFacility(restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 		restFacility.setStorageManagerUser(TEST_USER);
 
 		// Attempt creation without storage manager password
 		restFacility.setStorageManagerPassword(null);
 		response = fci.createFacility(restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 
 		// Attempt creation without storage manager password
 		restFacility.setStorageManagerPassword("");
 		response = fci.createFacility(restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 		restFacility.setStorageManagerPassword(TEST_USER);
 
 		// Attempt creation without default storage type
 		restFacility.setDefaultStorageType(null);
 		response = fci.createFacility(restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 
 		// Attempt creation without storage manager password
 		restFacility.setDefaultStorageType("");
 		response = fci.createFacility(restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 		restFacility.setStorageManagerPassword(testFacilityData[0][6]);
 	}
 
@@ -198,7 +193,7 @@ public class FacmgrControllerTest {
 	 * Test method for { @link de.dlr.proseo.facmgr.rest.FacmgrControllerImpl.deleteFacilityById(Long))}.
 	 */
 	@Test
-	public final void testDeleteFacilityById() {
+	void testDeleteFacilityById() {
 		logger.trace(">>> testDeleteFacilityById");
 
 		// Get a test facility from the database
@@ -206,14 +201,14 @@ public class FacmgrControllerTest {
 
 		// Delete the test facility with the facility controller
 		ResponseEntity<?> response = fci.deleteFacilityById(testFacility.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.NO_CONTENT, response.getStatusCode());
+		assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode(), "Wrong HTTP status: ");
 	}
 
 	/**
 	 * Test method for {@link de.dlr.proseo.facmgr.rest.FacmgrControllerImpl.getFacilities()}.
 	 */
 	@Test
-	public final void testGetFacilities() {
+	void testGetFacilities() {
 		logger.trace(">>> testGetFacilities");
 
 		// Get test facilities from the database
@@ -221,22 +216,22 @@ public class FacmgrControllerTest {
 
 		// Get facilities using different selection criteria
 		ResponseEntity<List<RestProcessingFacility>> retrievedFacilities = fci.getFacilities(null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedFacilities.getStatusCode());
-		assertEquals("Wrong number of facilities retrieved: ", testFacilities.size(), retrievedFacilities.getBody().size());
+		assertEquals(HttpStatus.OK, retrievedFacilities.getStatusCode(), "Wrong HTTP status: ");
+		assertEquals(testFacilities.size(), retrievedFacilities.getBody().size(), "Wrong number of facilities retrieved: ");
 
 		retrievedFacilities = fci.getFacilities("invalid");
-		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_FOUND, retrievedFacilities.getStatusCode());
+		assertEquals(HttpStatus.NOT_FOUND, retrievedFacilities.getStatusCode(), "Wrong HTTP status: ");
 
 		retrievedFacilities = fci.getFacilities(testFacilityData[0][2]);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedFacilities.getStatusCode());
-		assertEquals("Wrong number of facilities retrieved: ", 1, retrievedFacilities.getBody().size());
+		assertEquals(HttpStatus.OK, retrievedFacilities.getStatusCode(), "Wrong HTTP status: ");
+		assertEquals(1, retrievedFacilities.getBody().size(), "Wrong number of facilities retrieved: ");
 	}
 
 	/**
 	 * Test method for { @link de.dlr.proseo.facmgr.rest.FacmgrControllerImpl.getFacilityById(Long))}.
 	 */
 	@Test
-	public final void testGetFacilityById() {
+	void testGetFacilityById() {
 		logger.trace(">>> testGetFacilityById()");
 
 		// Get a test facility from the database
@@ -244,15 +239,15 @@ public class FacmgrControllerTest {
 
 		// Retrieve the test facility with the facility controller
 		ResponseEntity<RestProcessingFacility> response = fci.getFacilityById(testFacility.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
-		assertEquals("Wrong facility: ", testFacility.getName(), response.getBody().getName());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
+		assertEquals(testFacility.getName(), response.getBody().getName(), "Wrong facility: ");
 	}
 
 	/**
 	 * Test method for {@link de.dlr.proseo.facmgr.rest.FacmgrControllerImpl.modifyFacility(Long, RestFacility)}.
 	 */
 	@Test
-	public final void testModifyFacility() {
+	void testModifyFacility() {
 		logger.trace(">>> testModifyFacility()");
 
 		// Modify facility with facility controller
@@ -265,64 +260,63 @@ public class FacmgrControllerTest {
 		ResponseEntity<RestProcessingFacility> response = fci.modifyFacility(id, restFacility);
 
 		// Test that the facility attribute was changed as expected
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
-		assertEquals("Wrong Name: ", restFacility.getName(), response.getBody().getName());
-		assertEquals("Wrong Description: ", restFacility.getDescription(), response.getBody().getDescription());
-		assertEquals("Wrong Processing Engine URL: ", restFacility.getProcessingEngineUrl(),
-				response.getBody().getProcessingEngineUrl());
-		assertEquals("Wrong Deafult storage type value: ", restFacility.getDefaultStorageType().toString(),
-				response.getBody().getDefaultStorageType());
-		assertEquals("Wrong Storage URL: ", restFacility.getStorageManagerUrl(), response.getBody().getStorageManagerUrl());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
+		assertEquals(restFacility.getName(), response.getBody().getName(), "Wrong Name: ");
+		assertEquals(restFacility.getDescription(), response.getBody().getDescription(), "Wrong Description: ");
+		assertEquals(restFacility.getProcessingEngineUrl(), response.getBody().getProcessingEngineUrl(),
+				"Wrong Processing Engine URL: ");
+		assertEquals(restFacility.getDefaultStorageType().toString(), response.getBody().getDefaultStorageType(),
+				"Wrong Deafult storage type value: ");
+		assertEquals(restFacility.getStorageManagerUrl(), response.getBody().getStorageManagerUrl(), "Wrong Storage URL: ");
 
 		// Attempt modification without storage manager URL
 		restFacility.setStorageManagerUrl(null);
 		response = fci.modifyFacility(id, restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 
 		// Attempt modification without storage manager URL
 		restFacility.setStorageManagerUrl("");
 		response = fci.modifyFacility(id, restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 		restFacility.setStorageManagerUrl(testFacilityData[0][5]);
 
 		// Attempt modification without storage manager user
 		restFacility.setStorageManagerUser(null);
 		response = fci.modifyFacility(id, restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 
 		// Attempt modification without storage manager user
 		restFacility.setStorageManagerUser("");
 		response = fci.modifyFacility(id, restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 		restFacility.setStorageManagerUser(TEST_USER);
 
 		// Attempt modification without storage manager password
 		restFacility.setStorageManagerPassword(null);
 		response = fci.modifyFacility(id, restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 
 		// Attempt modification without storage manager password
 		restFacility.setStorageManagerPassword("");
 		response = fci.modifyFacility(id, restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 		restFacility.setStorageManagerPassword(TEST_USER);
 
 		// Attempt modification without default storage type
 		restFacility.setDefaultStorageType(null);
 		response = fci.modifyFacility(id, restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 
 		// Attempt modification without storage manager password
 		restFacility.setDefaultStorageType("");
 		response = fci.modifyFacility(id, restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 		restFacility.setStorageManagerPassword(testFacilityData[0][6]);
 
 		// Attempt illegal state transition
 		restFacility.setFacilityState(FacilityState.STARTING.toString());
 		response = fci.modifyFacility(id, restFacility);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 		restFacility.setFacilityState(FacilityState.RUNNING.toString());
 	}
-
 }
