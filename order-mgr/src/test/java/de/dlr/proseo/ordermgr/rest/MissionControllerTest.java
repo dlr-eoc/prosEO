@@ -5,25 +5,22 @@
  */
 package de.dlr.proseo.ordermgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
 import javax.transaction.Transactional;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -39,14 +36,10 @@ import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
 /**
  * Testing MissionControllerImpl.class.
  *
- * TODO test invalid REST requests
- *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = OrderManager.class)
 @WithMockUser(username = "UTM-testuser", roles = {})
-@AutoConfigureTestEntityManager
 @Transactional
 public class MissionControllerTest {
 
@@ -78,7 +71,7 @@ public class MissionControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.trace(">>> Starting to create test data in the database");
 		createMissionAndSpacecraft(testMissionData[0], testSpacecraftData);
@@ -92,7 +85,7 @@ public class MissionControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		logger.trace(">>> Starting to delete test data in database");
 		RepositoryService.getSpacecraftRepository().deleteAll();
@@ -103,10 +96,8 @@ public class MissionControllerTest {
 	/**
 	 * Create a test mission and a test spacecraft in the database
 	 *
-	 * @param missionData
-	 *            The data from which to create the mission
-	 * @param spacecraftData
-	 *            The data from which to create the spacecraft
+	 * @param missionData    The data from which to create the mission
+	 * @param spacecraftData The data from which to create the spacecraft
 	 */
 	private static void createMissionAndSpacecraft(String[] missionData, String[] spacecraftData) {
 		if (null != RepositoryService.getMissionRepository().findByCode(missionData[2])) {
@@ -143,8 +134,7 @@ public class MissionControllerTest {
 	}
 
 	/**
-	 * Test method for
-	 * {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl#getMissions(java.lang.String)}.
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl#getMissions(java.lang.String)}.
 	 */
 	@Test
 	public final void testGetMissions() {
@@ -152,12 +142,12 @@ public class MissionControllerTest {
 
 		// Get missions with MissionControllerImpl
 		ResponseEntity<List<RestMission>> entity = mci.getMissions("UTM");
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
+		assertEquals(HttpStatus.OK, entity.getStatusCode(), "Wrong HTTP status: ");
 
 		// Assert one mission with code UTM was retrieved
 		RepositoryService.getMissionRepository().findByCode("UTM");
-		assertTrue("More or less missions than expected were found.", entity.getBody().size() == 1);
-		assertTrue("An unexpected mission was found.", "UTM" == entity.getBody().get(0).getCode());
+		assertTrue(entity.getBody().size() == 1, "More or less missions than expected were found.");
+		assertTrue("UTM" == entity.getBody().get(0).getCode(), "An unexpected mission was found.");
 	}
 
 	/**
@@ -179,19 +169,18 @@ public class MissionControllerTest {
 		mission.setProductFileTemplate(testMissionData[2][6]);
 
 		ResponseEntity<RestMission> createdMission = mci.createMission(mission);
-		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, createdMission.getStatusCode());
+		assertEquals(HttpStatus.CREATED, createdMission.getStatusCode(), "Wrong HTTP status: ");
 
 		// Assert that the mission was created
 		List<Mission> afterCreation = RepositoryService.getMissionRepository().findAll();
-		assertTrue("Mission repository does not contain more missions after creation.",
-				afterCreation.size() > beforeCreation.size());
-		assertTrue("Created mission is not present in repository.",
-				null != RepositoryService.getMissionRepository().findByCode(createdMission.getBody().getCode()));
+		assertTrue(afterCreation.size() > beforeCreation.size(),
+				"Mission repository does not contain more missions after creation.");
+		assertTrue(null != RepositoryService.getMissionRepository().findByCode(createdMission.getBody().getCode()),
+				"Created mission is not present in repository.");
 	}
 
 	/**
-	 * Test method for
-	 * {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl#getMissionById(java.lang.Long)}.
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl#getMissionById(java.lang.Long)}.
 	 */
 	@Test
 	public final void testGetMissionById() {
@@ -202,10 +191,10 @@ public class MissionControllerTest {
 
 		// Retrieve a mission by MissionControllerImpl
 		ResponseEntity<RestMission> retrievedMission = mci.getMissionById(missionToRetrieve.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedMission.getStatusCode());
+		assertEquals(HttpStatus.OK, retrievedMission.getStatusCode(), "Wrong HTTP status: ");
 
 		// Assert that expected equals retrieved mission
-		assertEquals("Wrong mission retrieved: ", missionToRetrieve.getCode(), retrievedMission.getBody().getCode());
+		assertEquals(missionToRetrieve.getCode(), retrievedMission.getBody().getCode(), "Wrong mission retrieved: ");
 	}
 
 	/**
@@ -227,11 +216,12 @@ public class MissionControllerTest {
 
 			// Modify a mission with MissionControllerImpl
 			ResponseEntity<RestMission> entity = mci.modifyMission(missionToModify.getId(), missionToModify);
-			assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
+			assertEquals(HttpStatus.OK, entity.getStatusCode(), "Wrong HTTP status: ");
 
 			// Assert that the modification had the expected effect
-			assertEquals("Mission was not modified as expected.", MissionUtil.toModelMission(missionToModify),
-					RepositoryService.getMissionRepository().findByCode(missionToModify.getCode()));
+			assertEquals(MissionUtil.toModelMission(missionToModify),
+					RepositoryService.getMissionRepository().findByCode(missionToModify.getCode()),
+					"Mission was not modified as expected.");
 
 			return true;
 		});
@@ -255,19 +245,16 @@ public class MissionControllerTest {
 
 			// Delete spacecraft referencing mission
 			missionToDelete.getSpacecrafts()
-					.forEach(spacecraft -> RepositoryService.getSpacecraftRepository().deleteById(spacecraft.getId()));
+				.forEach(spacecraft -> RepositoryService.getSpacecraftRepository().deleteById(spacecraft.getId()));
 
 			// Delete a mission with MissionControllerImpl
 			mci.deleteMissionById(missionToDelete.getId(), false, false);
 
 			// Assert that the mission was deleted
 			List<Mission> afterDeletion = RepositoryService.getMissionRepository().findAll();
-			assertTrue("After deletion, repository does not contain less missions.", afterDeletion.size() < beforeDeletion.size());
-			assertFalse("Deleted mission is still in the repository.", afterDeletion.contains(missionToDelete));
-
+			assertTrue(afterDeletion.size() < beforeDeletion.size(), "After deletion, repository does not contain less missions.");
+			assertFalse(afterDeletion.contains(missionToDelete), "Deleted mission is still in the repository.");
 			return true;
 		});
-
 	}
-
 }

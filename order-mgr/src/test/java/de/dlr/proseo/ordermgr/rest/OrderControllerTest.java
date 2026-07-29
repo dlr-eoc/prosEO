@@ -5,8 +5,8 @@
  */
 package de.dlr.proseo.ordermgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -16,19 +16,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.restclient.RestTemplateBuilder;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -55,14 +52,10 @@ import de.dlr.proseo.ordermgr.OrderManager;
 /**
  * Testing OrderControllerImpl.class. planner
  *
- * TODO test invalid REST requests
- *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = OrderManager.class)
 @WithMockUser(username = "UTM-testuser", roles = { "ORDER_APPROVER", "ORDER_MGR" })
-@AutoConfigureTestEntityManager
 @Transactional
 public class OrderControllerTest {
 
@@ -121,7 +114,7 @@ public class OrderControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.debug(">>> Starting to create test data in the database");
 		createMissionAndSpacecraft(testMissionData, testSpacecraftData);
@@ -140,7 +133,7 @@ public class OrderControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		logger.debug(">>> Starting to delete test data in database");
 		RepositoryService.getOrderRepository().deleteAll();
@@ -383,8 +376,8 @@ public class OrderControllerTest {
 
 		RestOrder toBeCreated = createLocalTestOrder();
 		ResponseEntity<RestOrder> created = oci.createOrder(toBeCreated);
-		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, created.getStatusCode());
-		assertEquals("Error during order creation.", toBeCreated.getIdentifier(), created.getBody().getIdentifier());
+		assertEquals(HttpStatus.CREATED, created.getStatusCode(), "Wrong HTTP status: ");
+		assertEquals(toBeCreated.getIdentifier(), created.getBody().getIdentifier(), "Error during order creation.");
 	}
 
 	/**
@@ -398,8 +391,8 @@ public class OrderControllerTest {
 		List<ProcessingOrder> expectedOrders = RepositoryService.getOrderRepository().findAll();
 		expectedOrders.removeIf(po -> "UTM" != po.getMission().getCode());
 		ResponseEntity<List<RestOrder>> retrievedOrders = oci.getOrders("UTM", null, null, null, null, null, null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedOrders.getStatusCode());
-		assertTrue("Wrong number of orders retrieved.", expectedOrders.size() == retrievedOrders.getBody().size());
+		assertEquals(HttpStatus.OK, retrievedOrders.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(expectedOrders.size() == retrievedOrders.getBody().size(), "Wrong number of orders retrieved.");
 	}
 
 	/**
@@ -414,8 +407,8 @@ public class OrderControllerTest {
 		expectedOrders.removeIf(po -> "UTM" != po.getMission().getCode());
 		ResponseEntity<List<RestOrder>> retrievedOrders = oci.getAndSelectOrders("UTM", null, null, null, null, null, null, null,
 				null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedOrders.getStatusCode());
-		assertTrue("Wrong number of orders retrieved.", expectedOrders.size() == retrievedOrders.getBody().size());
+		assertEquals(HttpStatus.OK, retrievedOrders.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(expectedOrders.size() == retrievedOrders.getBody().size(), "Wrong number of orders retrieved.");
 	}
 
 	/**
@@ -433,8 +426,8 @@ public class OrderControllerTest {
 		logger.trace("Expected amount is " + expectedOrders.size());
 		logger.trace("Retrieved size is " + retrievedOrders.getBody());
 
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedOrders.getStatusCode());
-		assertTrue("Wrong number of orders retrieved.", expectedOrders.size() == Long.valueOf(retrievedOrders.getBody()));
+		assertEquals(HttpStatus.OK, retrievedOrders.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(expectedOrders.size() == Long.valueOf(retrievedOrders.getBody()), "Wrong number of orders retrieved.");
 	}
 
 	/**
@@ -447,8 +440,8 @@ public class OrderControllerTest {
 		RestOrder expectedOrder = OrderUtil.toRestOrder(RepositoryService.getOrderRepository().findAll().get(0));
 
 		ResponseEntity<RestOrder> retrievedOrder = oci.getOrderById(expectedOrder.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedOrder.getStatusCode());
-		assertTrue("Wrong order retrieved.", expectedOrder.getIdentifier().equals(retrievedOrder.getBody().getIdentifier()));
+		assertEquals(HttpStatus.OK, retrievedOrder.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(expectedOrder.getIdentifier().equals(retrievedOrder.getBody().getIdentifier()), "Wrong order retrieved.");
 	}
 
 	/**
@@ -462,10 +455,10 @@ public class OrderControllerTest {
 		ProcessingOrder toBeDeleted = beforeDeletion.get(0);
 
 		ResponseEntity<?> entity = oci.deleteOrderById(toBeDeleted.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.NO_CONTENT, entity.getStatusCode());
+		assertEquals(HttpStatus.NO_CONTENT, entity.getStatusCode(), "Wrong HTTP status: ");
 
 		List<ProcessingOrder> afterDeletion = RepositoryService.getOrderRepository().findAll();
-		assertTrue("Order not deleted.", !afterDeletion.contains(toBeDeleted));
+		assertTrue(!afterDeletion.contains(toBeDeleted), "Order not deleted.");
 
 	}
 
@@ -481,8 +474,8 @@ public class OrderControllerTest {
 		toBeModified.setOrderState(OrderState.APPROVED.toString());
 
 		ResponseEntity<RestOrder> entity = oci.modifyOrder(toBeModified.getId(), toBeModified);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
-		assertEquals("Modification unsuccessfull.", toBeModified.getIdentifier(), entity.getBody().getIdentifier());
+		assertEquals(HttpStatus.OK, entity.getStatusCode(), "Wrong HTTP status: ");
+		assertEquals(toBeModified.getIdentifier(), entity.getBody().getIdentifier(), "Modification unsuccessfull.");
 	}
 
 	/**
@@ -497,9 +490,7 @@ public class OrderControllerTest {
 		expectedOrders.removeIf(po -> "UTM" != po.getMission().getCode());
 
 		ResponseEntity<String> retrievedOrders = oci.countOrders("UTM", null, null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedOrders.getStatusCode());
-		assertTrue("Wrong number of orders retrieved.", expectedOrders.size() == Long.valueOf(retrievedOrders.getBody()));
-
+		assertEquals(HttpStatus.OK, retrievedOrders.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(expectedOrders.size() == Long.valueOf(retrievedOrders.getBody()), "Wrong number of orders retrieved.");
 	}
-
 }

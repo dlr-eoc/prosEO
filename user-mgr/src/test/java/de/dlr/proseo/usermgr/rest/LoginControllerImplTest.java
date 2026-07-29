@@ -5,22 +5,18 @@
  */
 package de.dlr.proseo.usermgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import jakarta.persistence.NoResultException;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +25,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -38,15 +33,14 @@ import de.dlr.proseo.usermgr.UsermgrSecurityConfig;
 import de.dlr.proseo.usermgr.dao.UserRepository;
 import de.dlr.proseo.usermgr.model.Authority;
 import de.dlr.proseo.usermgr.model.User;
+import jakarta.persistence.NoResultException;
 
 /**
  * Testing LoginControllerImpl.class.
  *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = UserManagerApplication.class)
-@AutoConfigureTestEntityManager
 @Transactional
 public class LoginControllerImplTest {
 
@@ -71,7 +65,7 @@ public class LoginControllerImplTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.trace("... adding test users to the database");
 
@@ -115,7 +109,7 @@ public class LoginControllerImplTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		logger.trace("... clearing test data from the database");
 

@@ -5,24 +5,21 @@
  */
 package de.dlr.proseo.usermgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -43,9 +40,7 @@ import de.dlr.proseo.usermgr.rest.model.RestUser;
  *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = UserManagerApplication.class)
-@AutoConfigureTestEntityManager
 @Transactional
 public class GroupControllerImplTest {
 
@@ -71,7 +66,7 @@ public class GroupControllerImplTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.trace("... adding a test user to the database");
 
@@ -116,7 +111,7 @@ public class GroupControllerImplTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		// Nothing to do, test data will be deleted by automatic rollback of test transaction
 	}
@@ -139,13 +134,13 @@ public class GroupControllerImplTest {
 		newUser = userRepository.save(newUser);
 
 		ResponseEntity<List<RestUser>> response = gci.addGroupMember(groupRepository.findAll().get(0).getId(), "UTM-johndoe");
-		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, response.getStatusCode());
+		assertEquals(HttpStatus.CREATED, response.getStatusCode(), "Wrong HTTP status: ");
 
 		List<RestUser> updatedMembers = response.getBody();
-		assertNotNull("Updated group members should not be null", updatedMembers);
-		assertTrue("There should be at least one group member", updatedMembers.size() > 0);
-		assertTrue("New user should be a group member",
-				updatedMembers.stream().anyMatch(user -> "UTM-johndoe".equals(user.getUsername())));
+		assertNotNull(updatedMembers, "Updated group members should not be null");
+		assertTrue(updatedMembers.size() > 0, "There should be at least one group member");
+		assertTrue(updatedMembers.stream().anyMatch(user -> "UTM-johndoe".equals(user.getUsername())),
+				"New user should be a group member");
 	}
 
 	/**
@@ -156,8 +151,8 @@ public class GroupControllerImplTest {
 		logger.trace(">>> testCountGroups()");
 
 		ResponseEntity<String> response = gci.countGroups("UTM");
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
-		assertEquals("Wrong number of groups retrieved: ", groupRepository.count() + "", response.getBody());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
+		assertEquals(groupRepository.count() + "", response.getBody(), "Wrong number of groups retrieved: ");
 	}
 
 	@Test
@@ -168,11 +163,11 @@ public class GroupControllerImplTest {
 		restGroup.setGroupname("NewGroup");
 
 		ResponseEntity<RestGroup> response = gci.createGroup(restGroup);
-		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, response.getStatusCode());
+		assertEquals(HttpStatus.CREATED, response.getStatusCode(), "Wrong HTTP status: ");
 
 		RestGroup createdGroup = response.getBody();
-		assertNotNull("Created group should not be null", createdGroup);
-		assertEquals("Groupname should match", "NewGroup", createdGroup.getGroupname());
+		assertNotNull(createdGroup, "Created group should not be null");
+		assertEquals("NewGroup", createdGroup.getGroupname(), "Groupname should match");
 	}
 
 	@Test
@@ -190,7 +185,7 @@ public class GroupControllerImplTest {
 		group = groupRepository.save(group);
 
 		ResponseEntity<?> response = gci.deleteGroupById(group.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.NO_CONTENT, response.getStatusCode());
+		assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode(), "Wrong HTTP status: ");
 	}
 
 	@Test
@@ -200,11 +195,11 @@ public class GroupControllerImplTest {
 		Long id = groupRepository.findAll().get(0).getId();
 
 		ResponseEntity<RestGroup> response = gci.getGroupById(id);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
 
 		RestGroup group = response.getBody();
-		assertNotNull("Retrieved group should not be null", group);
-		assertEquals("Id should match: ", id, group.getId());
+		assertNotNull(group, "Retrieved group should not be null");
+		assertEquals(id, group.getId(), "Id should match: ");
 	}
 
 	@Test
@@ -212,11 +207,11 @@ public class GroupControllerImplTest {
 		logger.trace(">>> testGetGroupMembers()");
 
 		ResponseEntity<List<RestUser>> response = gci.getGroupMembers(groupRepository.findByGroupName("UTM-testname").getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
 
 		List<RestUser> members = response.getBody();
-		assertNotNull("Group members should not be null", members);
-		assertTrue("There should be at least one group member", members.size() > 0);
+		assertNotNull(members, "Group members should not be null");
+		assertTrue(members.size() > 0, "There should be at least one group member");
 
 		groupRepository.findByGroupName("UTM-testname").getGroupMembers().forEach(member -> {
 			member.getGroup().getGroupMembers().clear();
@@ -225,7 +220,7 @@ public class GroupControllerImplTest {
 		});
 
 		response = gci.getGroupMembers(groupRepository.findByGroupName("UTM-testname").getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_FOUND, response.getStatusCode());
+		assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode(), "Wrong HTTP status: ");
 	}
 
 	/**
@@ -237,10 +232,10 @@ public class GroupControllerImplTest {
 		logger.trace(">>> testGetGroups()");
 
 		ResponseEntity<List<RestGroup>> response = gci.getGroups("UTM", null, null, null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
 
 		response = gci.getGroups("UTM", "UTM-testname", null, null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
 	}
 
 	/**
@@ -256,28 +251,28 @@ public class GroupControllerImplTest {
 		restGroup.setGroupname("ModifiedGroup");
 
 		ResponseEntity<RestGroup> response = gci.modifyGroup(groupRepository.findByGroupName("UTM-testname").getId(), restGroup);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
 
 		RestGroup modifiedGroup = response.getBody();
-		assertNotNull("Modified group should not be null", modifiedGroup);
+		assertNotNull(modifiedGroup, "Modified group should not be null");
 		// No name change allowed
-		assertEquals("Groupname should match", "UTM-testname", modifiedGroup.getGroupname());
+		assertEquals("UTM-testname", modifiedGroup.getGroupname(), "Groupname should match");
 
 		// Change authorities
 		restGroup.setGroupname("UTM-testname");
 		restGroup.getAuthorities().add("ROLE_ORDER_MGR");
 		response = gci.modifyGroup(groupRepository.findByGroupName("UTM-testname").getId(), restGroup);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
 
 		modifiedGroup = response.getBody();
-		assertNotNull("Modified group should not be null", modifiedGroup);
-		assertTrue("New authority should be included", modifiedGroup.getAuthorities().contains("ROLE_ORDER_MGR"));
+		assertNotNull(modifiedGroup, "Modified group should not be null");
+		assertTrue(modifiedGroup.getAuthorities().contains("ROLE_ORDER_MGR"), "New authority should be included");
 
 		// Add illegal authority
 		restGroup.setGroupname("UTM-testname");
 		restGroup.getAuthorities().add("ANY");
 		response = gci.modifyGroup(groupRepository.findByGroupName("UTM-testname").getId(), restGroup);
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 	}
 
 	/**
@@ -289,7 +284,6 @@ public class GroupControllerImplTest {
 		logger.trace(">>> testRemoveGroupMember()");
 
 		ResponseEntity<List<RestUser>> response = gci.removeGroupMember(groupRepository.findAll().get(0).getId(), "UTM-janedoe");
-		assertEquals("Wrong HTTP status: ", HttpStatus.NO_CONTENT, response.getStatusCode());
+		assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode(), "Wrong HTTP status: ");
 	}
-
 }

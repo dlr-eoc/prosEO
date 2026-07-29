@@ -5,9 +5,9 @@
  */
 package de.dlr.proseo.ordermgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -19,19 +19,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import jakarta.persistence.EntityNotFoundException;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.restclient.RestTemplateBuilder;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.ConfiguredProcessor;
@@ -55,6 +50,8 @@ import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.OrderUtil;
+import de.dlr.proseo.ordermgr.OrderManager;
+import jakarta.persistence.EntityNotFoundException;
 
 /**
  * Testing the service methods required to create, modify and delete processing order in the prosEO database, and to query the
@@ -62,9 +59,7 @@ import de.dlr.proseo.model.util.OrderUtil;
  *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@DataJpaTest
-@AutoConfigureTestEntityManager
+@SpringBootTest(classes = OrderManager.class)
 public class ProcessingOrderMgrTest {
 
 	/** A logger for this class */
@@ -123,7 +118,7 @@ public class ProcessingOrderMgrTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.debug(">>> Starting to create test data in the database");
 		createMissionAndSpacecraft(testMissionData[0], testSpacecraftData);
@@ -143,7 +138,7 @@ public class ProcessingOrderMgrTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		logger.debug(">>> Starting to delete test data in database");
 		RepositoryService.getOrderRepository().deleteAll();
@@ -686,7 +681,7 @@ public class ProcessingOrderMgrTest {
 		// Workflow may not be updated
 		ProcessingOrder po = OrderUtil.toModelOrder(testOrder);
 		po.setWorkflow(RepositoryService.getWorkflowRepository()
-				.findByMissionCodeAndNameAndVersion("UTM", testWorkflow[0][0], testWorkflowVersion));
+			.findByMissionCodeAndNameAndVersion("UTM", testWorkflow[0][0], testWorkflowVersion));
 		testOrder.setId(RepositoryService.getOrderRepository().save(po).getId());
 		testOrder.setWorkflowName(testWorkflow[1][0]);
 		testOrder.setWorkflowUuid(testWorkflow[1][1]);
