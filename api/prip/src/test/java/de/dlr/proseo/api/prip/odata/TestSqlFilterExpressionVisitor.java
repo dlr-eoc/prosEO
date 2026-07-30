@@ -3,7 +3,7 @@
  */
 package de.dlr.proseo.api.prip.odata;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,11 +32,11 @@ import org.apache.olingo.server.api.uri.queryoption.SkipOption;
 import org.apache.olingo.server.api.uri.queryoption.TopOption;
 import org.apache.olingo.server.api.uri.queryoption.expression.Expression;
 import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitException;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,7 +107,7 @@ public class TestSqlFilterExpressionVisitor {
 					logger.trace("filterExpression = " + filterExpression);
 					result = filterExpression.accept(expressionVisitor);
 					logger.trace("accept() returns [" + result + "]");
-					assertNotNull("Unexpected null result from expressionVisitor", result);
+					assertNotNull(result, "Unexpected null result from expressionVisitor");
 				} catch (ODataApplicationException | ExpressionVisitException e) {
 					logger.error("Exception thrown in filter expression: ", e);
 					response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
@@ -164,7 +164,7 @@ public class TestSqlFilterExpressionVisitor {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 		OData odata = OData.newInstance();
 		ServiceMetadata edm = odata.createServiceMetadata(edmProvider, new ArrayList<EdmxReference>());
@@ -181,14 +181,14 @@ public class TestSqlFilterExpressionVisitor {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		testRequest = new ODataRequest();
 		testRequest.setMethod(HttpMethod.GET);
@@ -201,7 +201,7 @@ public class TestSqlFilterExpressionVisitor {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		testRequest = null;
 	}
@@ -360,14 +360,50 @@ public class TestSqlFilterExpressionVisitor {
 		
 		runTest(uriQuery, sqlQuery);
 	}
+	
+	/**
+	 * Test for operations on UUIDs
+	 */
+	@Test
+	public final void testUuidOperations() {
+		String uriQuery = "$filter=Id ne e562f94e-6296-4375-ab9a-98b283709c88";
+		String sqlQuery = "p.uuid <> 'e562f94e-6296-4375-ab9a-98b283709c88'";
+		
+		runTest(uriQuery, sqlQuery);
+		logger.trace("... Test for 'Id ne <uuid>' completed");
+		
+		uriQuery = "$filter=Id eq e562f94e-6296-4375-ab9a-98b283709c88";
+		sqlQuery = "p.uuid = 'e562f94e-6296-4375-ab9a-98b283709c88'";
+		
+		runTest(uriQuery, sqlQuery);
+		logger.trace("... Test for 'Id eq <uuid>' completed");
+		
+		uriQuery = "$filter=Id eq ( e562f94e-6296-4375-ab9a-98b283709c88 + 1 )";
+		sqlQuery = "p.uuid = ('e562f94e-6296-4375-ab9a-98b283709c88' + 1)";
+		
+		runTest(uriQuery, sqlQuery, true);
+		logger.trace("... Test for 'Id eq (<uuid> + <int>)' completed");
+		
+	}
+
+	/**
+	 * Test a filter evaluation (expecting success)
+	 * 
+	 * @param uriQuery the URI query to evaluate
+	 * @param sqlQuery the expected SQL WHERE clause
+	 */
+	private void runTest(String uriQuery, String sqlQuery) {
+		runTest(uriQuery, sqlQuery, false);
+	}
 
 	/**
 	 * Test a filter evaluation
 	 * 
 	 * @param uriQuery the URI query to evaluate
 	 * @param sqlQuery the expected SQL WHERE clause
+	 * @param expectFailure true, if the test is expected to fail (due to invalid input data)
 	 */
-	private void runTest(String uriQuery, String sqlQuery) {
+	private void runTest(String uriQuery, String sqlQuery, Boolean expectFailure) {
 		testRequest.setRawRequestUri(URI_PROTOCOL + URI_BASE + URI_ODATA + "?" + uriQuery);
 		testRequest.setRawQueryPath(uriQuery);
 		
@@ -386,8 +422,12 @@ public class TestSqlFilterExpressionVisitor {
 			e.printStackTrace();
 			fail("Cannot read OData response due to exception " + e.getMessage());
 		}
-		
-		assertEquals("Unexpected where clause", sqlQuery, result);
+		if (expectFailure) {
+			assertTrue(result.contains("error"), "Unexpected success");
+			logger.trace("Response error message (expected): {}", result);
+		} else {
+			assertEquals(sqlQuery, result, "Unexpected where clause");
+		}
 	}
 
 }

@@ -31,6 +31,7 @@ import org.apache.olingo.commons.core.edm.primitivetype.EdmInt64;
 import org.apache.olingo.commons.core.edm.primitivetype.EdmSByte;
 import org.apache.olingo.commons.core.edm.primitivetype.EdmSingle;
 import org.apache.olingo.commons.core.edm.primitivetype.EdmString;
+import org.apache.olingo.commons.core.edm.primitivetype.EdmGuid;
 import org.apache.olingo.server.api.ODataApplicationException;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceComplexProperty;
@@ -279,6 +280,9 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 			}
 			// Add SQL string quotes
 			result = "'" + stringLiteral + "'";
+		} else if (literal.getType() instanceof EdmGuid) {
+			// Add SQL string quotes
+			result = "'" + literal.getText() + "'";
 		} else if (literal.getType() instanceof EdmDateTimeOffset) {
 			// Try to convert the literal into a Java Instant
 			try {
