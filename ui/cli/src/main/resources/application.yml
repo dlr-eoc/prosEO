@@ -14,6 +14,11 @@ proseo:
         id: local
         # instance environment is one of dev (development), val (evaluation) or ops (operational)
         environment: dev
+        # instance environment color for environment setting (background color of left-top and footer), see https://en.wikipedia.org/wiki/Web_colors
+        # ops - rgb(0,0,0,.25) - standard
+        # dev - BurlyWood
+        # val - SkyBlue
+        environmentColor: rgb(0,0,0,.25)
     cli:
         syntaxfile: ui-cli-syntax.yml
     

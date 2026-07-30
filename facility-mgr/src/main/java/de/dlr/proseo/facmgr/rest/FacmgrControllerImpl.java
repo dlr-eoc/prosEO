@@ -158,6 +158,8 @@ public class FacmgrControllerImpl implements FacilityController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (ConcurrentModificationException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		} catch (Exception e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		}
 	}
 

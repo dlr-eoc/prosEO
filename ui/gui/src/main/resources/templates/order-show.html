@@ -243,7 +243,7 @@
 											-->
 										<td th:if="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')" style="padding: 0px;">
 											<div th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
-												th:text="${ord?.orderState}" style="padding: 0.25rem;">
+												th:text="${ord?.orderState}" style="padding: 0.25rem;" th:title="${ord?.stateMessage}">
 											</div>
 											<div th:title="${ord?.createdJobs} + ' jobs of ' + ${ord?.expectedJobs}" class="progress" style="min-height: 10px; border-radius: 0px;">
 												<div th:class="'progress-bar ' + ${ord?.orderState}" role="progressbar" th:style="'width: ' + ${#numbers.formatInteger((100.0 / ord?.expectedJobs * ord?.createdJobs),1)} + '%;'"
@@ -254,7 +254,7 @@
 										<!-- Non-progress state rendering (simple text with possible FAILED class) -->
 										<td th:unless="(${ord?.orderState} == 'PLANNING' or ${ord?.orderState} == 'RELEASING')"
 											th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
-											th:text="${ord?.orderState}"></td>
+											th:text="${ord?.orderState}" th:title="${ord?.stateMessage}"></td>
 										<!-- Start / Stop times -->
 										<td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
 										<!-- Requested product classes: linkable if user has productclassreader role -->
