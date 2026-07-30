@@ -372,7 +372,12 @@ public class OrbitControllerImpl implements OrbitController {
 
 				// Update modified attributes
 				boolean orbitChanged = false;
-				Orbit changedOrbit = OrbitUtil.toModelOrbit(orbit);
+				Orbit changedOrbit = modelOrbit;
+				try {
+					changedOrbit = OrbitUtil.toModelOrbit(orbit);
+				} catch (Exception e) {
+					throw e;
+				}
 
 				// Adding spacecraft object to modelOrbit
 				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository()
