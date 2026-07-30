@@ -1,0 +1,72 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate:
+            jdbc.time_zone: UTC
+            #id.db_structure_naming_strategy: standard
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: postgres
+        password: demo-only
+        hikari.transaction-isolation: TRANSACTION_SERIALIZABLE
+logging:
+    file:
+        name: /proseo/log/proseo-prodplanner.log
+    level:
+        root: INFO
+        okhttp3: WARN
+        de.dlr.proseo: TRACE
+        #io.kubernetes.client.openapi: INFO
+        org.hibernate.engine.jdbc.env.internal: WARN
+management:
+    endpoints.web.exposure.include: "health"
+proseo:
+    wrapper:
+        # User and password for wrapper callbacks
+        user: wrapper
+        password: demo-only
+    productionPlanner:
+        # Callback URL for wrapper
+        url: http://host.docker.internal:8083/proseo/planner/v0.1
+        # maximum cycles to check finish of k8s proseo job 
+        maxcycles: 50
+        # wait time between cycle in milliseconds  
+        cyclewaittime: 1000
+        # wait time after k8s job creation in milliseconds  
+        jobcreatedwaittime: 2000
+        # wait time between test for new ready jobs in milliseconds (fallback loop, 10 min may be sufficient for test setup)
+        # run once if <= 0 (at startup)
+        dispatcherwaittime: 600000
+        # kubernetes configuration file, used to connect master
+        kubeconfig: empty
+        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
+        filecheckwaittime: 1000
+        filecheckmaxcycles: 50
+        # check for job steps to run after one has finished
+        checkForFurtherJobStepsToRun: true
+        # collect the planning and releasing of jobs and job steps into one transaction with planningbatchsize job steps 
+        planningbatchsize: 50
+        # Sort mode to start job steps (sensingTime | submissionTime)
+        jobStepSort: sensingTime
+        # Enable (true: default)/disable (false) automatic derivation of job steps to generate required input data
+        # autogenerate: true
+    ingestor:
+        # Callback URL for wrapper
+        url: http://host.docker.internal:8081/proseo/ingestor/v0.1
+    notification:
+        # URL for notification service
+        url: http://proseo-notification:8080/proseo/notification/v0.1
+    aip:
+        # URL for AIP client
+        url: http://proseo-aip-client:8080/proseo/api/aip-client/v0.1
+        # user without mission prefix for AIP client, user has to be defined in all missions of system
+        user: user
+        # password for AIP client
+        password: demo-only
+    posix:
+        workerMountPoint: /proseo/data
+
+    # Timeout for outgoing HTTP connections
+    http.timeout: 10000

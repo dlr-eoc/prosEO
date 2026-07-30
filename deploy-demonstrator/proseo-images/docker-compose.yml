@@ -1,0 +1,211 @@
+services:
+  proseo-db:
+    image: ${REGISTRY_URL}/postgres:17-demo
+    platform: linux/amd64
+    environment:
+      - POSTGRES_DB=proseo
+      - POSTGRES_PASSWORD=demo-only
+    volumes:
+      - /opt/prosEO/pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-ingestor:
+    image: ${REGISTRY_URL}/proseo-ingestor:${PROSEO_VERSION}-demo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8081:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-order-mgr:
+    image: ${REGISTRY_URL}/proseo-order-mgr:${PROSEO_VERSION}-demo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8082:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-prodplanner:
+    image: ${REGISTRY_URL}/proseo-planner:${PROSEO_VERSION}-demo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8083:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-processor-mgr:
+    image: ${REGISTRY_URL}/proseo-processor-mgr:${PROSEO_VERSION}-demo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8084:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-productclass-mgr:
+    image: ${REGISTRY_URL}/proseo-productclass-mgr:${PROSEO_VERSION}-demo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8085:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-user-mgr:
+    image: ${REGISTRY_URL}/proseo-user-mgr:${PROSEO_VERSION}-demo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8086:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-facility-mgr:
+    image: ${REGISTRY_URL}/proseo-facility-mgr:${PROSEO_VERSION}-demo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8087:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-gui:
+    image: ${REGISTRY_URL}/proseo-ui-gui:${PROSEO_VERSION}-demo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8088:8080"
+    depends_on:
+      - proseo-user-mgr
+      - proseo-ingestor
+      - proseo-prodplanner
+      - proseo-order-mgr
+      - proseo-processor-mgr
+      - proseo-productclass-mgr
+      - proseo-facility-mgr
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-api-prip:
+    image: ${REGISTRY_URL}/proseo-api-prip:${PROSEO_VERSION}-demo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8089:8080"
+    depends_on:
+      - proseo-user-mgr
+      - proseo-ingestor
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-api-odip:
+    image: ${REGISTRY_URL}/proseo-api-odip:${PROSEO_VERSION}-demo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8090:8080"
+    depends_on:
+      - proseo-user-mgr
+      - proseo-ingestor
+      - proseo-order-mgr
+      - proseo-prodplanner
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-notification:
+    image: ${REGISTRY_URL}/proseo-notification:${PROSEO_VERSION}-demo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8091:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-aip-client:
+    image: ${REGISTRY_URL}/proseo-aip-client:${PROSEO_VERSION}-demo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+      - /opt/prosEO/data/transfer:/proseo/transfer
+    ports:
+      - "8092:8080"
+    depends_on:
+      - proseo-user-mgr
+      - proseo-ingestor
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-archive-mgr:
+    image: ${REGISTRY_URL}/proseo-archive-mgr:${PROSEO_VERSION}-demo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8093:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+  proseo-order-gen:
+    image: ${REGISTRY_URL}/proseo-order-gen:${PROSEO_VERSION}-demo
+    platform: linux/amd64
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+    ports:
+      - "8094:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.177.57.0/24

@@ -1,13 +1,13 @@
 /**
  * ProseoLoggerTest.java
- * 
+ *
  * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.logging.logger;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
@@ -49,7 +49,7 @@ public class ProseoLoggerTest {
 	 */
 	@Test
 	public final void testFormat() throws Exception {
-		
+
 		String expected0 = "(E1) Insert: java.lang.Exception";
 		String result0 = ProseoLogger.format(TestMessage.ERROR_TEST, new Exception());
 		assertEquals(expected0, result0);
@@ -188,7 +188,7 @@ enum TestMessage implements ProseoMessage {
 	WARN_TEST(2, Level.WARN, true, "Insert: {0}", ""),
 	INFO_TEST(3, Level.INFO, true, "Insert: {0}, {1}", ""),
 	ILLEGAL_FORMAT(4, Level.ERROR, true, "Illegal format {}",""),
-	
+
 	;
 
 	private final int code;
@@ -205,18 +205,22 @@ enum TestMessage implements ProseoMessage {
 		this.description = description;
 	}
 
+	@Override
 	public int getCode() {
 		return code;
 	}
 
+	@Override
 	public Level getLevel() {
 		return level;
 	}
 
+	@Override
 	public String getMessage() {
 		return message;
 	}
 
+	@Override
 	public String getDescription() {
 		return description;
 	}
