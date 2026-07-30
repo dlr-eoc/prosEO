@@ -5,26 +5,23 @@
  */
 package de.dlr.proseo.usermgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -42,9 +39,7 @@ import de.dlr.proseo.usermgr.rest.model.RestUser;
  *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = UserManagerApplication.class)
-@AutoConfigureTestEntityManager
 @Transactional
 @WithMockUser(username = "UTM-testuser", roles = { "USERMGR" })
 public class UserControllerImplTest {
@@ -66,7 +61,7 @@ public class UserControllerImplTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.trace("... adding a test user to the database");
 
@@ -104,7 +99,7 @@ public class UserControllerImplTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		logger.trace("... clearing test data from the database");
 
@@ -121,16 +116,16 @@ public class UserControllerImplTest {
 		// Count users for a mission with known users
 		ResponseEntity<String> response = uci.countUsers("UTM");
 
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
-		assertNotNull("Count not returned: ", response.getBody());
-		assertEquals("Wrong number of users retrieved: ", "2", response.getBody());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
+		assertNotNull(response.getBody(), "Count not returned: ");
+		assertEquals("2", response.getBody(), "Wrong number of users retrieved: ");
 
 		// Count users for a mission with no known users
 		response = uci.countUsers("NOT");
 
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
-		assertNotNull("Count not returned: ", response.getBody());
-		assertEquals("Wrong number of users retrieved: ", "0", response.getBody());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
+		assertNotNull(response.getBody(), "Count not returned: ");
+		assertEquals("0", response.getBody(), "Wrong number of users retrieved: ");
 	}
 
 	@Test
@@ -145,10 +140,10 @@ public class UserControllerImplTest {
 
 		ResponseEntity<RestUser> response = uci.createUser(newUser);
 
-		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, response.getStatusCode());
-		assertNotNull("User not returned: ", response.getBody());
-		assertEquals("Unexpected username: ", "UTM-newuser", response.getBody().getUsername());
-		assertNull("Password should not be returned: ", response.getBody().getPassword());
+		assertEquals(HttpStatus.CREATED, response.getStatusCode(), "Wrong HTTP status: ");
+		assertNotNull(response.getBody(), "User not returned: ");
+		assertEquals("UTM-newuser", response.getBody().getUsername(), "Unexpected username: ");
+		assertNull(response.getBody().getPassword(), "Password should not be returned: ");
 
 		// Attempt to create a new user with an existing name
 		RestUser existingUser = new RestUser();
@@ -158,7 +153,7 @@ public class UserControllerImplTest {
 
 		response = uci.createUser(existingUser);
 
-		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(), "Wrong HTTP status: ");
 	}
 
 	@Test
@@ -167,7 +162,7 @@ public class UserControllerImplTest {
 
 		ResponseEntity<?> response = uci.deleteUserByName("UTM-johndoe");
 
-		assertEquals("Wrong HTTP status: ", HttpStatus.NO_CONTENT, response.getStatusCode());
+		assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode(), "Wrong HTTP status: ");
 	}
 
 	@Test
@@ -177,10 +172,10 @@ public class UserControllerImplTest {
 		// Retrieve a known user
 		ResponseEntity<RestUser> response = uci.getUserByName("UTM-janedoe");
 
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
-		assertNotNull("User not returned: ", response.getBody());
-		assertEquals("Unexpected username: ", "UTM-janedoe", response.getBody().getUsername());
-		assertNull("Password should not be returned: ", response.getBody().getPassword());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
+		assertNotNull(response.getBody(), "User not returned: ");
+		assertEquals("UTM-janedoe", response.getBody().getUsername(), "Unexpected username: ");
+		assertNull(response.getBody().getPassword(), "Password should not be returned: ");
 	}
 
 	/**
@@ -194,14 +189,14 @@ public class UserControllerImplTest {
 		// Retrieve by mission code only
 		ResponseEntity<List<RestUser>> response = uci.getUsers("UTM", null, null);
 
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
-		assertEquals("Wrong number of results: ", 2, response.getBody().size());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
+		assertEquals(2, response.getBody().size(), "Wrong number of results: ");
 
 		// Retrieve selected records
 		response = uci.getUsers("UTM", 0, 1);
 
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
-		assertEquals("Wrong number of results: ", 1, response.getBody().size());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
+		assertEquals(1, response.getBody().size(), "Wrong number of results: ");
 	}
 
 	@Test
@@ -216,46 +211,46 @@ public class UserControllerImplTest {
 
 		ResponseEntity<RestUser> response = uci.modifyUser("UTM-johndoe", modifiedUser);
 
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
-		assertNotNull("User not returned: ", response.getBody());
-		assertEquals("Unexpected username: ", "UTM-johndoe", response.getBody().getUsername());
-		assertNull("Password should not be returned: ", response.getBody().getPassword());
-		assertFalse("User should be disabled: ", response.getBody().getEnabled());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
+		assertNotNull(response.getBody(), "User not returned: ");
+		assertEquals("UTM-johndoe", response.getBody().getUsername(), "Unexpected username: ");
+		assertNull(response.getBody().getPassword(), "Password should not be returned: ");
+		assertFalse(response.getBody().getEnabled(), "User should be disabled: ");
 
 		// Modify name (as user manager, see test annotation), not allowed
 		modifiedUser.setUsername("UTM-jonadoe");
 
 		response = uci.modifyUser("UTM-johndoe", modifiedUser);
 
-		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_MODIFIED, response.getStatusCode());
+		assertEquals(HttpStatus.NOT_MODIFIED, response.getStatusCode(), "Wrong HTTP status: ");
 
 		// Modify password
 		modifiedUser.setUsername("UTM-johndoe");
 		modifiedUser.setPassword("newPassword");
-		;
+
 
 		response = uci.modifyUser("UTM-johndoe", modifiedUser);
 
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
-		assertNotNull("User not returned: ", response.getBody());
-		assertEquals("Unexpected username: ", "UTM-johndoe", response.getBody().getUsername());
-		assertNull("Password should not be returned: ", response.getBody().getPassword());
-		assertFalse("User should be disabled: ", response.getBody().getEnabled());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
+		assertNotNull(response.getBody(), "User not returned: ");
+		assertEquals("UTM-johndoe", response.getBody().getUsername(), "Unexpected username: ");
+		assertNull(response.getBody().getPassword(), "Password should not be returned: ");
+		assertFalse(response.getBody().getEnabled(), "User should be disabled: ");
 
-//		// Incorrectly modify authority
-//		modifiedUser.getAuthorities().add("WRONG");
-//		
-//		assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
+//				// Incorrectly modify authority
+//				modifiedUser.getAuthorities().add("WRONG");
+//
+//				assertEquals("Wrong HTTP status: ", HttpStatus.BAD_REQUEST, response.getStatusCode());
 
 		// Add quota
 		modifiedUser.setQuota(new RestQuota(10l, 0l, Date.from(Instant.now())));
 
 		response = uci.modifyUser("UTM-johndoe", modifiedUser);
 
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, response.getStatusCode());
-		assertNotNull("User not returned: ", response.getBody());
-		assertEquals("Unexpected quota: ", Long.valueOf(10), response.getBody().getQuota().getAssigned());
-		assertEquals("Unexpected quota: ", Long.valueOf(0), response.getBody().getQuota().getUsed());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Wrong HTTP status: ");
+		assertNotNull(response.getBody(), "User not returned: ");
+		assertEquals(Long.valueOf(10), response.getBody().getQuota().getAssigned(), "Unexpected quota: ");
+		assertEquals(Long.valueOf(0), response.getBody().getQuota().getUsed(), "Unexpected quota: ");
 	}
 
 }

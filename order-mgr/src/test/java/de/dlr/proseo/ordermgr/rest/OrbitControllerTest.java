@@ -5,24 +5,21 @@
  */
 package de.dlr.proseo.ordermgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -38,14 +35,10 @@ import de.dlr.proseo.ordermgr.rest.model.OrbitUtil;
 /**
  * Testing OrbitControllerImpl.class.
  *
- * TODO test invalid REST requests
- *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = OrderManager.class)
 @WithMockUser(username = "UTM-testuser", roles = {})
-@AutoConfigureTestEntityManager
 @Transactional
 public class OrbitControllerTest {
 
@@ -75,7 +68,7 @@ public class OrbitControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.trace(">>> Starting to create test data in the database");
 		createMissionAndSpacecraft(testMissionData, testSpacecraftData);
@@ -91,7 +84,7 @@ public class OrbitControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		logger.trace(">>> Starting to delete test data in database");
 		RepositoryService.getOrbitRepository().deleteAll();
@@ -180,8 +173,8 @@ public class OrbitControllerTest {
 		logger.trace(">>> testGetOrbits()");
 		ResponseEntity<List<RestOrbit>> retrievedOrbits = oci.getOrbits(testSpacecraftData[1], null, null, null, null, null, null,
 				null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedOrbits.getStatusCode());
-		assertTrue("Not all orbits found.", retrievedOrbits.getBody().size() == testOrbitData.length);
+		assertEquals(HttpStatus.OK, retrievedOrbits.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(retrievedOrbits.getBody().size() == testOrbitData.length, "Not all orbits found.");
 	}
 
 	/**
@@ -192,8 +185,8 @@ public class OrbitControllerTest {
 	public final void testCountOrbits() {
 		logger.trace(">>> testCountOrbits()");
 		ResponseEntity<String> orbitCount = oci.countOrbits(testSpacecraftData[1], null, null, null, null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, orbitCount.getStatusCode());
-		assertTrue("Wrong orbit count.", Long.valueOf(orbitCount.getBody()) == testOrbitData.length);
+		assertEquals(HttpStatus.OK, orbitCount.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(Long.valueOf(orbitCount.getBody()) == testOrbitData.length, "Wrong orbit count.");
 	}
 
 	/**
@@ -213,8 +206,8 @@ public class OrbitControllerTest {
 		orbitsToCreate.add(toCreate);
 
 		ResponseEntity<List<RestOrbit>> createdOrbits = oci.createOrbits(orbitsToCreate);
-		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, createdOrbits.getStatusCode());
-		assertTrue("Error during orbit creation.", createdOrbits.getBody().get(0).getOrbitNumber() == toCreate.getOrbitNumber());
+		assertEquals(HttpStatus.CREATED, createdOrbits.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(createdOrbits.getBody().get(0).getOrbitNumber() == toCreate.getOrbitNumber(), "Error during orbit creation.");
 	}
 
 	/**
@@ -227,9 +220,9 @@ public class OrbitControllerTest {
 		Orbit expectedOrbit = RepositoryService.getOrbitRepository().findAll().get(0);
 
 		ResponseEntity<RestOrbit> retrievedOrbit = oci.getOrbitById(expectedOrbit.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedOrbit.getStatusCode());
-		assertTrue("Wrong orbit retrieved.",
-				retrievedOrbit.getBody().getOrbitNumber() == Long.valueOf(expectedOrbit.getOrbitNumber()));
+		assertEquals(HttpStatus.OK, retrievedOrbit.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(retrievedOrbit.getBody().getOrbitNumber() == Long.valueOf(expectedOrbit.getOrbitNumber()),
+				"Wrong orbit retrieved.");
 	}
 
 	/**
@@ -244,8 +237,8 @@ public class OrbitControllerTest {
 		toBeModified.setOrbitNumber(200L);
 
 		ResponseEntity<RestOrbit> modifiedOrbit = oci.modifyOrbit(toBeModified.getId(), toBeModified);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, modifiedOrbit.getStatusCode());
-		assertEquals("Wrong orbit retrieved.", modifiedOrbit.getBody().getOrbitNumber(), toBeModified.getOrbitNumber());
+		assertEquals(HttpStatus.OK, modifiedOrbit.getStatusCode(), "Wrong HTTP status: ");
+		assertEquals(toBeModified.getOrbitNumber(), modifiedOrbit.getBody().getOrbitNumber(), "Wrong orbit retrieved.");
 	}
 
 	/**
@@ -258,9 +251,9 @@ public class OrbitControllerTest {
 		Orbit toBeDeleted = beforeDeletion.get(0);
 
 		ResponseEntity<?> deletion = oci.deleteOrbitById(toBeDeleted.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.NO_CONTENT, deletion.getStatusCode());
+		assertEquals(HttpStatus.NO_CONTENT, deletion.getStatusCode(), "Wrong HTTP status: ");
 
 		List<Orbit> afterDeletion = RepositoryService.getOrbitRepository().findAll();
-		assertTrue("After deletion, repository does not contain less orbits.", afterDeletion.size() < beforeDeletion.size());
+		assertTrue(afterDeletion.size() < beforeDeletion.size(), "After deletion, repository does not contain less orbits.");
 	}
 }

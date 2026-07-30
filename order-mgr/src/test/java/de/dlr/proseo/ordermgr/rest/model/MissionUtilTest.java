@@ -5,16 +5,12 @@
  */
 package de.dlr.proseo.ordermgr.rest.model;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Iterator;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +19,6 @@ import de.dlr.proseo.model.rest.model.RestMission;
 
 /**
  * @author Ranjitha Vignesh
- *
  */
 public class MissionUtilTest {
 
@@ -64,49 +59,21 @@ public class MissionUtilTest {
 		return testMission;
 	}
 
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@Before
-	public void setUp() throws Exception {
-	}
-
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@After
-	public void tearDown() throws Exception {
-	}
-
 	@Test
 	public final void test() {
 		// Create an empty product
 		Mission modelmission = new Mission();
 		RestMission restMission = MissionUtil.toRestMission(modelmission);
-		assertNull("Unexpected name for new mission: ", restMission.getName());
-		assertNull("Unexpected code for new mission: ", restMission.getCode());
+		assertNull(restMission.getName(), "Unexpected name for new mission: ");
+		assertNull(restMission.getCode(), "Unexpected code for new mission: ");
 		logger.info("Test copy empty mission OK");
 
 		// Copy a mission from model to REST
 		modelmission = createMission(testMissionData[0]);
 		restMission = MissionUtil.toRestMission(modelmission);
-		assertEquals("Unexpected ID: ", modelmission.getId(), restMission.getId());
-		assertEquals("Unexpected mission code: ", modelmission.getCode(), restMission.getCode());
-		assertEquals("Unexpected mission name: ", modelmission.getName(), restMission.getName());
+		assertEquals(modelmission.getId(), restMission.getId(), "Unexpected ID: ");
+		assertEquals(modelmission.getCode(), restMission.getCode(), "Unexpected mission code: ");
+		assertEquals(modelmission.getName(), restMission.getName(), "Unexpected mission name: ");
 
 		for (Iterator<String> it = modelmission.getProcessingModes().iterator(); it.hasNext();) {
 			if (!(restMission.getProcessingModes().contains((it.next())))) {
@@ -120,22 +87,22 @@ public class MissionUtilTest {
 
 			}
 		}
-		assertEquals("Unexpected ProductFile Template : ", modelmission.getProductFileTemplate(),
-				restMission.getProductFileTemplate());
+		assertEquals(modelmission.getProductFileTemplate(), restMission.getProductFileTemplate(),
+				"Unexpected ProductFile Template : ");
 
-		assertEquals("Unexpected Spacecrafts length: ", modelmission.getSpacecrafts().size(), restMission.getSpacecrafts().size());
+		assertEquals(modelmission.getSpacecrafts().size(), restMission.getSpacecrafts().size(), "Unexpected Spacecrafts length: ");
 
 		logger.info("Test copy model to REST OK");
 
 		// Copy a mission from REST to model
 		Mission copiedModelMission = MissionUtil.toModelMission(restMission);
-//		assertEquals("ID not preserved: ", modelmission.getId(), copiedModelMission.getId());
-		assertEquals("Code not preserved: ", modelmission.getCode(), copiedModelMission.getCode());
-		assertEquals("Name not preserved: ", modelmission.getName(), copiedModelMission.getName());
-		assertEquals("Number of Spacecrafts not preserved: ", modelmission.getSpacecrafts().size(),
-				copiedModelMission.getSpacecrafts().size());
-		assertEquals("Unexpected ProductFile Template : ", modelmission.getProductFileTemplate(),
-				copiedModelMission.getProductFileTemplate());
+//				assertEquals(modelmission.getId(), copiedModelMission.getId(), "ID not preserved: ");
+		assertEquals(modelmission.getCode(), copiedModelMission.getCode(), "Code not preserved: ");
+		assertEquals(modelmission.getName(), copiedModelMission.getName(), "Name not preserved: ");
+		assertEquals(modelmission.getSpacecrafts().size(), copiedModelMission.getSpacecrafts().size(),
+				"Number of Spacecrafts not preserved: ");
+		assertEquals(modelmission.getProductFileTemplate(), copiedModelMission.getProductFileTemplate(),
+				"Unexpected ProductFile Template : ");
 
 		logger.info("Test copy REST to model OK");
 	}
