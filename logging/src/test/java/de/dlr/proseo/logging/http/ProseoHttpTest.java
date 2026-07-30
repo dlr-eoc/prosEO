@@ -5,9 +5,9 @@
  */
 package de.dlr.proseo.logging.http;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

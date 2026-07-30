@@ -23,7 +23,7 @@ import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuil
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.http.protocol.HTTP;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -36,8 +36,8 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -294,8 +294,9 @@ public class ServiceConnection {
 		// Implementation does not rely on RestTemplate, as this seems to be buggy for PATCH!
 
 		// Build an HTTP request
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.setSerializationInclusion(JsonInclude.Include.NON_ABSENT);
+		ObjectMapper mapper = JsonMapper.builder()
+			    .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_ABSENT))
+			    .build();
 		HttpClientBuilder builder = HttpClientBuilder.create();
 		HttpPatch req = new HttpPatch(URI.create(serviceUrl + requestPath));
 		PoolingHttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()

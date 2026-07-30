@@ -20,15 +20,17 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-
+import tools.jackson.core.exc.StreamWriteException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.dataformat.xml.XmlMapper;
+import tools.jackson.dataformat.xml.XmlWriteFeature;
+import tools.jackson.dataformat.xml.ser.ToXmlGenerator;
+import tools.jackson.dataformat.yaml.YAMLFactory;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.UIMessage;
@@ -37,7 +39,6 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-
 
 /**
  * Utility methods for command interpretation
@@ -97,14 +98,11 @@ public class CLIUtil {
 		
 		try {
 			return mapper.readValue(objectFile, clazz);
-		} catch (JsonParseException e) {
-			String message = logger.log(UIMessage.INVALID_FILE_SYNTAX, objectFile.toString(), fileFormat, e.getMessage());
-			throw new IllegalArgumentException(message, e);
-		} catch (JsonMappingException e) {
+		} catch (DatabindException e) {
 			String message = logger.log(UIMessage.INVALID_FILE_STRUCTURE, fileFormat, objectFile.toString(), e.getMessage());
 			throw new IllegalArgumentException(message, e);
-		} catch (IOException e) {
-			String message = logger.log(UIMessage.EXCEPTION, e.getMessage());
+		} catch (JacksonException e) {
+			String message = logger.log(UIMessage.EXCEPTION, e.getClass().getName() + " / " + e.getMessage());
 			throw new IOException(message, e);
 		}
 	}
@@ -126,19 +124,21 @@ public class CLIUtil {
 		ObjectMapper mapper = null;
 		switch(fileFormat.toUpperCase()) {
 		case FILE_FORMAT_JSON:
-			mapper = new ObjectMapper();
+			mapper = JsonMapper.builder().configure(SerializationFeature.INDENT_OUTPUT, true).build();
 			break;
 		case FILE_FORMAT_XML:
-			mapper = (new XmlMapper()).enable(ToXmlGenerator.Feature.WRITE_XML_1_1);
+			mapper = XmlMapper.builder()
+				.configure(XmlWriteFeature.WRITE_XML_1_1, true)
+				.configure(SerializationFeature.INDENT_OUTPUT, true)
+				.build();
 			break;
 		case FILE_FORMAT_YAML:
-			mapper = new ObjectMapper(new YAMLFactory());
+			mapper = YAMLMapper.builder().configure(SerializationFeature.INDENT_OUTPUT, true).build();
 			break;
 		default:
 			String message = logger.log(UIMessage.INVALID_FILE_TYPE, fileFormat);
 			throw new IllegalArgumentException(message);
 		}
-		mapper.enable(SerializationFeature.INDENT_OUTPUT);
 		
 		try {
 			Object objectToPrint = object;
@@ -148,14 +148,14 @@ public class CLIUtil {
 				objectToPrint = ((Set) object).iterator().next();
 			}
 			out.println(mapper.writeValueAsString(objectToPrint));
-		} catch (JsonGenerationException e) {
+		} catch (StreamWriteException e) {
 			String message = logger.log(UIMessage.GENERATION_EXCEPTION, object, fileFormat, e.getMessage());
 			throw new IllegalArgumentException(message, e);
-		} catch (JsonMappingException e) {
+		} catch (DatabindException e) {
 			String message = logger.log(UIMessage.MAPPING_EXCEPTION, object, fileFormat, e.getMessage());
 			throw new IllegalArgumentException(message, e);
-		} catch (IOException e) {
-			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getMessage());
+		} catch (Exception e) {
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass().getName() + " / " + e.getMessage());
 			throw e;
 		}
 	}

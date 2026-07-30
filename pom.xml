@@ -4,7 +4,7 @@
 	
 	<groupId>de.dlr.proseo</groupId>
 	<artifactId>proseo</artifactId>
-	<version>2.1.1</version>
+	<version>2.2.0-SNAPSHOT</version>
 	<name>prosEO</name>
 	<description>prosEO – A Processing System for Earth Observation Data</description>
 	<packaging>pom</packaging>
@@ -19,7 +19,7 @@
 		<!-- Your own application should inherit from spring-boot-starter-parent -->
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.14</version>
+		<version>4.1.0</version>
 	</parent>
 
 	<scm>
@@ -37,12 +37,11 @@
 		<maven-javadoc-plugin.version>3.11.3</maven-javadoc-plugin.version>
 		<maven-project-info-reports-plugin.version>3.9.0</maven-project-info-reports-plugin.version>
 		<exec-maven-plugin.version>3.5.1</exec-maven-plugin.version>
-		<junit.version>4.13.2</junit.version>
-		<spring-boot-starter-test.version>3.5.14</spring-boot-starter-test.version> <!-- Not in parent POM! -->
+		<spring-boot-starter-test.version>4.1.0</spring-boot-starter-test.version> <!-- Not in parent POM! -->
 		
-		<!-- Version freezing addressing security vulnerabilities - REMOVE when upgrading Spring Boot! -->
-    <tomcat.version>10.1.55</tomcat.version><!-- Addresses CVE-2026-43515 -->
-		<netty.version>4.1.133.Final</netty.version>
+<!--		 Version freezing addressing security vulnerabilities - REMOVE when upgrading Spring Boot! -->
+<!--        <tomcat.version>10.1.55</tomcat.version> Addresses CVE-2026-43515 -->
+<!--		<netty.version>4.1.135.Final</netty.version> Addresses CVE-2026-45674 -->
 	</properties>
 
 	<modules>
@@ -216,22 +215,22 @@
                 </plugin>
 			</plugins>
 		</pluginManagement>
-<!--		<plugins>
-            <plugin>
-                <groupId>org.owasp</groupId>
-                <artifactId>dependency-check-maven</artifactId>
-                <version>12.2.0</version>
-                <configuration>
-                    <skipProvidedScope>true</skipProvidedScope>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>aggregate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-		</plugins>-->
+		<plugins>
+			<plugin>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>12.2.0</version>
+				<configuration>
+					<skipProvidedScope>true</skipProvidedScope>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>aggregate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
 	</build>
 </project>

@@ -5,16 +5,16 @@
  */
 package de.dlr.proseo.logging.documentation;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Katharina Bassler
@@ -27,7 +27,7 @@ public class LoggingDocumentationTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		output = new File("test.html");
 	}
@@ -35,7 +35,7 @@ public class LoggingDocumentationTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		output.delete();
 	}

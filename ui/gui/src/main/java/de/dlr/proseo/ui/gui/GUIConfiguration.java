@@ -6,7 +6,6 @@
 package de.dlr.proseo.ui.gui;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,7 +23,6 @@ import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
  */
 @Configuration
 @ConfigurationProperties(prefix = "proseo")
-@EntityScan(basePackages = "de.dlr.proseo.model")
 public class GUIConfiguration implements WebMvcConfigurer {
 
 	/** The base URI for the prosEO Processor Manager */

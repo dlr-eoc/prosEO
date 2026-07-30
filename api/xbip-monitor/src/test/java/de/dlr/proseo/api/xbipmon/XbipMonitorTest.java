@@ -25,11 +25,11 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -42,7 +42,7 @@ import de.dlr.proseo.api.xbipmon.rest.model.RestInterfaceStatus;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = XbipMonitorApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-@AutoConfigureTestEntityManager
+@AutoConfigureTestRestTemplate
 public class XbipMonitorTest {
 	
 	private static final String TEST_XBIP_MONITOR_ID = "S1B-SGS-01";
@@ -147,7 +147,6 @@ public class XbipMonitorTest {
 		
 		String testUrl = "http://localhost:" + this.port + XBIP_MONITOR_BASE_URI + "/status";
 		
-		ResponseEntity<RestInterfaceStatus> restInterfaceStatus = new TestRestTemplate().getForEntity(testUrl, RestInterfaceStatus.class);
 		
 		logger.info(String.format("Status request returned Id %s, availability %s, performance %G", 
 				restInterfaceStatus.getBody().getId(),

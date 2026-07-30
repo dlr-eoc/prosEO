@@ -29,10 +29,10 @@ a Helm-based deployment is required, see <https://github.com/kubernetes/dashboar
 1) Download the recommended dashboard configuration from 
    <https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml>
    to a new file `kubernetes/kubernetes-dashboard.yaml` (a copy may already be provided in the `kubernetes` directory).
-2) Run the dashboard:
+2) Run the dashboard (from `bash`, `nohup` won't work as intended on `zsh`):
    ```
    kubectl apply -f kubernetes/kubernetes-dashboard.yaml
-   nohup kubectl proxy --accept-hosts='.*' &
+   nohup kubectl proxy --accept-hosts='.*' >~/kubectl-proxy.log 2>&1 &
    ```
 3) Create a user with administrative privileges for the dashboard as per
    <https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md> and (from Kubernetes 1.22)

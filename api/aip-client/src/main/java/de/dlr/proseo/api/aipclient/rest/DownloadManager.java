@@ -73,7 +73,7 @@ import org.springframework.web.reactive.function.client.WebClient.RequestBodySpe
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.api.aipclient.AipClientConfiguration;
 import de.dlr.proseo.api.aipclient.rest.model.IngestorProduct;
@@ -812,13 +812,9 @@ public class DownloadManager {
 		// Analyse the result
 		ObjectMapper om = new ObjectMapper();
 		Map<?, ?> tokenResponseMap = null;
-		try {
-			tokenResponseMap = om.readValue(tokenResponse, Map.class);
-		} catch (IOException e) {
-			logger.log(OAuthMessage.TOKEN_RESPONSE_INVALID, tokenResponse, archive.getBaseUri() + "/" + archive.getTokenUri(),
-					e.getMessage());
-			return null;
-		}
+
+		tokenResponseMap = om.readValue(tokenResponse, Map.class);
+
 		if (null == tokenResponseMap || tokenResponseMap.isEmpty()) {
 			logger.log(OAuthMessage.TOKEN_RESPONSE_EMPTY, tokenResponse, archive.getBaseUri() + "/" + archive.getTokenUri());
 			return null;
@@ -1351,12 +1347,8 @@ public class DownloadManager {
 
 		ObjectMapper obj = new ObjectMapper();
 		String jsonRequest = null;
-		try {
-			jsonRequest = obj.writeValueAsString(Arrays.asList(product)); // Ingestion expects list of products
-		} catch (JsonProcessingException e) {
-			logger.log(AipClientMessage.ERROR_CONVERTING_INGESTOR_PRODUCT, product.getProductClass(), e.getMessage());
-			throw e;
-		}
+
+		jsonRequest = obj.writeValueAsString(Arrays.asList(product)); // Ingestion expects list of products
 
 		String basicAuth = "Basic " + Base64.getEncoder().encodeToString((user + ":" + password).getBytes());
 		HttpClient httpClient = HttpClient.create().wiretap(logger.isDebugEnabled());

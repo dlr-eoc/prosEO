@@ -35,6 +35,9 @@ To build prosEO from source code, the following prerequisites must be met:
   we recommend using a GUI tool, e. g. Joxit (<https://joxit.dev/docker-registry-ui/>). Sample (!) files for running the docker
   registry and the Joxit GUI are included in the `src/docker` directory.
   
+  *NOTE for macOS:* In recent versions of macOS port 5000 may be occupied by the `ControlCenter` app. If this is the case,
+  turn off AirPlay integration in `System Settings -> General -> AirDrop & Integration -> AirPlay receiver`.
+  
 - Add the following to your Maven settings file (usually at `$HOME/.m2/settings.xml`):
   ```
   <settings>
@@ -62,12 +65,6 @@ To build prosEO from source code, the following prerequisites must be met:
     ],
     ...
   }
-  ```
-- Push the OpenJDK 11 image to your local repository:
-  ```
-  docker pull openjdk:11
-  docker tag openjdk:11 localhost:5000/openjdk:11
-  docker push localhost:5000/openjdk:11
   ```
 - Install Node.js including `npm` (installation packages can be found on (https://nodejs.org)).
 - Install the `raml2html` helper ((https://github.com/raml2html/raml2html)):
