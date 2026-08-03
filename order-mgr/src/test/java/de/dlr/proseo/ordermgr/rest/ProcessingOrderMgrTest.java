@@ -145,6 +145,7 @@ public class ProcessingOrderMgrTest {
 		RepositoryService.getProductClassRepository().deleteAll();
 		RepositoryService.getConfiguredProcessorRepository().deleteAll();
 		RepositoryService.getProcessorRepository().deleteAll();
+		RepositoryService.getProcessorClassRepository().deleteAll();
 		RepositoryService.getWorkflowRepository().deleteAll();
 		RepositoryService.getSpacecraftRepository().deleteAll();
 		RepositoryService.getMissionRepository().deleteAll();
@@ -673,7 +674,7 @@ public class ProcessingOrderMgrTest {
 		// Input product reference may not be updated
 		testOrder.setInputProductReference(new RestInputReference());
 		testOrder.setId(RepositoryService.getOrderRepository().save(OrderUtil.toModelOrder(testOrder)).getId());
-		testOrder.setInputProductReference(null);
+		testOrder.setInputProductReference(new RestInputReference());
 		assertThrows(IllegalArgumentException.class, () -> pom.modifyOrder(testOrder.getId(), testOrder));
 		testOrder.setInputProductReference(null);
 		testOrder.setId(RepositoryService.getOrderRepository().save(OrderUtil.toModelOrder(testOrder)).getId());
