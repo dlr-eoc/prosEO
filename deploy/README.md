@@ -5,7 +5,7 @@ prosEO Deployment Example
 This document describes how to deploy a prosEO processing facility on a new set of
 (virtual) machines, e. g. as provisioned by some cloud service provider.
 
-# Prerequisites
+## Prerequisites
 
 The (virtual) machines need to at least fulfill the following requirements:
 - Linux installed
@@ -23,7 +23,7 @@ The procedure below assumes that a cloud infrastructure has been deployed accord
 (derived from template file `proseo-hosts.template`).
 
 
-# General Procedure
+## General Procedure
 
 The deployment of a full prosEO environment requires the following steps:
 1. Create images for the prosEO microservices (see `proseo-images/REAMDE.md`).
@@ -56,7 +56,7 @@ The dependencies are:
 Administrative access usually is through the bastion host for the control instance, since all inner nodes are reachable from there.
 
 
-# Starting the prosEO Database Server
+## Starting the prosEO Database Server
 
 Log in to the db-server host via the control instance bastion host, then create the container for the prosEO metadata database:
 ```
@@ -65,7 +65,7 @@ cd /opt/prosEO
 ```
 
 
-# Starting the prosEO Control Instance ("brain")
+## Starting the prosEO Control Instance ("brain")
 
 Log in to the brain host via the control instance bastion host, then create the containers for the prosEO microservices:
 ```
@@ -91,7 +91,7 @@ in `brain/prepare_proseo/files`.
 The control instance can be stopped using the script `stop_control_instance.sh`.
 
 
-# Starting the prosEO Storage Manager
+## Starting the prosEO Storage Manager
 
 Log in to the NFS server host via the control instance bastion host, then create the containers for the prosEO microservices:
 ```
@@ -100,12 +100,12 @@ cd /opt/prosEO
 ```
 
 
-# Starting the logging and monitoring
+## Starting the logging and monitoring
 
 Start the Docker applications. Convenience scripts (run_containers.sh, stop_containers.sh) are available on the loghost under /opt/prosEO.
 
 
-## Configure Grafana
+### Configure Grafana
 
 Connect to the Postgres container and switch to the prosEO database:
 ```
@@ -136,3 +136,56 @@ automatically. However, to properly initialize the prosEO database, it must be s
 view and saved and tested with the available "save & test" button. Only then will the dashboards be displayed correctly.
 
 An overview over recent errors is available at https://<your.bastion.host>/proseo/grafana/explore?orgId=1&left={"datasource":"Loki","queries":[{"expr":"{job=\"proseo\"} |= \"ERROR\""}]}.
+
+
+
+## Updating prosEO
+
+Locally:
+1. Update prosEO and mission-specific configuration, esp. Dockerfiles and application.yml files 
+   (compare with respective templates)
+2. Maven-build prosEO and mission-specific modules
+
+Target environment
+3. Stop all services:
+
+```
+# loghost
+cd /opt/prosEO
+./stop_containers.sh
+
+# brain
+cd /opt/prosEO
+./stop_control_instance.sh
+
+# nfs server
+cd /opt/prosEO
+./stop_containers.sh
+```
+
+4. For Postgres release updates, cf. model/src/main/sql/README prosEO 2.0.0.md
+5. Restart services:
+
+```
+# loghost
+./run_containers.sh proseo-registry.eoc.dlr.de <proseoversion> 
+docker ps
+
+# brain
+./run_control_instance.sh proseo-registry.eoc.dlr.de <proseoversion>
+docker ps
+
+# nfs-server
+./run_containers.sh proseo-registry.eoc.dlr.de <proseoversion> <auxipversion>
+docker ps
+```
+
+6. Update database
+
+```
+# brain
+cd /op/prosEO/pgdata
+# copy update file here, e.g. proseo_schema_update_2026-04-23.sql
+docker exec -it cdse-proseo-db-1 su - postgres
+psql proseo <data/proseo_schema_update_2026-04-23.sql
+```
