@@ -9,7 +9,7 @@ logging:
         org.apache.olingo: INFO
 proseo:
     # The Ingestor URI (protocol, host name, port, context; no terminating slash)
-    ingestor.url: http://localhost:8081/proseo/ingestor/v1 
+    ingestor.url: http://localhost:8081/proseo/ingestor/v0.1 
 
     # AUXIP Monitor configuration
     auxip:
