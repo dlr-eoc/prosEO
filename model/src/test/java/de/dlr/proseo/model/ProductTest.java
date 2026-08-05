@@ -5,16 +5,16 @@
  */
 package de.dlr.proseo.model;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Instant;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import de.dlr.proseo.model.enums.ParameterType;
@@ -62,28 +62,28 @@ public class ProductTest {
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 	
@@ -122,13 +122,13 @@ public class ProductTest {
 		product.setOrbit(orbit);
 		
 		mission.setProductFileTemplate(TEST_SIMPLE_TEMPLATE);
-		assertEquals("Unexpected resolution of simple template", EXPECTED_SIMPLENAME, product.generateFilename());
+		assertEquals(EXPECTED_SIMPLENAME, product.generateFilename(), "Unexpected resolution of simple template");
 		
 		mission.setProductFileTemplate(TEST_FILENAME_TEMPLATE);
-		assertEquals("Unexpected resolution of filename template", EXPECTED_FILENAME, product.generateFilename());
+		assertEquals(EXPECTED_FILENAME, product.generateFilename(), "Unexpected resolution of filename template");
 		
 		productClass.setProductFileTemplate(TEST_EXPRESSION_ONLY_TEMPLATE);
-		assertEquals("Unexpected resolution of filename template", EXPECTED_EXPRESSION_ONLY_NAME, product.generateFilename());
+		assertEquals(EXPECTED_EXPRESSION_ONLY_NAME, product.generateFilename(), "Unexpected resolution of filename template");
 		
 		logger.info("OK: Test for Product#generateFileName() completed");
 	}

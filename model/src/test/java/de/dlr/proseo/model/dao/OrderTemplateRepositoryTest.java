@@ -5,23 +5,20 @@
  */
 package de.dlr.proseo.model.dao;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Mission;
@@ -34,11 +31,9 @@ import de.dlr.proseo.model.service.RepositoryService;
  *
  * @author Dr. Thomas Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = RepositoryApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
 @Transactional
-@AutoConfigureTestEntityManager
 public class OrderTemplateRepositoryTest {
 
 	private static final String TEST_MISSIONCODE = "xyz567";
@@ -50,28 +45,28 @@ public class OrderTemplateRepositoryTest {
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -91,13 +86,13 @@ public class OrderTemplateRepositoryTest {
 		
 		// Test findByMissionCode
 		List<OrderTemplate> orderTemplates = RepositoryService.getOrderTemplateRepository().findByMissionCode(TEST_MISSIONCODE);
-		assertEquals("Find by mission code failed for OrderTemplate", 1, orderTemplates.size());
+		assertEquals(1, orderTemplates.size(), "Find by mission code failed for OrderTemplate");
 		
 		logger.info("OK: Test for findByMissionCode completed");
 		
 		// Test findByMissionCodeAndName
 		orderTemplate = RepositoryService.getOrderTemplateRepository().findByMissionCodeAndName(TEST_MISSIONCODE, TEST_NAME);
-		assertNotNull("Find by mission code and name failed for OrderTemplate", orderTemplate);
+		assertNotNull(orderTemplate, "Find by mission code and name failed for OrderTemplate");
 		
 		logger.info("OK: Test for findByMissionCodeAndName completed");
 		

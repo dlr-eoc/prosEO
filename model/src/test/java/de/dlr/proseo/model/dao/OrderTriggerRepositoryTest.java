@@ -5,24 +5,21 @@
  */
 package de.dlr.proseo.model.dao;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.CalendarOrderTrigger;
@@ -41,11 +38,9 @@ import de.dlr.proseo.model.service.RepositoryService;
  *
  * @author Dr. Thomas Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = RepositoryApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
 @Transactional
-@AutoConfigureTestEntityManager
 public class OrderTriggerRepositoryTest {
 
 	private static final String TEST_CODE_1 = "$ABC$";
@@ -66,28 +61,28 @@ public class OrderTriggerRepositoryTest {
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -144,7 +139,7 @@ public class OrderTriggerRepositoryTest {
 		trigger1.setOrderTemplate(orderTemplate1);
 		trigger1.setInputProductClass(productClass1);
 		trigger1 = RepositoryService.getDataDrivenOrderTriggerRepository().save(trigger1);
-		assertNotNull("DataDrivenOrderTrigger 1 not created correctly", trigger1);
+		assertNotNull(trigger1, "DataDrivenOrderTrigger 1 not created correctly");
 		
 		DataDrivenOrderTrigger trigger2 = new DataDrivenOrderTrigger();
 		trigger2.setMission(mission2);
@@ -152,7 +147,7 @@ public class OrderTriggerRepositoryTest {
 		trigger2.setOrderTemplate(orderTemplate2);
 		trigger2.setInputProductClass(productClass2);
 		trigger2 = RepositoryService.getDataDrivenOrderTriggerRepository().save(trigger2);
-		assertNotNull("DataDrivenOrderTrigger 2 not created correctly", trigger2);
+		assertNotNull(trigger2, "DataDrivenOrderTrigger 2 not created correctly");
 		
 		DataDrivenOrderTrigger trigger3 = new DataDrivenOrderTrigger();
 		trigger3.setMission(mission1);
@@ -160,33 +155,33 @@ public class OrderTriggerRepositoryTest {
 		trigger3.setOrderTemplate(orderTemplate3);
 		trigger3.setInputProductClass(productClass3);
 		trigger3 = RepositoryService.getDataDrivenOrderTriggerRepository().save(trigger3);
-		assertNotNull("DataDrivenOrderTrigger 3 not created correctly", trigger3);
+		assertNotNull(trigger3, "DataDrivenOrderTrigger 3 not created correctly");
 
 		logger.info("OK: Test DataDrivenOrderTriggerRepository::save");
 		
 		// Test findAll
 		List<DataDrivenOrderTrigger> ddTriggerList = RepositoryService.getDataDrivenOrderTriggerRepository().findAll();
-		assertEquals("Wrong number of triggers returned", 3, ddTriggerList.size());
+		assertEquals(3, ddTriggerList.size(), "Wrong number of triggers returned");
 		
 		logger.info("OK: Test DataDrivenOrderTriggerRepository::findAll");
 		
 		// Test findByMissionCode
 		ddTriggerList = RepositoryService.getDataDrivenOrderTriggerRepository().findByMissionCode(TEST_CODE_1);
-		assertEquals("Wrong number of triggers returned", 2, ddTriggerList.size());
+		assertEquals(2, ddTriggerList.size(), "Wrong number of triggers returned");
 		
 		logger.info("OK: Test DataDrivenOrderTriggerRepository::findByMissionCode");
 		
 		// Test findByMissionCodeAndName
 		DataDrivenOrderTrigger ddTrigger = RepositoryService.getDataDrivenOrderTriggerRepository()
 				.findByMissionCodeAndName(TEST_CODE_1, TEST_TRIGGER_1);
-		assertNotNull("Trigger 1 (" + TEST_CODE_1 + "/" + TEST_TRIGGER_1 + ") not found", ddTrigger);
+		assertNotNull(ddTrigger, "Trigger 1 (" + TEST_CODE_1 + "/" + TEST_TRIGGER_1 + ") not found");
 		
 		logger.info("OK: Test DataDrivenOrderTriggerRepository::findByMissionCodeAndName");
 		
 		// Test findByMissionCodeAndProductClass
 		ddTriggerList = RepositoryService.getDataDrivenOrderTriggerRepository()
 				.findByMissionCodeAndProductClass(TEST_CODE_1, productClass3);
-		assertEquals("Wrong number of triggers returned", 1, ddTriggerList.size());
+		assertEquals(1, ddTriggerList.size(), "Wrong number of triggers returned");
 		
 		logger.info("OK: Test DataDrivenOrderTriggerRepository::findByMissionCodeAndProductClass");
 		
@@ -194,7 +189,7 @@ public class OrderTriggerRepositoryTest {
 		RepositoryService.getDataDrivenOrderTriggerRepository().delete(trigger3);
 		ddTrigger = RepositoryService.getDataDrivenOrderTriggerRepository()
 				.findByMissionCodeAndName(TEST_CODE_1, TEST_TRIGGER_3);
-		assertNull("DataDrivenOrderTrigger 3 not deleted", ddTrigger);
+		assertNull(ddTrigger, "DataDrivenOrderTrigger 3 not deleted");
 		
 		logger.info("--- Test for DataDrivenOrderTriggerRepository completed ---");
 		
@@ -207,20 +202,20 @@ public class OrderTriggerRepositoryTest {
 		trigger4.setName(TEST_TRIGGER_3);
 		trigger4.setOrderTemplate(orderTemplate3);
 		trigger4 = RepositoryService.getCalendarOrderTriggerRepository().save(trigger4);
-		assertNotNull("CalendarOrderTrigger 4 not created correctly", trigger4);
+		assertNotNull(trigger4, "CalendarOrderTrigger 4 not created correctly");
 
 		logger.info("OK: Test CalendarOrderTriggerRepository::save");
 		
 		// Test findByMissionCode
 		List<CalendarOrderTrigger> coTriggerList = RepositoryService.getCalendarOrderTriggerRepository().findByMissionCode(TEST_CODE_1);
-		assertEquals("Wrong number of triggers returned", 1, coTriggerList.size());
+		assertEquals(1, coTriggerList.size(), "Wrong number of triggers returned");
 		
 		logger.info("OK: Test CalendarOrderTriggerRepository::findByMissionCode");
 		
 		// Test findByMissionCodeAndName
 		CalendarOrderTrigger coTrigger = RepositoryService.getCalendarOrderTriggerRepository()
 				.findByMissionCodeAndName(TEST_CODE_1, TEST_TRIGGER_3);
-		assertNotNull("CalendarOrderTrigger 4 (" + TEST_CODE_1 + "/" + TEST_TRIGGER_3 + ") not found", coTrigger);
+		assertNotNull(coTrigger, "CalendarOrderTrigger 4 (" + TEST_CODE_1 + "/" + TEST_TRIGGER_3 + ") not found");
 		
 		logger.info("OK: Test CalendarOrderTriggerRepository::findByMissionCodeAndName");
 		
@@ -228,7 +223,7 @@ public class OrderTriggerRepositoryTest {
 		RepositoryService.getCalendarOrderTriggerRepository().delete(trigger4);
 		coTrigger = RepositoryService.getCalendarOrderTriggerRepository()
 				.findByMissionCodeAndName(TEST_CODE_1, TEST_TRIGGER_3);
-		assertNull("CalendarOrderTrigger 4 not deleted", coTrigger);
+		assertNull(coTrigger, "CalendarOrderTrigger 4 not deleted");
 		
 		logger.info("--- Test for CalendarOrderTriggerRepository completed ---");
 		
@@ -241,20 +236,20 @@ public class OrderTriggerRepositoryTest {
 		trigger5.setName(TEST_TRIGGER_3);
 		trigger5.setOrderTemplate(orderTemplate3);
 		trigger5 = RepositoryService.getDatatakeOrderTriggerRepository().save(trigger5);
-		assertNotNull("DatatakeOrderTrigger 5 not created correctly", trigger5);
+		assertNotNull(trigger5, "DatatakeOrderTrigger 5 not created correctly");
 
 		logger.info("OK: Test DatatakeOrderTriggerRepository::save");
 		
 		// Test findByMissionCode
 		List<DatatakeOrderTrigger> dtTriggerList = RepositoryService.getDatatakeOrderTriggerRepository().findByMissionCode(TEST_CODE_1);
-		assertEquals("Wrong number of triggers returned", 1, dtTriggerList.size());
+		assertEquals(1, dtTriggerList.size(), "Wrong number of triggers returned");
 		
 		logger.info("OK: Test DatatakeOrderTriggerRepository::findByMissionCode");
 		
 		// Test findByMissionCodeAndName
 		DatatakeOrderTrigger dtTrigger = RepositoryService.getDatatakeOrderTriggerRepository()
 				.findByMissionCodeAndName(TEST_CODE_1, TEST_TRIGGER_3);
-		assertNotNull("DatatakeOrderTrigger 5 (" + TEST_CODE_1 + "/" + TEST_TRIGGER_3 + ") not found", dtTrigger);
+		assertNotNull(dtTrigger, "DatatakeOrderTrigger 5 (" + TEST_CODE_1 + "/" + TEST_TRIGGER_3 + ") not found");
 		
 		logger.info("OK: Test DatatakeOrderTriggerRepository::findByMissionCodeAndName");
 		
@@ -262,7 +257,7 @@ public class OrderTriggerRepositoryTest {
 		RepositoryService.getDatatakeOrderTriggerRepository().delete(trigger5);
 		dtTrigger = RepositoryService.getDatatakeOrderTriggerRepository()
 				.findByMissionCodeAndName(TEST_CODE_1, TEST_TRIGGER_3);
-		assertNull("DatatakeOrderTrigger 5 not deleted", dtTrigger);
+		assertNull(dtTrigger, "DatatakeOrderTrigger 5 not deleted");
 		
 		logger.info("--- Test for DatatakeOrderTriggerRepository completed ---");
 		
@@ -275,20 +270,20 @@ public class OrderTriggerRepositoryTest {
 		trigger6.setName(TEST_TRIGGER_3);
 		trigger6.setOrderTemplate(orderTemplate3);
 		trigger6 = RepositoryService.getOrbitOrderTriggerRepository().save(trigger6);
-		assertNotNull("OrbitOrderTrigger 6 not created correctly", trigger6);
+		assertNotNull(trigger6, "OrbitOrderTrigger 6 not created correctly");
 
 		logger.info("OK: Test OrbitOrderTriggerRepository::save");
 		
 		// Test findByMissionCode
 		List<OrbitOrderTrigger> ooTriggerList = RepositoryService.getOrbitOrderTriggerRepository().findByMissionCode(TEST_CODE_1);
-		assertEquals("Wrong number of triggers returned", 1, ooTriggerList.size());
+		assertEquals(1, ooTriggerList.size(), "Wrong number of triggers returned");
 		
 		logger.info("OK: Test OrbitOrderTriggerRepository::findByMissionCode");
 		
 		// Test findByMissionCodeAndName
 		OrbitOrderTrigger ooTrigger = RepositoryService.getOrbitOrderTriggerRepository()
 				.findByMissionCodeAndName(TEST_CODE_1, TEST_TRIGGER_3);
-		assertNotNull("OrbitOrderTrigger 6 (" + TEST_CODE_1 + "/" + TEST_TRIGGER_3 + ") not found", ooTrigger);
+		assertNotNull(ooTrigger, "OrbitOrderTrigger 6 (" + TEST_CODE_1 + "/" + TEST_TRIGGER_3 + ") not found");
 		
 		logger.info("OK: Test OrbitOrderTriggerRepository::findByMissionCodeAndName");
 		
@@ -296,7 +291,7 @@ public class OrderTriggerRepositoryTest {
 		RepositoryService.getOrbitOrderTriggerRepository().delete(trigger6);
 		ooTrigger = RepositoryService.getOrbitOrderTriggerRepository()
 				.findByMissionCodeAndName(TEST_CODE_1, TEST_TRIGGER_3);
-		assertNull("OrbitOrderTrigger 6 not deleted", ooTrigger);
+		assertNull(ooTrigger, "OrbitOrderTrigger 6 not deleted");
 		
 		logger.info("--- Test for OrbitOrderTriggerRepository completed ---");
 		
@@ -309,20 +304,20 @@ public class OrderTriggerRepositoryTest {
 		trigger7.setName(TEST_TRIGGER_3);
 		trigger7.setOrderTemplate(orderTemplate3);
 		trigger7 = RepositoryService.getTimeIntervalOrderTriggerRepository().save(trigger7);
-		assertNotNull("TimeIntervalOrderTrigger 7 not created correctly", trigger7);
+		assertNotNull(trigger7, "TimeIntervalOrderTrigger 7 not created correctly");
 
 		logger.info("OK: Test TimeIntervalOrderTriggerRepository::save");
 		
 		// Test findByMissionCode
 		List<TimeIntervalOrderTrigger> tiTriggerList = RepositoryService.getTimeIntervalOrderTriggerRepository().findByMissionCode(TEST_CODE_1);
-		assertEquals("Wrong number of triggers returned", 1, tiTriggerList.size());
+		assertEquals(1, tiTriggerList.size(), "Wrong number of triggers returned");
 		
 		logger.info("OK: Test TimeIntervalOrderTriggerRepository::findByMissionCode");
 		
 		// Test findByMissionCodeAndName
 		TimeIntervalOrderTrigger tiTrigger = RepositoryService.getTimeIntervalOrderTriggerRepository()
 				.findByMissionCodeAndName(TEST_CODE_1, TEST_TRIGGER_3);
-		assertNotNull("TimeIntervalOrderTrigger 7 (" + TEST_CODE_1 + "/" + TEST_TRIGGER_3 + ") not found", tiTrigger);
+		assertNotNull(tiTrigger, "TimeIntervalOrderTrigger 7 (" + TEST_CODE_1 + "/" + TEST_TRIGGER_3 + ") not found");
 		
 		logger.info("OK: Test TimeIntervalOrderTriggerRepository::findByMissionCodeAndName");
 		
@@ -330,7 +325,7 @@ public class OrderTriggerRepositoryTest {
 		RepositoryService.getTimeIntervalOrderTriggerRepository().delete(trigger7);
 		tiTrigger = RepositoryService.getTimeIntervalOrderTriggerRepository()
 				.findByMissionCodeAndName(TEST_CODE_1, TEST_TRIGGER_3);
-		assertNull("TimeIntervalOrderTrigger 7 not deleted", tiTrigger);
+		assertNull(tiTrigger, "TimeIntervalOrderTrigger 7 not deleted");
 		
 		logger.info("--- Test for TimeIntervalOrderTriggerRepository completed ---");
 		

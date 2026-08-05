@@ -5,25 +5,22 @@
  */
 package de.dlr.proseo.model.dao;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Mission;
@@ -40,11 +37,9 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  *
  * @author Dr. Thomas Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = RepositoryApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
 @Transactional
-@AutoConfigureTestEntityManager
 public class ProductRepositoryTest {
 
 	private static final String TEST_CODE = "$ABC$";
@@ -60,28 +55,28 @@ public class ProductRepositoryTest {
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -132,47 +127,47 @@ public class ProductRepositoryTest {
 		// Test findByMissionCodeAndProductTypeAndOrbitNumberBetween
 		List<Product> products = RepositoryService.getProductRepository().findByMissionCodeAndProductTypeAndOrbitNumberBetween(
 				TEST_CODE, TEST_PRODUCT_TYPE, TEST_ORBIT_NUMBER, TEST_ORBIT_NUMBER + 1);
-		assertFalse("Find by mission code, product type and orbit failed for Product", products.isEmpty());
+		assertFalse(products.isEmpty(), "Find by mission code, product type and orbit failed for Product");
 		
 		logger.info("OK: Test for findByMissionCodeAndProductTypeAndOrbitNumberBetween completed");
 		
 		// Test findByMissionCodeAndProductTypeAndRequestedStartTimeBetween
 		products = RepositoryService.getProductRepository().findByMissionCodeAndProductTypeAndRequestedStartTimeBetween(
 				TEST_CODE, TEST_PRODUCT_TYPE, TEST_START_TIME, TEST_START_TIME.plusSeconds(200));
-		assertFalse("Find by mission code, product type and requested start time failed for Product", products.isEmpty());
+		assertFalse(products.isEmpty(), "Find by mission code, product type and requested start time failed for Product");
 		
 		logger.info("OK: Test for findByMissionCodeAndProductTypeAndRequestedStartTimeBetween completed");
 		
 		// Test findByMissionCodeAndProductTypeAndSensingStartTimeBetween
 		products = RepositoryService.getProductRepository().findByMissionCodeAndProductTypeAndSensingStartTimeBetween(
 				TEST_CODE, TEST_PRODUCT_TYPE, TEST_START_TIME, TEST_START_TIME.plusSeconds(200));
-		assertFalse("Find by mission code, product type and start time failed for Product", products.isEmpty());
+		assertFalse(products.isEmpty(), "Find by mission code, product type and start time failed for Product");
 		
 		logger.info("OK: Test for findByMissionCodeAndProductTypeAndSensingStartTimeBetween completed");
 		
 		// Test findByMissionCodeAndProductTypeAndRequesteStartTimeLessAndSensingStopTimeGreater (testing intersection)
 		products = RepositoryService.getProductRepository().findByMissionCodeAndProductTypeAndRequestedStartTimeLessAndRequestedStopTimeGreater(
 				TEST_CODE, TEST_PRODUCT_TYPE, TEST_START_TIME.plusSeconds(1000), TEST_START_TIME.minusSeconds(200));
-		assertFalse("Find by mission code, product type and requested start/stop time failed for Product", products.isEmpty());
+		assertFalse(products.isEmpty(), "Find by mission code, product type and requested start/stop time failed for Product");
 		
 		logger.info("OK: Test for findByMissionCodeAndProductTypeAndSensingStartTimeLessAndSensingStopTimeGreater completed");
 		
 		// Test findByMissionCodeAndProductTypeAndSensingStartTimeLessAndSensingStopTimeGreater (testing intersection)
 		products = RepositoryService.getProductRepository().findByMissionCodeAndProductTypeAndSensingStartTimeLessAndSensingStopTimeGreater(
 				TEST_CODE, TEST_PRODUCT_TYPE, TEST_START_TIME.plusSeconds(1000), TEST_START_TIME.minusSeconds(200));
-		assertFalse("Find by mission code, product type and start/stop time failed for Product", products.isEmpty());
+		assertFalse(products.isEmpty(), "Find by mission code, product type and start/stop time failed for Product");
 		
 		logger.info("OK: Test for findByMissionCodeAndProductTypeAndSensingStartTimeLessAndSensingStopTimeGreater completed");
 		
 		// Test findByUuid
 		product = RepositoryService.getProductRepository().findByUuid(TEST_UUID);
-		assertFalse("Find by UUID failed for Product", null == product);
+		assertFalse(null == product, "Find by UUID failed for Product");
 		
 		logger.info("OK: Test for findByUuid completed");
 		
 		// Test findByEvictionTimeBeforeNow
 		products = RepositoryService.getProductRepository().findByEvictionTimeBeforeNow();
-		assertFalse("Find by eviction time before now failed for Product", products.isEmpty());
+		assertFalse(products.isEmpty(), "Find by eviction time before now failed for Product");
 		
 		logger.info("OK: Test for findByEvictionTimeBeforeNow completed");
 	}

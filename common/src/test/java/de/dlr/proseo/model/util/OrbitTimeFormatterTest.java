@@ -5,12 +5,12 @@
  */
 package de.dlr.proseo.model.util;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test class for OrbitTimeFormatter
@@ -20,58 +20,58 @@ import org.junit.Test;
  */
 public class OrbitTimeFormatterTest {
 
-	/**
-	 * Test method for {@link de.dlr.proseo.model.util.OrbitTimeFormatter#format(java.time.temporal.TemporalAccessor)}.
-	 */
-	@Test
-	public final void testFormat() {
-		Instant testInstant = Instant.parse("2020-03-23T15:46:17.123456Z");
+    /**
+     * Test method for {@link de.dlr.proseo.model.util.OrbitTimeFormatter#format(java.time.temporal.TemporalAccessor)}.
+     */
+    @Test
+    public final void testFormat() {
+        Instant testInstant = Instant.parse("2020-03-23T15:46:17.123456Z");
 
-		String formattedInstant = OrbitTimeFormatter.format(testInstant);
+        String formattedInstant = OrbitTimeFormatter.format(testInstant);
 
-		assertEquals("Unexpected time format:", "2020-03-23T15:46:17.123456", formattedInstant);
-	}
+        assertEquals("2020-03-23T15:46:17.123456", formattedInstant, "Unexpected time format:");
+    }
 
-	/**
-	 * Test method for {@link de.dlr.proseo.model.util.OrbitTimeFormatter#parse(java.lang.String)}.
-	 */
-	@Test
-	public final void testParse() {
-		String inputNoTimezone = "2020-03-23T15:46:17.123456";
+    /**
+     * Test method for {@link de.dlr.proseo.model.util.OrbitTimeFormatter#parse(java.lang.String)}.
+     */
+    @Test
+    public final void testParse() {
+        String inputNoTimezone = "2020-03-23T15:46:17.123456";
 
-		Instant testInstantNoTimezone = Instant.parse(inputNoTimezone + "Z");
+        Instant testInstantNoTimezone = Instant.parse(inputNoTimezone + "Z");
 
-		assertEquals("Parsing without timezone failed:", testInstantNoTimezone, Instant.from(OrbitTimeFormatter.parse(inputNoTimezone)));
+        assertEquals(testInstantNoTimezone, Instant.from(OrbitTimeFormatter.parse(inputNoTimezone)), "Parsing without timezone failed:");
 
-		inputNoTimezone = "2020-03-23T15:46:17";
+        inputNoTimezone = "2020-03-23T15:46:17";
 
-		testInstantNoTimezone = Instant.parse(inputNoTimezone + "Z");
+        testInstantNoTimezone = Instant.parse(inputNoTimezone + "Z");
 
-		assertEquals("Parsing without timezone and fraction of seconds failed:", testInstantNoTimezone, Instant.from(OrbitTimeFormatter.parse(inputNoTimezone)));
+        assertEquals(testInstantNoTimezone, Instant.from(OrbitTimeFormatter.parse(inputNoTimezone)), "Parsing without timezone and fraction of seconds failed:");
 
-		inputNoTimezone = "2020-03-23T15:46:17.456";
+        inputNoTimezone = "2020-03-23T15:46:17.456";
 
-		testInstantNoTimezone = Instant.parse(inputNoTimezone + "Z");
+        testInstantNoTimezone = Instant.parse(inputNoTimezone + "Z");
 
-		assertEquals("Parsing without timezone and with milliseconds failed:", testInstantNoTimezone, Instant.from(OrbitTimeFormatter.parse(inputNoTimezone)));
-		// assertEquals("Parsing without timezone and with milliseconds failed:", testInstantNoTimezone, Instant.from(OrbitTimeFormatter.parse(inputNoTimezone + "G")));
+        assertEquals(testInstantNoTimezone, Instant.from(OrbitTimeFormatter.parse(inputNoTimezone)), "Parsing without timezone and with milliseconds failed:");
+        // assertEquals("Parsing without timezone and with milliseconds failed:", testInstantNoTimezone, Instant.from(OrbitTimeFormatter.parse(inputNoTimezone + "G")));
 
-		// --- Test invalid inputs ---
-		String invalidInput = "something weird";
-		try {
-			OrbitTimeFormatter.parse(invalidInput);
-			fail("DateTimeParseException expected on input '" + invalidInput + "'");
-		} catch (DateTimeParseException e) {
-			assertEquals("Unexpected error message", "Cannot parse date/time string " + invalidInput + " at index 0", e.getMessage());
-		}
+        // --- Test invalid inputs ---
+        String invalidInput = "something weird";
+        try {
+            OrbitTimeFormatter.parse(invalidInput);
+            fail("DateTimeParseException expected on input '" + invalidInput + "'");
+        } catch (DateTimeParseException e) {
+            assertEquals("Cannot parse date/time string " + invalidInput + " at index 0", e.getMessage(), "Unexpected error message");
+        }
 
-		invalidInput = "2020-03-23T15:16GGG";
-		try {
-			OrbitTimeFormatter.parse(invalidInput);
-			fail("DateTimeParseException expected on input '" + invalidInput + "'");
-		} catch (DateTimeParseException e) {
-			assertEquals("Unexpected error message", "Cannot parse date/time string " + invalidInput + " at index " + invalidInput.indexOf('G'), e.getMessage());
-		}
-	}
+        invalidInput = "2020-03-23T15:16GGG";
+        try {
+            OrbitTimeFormatter.parse(invalidInput);
+            fail("DateTimeParseException expected on input '" + invalidInput + "'");
+        } catch (DateTimeParseException e) {
+            assertEquals("Cannot parse date/time string " + invalidInput + " at index " + invalidInput.indexOf('G'), e.getMessage(), "Unexpected error message");
+        }
+    }
 
 }

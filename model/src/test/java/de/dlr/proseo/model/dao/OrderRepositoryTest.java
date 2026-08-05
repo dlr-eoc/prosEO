@@ -5,25 +5,22 @@
  */
 package de.dlr.proseo.model.dao;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Mission;
@@ -37,11 +34,9 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  *
  * @author Dr. Thomas Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = RepositoryApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
 @Transactional
-@AutoConfigureTestEntityManager
 public class OrderRepositoryTest {
 
 	private static final String TEST_MISSIONCODE = "xyz567";
@@ -54,28 +49,28 @@ public class OrderRepositoryTest {
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -98,20 +93,20 @@ public class OrderRepositoryTest {
 		
 		// Test findByIdentifier
 		order = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(TEST_MISSIONCODE, TEST_IDENTIFIER);
-		assertNotNull("Find by identifier failed for ProcessingOrder", order);
+		assertNotNull(order, "Find by identifier failed for ProcessingOrder");
 		
 		logger.info("OK: Test for findByIdentifier completed");
 		
 		// Test findByUuid
 		order = RepositoryService.getOrderRepository().findByUuid(order.getUuid());
-		assertNotNull("Find by UUID failed for ProcessingOrder", order);
+		assertNotNull(order, "Find by UUID failed for ProcessingOrder");
 		
 		logger.info("OK: Test for findByUuid completed");
 		
 		// Test findByExecutionTimeBetween
 		List<ProcessingOrder> orders = RepositoryService.getOrderRepository().findByExecutionTimeBetween(
 				TEST_EXECUTION_TIME, TEST_EXECUTION_TIME.plusSeconds(600));
-		assertFalse("Find by execution time between failed for ProcessingOrder", orders.isEmpty());
+		assertFalse(orders.isEmpty(), "Find by execution time between failed for ProcessingOrder");
 		
 		logger.info("OK: Test for findByExecutionTimeBetween completed");
 		

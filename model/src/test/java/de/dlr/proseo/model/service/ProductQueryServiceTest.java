@@ -5,28 +5,25 @@
  */
 package de.dlr.proseo.model.service;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.TimeZone;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.InputFilter;
@@ -50,11 +47,9 @@ import de.dlr.proseo.model.ProcessingOrder;
  * 
  * @author Dr. Thomas Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = RepositoryApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
 @Transactional
-@AutoConfigureTestEntityManager
 public class ProductQueryServiceTest {
 
 	/* Various static test data */
@@ -90,7 +85,7 @@ public class ProductQueryServiceTest {
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 	    TimeZone.setDefault( TimeZone.getTimeZone( "UTC" ) );
 	}
@@ -98,21 +93,21 @@ public class ProductQueryServiceTest {
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -240,14 +235,14 @@ public class ProductQueryServiceTest {
 			e.printStackTrace();
 			fail("Unexpected exception when parsing selection rule " + TEST_SELECTION_RULE + " (cause: " + e.getMessage() + ")");
 		}
-		assertTrue("List of selection rules is empty", !selectionRule.getSimpleRules().isEmpty());
+		assertTrue(!selectionRule.getSimpleRules().isEmpty(), "List of selection rules is empty");
 
 		SimpleSelectionRule simpleSelectionRule = selectionRule.getSimpleRules().iterator().next();
 		ProductQuery query = ProductQuery.fromSimpleSelectionRule(
 				simpleSelectionRule, jobStepLate, queryService.getProductColumnMapping(),
 				ProductQueryService.FACILITY_QUERY_SQL, ProductQueryService.FACILITY_QUERY_SQL_SUBSELECT);
 		logger.trace("Starting test for product query 1 based on " + simpleSelectionRule);
-		assertTrue("Product query 1 fails unexpectedly", queryService.executeQuery(query, true));
+		assertTrue(queryService.executeQuery(query, true), "Product query 1 fails unexpectedly");
 		
 		// Test first product query with additional filter condition "revision:2" --> fails
 		inputFilter.getFilterConditions().clear();
@@ -255,7 +250,7 @@ public class ProductQueryServiceTest {
 		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepLate, queryService.getProductColumnMapping(),
 				ProductQueryService.FACILITY_QUERY_SQL, ProductQueryService.FACILITY_QUERY_SQL_SUBSELECT);
 		logger.trace("Starting test for product query 1 with filters " + query.getFilterConditions());
-		assertTrue("Product query 1 succeeds unexpectedly for filter 'revision:2'", !queryService.executeQuery(query, true));
+		assertTrue(!queryService.executeQuery(query, true), "Product query 1 succeeds unexpectedly for filter 'revision:2'");
 		inputFilter.getFilterConditions().clear();
 		inputFilter.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 1));
 		
@@ -266,18 +261,18 @@ public class ProductQueryServiceTest {
 			e.printStackTrace();
 			fail("Unexpected exception when parsing selection rule " + TEST_SELECTION_RULE + " (cause: " + e.getMessage() + ")");
 		}
-		assertTrue("List of selection rules is empty", !selectionRule.getSimpleRules().isEmpty());
+		assertTrue(!selectionRule.getSimpleRules().isEmpty(), "List of selection rules is empty");
 
 		simpleSelectionRule = selectionRule.getSimpleRules().iterator().next();
 		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepEarly, queryService.getProductColumnMapping(),
 				ProductQueryService.FACILITY_QUERY_SQL, ProductQueryService.FACILITY_QUERY_SQL_SUBSELECT);
 		logger.trace("Starting test for product query 2 and early interval based on " + simpleSelectionRule);
-		assertTrue("Product query 2 fails unexpectedly for early interval", queryService.executeQuery(query, true));
+		assertTrue(queryService.executeQuery(query, true), "Product query 2 fails unexpectedly for early interval");
 
 		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepLate, queryService.getProductColumnMapping(),
 				ProductQueryService.FACILITY_QUERY_SQL, ProductQueryService.FACILITY_QUERY_SQL_SUBSELECT);
 		logger.trace("Starting test for product query 2 and late interval based on " + simpleSelectionRule);
-		assertTrue("Product query 2 succeeds unexpectedly for late interval", !queryService.executeQuery(query, true));
+		assertTrue(!queryService.executeQuery(query, true), "Product query 2 succeeds unexpectedly for late interval");
 		
 		logger.info("OK: Test for executeQuery completed");
 	}

@@ -5,7 +5,7 @@
  */
 package de.dlr.proseo.model;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.text.ParseException;
 import java.time.Duration;
@@ -17,11 +17,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -348,7 +348,7 @@ public class SimpleSelectionRuleTest {
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 		productColumnMapping.put("fileClass", "file_class");
 	}
@@ -356,7 +356,7 @@ public class SimpleSelectionRuleTest {
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 	}
 
@@ -365,7 +365,7 @@ public class SimpleSelectionRuleTest {
 	 * 
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		// Create required mission and product classes
 		mission.setId(TEST_MISSION_ID);
@@ -386,7 +386,7 @@ public class SimpleSelectionRuleTest {
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -401,8 +401,9 @@ public class SimpleSelectionRuleTest {
 				List<SimpleSelectionRule> simpleRules = selectionRule.getSimpleRules();
 				for (SimpleSelectionRule simpleSelectionRule: simpleRules) {
 					
-					assertEquals("Unexpected JPQL query for selection rule string " + i, expectedJpqlQueries[i], 
-							simpleSelectionRule.asJpqlQuery(TEST_START_TIME, TEST_STOP_TIME, null));
+					assertEquals(expectedJpqlQueries[i], 
+							simpleSelectionRule.asJpqlQuery(TEST_START_TIME, TEST_STOP_TIME, null),
+							"Unexpected JPQL query for selection rule string " + i);
 				}
 			} catch (IllegalArgumentException | ParseException e) {
 				e.printStackTrace();
@@ -424,8 +425,9 @@ public class SimpleSelectionRuleTest {
 				List<SimpleSelectionRule> simpleRules = selectionRule.getSimpleRules();
 				for (SimpleSelectionRule simpleSelectionRule: simpleRules) {
 					
-					assertEquals("Unexpected SQL query for selection rule string " + i, expectedSqlQueries[i], 
-							simpleSelectionRule.asSqlQuery(TEST_START_TIME, TEST_STOP_TIME, null, productColumnMapping, null, null));
+					assertEquals(expectedSqlQueries[i], 
+							simpleSelectionRule.asSqlQuery(TEST_START_TIME, TEST_STOP_TIME, null, productColumnMapping, null, null),
+							"Unexpected SQL query for selection rule string " + i);
 				}
 			} catch (IllegalArgumentException | ParseException e) {
 				e.printStackTrace();

@@ -5,19 +5,16 @@
  */
 package de.dlr.proseo.model.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.Instant;
 import java.util.UUID;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ProcessingOrder;
@@ -30,10 +27,8 @@ import de.dlr.proseo.model.service.RepositoryApplication;
  * @author Ranjitha Vignesh
  *
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = { OrderUtil.class, RepositoryApplication.class })
 @Transactional
-@AutoConfigureTestEntityManager
 public class OrderUtilTest {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrderUtilTest.class);
@@ -94,30 +89,34 @@ public class OrderUtilTest {
 		RestOrder restOrder = new RestOrder();
 		// restOrder = OrderUtil.toRestOrder(modelOrder);
 
-		assertNull("Unexpected identifier: ", restOrder.getIdentifier());
-		assertNull("Unexpected mission code for new order: ", restOrder.getMissionCode());
+		assertNull(restOrder.getIdentifier(), "Unexpected identifier: ");
+		assertNull(restOrder.getMissionCode(), "Unexpected mission code for new order: ");
 		logger.info("Test copy empty order OK");
 
 		// Copy a model order to rest order
 		modelOrder = createOrder(testOrderData[0]);
 		restOrder = OrderUtil.toRestOrder(modelOrder);
-		assertEquals("Unexpected ID: ", modelOrder.getId().longValue(), restOrder.getId().longValue());
-		assertEquals("Unexpected Mission code: ", modelOrder.getMission().getCode(), restOrder.getMissionCode());
-		assertEquals("Unexpected Identifier: ", modelOrder.getIdentifier(), restOrder.getIdentifier());
-		assertEquals("Unexpected UUID: ", modelOrder.getUuid().toString(), restOrder.getUuid());
-		assertEquals("Unexpected order state: ", modelOrder.getOrderState().toString(),
-				restOrder.getOrderState().toString());
+		assertEquals(modelOrder.getId().longValue(), restOrder.getId().longValue(), "Unexpected ID: ");
+		assertEquals(modelOrder.getMission().getCode(), restOrder.getMissionCode(), "Unexpected Mission code: ");
+		assertEquals(modelOrder.getIdentifier(), restOrder.getIdentifier(), "Unexpected Identifier: ");
+		assertEquals(modelOrder.getUuid().toString(), restOrder.getUuid(), "Unexpected UUID: ");
+		assertEquals(modelOrder.getOrderState().toString(),
+				restOrder.getOrderState().toString(),
+				"Unexpected order state: ");
 		logger.info("model execution time: " + modelOrder.getExecutionTime());
 		logger.info("rest execution time: " + restOrder.getExecutionTime().toInstant());
 
-		assertEquals("Unexpected execution time: ", modelOrder.getExecutionTime(),
-				restOrder.getExecutionTime().toInstant());
-		assertEquals("Unexpected start time: ", modelOrder.getStartTime(),
-				Instant.from(OrbitTimeFormatter.parse(restOrder.getStartTime())));
-		assertEquals("Unexpected stop time: ", modelOrder.getStopTime(),
-				Instant.from(OrbitTimeFormatter.parse(restOrder.getStopTime())));
+		assertEquals(modelOrder.getExecutionTime(),
+				restOrder.getExecutionTime().toInstant(),
+				"Unexpected execution time: ");
+		assertEquals(modelOrder.getStartTime(),
+				Instant.from(OrbitTimeFormatter.parse(restOrder.getStartTime())),
+				"Unexpected start time: ");
+		assertEquals(modelOrder.getStopTime(),
+				Instant.from(OrbitTimeFormatter.parse(restOrder.getStopTime())),
+				"Unexpected stop time: ");
 
-		assertEquals("Unexpected processing Mode: ", modelOrder.getProcessingMode(), restOrder.getProcessingMode());
+		assertEquals(modelOrder.getProcessingMode(), restOrder.getProcessingMode(), "Unexpected processing Mode: ");
 
 //		//Validation for requestedOrbits, requestedProductClasses,requestedConfiguredProcesors,
 //		//filterconditions,inputProductClasses, outputParameters
@@ -126,27 +125,32 @@ public class OrderUtilTest {
 
 		// Copy a order from REST to model
 		ProcessingOrder copiedModelOrder = OrderUtil.toModelOrder(restOrder);
-		assertEquals("ID not preserved: ", modelOrder.getId(), copiedModelOrder.getId());
-		assertEquals("Unexpected Identifier: ", modelOrder.getIdentifier(), copiedModelOrder.getIdentifier());
-		assertEquals("Unexpected UUID: ", modelOrder.getUuid(), copiedModelOrder.getUuid());
-		assertEquals("Unexpected order state: ", modelOrder.getOrderState(), copiedModelOrder.getOrderState());
-		assertEquals("Unexpected execution time: ", modelOrder.getExecutionTime(), copiedModelOrder.getExecutionTime());
-		assertEquals("Unexpected start time: ", modelOrder.getStartTime(), copiedModelOrder.getStartTime());
-		assertEquals("Unexpected stop time: ", modelOrder.getStopTime(), copiedModelOrder.getStopTime());
+		assertEquals(modelOrder.getId(), copiedModelOrder.getId(), "ID not preserved: ");
+		assertEquals(modelOrder.getIdentifier(), copiedModelOrder.getIdentifier(), "Unexpected Identifier: ");
+		assertEquals(modelOrder.getUuid(), copiedModelOrder.getUuid(), "Unexpected UUID: ");
+		assertEquals(modelOrder.getOrderState(), copiedModelOrder.getOrderState(), "Unexpected order state: ");
+		assertEquals(modelOrder.getExecutionTime(), copiedModelOrder.getExecutionTime(), "Unexpected execution time: ");
+		assertEquals(modelOrder.getStartTime(), copiedModelOrder.getStartTime(), "Unexpected start time: ");
+		assertEquals(modelOrder.getStopTime(), copiedModelOrder.getStopTime(), "Unexpected stop time: ");
 
-		assertEquals("Unexpected processing Mode: ", modelOrder.getProcessingMode(),
-				copiedModelOrder.getProcessingMode());
-		assertEquals("Unexpected size of input filters: ", modelOrder.getInputFilters().size(),
-				copiedModelOrder.getInputFilters().size());
+		assertEquals(modelOrder.getProcessingMode(),
+				copiedModelOrder.getProcessingMode(),
+				"Unexpected processing Mode: ");
+		assertEquals(modelOrder.getInputFilters().size(),
+				copiedModelOrder.getInputFilters().size(),
+				"Unexpected size of input filters: ");
 		for (ProductClass productClass : modelOrder.getInputFilters().keySet()) {
-			assertEquals("Unexpected filter conditions: ", modelOrder.getInputFilters().get(productClass),
-					copiedModelOrder.getInputFilters().get(productClass));
+			assertEquals(modelOrder.getInputFilters().get(productClass),
+					copiedModelOrder.getInputFilters().get(productClass),
+					"Unexpected filter conditions: ");
 		}
-		assertEquals("Unexpected size of parameterized outputs: ", modelOrder.getClassOutputParameters().size(),
-				copiedModelOrder.getClassOutputParameters().size());
+		assertEquals(modelOrder.getClassOutputParameters().size(),
+				copiedModelOrder.getClassOutputParameters().size(),
+				"Unexpected size of parameterized outputs: ");
 		for (ProductClass productClass : modelOrder.getClassOutputParameters().keySet()) {
-			assertEquals("Unexpected output parameters: ", modelOrder.getClassOutputParameters().get(productClass),
-					copiedModelOrder.getClassOutputParameters().get(productClass));
+			assertEquals(modelOrder.getClassOutputParameters().get(productClass),
+					copiedModelOrder.getClassOutputParameters().get(productClass),
+					"Unexpected output parameters: ");
 		}
 		logger.info("Test copy REST to model OK");
 	}

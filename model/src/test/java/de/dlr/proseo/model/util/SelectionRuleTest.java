@@ -5,7 +5,7 @@
  */
 package de.dlr.proseo.model.util;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -18,9 +18,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.TimeZone;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,7 +110,7 @@ public class SelectionRuleTest {
 	 * 
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 		final String leapSecondString = "2015-06-30T23:59:60Z";
 		final String nextSecondString = "2015-07-01T00:00:00Z";
@@ -120,33 +120,33 @@ public class SelectionRuleTest {
 		SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		Date noLeapSecondDate = sdf.parse(leapSecondString);
-		assertEquals("SimpleDateFormat class is not expected preserve leap second", nextSecondString, sdf.format(noLeapSecondDate));
+		assertEquals(nextSecondString, sdf.format(noLeapSecondDate), "SimpleDateFormat class is not expected preserve leap second");
 		
 		Instant leapSecondInstant = Instant.parse(leapSecondString);
-		assertEquals("Instant class should hide leap second", previousSecondString, leapSecondInstant.toString());
+		assertEquals(previousSecondString, leapSecondInstant.toString(), "Instant class should hide leap second");
 		
-		assertEquals("Date and Instant classes should differ by one epoch second",
-				noLeapSecondDate.getTime(), leapSecondInstant.toEpochMilli() + 1000);
+		assertEquals(noLeapSecondDate.getTime(), leapSecondInstant.toEpochMilli() + 1000,
+				"Date and Instant classes should differ by one epoch second");
 		
-		assertEquals("Unexpected Date difference between " + previousSecondString + " and " + nextSecondString, 1000,
-				sdf.parse(nextSecondString).getTime() - sdf.parse(previousSecondString).getTime());
+		assertEquals(1000, sdf.parse(nextSecondString).getTime() - sdf.parse(previousSecondString).getTime(),
+				"Unexpected Date difference between " + previousSecondString + " and " + nextSecondString);
 		
-		assertEquals("Unexpected Instant difference between " + previousSecondString + " and " + nextSecondString, 1000,
-				Instant.parse(nextSecondString).toEpochMilli() - Instant.parse(previousSecondString).toEpochMilli());
+		assertEquals(1000, Instant.parse(nextSecondString).toEpochMilli() - Instant.parse(previousSecondString).toEpochMilli(),
+				"Unexpected Instant difference between " + previousSecondString + " and " + nextSecondString);
 		
 	}
 
 //	/**
 //	 * @throws java.lang.Exception if an error occurs
 //	 */
-//	@AfterClass
+//	@AfterAll
 //	public static void tearDownAfterClass() throws Exception {
 //	}
 //
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		// Create required mission and product classes
 		mission.setId(TEST_MISSION_ID);
@@ -171,7 +171,7 @@ public class SelectionRuleTest {
 //	/**
 //	 * @throws java.lang.Exception if an error occurs
 //	 */
-//	@After
+//	@AfterEach
 //	public void tearDown() throws Exception {
 //	}
 
@@ -282,26 +282,30 @@ public class SelectionRuleTest {
 		
 		// Test legal rules
 		for (int i = 0; i < legalRules.length; ++i) {
+			final int ruleNumber = i;
 			try {
 				SelectionRule selectionRule = SelectionRule.parseSelectionRule(targetProductClass, legalRules[i]);
-				assertEquals(String.format("For legal rule %d the parse result is unexpected: ", i), legalResults[i], selectionRule.toString());
+				assertEquals(legalResults[i], selectionRule.toString(),
+						() -> String.format("For legal rule %d the parse result is unexpected: ", ruleNumber));
 			} catch (ParseException e) {
-				fail(String.format("No ParseException expected for legal rule #%d, error message is '%s', offset is %d",
-						i, e.getMessage(), e.getErrorOffset()));
+				fail(() -> String.format("No ParseException expected for legal rule #%d, error message is '%s', offset is %d",
+						ruleNumber, e.getMessage(), e.getErrorOffset()));
 			}
 		}
 		
 		// Test illegal rules
 		for (int i = 0; i < illegalRules.length; ++i) {
+			final int ruleNumber = i;
 			try {
 				SelectionRule selectionRule = SelectionRule.parseSelectionRule(targetProductClass, illegalRules[i]);
-				fail(String.format("ParseException expected for illegal rule #%d, parse result is '%s'",
-						i, selectionRule.toString()));
+				fail(() -> String.format("ParseException expected for illegal rule #%d, parse result is '%s'",
+						ruleNumber, selectionRule.toString()));
 			} catch (ParseException e) {
-				assertTrue(
-						String.format("For illegal rule %d the error message is unexpected: '%s' at offset %d", i, e.getMessage(), e.getErrorOffset()), 
-						e.getMessage().contains(illegalResults[i]));
-				assertEquals(String.format("For illegal rule %d the error position is unexpected: ", i), illegalOffsets[i], e.getErrorOffset());
+				assertTrue(e.getMessage().contains(illegalResults[i]),
+						() -> String.format("For illegal rule %d the error message is unexpected: '%s' at offset %d", 
+								ruleNumber, e.getMessage(), e.getErrorOffset()));
+				assertEquals(illegalOffsets[i], e.getErrorOffset(),
+						() -> String.format("For illegal rule %d the error position is unexpected: ", ruleNumber));
 			}
 		}
 	}
@@ -336,7 +340,7 @@ public class SelectionRuleTest {
 			SelectionRule firstRule = SelectionRule.parseSelectionRule(targetProductClass, rule1);
 			SelectionRule secondRule = SelectionRule.parseSelectionRule(targetProductClass, rule2);
 			SelectionRule mergedRule = firstRule.merge(secondRule);
-			assertEquals("Unexpected merge result (1): ", result1, mergedRule.toString());
+			assertEquals(result1, mergedRule.toString(), "Unexpected merge result (1): ");
 		} catch (ParseException e) {
 			fail(String.format("No ParseException expected for legal rule (1), error message is '%s', offset is %d",
 					e.getMessage(), e.getErrorOffset()));
@@ -359,7 +363,7 @@ public class SelectionRuleTest {
 			SelectionRule firstRule = SelectionRule.parseSelectionRule(targetProductClass, rule3);
 			SelectionRule secondRule = SelectionRule.parseSelectionRule(targetProductClass, rule4);
 			SelectionRule mergedRule = firstRule.merge(secondRule);
-			assertEquals("Unexpected merge result (2): ", result2, mergedRule.toString());
+			assertEquals(result2, mergedRule.toString(), "Unexpected merge result (2): ");
 		} catch (ParseException e) {
 			fail(String.format("No ParseException expected for legal rule (2), error message is '%s', offset is %d",
 					e.getMessage(), e.getErrorOffset()));
@@ -656,8 +660,8 @@ public class SelectionRuleTest {
 							TEST_PRODUCT_TYPE, items, startStopTimes[k][0], startStopTimes[k][1]);
 					result = ( null == result ? "" : result);
 					System.out.println(String.format("... result is: %s", result));
-					assertEquals(String.format("Unexpected selection result for rule %d and time interval %d: ", i, k),
-							expectedResults[i][k], result);
+					assertEquals(expectedResults[i][k], result,
+							String.format("Unexpected selection result for rule %d and time interval %d: ", i, k));
 				} catch (NoSuchElementException e) {
 					if (ERROR_RESULT.equals(expectedResults[i][k])) {
 						System.out.println(String.format("... expected exception thrown: %s", e.getMessage()));
@@ -920,8 +924,8 @@ public class SelectionRuleTest {
 					}
 					
 					System.out.println(String.format("... result is: %s", resultString));
-					assertEquals(String.format("Unexpected selection result for rule %d and time interval %d: ", i, k),
-							expectedResults[i][k], resultString);
+					assertEquals(expectedResults[i][k], resultString, 
+							String.format("Unexpected selection result for rule %d and time interval %d: ", i, k));
 				} catch (NoSuchElementException e) {
 					if (ERROR_RESULT.equals(expectedResults[i][k])) {
 						System.out.println(String.format("... expected exception thrown: %s", e.getMessage()));
@@ -1017,11 +1021,11 @@ public class SelectionRuleTest {
 		try {
 			SelectionRule rule = SelectionRule.parseSelectionRule(targetProductClass, rules[0]);
 			List<SimpleSelectionRule> simpleRules = rule.getSimpleRules();
-			assertNotNull("List of simple selection rules missing", simpleRules);
-			assertEquals("Unexpected number of simple selection rules:", 1, simpleRules.size());
+			assertNotNull(simpleRules, "List of simple selection rules missing");
+			assertEquals(1, simpleRules.size(), "Unexpected number of simple selection rules:");
 			SimpleSelectionRule simpleRule = simpleRules.get(0);
-			assertEquals("Unexpected source product class:", TEST_PRODUCT_TYPE, simpleRule.getSourceProductClass().getProductType());
-			assertEquals("Unexpected number of simple policies:", 1, simpleRule.getSimplePolicies().size());
+			assertEquals(TEST_PRODUCT_TYPE, simpleRule.getSourceProductClass().getProductType(), "Unexpected source product class:");
+			assertEquals(1, simpleRule.getSimplePolicies().size(), "Unexpected number of simple policies:");
 		} catch (IllegalArgumentException | ParseException e) {
 			fail(String.format("No exception expected for legal rule, error message is '%s'", e.getMessage()));
 		}
@@ -1037,12 +1041,11 @@ public class SelectionRuleTest {
 		
 		try {
 			SelectionRule rule = SelectionRule.parseSelectionRule(targetProductClass, rules[0]);
-			String auxProductType = TEST_PRODUCT_TYPE;
-			assertTrue(String.format("Rule %s should contain policy for %s", rules[0], auxProductType), 
-					rule.hasPolicyFor(auxProductType));
-			auxProductType = "garbage";
-			assertFalse(String.format("Rule %s should not contain policy for %s", rules[0], auxProductType), 
-					rule.hasPolicyFor(auxProductType));
+			assertTrue(rule.hasPolicyFor(TEST_PRODUCT_TYPE),
+					() -> String.format("Rule %s should contain policy for %s", rules[0], TEST_PRODUCT_TYPE));
+			final String invalidProductType = "garbage";
+			assertFalse(rule.hasPolicyFor(invalidProductType),
+					String.format("Rule %s should not contain policy for %s", rules[0], invalidProductType));
 		} catch (IllegalArgumentException | ParseException e) {
 			fail(String.format("No exception expected for legal rule, error message is '%s'", e.getMessage()));
 		}
@@ -1058,10 +1061,10 @@ public class SelectionRuleTest {
 		try {
 			SelectionRule selectionRule = SelectionRule.parseSelectionRule(
 					targetProductClass, "FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(1 H, 1 D); FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(1 D, 1 H)");
-			assertEquals("Unexpected string value for rule: ",
-					"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(1 D, 1 D) MANDATORY", selectionRule.toString());
+			assertEquals("FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(1 D, 1 D) MANDATORY", selectionRule.toString(),
+					"Unexpected string value for rule: ");
 		} catch (ParseException e) {
-			fail(String.format("No ParseException expected for legal rule, error message is '%s', offset is %d",
+			fail(() -> String.format("No ParseException expected for legal rule, error message is '%s', offset is %d",
 					e.getMessage(), e.getErrorOffset()));
 		}
 	}

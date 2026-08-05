@@ -5,24 +5,21 @@
  */
 package de.dlr.proseo.model.dao;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Mission;
@@ -38,11 +35,9 @@ import de.dlr.proseo.model.service.RepositoryService;
  *
  * @author Dr. Thomas Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = RepositoryApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
 @Transactional
-@AutoConfigureTestEntityManager
 public class ProductFileRepositoryTest {
 
 	private static final String TEST_CODE = "$ABC$";
@@ -55,28 +50,28 @@ public class ProductFileRepositoryTest {
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -116,11 +111,11 @@ public class ProductFileRepositoryTest {
 		
 		// Test findByProductId
 		List<ProductFile> queryList = RepositoryService.getProductFileRepository().findByProductId(product.getId());
-		assertFalse("Find by product id failed for ProductFile", queryList.isEmpty());
+		assertFalse(queryList.isEmpty(), "Find by product id failed for ProductFile");
 		
 		// Test findByProcessingFacilityId
 		queryList = RepositoryService.getProductFileRepository().findByProcessingFacilityId(facility.getId());
-		assertFalse("Find by processing facility id failed for ProductFile", queryList.isEmpty());
+		assertFalse(queryList.isEmpty(), "Find by processing facility id failed for ProductFile");
 		
 		logger.info("OK: Test for findByProductId completed");
 		
