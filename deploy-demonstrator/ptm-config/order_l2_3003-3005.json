@@ -1,0 +1,76 @@
+{
+    "missionCode": "PTM",
+    "identifier": "L2_orbits_3003-3005",
+    "orderState": "INITIAL",
+    "slicingType": "ORBIT",
+    "sliceOverlap": 0,
+    "inputFilters": [
+    	{
+    		"productClass": "PTM_L0",
+		    "filterConditions": [
+		        {
+		            "key": "revision",
+		            "parameterType": "INTEGER",
+		            "parameterValue": "1"
+		        },
+		        {
+		            "key": "fileClass",
+		            "parameterType": "STRING",
+		            "parameterValue": "OPER"
+		        }
+		    ]
+	    },
+    	{
+    		"productClass": "PTM_L1B_P1",
+		    "filterConditions": [
+		        {
+		            "key": "revision",
+		            "parameterType": "INTEGER",
+		            "parameterValue": "2"
+		        },
+		        {
+		            "key": "fileClass",
+		            "parameterType": "STRING",
+		            "parameterValue": "TEST"
+		        }
+		    ]
+	    }
+    ],
+    "classOutputParameters": [
+    	{
+    		"productClass": "PTM_L1B_P1",
+    		"outputParameters": [
+    			{
+    				"key": "revision",
+    				"parameterType": "INTEGER",
+    				"parameterValue": "2"
+    			},
+		        {
+		            "key": "copernicusCollection",
+		            "parameterType": "INTEGER",
+		            "parameterValue": "77"
+		        }
+    		]
+    	}
+    ],
+    "outputParameters": [
+        {
+            "key": "revision",
+            "parameterType": "INTEGER",
+            "parameterValue": "99"
+        },
+        {
+            "key": "copernicusCollection",
+            "parameterType": "INTEGER",
+            "parameterValue": "77"
+        }
+    ],
+    "configuredProcessors": [ ],
+    "orbits": [
+        { "spacecraftCode": "PTS", "orbitNumberFrom": 3003, "orbitNumberTo": 3005 }
+    ],
+    "requestedProductClasses": [ "PTM_L2_A", "PTM_L2_B" ],
+    "inputProductClasses": [],
+    "outputFileClass": "TEST",
+    "processingMode": "OPER"
+}

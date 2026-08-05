@@ -1,0 +1,22 @@
+spring:
+    maxResults: 10000
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate:
+            jdbc.time_zone: UTC
+            #id.db_structure_naming_strategy: standard
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: <db_user>
+        password: demo-only
+    packagesToScan: de.dlr.proseo.model
+management:
+    endpoints.web.exposure.include: "health"
+logging:
+    file: 
+        name: /proseo/log/proseo-archive-mgr.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE

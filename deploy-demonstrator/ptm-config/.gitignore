@@ -1,0 +1,7 @@
+/proseo-ui-cli.*
+/testfiles
+/testproducts
+/configure_proseo_test_mission.pl
+/cli_*.txt
+/test*.json
+/create_data_local.sh
