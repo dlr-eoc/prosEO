@@ -2,7 +2,7 @@ package de.dlr.proseo.storagemgr;
 
 import java.nio.file.Paths;
 
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.TestInfo;
 
 import de.dlr.proseo.storagemgr.utils.PathConverter;
 
@@ -29,10 +29,10 @@ public class UniqueStorageTestPaths {
 		createUniqueTestFolders();
 	}
 
-	public UniqueStorageTestPaths(Object unitTest, TestName testName) {
+	public UniqueStorageTestPaths(Object unitTest, TestInfo testInfo) {
 
 		String className = unitTest.getClass().getSimpleName();
-		String methodName = testName.getMethodName();
+		String methodName = testInfo.getTestMethod().get().getName();
 		uniqueTestFolder = className + "_" + methodName;
 
 		createUniqueTestFolders();

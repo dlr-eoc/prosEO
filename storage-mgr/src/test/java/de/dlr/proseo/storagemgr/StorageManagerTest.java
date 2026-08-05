@@ -1,10 +1,8 @@
 package de.dlr.proseo.storagemgr;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * Simple smoke test for Storage Manager
@@ -13,7 +11,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  * 
  */
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 public class StorageManagerTest {
 

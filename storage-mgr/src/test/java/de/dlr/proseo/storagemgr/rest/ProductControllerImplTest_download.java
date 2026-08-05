@@ -2,18 +2,15 @@ package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -37,7 +34,6 @@ import de.dlr.proseo.storagemgr.utils.PathConverter;
 /**
  * @throws Exception
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class ProductControllerImplTest_download {
@@ -54,9 +50,6 @@ public class ProductControllerImplTest_download {
 	@Autowired
 	private StorageProvider storageProvider;
 
-	@Rule
-	public TestName testName = new TestName();
-
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/products/download";
 
 	/**
@@ -66,7 +59,7 @@ public class ProductControllerImplTest_download {
 	 * 
 	 */
 	@Test
-	public void testDownloadFromStorage_posix() throws Exception {
+	public void testDownloadFromStorage_posix(TestInfo testInfo) throws Exception {
 
 		if (TESTS_ENABLED) {
 
@@ -74,10 +67,10 @@ public class ProductControllerImplTest_download {
 			storageProvider.setDefaultStorage(storageType);
 			boolean downloadFileFromCache = false;
 
-			downloadProductFiles(storageType, downloadFileFromCache);
+			downloadProductFiles(storageType, downloadFileFromCache, testInfo);
 
 			StorageType realStorageType = storageProvider.getStorage().getStorageType();
-			assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+			assertEquals(storageType, realStorageType, "Expected: SM POSIX, " + " Exists: " + realStorageType);
 		} else {
 			System.out.println("TESTS ARE DISABLED");
 		}
@@ -90,7 +83,7 @@ public class ProductControllerImplTest_download {
 	 * 
 	 */
 	@Test
-	public void testDownloadfromStorage_S3() throws Exception {
+	public void testDownloadfromStorage_S3(TestInfo testInfo) throws Exception {
 
 		if (TESTS_ENABLED) {
 
@@ -98,10 +91,10 @@ public class ProductControllerImplTest_download {
 			storageProvider.setDefaultStorage(storageType);
 			boolean downloadFileFromCache = false;
 
-			downloadProductFiles(storageType, downloadFileFromCache);
+			downloadProductFiles(storageType, downloadFileFromCache, testInfo);
 
 			StorageType realStorageType = storageProvider.getStorage().getStorageType();
-			assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+			assertEquals("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
 		} else {
 			System.out.println("TESTS ARE DISABLED");
 		}
@@ -114,7 +107,7 @@ public class ProductControllerImplTest_download {
 	 * 
 	 */
 	@Test
-	public void testDownloadFromCache_posix() throws Exception {
+	public void testDownloadFromCache_posix(TestInfo testInfo) throws Exception {
 
 		if (TESTS_ENABLED) {
 
@@ -122,10 +115,10 @@ public class ProductControllerImplTest_download {
 			storageProvider.setDefaultStorage(storageType);
 			boolean downloadFileFromCache = true;
 
-			downloadProductFiles(storageType, downloadFileFromCache);
+			downloadProductFiles(storageType, downloadFileFromCache, testInfo);
 
 			StorageType realStorageType = storageProvider.getStorage().getStorageType();
-			assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+			assertEquals(storageType, realStorageType, "Expected: SM POSIX, " + " Exists: " + realStorageType);
 		} else {
 			System.out.println("TESTS ARE DISABLED");
 		}
@@ -138,7 +131,7 @@ public class ProductControllerImplTest_download {
 	 * 
 	 */
 	@Test
-	public void testDownloadfromCache_S3() throws Exception {
+	public void testDownloadfromCache_S3(TestInfo testInfo) throws Exception {
 
 		if (TESTS_ENABLED) {
 
@@ -146,10 +139,10 @@ public class ProductControllerImplTest_download {
 			storageProvider.setDefaultStorage(storageType);
 			boolean downloadFileFromCache = true;
 
-			downloadProductFiles(storageType, downloadFileFromCache);
+			downloadProductFiles(storageType, downloadFileFromCache, testInfo);
 
 			StorageType realStorageType = storageProvider.getStorage().getStorageType();
-			assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+			assertEquals(storageType, realStorageType, "Expected: SM S3, " + " Exists: " + realStorageType);
 		} else {
 			System.out.println("TESTS ARE DISABLED");
 		}
@@ -179,11 +172,12 @@ public class ProductControllerImplTest_download {
 	 *                              download(). If a file is in the cache,
 	 *                              download() method will download it directly from
 	 *                              the cache, not from the storage
+	 * @param testInfo 				JUnit test information
 	 * 
 	 */
-	private void downloadProductFiles(StorageType storageType, boolean downloadFileFromCache) throws Exception {
+	private void downloadProductFiles(StorageType storageType, boolean downloadFileFromCache, TestInfo testInfo) throws Exception {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 
 		// create source paths
 		String prefix = "prodDownloadPrefix";
@@ -246,8 +240,8 @@ public class ProductControllerImplTest_download {
 		System.out.println("Real      " + realFileContent);
 		System.out.println("Expected: " + expectedFileContent);
 
-		assertTrue("Real path: " + realFileContent + " Expected  path: " + expectedFileContent,
-				realFileContent.equals(expectedFileContent));
+		assertEquals(expectedFileContent, realFileContent,
+				"Real path: " + realFileContent + " Expected  path: " + expectedFileContent);
 		System.out.println("TEST PARTIAL CONTENT END");
 
 		// TEST FULL CONTENT
@@ -269,8 +263,8 @@ public class ProductControllerImplTest_download {
 		System.out.println("Real      " + realFileContent);
 		System.out.println("Expected: " + expectedFileContent);
 
-		assertTrue("Real path: " + realFileContent + " Expected  path: " + expectedFileContent,
-				realFileContent.equals(expectedFileContent));
+		assertEquals(expectedFileContent, realFileContent,
+				"Real path: " + realFileContent + " Expected  path: " + expectedFileContent);
 		System.out.println("TEST FULL CONTENT END");
 
 		// delete storage files with prefix

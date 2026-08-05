@@ -1,30 +1,23 @@
 package de.dlr.proseo.storagemgr.cache;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import javax.annotation.PostConstruct;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.TestUtils;
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 public class FileCacheLRUTest {
 	
 	@Autowired
 	private TestUtils testUtils;
-
-	@Rule
-	public TestName testName = new TestName();
 
 	@Autowired
 	private FileCache fileCache;
@@ -40,9 +33,9 @@ public class FileCacheLRUTest {
 	 * 
 	 */
 	@Test
-	public void testLRU() {
+	public void testLRU(TestInfo testInfo) {
 			 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 		TestUtils.createEmptyTestDirectories();
 		fileCache.setPath(testCachePath);
 
@@ -56,7 +49,7 @@ public class FileCacheLRUTest {
 		
 		fileCache.putFilesToCache(testCachePath);
 		
-		assertTrue("Cache has not 3 elements: " + fileCache.size(), fileCache.size() == 3);
+		assertEquals(3, fileCache.size(), "Cache has not 3 elements: " + fileCache.size());
 
 		// TO-DO: Test LRU, cfg is null 
 		

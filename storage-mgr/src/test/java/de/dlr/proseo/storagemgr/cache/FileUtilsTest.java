@@ -1,19 +1,16 @@
 package de.dlr.proseo.storagemgr.cache;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 
 import javax.annotation.PostConstruct;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.TestUtils;
@@ -23,13 +20,9 @@ import de.dlr.proseo.storagemgr.utils.FileUtils;
  * @author Denys Chaykovskiy
  *
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 public class FileUtilsTest {
 
-	@Rule
-	public TestName testName = new TestName();
-	
 	@Autowired
 	private TestUtils testUtils;
 
@@ -44,9 +37,9 @@ public class FileUtilsTest {
 	 * 
 	 */
 	@Test
-	public void testCreateSizeContent() {
+	public void testCreateSizeContent(TestInfo testInfo) {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 		TestUtils.createEmptyTestDirectories();
 
 		String testFile = testPath + "/test.txt";
@@ -57,13 +50,11 @@ public class FileUtilsTest {
 
 		File file = new File(testFile);
 
-		assertTrue("Test file was not created: " + testFile, file.exists());
+		assertTrue(file.exists(), "Test file was not created: " + testFile);
 
-		assertTrue("Size is wrong: " + fileUtils.getFileSize(),
-				fileUtils.getFileSize() == testContent.length());
+		assertEquals(testContent.length(), fileUtils.getFileSize(), "Size is wrong: " + fileUtils.getFileSize());
 
-		assertTrue("Content is wrong: " + fileUtils.getFileContent(),
-				fileUtils.getFileContent().equals(testContent));
+		assertEquals(testContent, fileUtils.getFileContent(), "Content is wrong: " + fileUtils.getFileContent());
 		
 		TestUtils.deleteTestDirectories();
 	}

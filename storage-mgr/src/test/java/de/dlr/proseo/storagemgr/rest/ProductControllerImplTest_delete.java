@@ -2,21 +2,19 @@ package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -37,7 +35,6 @@ import de.dlr.proseo.storagemgr.utils.PathConverter;
 /**
  * @throws Exception
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class ProductControllerImplTest_delete {
@@ -47,9 +44,6 @@ public class ProductControllerImplTest_delete {
 
 	@Autowired
 	private BaseStorageTestUtils storageTestUtils;
-
-	@Rule
-	public TestName testName = new TestName();
 
 	@Autowired
 	private StorageProvider storageProvider;
@@ -64,15 +58,15 @@ public class ProductControllerImplTest_delete {
 	 * @return RestProductFS
 	 */
 	@Test
-	public void testDelete_posix() throws Exception {
+	public void testDelete_posix(TestInfo testInfo) throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
 		storageProvider.setDefaultStorage(storageType);
 
-		delete(storageProvider);
+		delete(storageProvider, testInfo);
 
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM POSIX, " + " Exists: " + realStorageType);
 	}
 
 	/**
@@ -83,20 +77,20 @@ public class ProductControllerImplTest_delete {
 	 * @return RestProductFS
 	 */
 	@Test
-	public void testDelete_S3() throws Exception {
+	public void testDelete_S3(TestInfo testInfo) throws Exception {
 
 		StorageType storageType = StorageType.S3;
 		storageProvider.setDefaultStorage(storageType);
 
-		delete(storageProvider);
+		delete(storageProvider, testInfo);
 
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM S3, " + " Exists: " + realStorageType);
 	}
 
-	private void delete(StorageProvider storageProvider) throws Exception {
+	private void delete(StorageProvider storageProvider, TestInfo testInfo) throws Exception {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 
 		// create unique source paths
 		String prefix = "product_delete";
@@ -124,8 +118,8 @@ public class ProductControllerImplTest_delete {
 		// check count of uploaded prefix storage files
 		int realStorageFileCount = storageProvider.getStorage().getRelativeFiles(prefix).size();
 		int expectedStorageFileCount = relativePaths.size();
-		assertTrue("After upload - Expected:" + expectedStorageFileCount + " Exists: " + realStorageFileCount,
-				realStorageFileCount == expectedStorageFileCount);
+		assertEquals(expectedStorageFileCount, realStorageFileCount,
+				"After upload - Expected:" + expectedStorageFileCount + " Exists: " + realStorageFileCount);
 
 		// absolute prefix path to delete
 		String pathInfo = new PathConverter(storageProvider.getStorage().getAbsolutePath(prefix)).addSlashAtEnd()
@@ -146,7 +140,7 @@ public class ProductControllerImplTest_delete {
 		// check files after delete (expected: 0)
 		realStorageFileCount = storageProvider.getStorage().getRelativeFiles(prefix).size();
 		expectedStorageFileCount = 0;
-		assertTrue("After upload - Expected:" + expectedStorageFileCount + " Exists: " + realStorageFileCount,
-				realStorageFileCount == expectedStorageFileCount);
+		assertEquals(expectedStorageFileCount, realStorageFileCount,
+				"After upload - Expected:" + expectedStorageFileCount + " Exists: " + realStorageFileCount);
 	}
 }

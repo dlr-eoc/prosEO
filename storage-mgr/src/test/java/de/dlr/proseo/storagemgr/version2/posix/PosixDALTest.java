@@ -1,20 +1,17 @@
 package de.dlr.proseo.storagemgr.version2.posix;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageProvider;
@@ -24,13 +21,9 @@ import de.dlr.proseo.storagemgr.UniqueStorageTestPaths;
 import de.dlr.proseo.storagemgr.posix.PosixDAL;
 import de.dlr.proseo.storagemgr.utils.PathConverter;
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class PosixDALTest {
-
-	@Rule
-	public TestName testName = new TestName();
 
 	@Autowired
 	private BaseStorageTestUtils storageTestUtils;
@@ -39,10 +32,10 @@ public class PosixDALTest {
 	private StorageProvider storageProvider;
 
 	@Test
-	public void test() {
+	public void test(TestInfo testInfo) {
 
-		TestUtils.printMethodName(this, testName);
-		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testName);
+		TestUtils.printMethodName(this, testInfo);
+		UniqueStorageTestPaths uniquePaths = new UniqueStorageTestPaths(this, testInfo);
 
 		// create unique source paths
 		List<String> pathes = new ArrayList<>();
@@ -66,22 +59,22 @@ public class PosixDALTest {
 			// print source files
 			List<String> sourceFiles = posixDAL.getFiles(sourcePath);
 			TestUtils.printList("Source Files: ", sourceFiles);
-			assertTrue("Expected: 3, " + " Exists: " + sourceFiles.size(), sourceFiles.size() == 3);
+			assertEquals(3, sourceFiles.size(), "Expected: 3, " + " Exists: " + sourceFiles.size());
 
 			// upload files to storage
 			List<String> uploadedFiles = posixDAL.upload(sourcePath, storagePath);
 			TestUtils.printList("Uploaded Files: ", uploadedFiles);
-			assertTrue("Expected: 3, " + " Exists: " + uploadedFiles.size(), uploadedFiles.size() == 3);
+			assertEquals(3, uploadedFiles.size(), "Expected: 3, " + " Exists: " + uploadedFiles.size());
 
 			// delete source files
 			List<String> deletedFiles = posixDAL.delete(sourcePath);
 			TestUtils.printList("Deleted Files: ", deletedFiles);
-			assertTrue("Expected: 3, " + " Exists: " + deletedFiles.size(), deletedFiles.size() == 3);
+			assertEquals(3, deletedFiles.size(), "Expected: 3, " + " Exists: " + deletedFiles.size());
 
 			// download files from storage
 			List<String> downloadedFiles = posixDAL.download(storagePath, sourcePath);
 			TestUtils.printList("Downloaded Files: ", downloadedFiles);
-			assertTrue("Expected: 3, " + " Exists: " + downloadedFiles.size(), downloadedFiles.size() == 3);
+			assertEquals(3, downloadedFiles.size(), "Expected: 3, " + " Exists: " + downloadedFiles.size());
 
 		} catch (IOException e) {
 			e.printStackTrace();

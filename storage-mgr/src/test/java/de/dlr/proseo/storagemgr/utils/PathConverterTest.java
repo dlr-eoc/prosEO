@@ -1,11 +1,11 @@
 package de.dlr.proseo.storagemgr.utils;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PathConverterTest {
 
@@ -28,8 +28,8 @@ public class PathConverterTest {
 
 			String relativePath = new PathConverter(pathes[i], basePaths).getRelativePath().getPath();
 
-			assertTrue("Wrong relative path: " + relativePath + " expected: " + expected[i],
-					relativePath.equals(expected[i]));
+			assertEquals(expected[i], relativePath,
+					"Wrong relative path: " + relativePath + " expected: " + expected[i]);
 		}
 	}
 
@@ -46,10 +46,10 @@ public class PathConverterTest {
 		basePaths.add(cachePath);
 
 		String firstPath = new PathConverter(path1, basePaths).getFirstFolder().getPath();
-		assertTrue("Wrong first path: " + firstPath + " expected: " + expectedFirst1, firstPath.equals(expectedFirst1));
+		assertEquals(expectedFirst1, firstPath, "Wrong first path: " + firstPath + " expected: " + expectedFirst1);
 
 		String withoutFirst = new PathConverter(path1, basePaths).removeFirstFolder().getPath();
-		assertTrue("Wrong without first path: " + withoutFirst + " expected: " + expectedWithoutFirst1,
-				withoutFirst.equals(expectedWithoutFirst1));
+		assertEquals(expectedWithoutFirst1, withoutFirst,
+				"Wrong without first path: " + withoutFirst + " expected: " + expectedWithoutFirst1);
 	}
 }

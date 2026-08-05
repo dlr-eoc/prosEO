@@ -1,6 +1,6 @@
 package de.dlr.proseo.storagemgr.cache;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -8,14 +8,11 @@ import java.time.Instant;
 
 import javax.annotation.PostConstruct;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.TestUtils;
@@ -26,15 +23,11 @@ import de.dlr.proseo.storagemgr.utils.FileUtils;
  *
  */
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 public class FileCacheTest {
 
 	@Autowired
 	private TestUtils testUtils;
-
-	@Rule
-	public TestName testName = new TestName();
 
 	@Autowired
 	private FileCache fileCache;
@@ -52,9 +45,9 @@ public class FileCacheTest {
 	 * 
 	 */
 	@Test
-	public void testDeleteEmptyDirectoriesToTop() {
+	public void testDeleteEmptyDirectoriesToTop(TestInfo testInfo) {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 		TestUtils.createEmptyTestDirectories();
 
 		String emptyDirectories = testCachePath + "/d1/d2/d3";
@@ -66,7 +59,7 @@ public class FileCacheTest {
 
 		TestUtils.printDirectoryTree("Directories after creation (expectected: /d1/d2/d3 ):", testCachePath);
 
-		assertTrue("Empty Directories were not created: " + emptyDirectories, f.exists());
+		assertTrue(f.exists(), "Empty Directories were not created: " + emptyDirectories);
 
 		// delete test directories
 
@@ -74,7 +67,7 @@ public class FileCacheTest {
 
 		TestUtils.printDirectoryTree("Directories after deletion (expectected: nothing)", cachePath);
 
-		assertTrue("Empty Directories were not deleted: " + emptyDirectories, !f.exists());
+		assertFalse(f.exists(), "Empty Directories were not deleted: " + emptyDirectories);
 
 		// clear
 
@@ -85,9 +78,9 @@ public class FileCacheTest {
 	 * 
 	 */
 	@Test
-	public void testGetLastAccessed() {
+	public void testGetLastAccessed(TestInfo testInfo) {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 		TestUtils.createEmptyTestDirectories();
 		fileCache.setPath(testCachePath);
 
@@ -105,7 +98,7 @@ public class FileCacheTest {
 
 		File f = new File(fileCache.getAccessedPath(path));
 
-		assertTrue("Last Accessed File not exists: " + f.getPath(), f.exists() && !f.isDirectory());
+		assertTrue(f.exists() && !f.isDirectory(), "Last Accessed File not exists: " + f.getPath());
 
 		fileCache.clear();
 		TestUtils.deleteTestDirectories();
@@ -115,9 +108,9 @@ public class FileCacheTest {
 	 * 
 	 */
 	@Test
-	public void testGetAccessedPath() {
+	public void testGetAccessedPath(TestInfo testInfo) {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 
 		String dir = "path";
 		String fileName = "file.txt";
@@ -130,16 +123,16 @@ public class FileCacheTest {
 		System.out.println("Accessed Path:          " + accessedPath);
 		System.out.println("Expected Accessed Path: " + expectedAccessedPath);
 
-		assertTrue("Accessed Path is wrong: " + accessedPath, accessedPath.equals(expectedAccessedPath));
+		assertEquals(expectedAccessedPath, accessedPath, "Accessed Path is wrong: " + accessedPath);
 	}
 
 	/**
 	 * 
 	 */
 	@Test
-	public void testGetPutContainsRemove() {
+	public void testGetPutContainsRemove(TestInfo testInfo) {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 		TestUtils.createEmptyTestDirectories();
 		fileCache.setPath(testCachePath);
 
@@ -160,20 +153,20 @@ public class FileCacheTest {
 
 		fileCache.putFilesToCache(testCachePath);
 
-		assertTrue("Cache does not contain 5 elements after dir init: " + fileCache.size(), fileCache.size() == 5);
+		assertEquals(5, fileCache.size(), "Cache does not contain 5 elements after dir init: " + fileCache.size());
 
 		System.out.println("Before adding the element: " + path1);
 
 		MapCacheTest.printCache("Cache after init, 5 elements:", fileCache.getMapCache());
 		TestUtils.printDirectoryTree(testCachePath);
 
-		assertTrue("Cache Exists failed: " + path2, fileCache.containsKey(path2));
+		assertEquals(fileCache.containsKey(path2), "Cache Exists failed: " + path2);
 
-		assertTrue("Cache get failed: " + path3, fileCache.get(path3) != null);
+		assertNotNull(fileCache.get(path3), "Cache get failed: " + path3);
 
-		assertTrue("Cache contains key not found failed: " + pathNotExists, !fileCache.containsKey(pathNotExists));
+		assertFalse(fileCache.containsKey(pathNotExists), "Cache contains key not found failed: " + pathNotExists);
 
-		assertTrue("Cache get not found failed: " + pathNotExists, fileCache.get(pathNotExists) == null);
+		assertNull(fileCache.get(pathNotExists), "Cache get not found failed: " + pathNotExists);
 
 		fileCache.remove(path2);
 
@@ -193,9 +186,9 @@ public class FileCacheTest {
 	 * 
 	 */
 	@Test
-	public void testStatus() {
+	public void testStatus(TestInfo testInfo) {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 		TestUtils.createEmptyTestDirectories();
 		fileCache.setPath(testCachePath);
 
@@ -218,18 +211,18 @@ public class FileCacheTest {
 
 		fileCache.putFilesToCache(testCachePath);
 
-		assertTrue("Expected Cache size is 2 elements after put(). Exists: " + fileCache.size(), fileCache.size() == 2);
+		assertEquals(2, fileCache.size(), "Expected Cache size is 2 elements after put(). Exists: " + fileCache.size());
 
 		// check status after put()
 
 		status1 = fileCache.getCacheFileStatus(path1);
 		status2 = fileCache.getCacheFileStatus(path2);
 
-		assertTrue("Expected cache file1 status after put() is Ready. Exists: " + status1.toString(),
-				status1 == CacheFileStatus.READY);
+		assertEquals(CacheFileStatus.READY, status1,
+				"Expected cache file1 status after put() is Ready. Exists: " + status1.toString());
 
-		assertTrue("Expected cache file2 status after put() is Ready. Exists: " + status2.toString(),
-				status2 == CacheFileStatus.READY);
+		assertEquals(CacheFileStatus.READY, status2, 
+				"Expected cache file2 status after put() is Ready. Exists: " + status2.toString());
 		
 		// check not exists status - file is not in cache, but has a status
 		
@@ -237,11 +230,11 @@ public class FileCacheTest {
 		
 		status3 = fileCache.getCacheFileStatus(path3);
 		
-		assertTrue("Expected cache file3 does not exist in the cache. Exists:" + fileCache.containsKey(path3),
-				!fileCache.containsKey(path3));
+		assertFalse(fileCache.containsKey(path3),
+				"Expected cache file3 does not exist in the cache. Exists:" + fileCache.containsKey(path3));
 		
-		assertTrue("Expected cache file3 status after setStatus(INCOMPLETE) is INCOMPLETE. Exists:" + status3.toString(),
-				status3 == CacheFileStatus.INCOMPLETE);
+		assertEquals(CacheFileStatus.INCOMPLETE, status3,
+				"Expected cache file3 status after setStatus(INCOMPLETE) is INCOMPLETE. Exists:" + status3.toString());
 		
 		// changing status1 to INCOMPLETE 
 
@@ -250,11 +243,11 @@ public class FileCacheTest {
 		status1 = fileCache.getCacheFileStatus(path1);
 		status2 = fileCache.getCacheFileStatus(path2);
 
-		assertTrue("Expected cache file1 status after setStatus(INCOMPLETE) is INCOMPLETE. Exists:" + status1.toString(),
-				status1 == CacheFileStatus.INCOMPLETE);
+		assertEquals(CacheFileStatus.INCOMPLETE, status1,
+				"Expected cache file1 status after setStatus(INCOMPLETE) is INCOMPLETE. Exists:" + status1.toString());
 
-		assertTrue("Expected cache file2 status after <no changes> is Ready. Exists:" + status2.toString(),
-				status2 == CacheFileStatus.READY);
+		assertEquals(CacheFileStatus.READY, status2,
+				"Expected cache file2 status after <no changes> is Ready. Exists:" + status2.toString());
 
 		// changing status2 to INCOMPLETE
 
@@ -263,11 +256,11 @@ public class FileCacheTest {
 		status1 = fileCache.getCacheFileStatus(path1);
 		status2 = fileCache.getCacheFileStatus(path2);
 
-		assertTrue("Expected cache file1 status after <no changes> is INCOMPLETE. Exists: " + status1.toString(),
-				status1 == CacheFileStatus.INCOMPLETE);
+		assertEquals(CacheFileStatus.INCOMPLETE, status1,
+				"Expected cache file1 status after <no changes> is INCOMPLETE. Exists: " + status1.toString());
 
-		assertTrue("Expected cache file2 status after setStatus(INCOMPLETE) is INCOMPLETE. Exists: " + status2.toString(),
-				status2 == CacheFileStatus.INCOMPLETE);
+		assertEquals(CacheFileStatus.INCOMPLETE, status2,
+				"Expected cache file2 status after setStatus(INCOMPLETE) is INCOMPLETE. Exists: " + status2.toString());
 
 		// changing status1 to Ready
 
@@ -276,15 +269,15 @@ public class FileCacheTest {
 		status1 = fileCache.getCacheFileStatus(path1);
 		status2 = fileCache.getCacheFileStatus(path2);
 
-		assertTrue("Expected cache file1 status after setStatus(Ready) is Ready. Exists: " + status1.toString(),
-				status1 == CacheFileStatus.READY);
+		assertEquals(CacheFileStatus.READY, status1,
+				"Expected cache file1 status after setStatus(Ready) is Ready. Exists: " + status1.toString());
 
-		assertTrue("Expected cache file2 status after <no changes> is Downloading. Exists: " + status2.toString(),
-				status2 == CacheFileStatus.INCOMPLETE);
+		assertEquals(CacheFileStatus.INCOMPLETE, status2,
+				"Expected cache file2 status after <no changes> is Downloading. Exists: " + status2.toString());
 	
 		// check cache after status changes 
 
-		assertTrue("Expected 2 elements in the cache. Exists: " + fileCache.size(), fileCache.size() == 2);
+		assertEquals(2, fileCache.size(), "Expected 2 elements in the cache. Exists: " + fileCache.size());
 
 		// clear
 		
@@ -296,9 +289,9 @@ public class FileCacheTest {
 	 * 
 	 */
 	@Test
-	public void testInterface() {
+	public void testInterface(TestInfo testInfo) {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 		TestUtils.createEmptyTestDirectories();
 		fileCache.setPath(testCachePath);
 
@@ -315,7 +308,7 @@ public class FileCacheTest {
 
 		fileCache.putFilesToCache(testCachePath);
 
-		assertTrue("Cache does not contain 2 elements after dir init: " + fileCache.size(), fileCache.size() == 2);
+		assertEquals(2, fileCache.size(), "Cache does not contain 2 elements after dir init: " + fileCache.size());
 
 		// check containsKey - contains and update accessed
 
@@ -324,7 +317,7 @@ public class FileCacheTest {
 		timeChanged = fileCache.getFileAccessed(path1);
 		timeNotChanged = fileCache.getFileAccessed(path2);
 
-		assertTrue("Cache does not contain an elements after dir init: " + path1, fileCache.containsKey(path1));
+		assertTrue(fileCache.containsKey(path1), "Cache does not contain an elements after dir init: " + path1);
 
 		System.out.println("Path1 Time:                         " + timeChanged);
 		System.out.println("Path1 time after contains(changed): " + fileCache.getFileAccessed(path1));
@@ -334,12 +327,11 @@ public class FileCacheTest {
 		System.out.println("Path2 Time:          " + timeNotChanged);
 		System.out.println("Path2 time (stable): " + fileCache.getFileAccessed(path2));
 
-		assertTrue("Last accessed was not updated: ", fileCache.getFileAccessed(path1).compareTo(timeChanged) > 0);
+		assertTrue(fileCache.getFileAccessed(path1).compareTo(timeChanged) > 0, "Last accessed was not updated: ");
 
-		assertTrue("Last accessed must not be updated: ",
-				fileCache.getFileAccessed(path2).compareTo(timeNotChanged) == 0);
+		assertEquals(timeNotChanged, fileCache.getFileAccessed(path2), "Last accessed must not be updated: ");
 
-		assertTrue("Cache does not contain 2 elements after contains: " + fileCache.size(), fileCache.size() == 2);
+		assertEquals(2, fileCache.size(), "Cache does not contain 2 elements after contains: " + fileCache.size());
 
 		// check containsKey - not contains
 
@@ -348,7 +340,7 @@ public class FileCacheTest {
 		timeNotChanged = fileCache.getFileAccessed(path1);
 		timeNotChanged2 = fileCache.getFileAccessed(path2);
 
-		assertTrue("Cache contains an element, but must not: " + pathNotExists, !fileCache.containsKey(pathNotExists));
+		assertFalse(fileCache.containsKey(pathNotExists), "Cache contains an element, but must not: " + pathNotExists);
 
 		System.out.println("Path1 Time:                        " + timeNotChanged);
 		System.out.println("Path1 time after contains(stable): " + fileCache.getFileAccessed(path1));
@@ -358,26 +350,26 @@ public class FileCacheTest {
 		System.out.println("Path2 Time:                        " + timeNotChanged2);
 		System.out.println("Path2 time after contains(stable): " + fileCache.getFileAccessed(path2));
 
-		assertTrue("path1 Last accessed must not be updated: ",
-				fileCache.getFileAccessed(path1).compareTo(timeNotChanged) == 0);
+		assertEquals(timeNotChanged, fileCache.getFileAccessed(path1),
+				"path1 Last accessed must not be updated: ");
 
-		assertTrue("path2 Last accessed must not be updated: ",
-				fileCache.getFileAccessed(path2).compareTo(timeNotChanged2) == 0);
+		assertEquals(timeNotChanged2, fileCache.getFileAccessed(path2),
+				"path2 Last accessed must not be updated: ");
 
 		// check put - not contains
 
 		System.out.println("Subtest: check containsKey - not contains");
 
-		assertTrue("Cache does not contain 2 elements after contains: " + fileCache.size(), fileCache.size() == 2);
+		assertEquals(2, fileCache.size(), "Cache does not contain 2 elements after contains: " + fileCache.size());
 
-		assertTrue("Cache contains an element before put: " + path3, !fileCache.containsKey(path3));
+		assertFalse(fileCache.containsKey(path3), "Cache contains an element before put: " + path3);
 
 		TestUtils.createFile(path3, "");
 		fileCache.put(path3);
 
-		assertTrue("Cache does not contain 3 elements after contains: " + fileCache.size(), fileCache.size() == 3);
+		assertEquals(3, fileCache.size(), "Cache does not contain 3 elements after contains: " + fileCache.size());
 
-		assertTrue("Cache does not contains an element after put: " + path3, fileCache.containsKey(path3));
+		assertTrue(fileCache.containsKey(path3), "Cache does not contains an element after put: " + path3);
 
 		// check put - contains, update
 
@@ -396,12 +388,11 @@ public class FileCacheTest {
 		System.out.println("Path2 Time:          " + timeNotChanged);
 		System.out.println("Path2 time (stable): " + fileCache.getFileAccessed(path2));
 
-		assertTrue("Last accessed was not updated: ", fileCache.getFileAccessed(path1).compareTo(timeChanged) > 0);
+		assertTrue(fileCache.getFileAccessed(path1).compareTo(timeChanged) > 0, "Last accessed was not updated: ");
 
-		assertTrue("Last accessed must not be updated: ",
-				fileCache.getFileAccessed(path2).compareTo(timeNotChanged) == 0);
+		assertEquals(timeNotChanged, fileCache.getFileAccessed(path2), "Last accessed must not be updated: ");
 
-		assertTrue("Cache does not contain 3 elements after contains: " + fileCache.size(), fileCache.size() == 3);
+		assertEquals(3, fileCache.size(), "Cache does not contain 3 elements after contains: " + fileCache.size());
 
 		fileCache.clear();
 		TestUtils.deleteTestDirectories();

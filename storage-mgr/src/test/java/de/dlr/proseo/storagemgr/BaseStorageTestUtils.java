@@ -1,6 +1,6 @@
 package de.dlr.proseo.storagemgr;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -8,8 +8,7 @@ import java.util.List;
 
 import javax.annotation.PostConstruct;
 
-import org.junit.Rule;
-import org.junit.rules.TestName;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,9 +30,6 @@ public class BaseStorageTestUtils {
 	
 	@Autowired
 	private TestUtils testUtils;
-
-	@Rule
-	public TestName testName = new TestName();
 
 	protected String sourcePath;
 	protected String storagePath;
@@ -115,7 +111,7 @@ public class BaseStorageTestUtils {
 
 		TestUtils.createFile(sourceFilePath, testFileContent);
 
-		assertTrue("File for upload in Source has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
+		assertTrue(TestUtils.fileExists(sourceFilePath), "File for upload in Source has not been created: " + sourceFilePath);
 
 		System.out.println("File " + relativePath + " successfully created in Source");
 
@@ -139,7 +135,7 @@ public class BaseStorageTestUtils {
 
 		TestUtils.createLargeFile(sourceFilePath, fileSizeInBytes);
 
-		assertTrue("File for upload in Source has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
+		assertTrue(TestUtils.fileExists(sourceFilePath), "File for upload in Source has not been created: " + sourceFilePath);
 
 		System.out.println("File " + relativePath + " successfully created in Source");
 
@@ -166,7 +162,7 @@ public class BaseStorageTestUtils {
 			System.out.println("Cannot upload: " + e.getMessage());
 		}
 
-		assertTrue("File was not uploaded to storage: " + relativePath, TestUtils.fileExists(destFile.getFullPath()));
+		assertTrue(TestUtils.fileExists(destFile.getFullPath()), "File was not uploaded to storage: " + relativePath);
 
 		System.out.println("File " + relativePath + " successfully uploaded to Posix Storage");
 	}
@@ -185,8 +181,8 @@ public class BaseStorageTestUtils {
 			System.out.println("Cannot download: " + e.getMessage());
 		}
 
-		assertTrue("File was not downloaded from storage: " + relativePath,
-				TestUtils.fileExists(destFile.getFullPath()));
+		assertTrue(TestUtils.fileExists(destFile.getFullPath()),
+				"File was not downloaded from storage: " + relativePath);
 
 		System.out.println("File " + relativePath + " successfully downloaded from Posix Storage to Cache");
 	}

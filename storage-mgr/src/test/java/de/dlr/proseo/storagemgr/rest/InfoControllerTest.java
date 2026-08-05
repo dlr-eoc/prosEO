@@ -7,13 +7,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import de.dlr.proseo.storagemgr.StorageManager;
@@ -24,7 +22,6 @@ import de.dlr.proseo.storagemgr.StorageManager;
  * @author Denys Chaykovskiy
  * 
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class InfoControllerTest {
@@ -42,7 +39,7 @@ public class InfoControllerTest {
 	 * @return RestInfo
 	 */
 	@Test
-	public void testInfo() throws Exception {
+	public void TestInfo() throws Exception {
 
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(REQUEST_STRING);
 

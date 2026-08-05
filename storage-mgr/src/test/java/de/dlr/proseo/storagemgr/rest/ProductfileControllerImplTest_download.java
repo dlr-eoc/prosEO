@@ -2,21 +2,18 @@ package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
 
 import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -40,7 +37,6 @@ import de.dlr.proseo.storagemgr.utils.PathConverter;
 /**
  * @throws Exception
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class ProductfileControllerImplTest_download {
@@ -54,33 +50,30 @@ public class ProductfileControllerImplTest_download {
  	@Autowired
 	private StorageProvider storageProvider;
 	
-	@Rule
-	public TestName testName = new TestName();
-
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/productfiles";
 
 	@Test
-	public void testDownload_posix() throws Exception {
+	public void testDownload_posix(TestInfo testInfo) throws Exception {
 		
 		StorageType storageType = StorageType.POSIX; 
 		storageProvider.setDefaultStorage(storageType);
 
-		download("Posix");
+		download("Posix", testInfo);
 		
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM POSIX, " + " Exists: " + realStorageType);
 	}
 	
 	@Test
-	public void testDownload_S3() throws Exception {
+	public void testDownload_S3(TestInfo testInfo) throws Exception {
 		
 		StorageType storageType = StorageType.S3; 
 		storageProvider.setDefaultStorage(storageType);
 
-		download("S3");
+		download("S3", testInfo);
 		
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM S3, " + " Exists: " + realStorageType);
 	}
 		
 	/**
@@ -98,9 +91,9 @@ public class ProductfileControllerImplTest_download {
 	 * 
 	 * Posix only (cache):  /<cachePath>/<relativePath>
 	 */
-	private void download(String testID) throws Exception {
+	private void download(String testID, TestInfo testInfo) throws Exception {
 		
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 		
 		// create file in source
 		// upload to storage 
@@ -145,11 +138,11 @@ public class ProductfileControllerImplTest_download {
 		System.out.println("Expected cache path: " + expectedAbsoluteCachePath);
 		
 		realAbsoluteCachePath = new PathConverter(realAbsoluteCachePath).normalizeWindowsPath().getPath();
-		assertTrue("Real cache path: " + realAbsoluteCachePath + " expected cache path: " + expectedAbsoluteCachePath, 
-				realAbsoluteCachePath.equals(expectedAbsoluteCachePath));
+		assertEquals(expectedAbsoluteCachePath, realAbsoluteCachePath,
+				"Real cache path: " + realAbsoluteCachePath + " expected cache path: " + expectedAbsoluteCachePath);
 		
-		assertTrue("Downloaded file from storage to cache does not exist: " + realAbsoluteCachePath, 
-				new File(realAbsoluteCachePath).exists());
+		assertTrue(new File(realAbsoluteCachePath).exists(),
+				"Downloaded file from storage to cache does not exist: " + realAbsoluteCachePath);
 		
 		// delete files with empty folders
 		new FileUtils(absoluteSourcePath).deleteFile(); // source

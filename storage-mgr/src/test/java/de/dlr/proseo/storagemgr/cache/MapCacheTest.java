@@ -1,6 +1,6 @@
 package de.dlr.proseo.storagemgr.cache;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,14 +12,11 @@ import java.util.Map.Entry;
 
 import javax.annotation.PostConstruct;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.TestUtils;
@@ -28,13 +25,9 @@ import de.dlr.proseo.storagemgr.TestUtils;
  * @author Denys Chaykovskiy
  *
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 public class MapCacheTest {
 
-	@Rule
-	public TestName testName = new TestName();
-	
 	@Autowired
 	private TestUtils testUtils;
 
@@ -49,9 +42,9 @@ public class MapCacheTest {
 	 * 
 	 */
 	@Test
-	public void testGetPutContains() {
+	public void testGetPutContains(TestInfo testInfo) {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 
 		String testFile = "file3";
 
@@ -71,27 +64,28 @@ public class MapCacheTest {
 
 		fileInfo = mapCache.get(testFile);
 
-		assertTrue("Get is not working: " + testFile,
-				fileInfo.getAccessed() == testFileInfo.getAccessed() && fileInfo.getSize() == testFileInfo.getSize());
+		assertTrue(fileInfo.getAccessed() == testFileInfo.getAccessed() && fileInfo.getSize() == testFileInfo.getSize(),
+				"Get is not working: " + testFile);
 
 		mapCache.put(testFile, replaceFileInfo);
 		fileInfo = mapCache.get(testFile);
 
-		assertTrue("Replace is not working: " + testFile, fileInfo.getAccessed() == replaceFileInfo.getAccessed()
-				&& fileInfo.getSize() == replaceFileInfo.getSize());
+		assertTrue(fileInfo.getAccessed() == replaceFileInfo.getAccessed()
+				&& fileInfo.getSize() == replaceFileInfo.getSize(),
+				"Replace is not working: " + testFile);
 
 		testFileInfo = mapCache.get(testFile);
 
-		assertTrue("Contains is not working: " + testFile, mapCache.containsKey(testFile));
+		assertTrue(mapCache.containsKey(testFile), "Contains is not working: " + testFile);
 	}
 
 	/**
 	 * 
 	 */
 	@Test
-	public void testSort() {
+	public void testSort(TestInfo testInfo) {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 
 		String minSizeFile = "file2";
 		long minSize = 1L;
@@ -127,7 +121,7 @@ public class MapCacheTest {
 		sortedFileInfo = mapCache.getSortedPathes().get(0).getValue();
 		testFileInfo = mapCache.get(minSizeFile);
 
-		assertTrue("Sorting size asc is not working. ", sortedFileInfo.getSize() == testFileInfo.getSize());
+		assertEquals(testFileInfo.getSize(), sortedFileInfo.getSize(), "Sorting size asc is not working. ");
 
 		System.out.println("Sorting Size Desc: ");
 
@@ -137,7 +131,7 @@ public class MapCacheTest {
 		sortedFileInfo = mapCache.getSortedPathes().get(0).getValue();
 		testFileInfo = mapCache.get(maxSizeFile);
 
-		assertTrue("Sorting size desc is not working. ", sortedFileInfo.getSize() == testFileInfo.getSize());
+		assertEquals(testFileInfo.getSize(), sortedFileInfo.getSize(), "Sorting size desc is not working. ");
 
 		System.out.println("Sorting Access Asc: ");
 
@@ -147,8 +141,7 @@ public class MapCacheTest {
 		sortedFileInfo = mapCache.getSortedPathes().get(0).getValue();
 		testFileInfo = mapCache.get(minTimeStampFile);
 
-		assertTrue("Sorting timestamp asc is not working. ",
-				sortedFileInfo.getAccessed() == testFileInfo.getAccessed());
+		assertEquals(testFileInfo.getAccessed(), sortedFileInfo.getAccessed(), "Sorting timestamp asc is not working. ");
 
 		System.out.println("Sorting Access Desc: ");
 
@@ -158,17 +151,16 @@ public class MapCacheTest {
 		sortedFileInfo = mapCache.getSortedPathes().get(0).getValue();
 		testFileInfo = mapCache.get(maxTimeStampFile);
 
-		assertTrue("Sorting timestamp desc is not working. ",
-				sortedFileInfo.getAccessed() == testFileInfo.getAccessed());
+		assertEquals(testFileInfo.getAccessed(), sortedFileInfo.getAccessed(), "Sorting timestamp desc is not working. ");
 	}
 
 	/**
 	 * @throws IOException
 	 */
 	@Test
-	public void testPathes() throws IOException {
+	public void testPathes(TestInfo testInfo) throws IOException {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 		TestUtils.createEmptyTestDirectories();
 
 		File file = new File(testPath);

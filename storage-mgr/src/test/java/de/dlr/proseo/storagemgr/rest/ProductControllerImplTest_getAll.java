@@ -2,18 +2,15 @@ package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -33,7 +30,6 @@ import de.dlr.proseo.storagemgr.model.StorageType;
 /**
  * @throws Exception
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class ProductControllerImplTest_getAll {
@@ -43,9 +39,6 @@ public class ProductControllerImplTest_getAll {
 
 	@Autowired
 	private StorageProvider storageProvider;
-
-	@Rule
-	public TestName testName = new TestName();
 
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/products";
 
@@ -57,15 +50,15 @@ public class ProductControllerImplTest_getAll {
 	 * @return products string[]
 	 */
 	@Test
-	public void testGet_posix() throws Exception {
+	public void testGet_posix(TestInfo testInfo) throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
 		storageProvider.setDefaultStorage(storageType);
 
-		getProductFiles(storageType);
+		getProductFiles(storageType, testInfo);
 
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM POSIX, " + " Exists: " + realStorageType);
 	}
 
 	/**
@@ -76,15 +69,15 @@ public class ProductControllerImplTest_getAll {
 	 * @return products string[]
 	 */
 	@Test
-	public void testGet_S3() throws Exception {
+	public void testGet_S3(TestInfo testInfo) throws Exception {
 
 		StorageType storageType = StorageType.S3;
 		storageProvider.setDefaultStorage(storageType);
 
-		getProductFiles(storageType);
+		getProductFiles(storageType, testInfo);
 
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM S3, " + " Exists: " + realStorageType);
 	}
 
 	/**
@@ -105,11 +98,12 @@ public class ProductControllerImplTest_getAll {
 	 * 
 	 * s3://<bucket>/<relativePath> // no storage path in s3
 	 * /<storagePath>/<relativePath> // no bucket in posix currently
+	 * @param testInfo TODO
 	 * 
 	 */
-	private void getProductFiles(StorageType storageType) throws Exception {
+	private void getProductFiles(StorageType storageType, TestInfo testInfo) throws Exception {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 
 		// show storage files
 		BaseStorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());

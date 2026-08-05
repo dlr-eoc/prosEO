@@ -1,20 +1,17 @@
 package de.dlr.proseo.storagemgr.version2.posix;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageProvider;
@@ -23,7 +20,6 @@ import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class PosixStorageTest {
@@ -34,13 +30,10 @@ public class PosixStorageTest {
 	@Autowired
 	private StorageProvider storageProvider;
 
-	@Rule
-	public TestName testName = new TestName();
-
 	@Test
-	public void testPosixPosixUpload() throws IOException {
+	public void testPosixPosixUpload(TestInfo testInfo) throws IOException {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 		TestUtils.createEmptyStorageDirectories();
 
 		StorageType storageType = StorageType.POSIX;
@@ -65,19 +58,19 @@ public class PosixStorageTest {
 		List<String> uploadedPathes = storageProvider.getStorage().upload(sourceDir, targetDir);
 		storageTestUtils.printPosixStorage();
 		TestUtils.printList("Storage Files: ", uploadedPathes);
-		assertTrue("Expected: 3, " + " Exists: " + uploadedPathes.size(), uploadedPathes.size() == 3);
+		assertEquals(3, uploadedPathes.size(), "Expected: 3, " + " Exists: " + uploadedPathes.size());
 
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM POSIX, " + " Exists: " + realStorageType);
 		
 		// clear 
 		storageProvider.getStorage().delete(prefix);
 	}
 
 	@Test
-	public void testPosixPosixDownload() throws IOException {
+	public void testPosixPosixDownload(TestInfo testInfo) throws IOException {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 		TestUtils.createEmptyStorageDirectories();
 
 		StorageType storageType = StorageType.POSIX;
@@ -103,10 +96,10 @@ public class PosixStorageTest {
 		// download files
 		List<String> downloadedPathes = storageProvider.getStorage().download(sourceDir, targetDir);
 		TestUtils.printList("Source Files: ", downloadedPathes);
-		assertTrue("Expected: 3, " + " Exists: " + downloadedPathes.size(), downloadedPathes.size() == 3);
+		assertEquals(3, downloadedPathes.size(), "Expected: 3, " + " Exists: " + downloadedPathes.size());
 
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM POSIX, " + " Exists: " + realStorageType);
 		
 		// clear 
 		storageProvider.getStorage().delete(prefix);

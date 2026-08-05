@@ -2,22 +2,19 @@ package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -40,7 +37,6 @@ import de.dlr.proseo.storagemgr.utils.PathConverter;
 /**
  * @throws Exception
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class ProductControllerImplTest_get {
@@ -54,9 +50,6 @@ public class ProductControllerImplTest_get {
 	@Autowired
 	private StorageProvider storageProvider;
 
-	@Rule
-	public TestName testName = new TestName();
-
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/products";
 
 	/**
@@ -67,15 +60,15 @@ public class ProductControllerImplTest_get {
 	 * @return products string[]
 	 */
 	@Test
-	public void testGet_v2Posix() throws Exception {
+	public void testGet_v2Posix(TestInfo testInfo) throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
 		storageProvider.setDefaultStorage(storageType);
 
-		getProductFiles(storageType);
+		getProductFiles(storageType, testInfo);
 
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM POSIX, " + " Exists: " + realStorageType);
 	}
 
 	/**
@@ -86,15 +79,15 @@ public class ProductControllerImplTest_get {
 	 * @return products string[]
 	 */
 	@Test
-	public void testGet_v2S3() throws Exception {
+	public void testGet_v2S3(TestInfo testInfo) throws Exception {
 
 		StorageType storageType = StorageType.S3;
 		storageProvider.setDefaultStorage(storageType);
 
-		getProductFiles(storageType);
+		getProductFiles(storageType, testInfo);
 
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM S3, " + " Exists: " + realStorageType);
 	}
 
 	/**
@@ -117,9 +110,9 @@ public class ProductControllerImplTest_get {
 	 * /<storagePath>/<relativePath> // no bucket in posix currently
 	 * 
 	 */
-	private void getProductFiles(StorageType storageType) throws Exception {
+	private void getProductFiles(StorageType storageType, TestInfo testInfo) throws Exception {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 
 		// create source paths
 		String prefix = "prodGetPrefix";
@@ -167,8 +160,8 @@ public class ProductControllerImplTest_get {
 			
 			realAbsoluteStoragePath = new PathConverter(realAbsoluteStoragePath).normalizeWindowsPath().getPath();
 
-			assertTrue("Real path: " + realAbsoluteStoragePath + " Expected  path: " + expectedAbsoluteStoragePath,
-					realAbsoluteStoragePath.equals(expectedAbsoluteStoragePath));
+			assertEquals(expectedAbsoluteStoragePath, realAbsoluteStoragePath,
+					"Real path: " + realAbsoluteStoragePath + " Expected  path: " + expectedAbsoluteStoragePath);
 		}
 
 		// delete storage files with prefix

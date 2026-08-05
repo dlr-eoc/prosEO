@@ -11,7 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
-import org.junit.rules.TestName;
+
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MvcResult;
@@ -134,11 +135,11 @@ public class TestUtils {
 	/**
 	 * 
 	 */
-	public static void printMethodName(Object object, TestName testName) {
+	public static void printMethodName(Object object, TestInfo testInfo) {
 
 		System.out.println();
 		System.out.println(TEST_SEPARATOR + TEST_SEPARATOR);
-		System.out.println("TEST " + object.getClass().getSimpleName() + "." + testName.getMethodName());
+		System.out.println("TEST " + object.getClass().getSimpleName() + "." + testInfo.getTestMethod().get().getName());
 		System.out.println();
 	}
 

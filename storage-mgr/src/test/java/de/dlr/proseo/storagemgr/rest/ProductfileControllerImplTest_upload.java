@@ -2,19 +2,16 @@ package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -37,7 +34,6 @@ import de.dlr.proseo.storagemgr.utils.PathConverter;
 /**
  * @throws Exception
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class ProductfileControllerImplTest_upload {
@@ -51,33 +47,30 @@ public class ProductfileControllerImplTest_upload {
 	@Autowired
 	private StorageProvider storageProvider;
 
-	@Rule
-	public TestName testName = new TestName();
-
 	private static final String REQUEST_STRING = "/proseo/storage-mgr/x/productfiles";
 
 	@Test
-	public void testUpload_Posix() throws Exception {
+	public void testUpload_Posix(TestInfo testInfo) throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
 		storageProvider.setDefaultStorage(storageType);
 
-		upload();
+		upload(testInfo);
 
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM POSIX, " + " Exists: " + realStorageType);
 	}
 
 	@Test
-	public void testUpload_S3() throws Exception {
+	public void testUpload_S3(TestInfo testInfo) throws Exception {
 
 		StorageType storageType = StorageType.S3;
 		storageProvider.setDefaultStorage(storageType);
 
-		upload();
+		upload(testInfo);
 
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM S3, " + " Exists: " + realStorageType);
 	}
 
 	/**
@@ -97,10 +90,11 @@ public class ProductfileControllerImplTest_upload {
 	 * 
 	 * Posix: /<storagePath>/<productId>/<filename from input absolutPath>
 	 * s3://<defaultBucket>/<productId>/<filename from input absolutPath>
+	 * @param testInfo TODO
 	 */
-	private void upload() throws Exception {
+	private void upload(TestInfo testInfo) throws Exception {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 
 		String productId = "12345"; // only int type allowed
 		String filename = "productFileUpload.txt";
@@ -123,7 +117,7 @@ public class ProductfileControllerImplTest_upload {
 		RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
 		String realRelativeStoragePath = storageProvider.getRelativePath(result.getFilePath());
 		System.out.println("Created job order path: " + realRelativeStoragePath);
-		assertTrue("Expected path: " + realRelativeStoragePath + " Exists: " + relativePath, relativePath.equals(realRelativeStoragePath));
+		assertEquals(relativePath, realRelativeStoragePath, "Expected path: " + relativePath + " Exists: " + realRelativeStoragePath);
 
 		// show storage files
 		BaseStorageTestUtils.printStorageFiles("After http-call", storageProvider.getStorage());

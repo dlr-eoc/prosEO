@@ -1,20 +1,17 @@
 package de.dlr.proseo.storagemgr.utils;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.nio.file.Paths;
 
 import javax.annotation.PostConstruct;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageProvider;
@@ -24,7 +21,6 @@ import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 public class StorageProviderTest {
 
@@ -36,9 +32,6 @@ public class StorageProviderTest {
 	
 	@Autowired
 	private StorageProvider storageProvider;
-
-	@Rule
-	public TestName testName = new TestName();
 
 	String storagePath;
 	String cachePath;
@@ -53,9 +46,9 @@ public class StorageProviderTest {
 	}
 
 	@Test
-	public void testPosixPosixProvider() throws IOException {
+	public void testPosixPosixProvider(TestInfo testInfo) throws IOException {
 
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 		TestUtils.createEmptyStorageDirectories();
 
 		String testFileName = "testfile.txt";
@@ -75,7 +68,7 @@ public class StorageProviderTest {
 		
 		TestUtils.printDirectoryTree(sourcePath);
 		
-		assertTrue("File for upload has not been created: " + sourceFilePath, TestUtils.fileExists(sourceFilePath));
+		assertTrue(TestUtils.fileExists(sourceFilePath), "File for upload has not been created: " + sourceFilePath);
 
 		StorageType storageType = StorageType.POSIX; 
 		storageProvider.setDefaultStorage(storageType);
@@ -93,7 +86,7 @@ public class StorageProviderTest {
 			System.out.println("Cannot upload: " + e.getMessage());
 		}
 
-		assertTrue("File was not uploaded to storage: " + storageFilePath, TestUtils.fileExists(storageFilePath));
+		assertTrue(TestUtils.fileExists(storageFilePath), "File was not uploaded to storage: " + storageFilePath);
 
 		BaseStorageTestUtils.printStorageFileList("Storage Files (should be 1 file) ", storage.getStorageFiles());
 
@@ -111,19 +104,19 @@ public class StorageProviderTest {
 				
 		TestUtils.printDirectoryTree(cachePath);
 		
-		assertTrue("File was not downloaded from storage: " + cacheFilePath, TestUtils.fileExists(cacheFilePath));
+		assertTrue(TestUtils.fileExists(cacheFilePath), "File was not downloaded from storage: " + cacheFilePath);
 		
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM POSIX, " + " Exists: " + realStorageType);
 		
 		TestUtils.deleteStorageDirectories();
 	}
 	
 	
 	@Test 
-	public void probaTest() throws Exception { 
+	public void probaTest(TestInfo testInfo) throws Exception { 
 		
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 		TestUtils.createEmptyStorageDirectories();
 		
 		String testFile = "probaTest.txt"; 

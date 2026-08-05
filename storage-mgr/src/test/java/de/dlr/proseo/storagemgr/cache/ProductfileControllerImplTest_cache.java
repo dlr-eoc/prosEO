@@ -2,24 +2,22 @@ package de.dlr.proseo.storagemgr.cache;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.junit.Assert.*;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 
 import javax.annotation.PostConstruct;
 
-import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -34,7 +32,6 @@ import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.utils.FileUtils;
 import de.dlr.proseo.storagemgr.utils.PathConverter;
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class ProductfileControllerImplTest_cache {
@@ -48,9 +45,6 @@ public class ProductfileControllerImplTest_cache {
 	@Autowired
 	private StorageProvider storageProvider;
 
-	@Rule
-	public TestName testName = new TestName();
-	
 	@Autowired
 	private BaseStorageTestUtils storageTestUtils;
 
@@ -71,27 +65,27 @@ public class ProductfileControllerImplTest_cache {
 
 
 	@Test
-	public void testCache_posix() throws Exception {
+	public void testCache_posix(TestInfo testInfo) throws Exception {
 
 		StorageType storageType = StorageType.POSIX;
 		storageProvider.setDefaultStorage(storageType);
 
-		testCache();
+		testCache(testInfo);
 
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM POSIX, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM POSIX, " + " Exists: " + realStorageType);
 	}
 
 	@Test
-	public void testCache_S3() throws Exception {
+	public void testCache_S3(TestInfo testInfo) throws Exception {
 
 		StorageType storageType = StorageType.S3;
 		storageProvider.setDefaultStorage(storageType);
 
-		testCache();
+		testCache(testInfo);
 
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
-		assertTrue("Expected: SM S3, " + " Exists: " + realStorageType, storageType == realStorageType);
+		assertEquals(storageType, realStorageType, "Expected: SM S3, " + " Exists: " + realStorageType);
 	}
 
 	
@@ -117,12 +111,12 @@ public class ProductfileControllerImplTest_cache {
 	 * 
 	 * Posix only (cache):  /<cachePath>/<relativePath> (without first folder as bucket) 
 	 */
-	private void testCache() throws Exception {
+	private void testCache(TestInfo testInfo) throws Exception {
 
 		TestUtils.getInstance().deleteFilesinS3Storage();
 		TestUtils.getInstance().deleteFilesinPosixStorage();
 		
-		TestUtils.printMethodName(this, testName);
+		TestUtils.printMethodName(this, testInfo);
 		
 		// create file in source
 		// upload to storage <bucket>/relative path only
@@ -174,7 +168,7 @@ public class ProductfileControllerImplTest_cache {
 		String expectedCachePath = new PathConverter(storageProvider.getCachePath(), relativePath).getPath();
 		
 		String json = mvcResult.getResponse().getContentAsString();
-		RestFileInfo result = new ObjectMapper().readValue(json, RestFileInfo.class);
+		RestFileInfo result = JsonMapper.builder().build().readValue(json, RestFileInfo.class);
 		String realCachePath = result.getFilePath();
 		
 		System.out.println("Expected cache path: " + expectedCachePath);
@@ -182,8 +176,7 @@ public class ProductfileControllerImplTest_cache {
 		
 		realCachePath = new PathConverter(realCachePath).normalizeWindowsPath().getPath();
 
-		assertTrue("Expected path: " + expectedCachePath + " Exists: " + realCachePath, 
-				expectedCachePath.equals(realCachePath));
+		assertEquals(expectedCachePath, realCachePath, "Expected path: " + expectedCachePath + " Exists: " + realCachePath);
 		
 		// delete files with empty folders
 		new FileUtils(absolutePath).deleteFile(); // source
