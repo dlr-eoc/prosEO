@@ -1,3 +1,8 @@
+/**
+ * LogParser.java
+ * 
+ * (C) 2024 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr;
 
 import java.time.DateTimeException;
@@ -8,6 +13,8 @@ import java.time.format.DateTimeFormatter;
 /**
  * LogParser Class
  * 
+ * Utility class to analyse a single log line; used by unit tests through MultiThreadLogAnalyser
+ * 
  * - Intercepted: 2024-02-22 20:23:08.000 TRACE 14224 --- [ Thread-6]
  * d.dlr.proseo.storagemgr.utils.FileUtils : >>>
  * createFile(2024-02-22T19:23:08.000469Z)
@@ -15,7 +22,6 @@ import java.time.format.DateTimeFormatter;
  * @author Denys Chaykovskiy
  * 
  */
-
 public class LogParser {
 
 	private String logString;

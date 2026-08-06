@@ -1,10 +1,15 @@
+/**
+ * FileUtilsTest.java
+ * 
+ * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.cache;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -17,6 +22,8 @@ import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.utils.FileUtils;
 
 /**
+ * Test class for FileUtils
+ * 
  * @author Denys Chaykovskiy
  *
  */
@@ -40,7 +47,7 @@ public class FileUtilsTest {
 	public void testCreateSizeContent(TestInfo testInfo) {
 
 		TestUtils.printMethodName(this, testInfo);
-		TestUtils.createEmptyTestDirectories();
+		testUtils.createEmptyTestDirectories();
 
 		String testFile = testPath + "/test.txt";
 		String testContent = "Content";
@@ -56,7 +63,7 @@ public class FileUtilsTest {
 
 		assertEquals(testContent, fileUtils.getFileContent(), "Content is wrong: " + fileUtils.getFileContent());
 		
-		TestUtils.deleteTestDirectories();
+		testUtils.deleteTestDirectories();
 	}
 
 }

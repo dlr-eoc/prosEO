@@ -1,3 +1,8 @@
+/**
+ * ProductfileControllerImplTest_download.java
+ * 
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -33,9 +38,6 @@ import de.dlr.proseo.storagemgr.utils.PathConverter;
  * 
  * @author Denys Chaykovskiy
  * 
- */
-/**
- * @throws Exception
  */
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc

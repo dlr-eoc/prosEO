@@ -1,3 +1,8 @@
+/**
+ * S3StorageTest.java
+ * 
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.s3;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -6,7 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +27,11 @@ import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
 
+/**
+ * Test class for S3Storage
+ * 
+ * @author Denys Chaykovskiy
+ */
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class S3StorageTest {
@@ -50,7 +60,7 @@ public class S3StorageTest {
 	@Test
 	public void testUploadFile() throws IOException {
 
-		TestUtils.createEmptyStorageDirectories();
+		testUtils.createEmptyStorageDirectories();
 		
 		// StorageProvider storageProvider = new StorageProvider();
 

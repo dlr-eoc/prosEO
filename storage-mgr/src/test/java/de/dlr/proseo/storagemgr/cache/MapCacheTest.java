@@ -1,3 +1,8 @@
+/**
+ * MapCacheTest.java
+ * 
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.cache;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,8 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import javax.annotation.PostConstruct;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +23,11 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.TestUtils;
+import jakarta.annotation.PostConstruct;
 
 /**
+ * Test class for MapCache
+ * 
  * @author Denys Chaykovskiy
  *
  */
@@ -31,7 +37,7 @@ public class MapCacheTest {
 	@Autowired
 	private TestUtils testUtils;
 
-	String testPath; 
+	private String testPath; 
 	
 	@PostConstruct
 	private void init() {
@@ -161,7 +167,7 @@ public class MapCacheTest {
 	public void testPathes(TestInfo testInfo) throws IOException {
 
 		TestUtils.printMethodName(this, testInfo);
-		TestUtils.createEmptyTestDirectories();
+		testUtils.createEmptyTestDirectories();
 
 		File file = new File(testPath);
 
@@ -169,7 +175,7 @@ public class MapCacheTest {
 		System.out.println("Absolute Path: " + file.getAbsolutePath());
 		System.out.println("Canonical Path: " + file.getCanonicalPath());
 		
-		TestUtils.deleteTestDirectories();
+		testUtils.deleteTestDirectories();
 	}
 
 	/**

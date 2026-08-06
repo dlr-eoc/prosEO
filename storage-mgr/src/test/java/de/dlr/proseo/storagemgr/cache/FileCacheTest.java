@@ -1,3 +1,8 @@
+/**
+ * FileCacheTest.java
+ * 
+ * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.cache;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -6,7 +11,7 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.time.Instant;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -19,6 +24,9 @@ import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.utils.FileUtils;
 
 /**
+ * Test class for FileCache
+ * @see FileCacheLRUTest.java
+ * 
  * @author Denys Chaykovskiy
  *
  */
@@ -32,8 +40,8 @@ public class FileCacheTest {
 	@Autowired
 	private FileCache fileCache;
 
-	String testCachePath;
-	String cachePath;
+	private String testCachePath;
+	private String cachePath;
 
 	@PostConstruct
 	private void init() {
@@ -41,21 +49,18 @@ public class FileCacheTest {
 		cachePath = testUtils.getCachePath();
 	}
 
-	/**
-	 * 
-	 */
 	@Test
 	public void testDeleteEmptyDirectoriesToTop(TestInfo testInfo) {
 
 		TestUtils.printMethodName(this, testInfo);
-		TestUtils.createEmptyTestDirectories();
+		testUtils.createEmptyTestDirectories();
 
 		String emptyDirectories = testCachePath + "/d1/d2/d3";
 		File f = new File(emptyDirectories);
 
 		// create test directories
 
-		TestUtils.createDirectory(emptyDirectories);
+		testUtils.createDirectory(emptyDirectories);
 
 		TestUtils.printDirectoryTree("Directories after creation (expectected: /d1/d2/d3 ):", testCachePath);
 
@@ -71,7 +76,7 @@ public class FileCacheTest {
 
 		// clear
 
-		TestUtils.deleteTestDirectories();
+		testUtils.deleteTestDirectories();
 	}
 
 	/**
@@ -81,7 +86,7 @@ public class FileCacheTest {
 	public void testGetLastAccessed(TestInfo testInfo) {
 
 		TestUtils.printMethodName(this, testInfo);
-		TestUtils.createEmptyTestDirectories();
+		testUtils.createEmptyTestDirectories();
 		fileCache.setPath(testCachePath);
 
 		String testFile = "testLastAccessed.txt";
@@ -101,7 +106,7 @@ public class FileCacheTest {
 		assertTrue(f.exists() && !f.isDirectory(), "Last Accessed File not exists: " + f.getPath());
 
 		fileCache.clear();
-		TestUtils.deleteTestDirectories();
+		testUtils.deleteTestDirectories();
 	}
 
 	/**
@@ -133,7 +138,7 @@ public class FileCacheTest {
 	public void testGetPutContainsRemove(TestInfo testInfo) {
 
 		TestUtils.printMethodName(this, testInfo);
-		TestUtils.createEmptyTestDirectories();
+		testUtils.createEmptyTestDirectories();
 		fileCache.setPath(testCachePath);
 
 		String path1 = Paths.get(testCachePath + "/test/test1.txt").toString();
@@ -160,7 +165,7 @@ public class FileCacheTest {
 		MapCacheTest.printCache("Cache after init, 5 elements:", fileCache.getMapCache());
 		TestUtils.printDirectoryTree(testCachePath);
 
-		assertEquals(fileCache.containsKey(path2), "Cache Exists failed: " + path2);
+		assertTrue(fileCache.containsKey(path2), "Cache Exists failed: " + path2);
 
 		assertNotNull(fileCache.get(path3), "Cache get failed: " + path3);
 
@@ -179,7 +184,7 @@ public class FileCacheTest {
 		TestUtils.printDirectoryTree(testCachePath);
 
 		fileCache.clear();
-		TestUtils.deleteTestDirectories();
+		testUtils.deleteTestDirectories();
 	}
 
 	/**
@@ -189,7 +194,7 @@ public class FileCacheTest {
 	public void testStatus(TestInfo testInfo) {
 
 		TestUtils.printMethodName(this, testInfo);
-		TestUtils.createEmptyTestDirectories();
+		testUtils.createEmptyTestDirectories();
 		fileCache.setPath(testCachePath);
 
 		String path1 = Paths.get(testCachePath + "/" + "testStatus1.txt").toString();
@@ -282,7 +287,7 @@ public class FileCacheTest {
 		// clear
 		
 		fileCache.clear();
-		TestUtils.deleteTestDirectories();
+		testUtils.deleteTestDirectories();
 	}
 
 	/**
@@ -292,7 +297,7 @@ public class FileCacheTest {
 	public void testInterface(TestInfo testInfo) {
 
 		TestUtils.printMethodName(this, testInfo);
-		TestUtils.createEmptyTestDirectories();
+		testUtils.createEmptyTestDirectories();
 		fileCache.setPath(testCachePath);
 
 		String path1 = Paths.get(testCachePath + "/" + "test1.txt").toString();
@@ -395,6 +400,6 @@ public class FileCacheTest {
 		assertEquals(3, fileCache.size(), "Cache does not contain 3 elements after contains: " + fileCache.size());
 
 		fileCache.clear();
-		TestUtils.deleteTestDirectories();
+		testUtils.deleteTestDirectories();
 	}
 }

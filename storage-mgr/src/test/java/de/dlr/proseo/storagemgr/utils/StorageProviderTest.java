@@ -1,3 +1,8 @@
+/**
+ * StorageProviderTest.java
+ * 
+ * (C) 2024 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.utils;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -5,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.IOException;
 import java.nio.file.Paths;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -21,6 +26,11 @@ import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
 
+/**
+ * Test class for StorageProvider
+ * 
+ * @author Denys Chaykovskiy
+ */
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 public class StorageProviderTest {
 
@@ -33,9 +43,9 @@ public class StorageProviderTest {
 	@Autowired
 	private StorageProvider storageProvider;
 
-	String storagePath;
-	String cachePath;
-	String sourcePath;
+	private String storagePath;
+	private String cachePath;
+	private String sourcePath;
 
 	@PostConstruct
 	private void init() {
@@ -49,7 +59,7 @@ public class StorageProviderTest {
 	public void testPosixPosixProvider(TestInfo testInfo) throws IOException {
 
 		TestUtils.printMethodName(this, testInfo);
-		TestUtils.createEmptyStorageDirectories();
+		testUtils.createEmptyStorageDirectories();
 
 		String testFileName = "testfile.txt";
 		String testFileContent = "some text inside file";
@@ -109,7 +119,7 @@ public class StorageProviderTest {
 		StorageType realStorageType = storageProvider.getStorage().getStorageType();
 		assertEquals(storageType, realStorageType, "Expected: SM POSIX, " + " Exists: " + realStorageType);
 		
-		TestUtils.deleteStorageDirectories();
+		testUtils.deleteStorageDirectories();
 	}
 	
 	
@@ -117,7 +127,7 @@ public class StorageProviderTest {
 	public void probaTest(TestInfo testInfo) throws Exception { 
 		
 		TestUtils.printMethodName(this, testInfo);
-		TestUtils.createEmptyStorageDirectories();
+		testUtils.createEmptyStorageDirectories();
 		
 		String testFile = "probaTest.txt"; 
 		
@@ -131,6 +141,6 @@ public class StorageProviderTest {
 		storageTestUtils.printCache();
 		
 
-		TestUtils.deleteStorageDirectories();
+		testUtils.deleteStorageDirectories();
 	}
 }

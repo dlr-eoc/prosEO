@@ -1,3 +1,8 @@
+/**
+ * PosixStorageTest.java
+ * 
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.version2.posix;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,6 +25,11 @@ import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.StorageFile;
 import de.dlr.proseo.storagemgr.model.StorageType;
 
+/**
+ * Test class for PosixStorage
+ * 
+ * @author Denys Chaykovskiy
+ */
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class PosixStorageTest {
@@ -28,13 +38,16 @@ public class PosixStorageTest {
 	private BaseStorageTestUtils storageTestUtils;
 
 	@Autowired
+	private TestUtils testUtils;
+	
+	@Autowired
 	private StorageProvider storageProvider;
 
 	@Test
 	public void testPosixPosixUpload(TestInfo testInfo) throws IOException {
 
 		TestUtils.printMethodName(this, testInfo);
-		TestUtils.createEmptyStorageDirectories();
+		testUtils.createEmptyStorageDirectories();
 
 		StorageType storageType = StorageType.POSIX;
 		storageProvider.setDefaultStorage(storageType);
@@ -71,7 +84,7 @@ public class PosixStorageTest {
 	public void testPosixPosixDownload(TestInfo testInfo) throws IOException {
 
 		TestUtils.printMethodName(this, testInfo);
-		TestUtils.createEmptyStorageDirectories();
+		testUtils.createEmptyStorageDirectories();
 
 		StorageType storageType = StorageType.POSIX;
 		storageProvider.setDefaultStorage(storageType);

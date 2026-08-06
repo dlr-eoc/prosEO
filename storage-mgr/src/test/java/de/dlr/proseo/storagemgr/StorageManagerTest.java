@@ -1,3 +1,8 @@
+/**
+ * TestUtils.java
+ * 
+ * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr;
 
 import org.junit.jupiter.api.Test;

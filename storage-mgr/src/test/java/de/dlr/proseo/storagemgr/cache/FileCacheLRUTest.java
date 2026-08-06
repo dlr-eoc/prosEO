@@ -1,8 +1,11 @@
+/**
+ * FileCacheLRUTest.java
+ * 
+ * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.cache;
 
 import static org.junit.jupiter.api.Assertions.*;
-
-import javax.annotation.PostConstruct;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -13,6 +16,11 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.TestUtils;
 
+/**
+ * Test class for LRU cache handling by FileCache
+ * 
+ * @author Denys Chaykovskiy
+ */
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 public class FileCacheLRUTest {
 	
@@ -22,13 +30,6 @@ public class FileCacheLRUTest {
 	@Autowired
 	private FileCache fileCache;
 	
-	String testCachePath; 
-	
-	@PostConstruct
-	private void init() {
-		testCachePath = testUtils.getTestCachePath();
-	}
-	
 	/**
 	 * 
 	 */
@@ -36,7 +37,8 @@ public class FileCacheLRUTest {
 	public void testLRU(TestInfo testInfo) {
 			 
 		TestUtils.printMethodName(this, testInfo);
-		TestUtils.createEmptyTestDirectories();
+		testUtils.createEmptyTestDirectories();
+		String testCachePath = testUtils.getTestCachePath();
 		fileCache.setPath(testCachePath);
 
 		String path1 = testCachePath + "/test1.txt";
@@ -54,7 +56,7 @@ public class FileCacheLRUTest {
 		// TO-DO: Test LRU, cfg is null 
 		
 		fileCache.clear();
-		TestUtils.deleteTestDirectories();
+		testUtils.deleteTestDirectories();
 	}
 
 

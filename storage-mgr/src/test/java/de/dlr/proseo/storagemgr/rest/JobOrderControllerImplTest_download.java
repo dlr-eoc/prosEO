@@ -1,3 +1,8 @@
+/**
+ * JobOrderControllerImplTest_download.java
+ * 
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -28,7 +33,7 @@ import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
 
 /**
- * Mock Mvc test for Product Controller
+ * Mock Mvc test for JobOrderControllerImpl
  * 
  * @author Denys Chaykovskiy
  * 

@@ -1,3 +1,8 @@
+/**
+ * BaseStorageTestUtils.java
+ * 
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -5,9 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
-
-import javax.annotation.PostConstruct;
-
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,54 +21,33 @@ import de.dlr.proseo.storagemgr.posix.PosixStorageFile;
 import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
+ * Utility class for Storage Manager unit tests
+ * 
  * @author Denys Chaykovskiy
  *
  */
 @Component
 public class BaseStorageTestUtils {
-	
+
 	@Autowired
 	private StorageProvider storageProvider;
 	
 	@Autowired
 	private TestUtils testUtils;
 
-	protected String sourcePath;
-	protected String storagePath;
-	protected String cachePath;
-	
-	@PostConstruct
-	private void init() {
-
-		sourcePath = testUtils.getSourcePath();
-		storagePath = testUtils.getStoragePath();
-		cachePath = testUtils.getCachePath();
-
-		theTestUtils = this;
-		
-		// storageProvider = new StorageProvider();
-	}
-	
-	private static BaseStorageTestUtils theTestUtils;
-
-	public static BaseStorageTestUtils getInstance() {
-
-		return theTestUtils;
-	}
-
 	public StorageFile getSourceFile(String relativePath) {
 
-		return new PosixStorageFile(sourcePath, relativePath);
+		return new PosixStorageFile(testUtils.getSourcePath(), relativePath);
 	}
 
 	public StorageFile getStorageFile(String relativePath) {
 
-		return new PosixStorageFile(storagePath, relativePath);
+		return new PosixStorageFile(testUtils.getStoragePath(), relativePath);
 	}
 
 	public StorageFile getCacheFile(String relativePath) {
 
-		return new PosixStorageFile(cachePath, relativePath);
+		return new PosixStorageFile(testUtils.getCachePath(), relativePath);
 	}
 
 	/**
@@ -106,7 +87,7 @@ public class BaseStorageTestUtils {
 	public String createSourceFile(String relativePath, String fileContent) {
 
 		String testFileContent = fileContent;
-		String path = Paths.get(sourcePath, relativePath).toString();
+		String path = Paths.get(testUtils.getSourcePath(), relativePath).toString();
 		String sourceFilePath = new PathConverter(path).convertToSlash().getPath();
 
 		TestUtils.createFile(sourceFilePath, testFileContent);
@@ -130,7 +111,7 @@ public class BaseStorageTestUtils {
 	 */
 	public String createSourceFile(String relativePath, long fileSizeInBytes) {
 
-		String path = Paths.get(sourcePath, relativePath).toString();
+		String path = Paths.get(testUtils.getSourcePath(), relativePath).toString();
 		String sourceFilePath = new PathConverter(path).convertToSlash().getPath();
 
 		TestUtils.createLargeFile(sourceFilePath, fileSizeInBytes);
@@ -144,7 +125,7 @@ public class BaseStorageTestUtils {
 	
 	public String getAbsoluteSourcePath(String relativePath) {
 
-		String path = Paths.get(sourcePath, relativePath).toString();
+		String path = Paths.get(testUtils.getSourcePath(), relativePath).toString();
 		return new PathConverter(path).convertToSlash().getPath();
 	}
 
@@ -189,29 +170,29 @@ public class BaseStorageTestUtils {
 
 	public void printSource() {
 
-		TestUtils.printDirectoryTree(sourcePath);
+		TestUtils.printDirectoryTree(testUtils.getSourcePath());
 	}
 
 	public void printPosixStorage() {
 
-		TestUtils.printDirectoryTree(storagePath);
+		TestUtils.printDirectoryTree(testUtils.getStoragePath());
 	}
 
 	public void printCache() {
 
-		TestUtils.printDirectoryTree(cachePath);
+		TestUtils.printDirectoryTree(testUtils.getCachePath());
 	}
 
 	public String getStoragePath() {
-		return storagePath;
+		return testUtils.getStoragePath();
 	}
 
 	public String getCachePath() {
-		return cachePath;
+		return testUtils.getCachePath();
 	}
 
 	public String getSourcePath() {
-		return sourcePath;
+		return testUtils.getSourcePath();
 	}
 	
 	public static void printStorageFiles(String message, Storage storage) {

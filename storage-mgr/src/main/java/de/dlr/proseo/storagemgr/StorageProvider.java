@@ -12,7 +12,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -86,6 +86,53 @@ public class StorageProvider {
 	 */
 	public StorageProvider() {
 		// init();
+	}
+
+	/**
+	 * Initializes storage(s) from Application.yml
+	 *
+	 * @throws IOException if an error occurs during initialization
+	 */
+	@PostConstruct
+	private void init() throws IOException {
+		theStorageProvider = this;
+		StorageType storageType = StorageType.valueOf(cfg.getDefaultStorageType());
+		defaultStorage = createStorage(storageType, 
+				StorageType.POSIX.equals(storageType) ? cfg.getPosixBackendPath() : cfg.getS3DefaultBucket());
+
+		basePaths.add(defaultStorage.getBasePath());
+		basePaths.add(cfg.getDefaultSourcePath());
+		basePaths.add(cfg.getPosixCachePath());
+
+		loadDefaultPaths();
+	}
+	
+	/**
+	 * Creates a storage instance based on the specified storage type and storage
+	 * path.
+	 *
+	 * @param storageType the storage type (S3 or POSIX)
+	 * @param storagePath the base path for a POSIX storage and the bucket for an S3 storage
+	 * @return the created storage instance
+	 * @throws IOException if an error occurs during storage creation
+	 */
+	private Storage createStorage(StorageType storageType, String storagePath) throws IOException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> createStorage({}, {})", storageType.toString(), storagePath);
+
+		sourcePath = cfg.getDefaultSourcePath();
+
+		if (StorageType.POSIX.equals(storageType)) {
+			PosixConfiguration posixConfig = getPosixConfigurationFromFile();
+			posixConfig.setBasePath(storagePath);
+			return new PosixStorage(posixConfig);
+		} else if (StorageType.S3.equals(storageType)) {
+			S3Configuration s3Config = getS3ConfigurationFromFile();
+			s3Config.setBucket(storagePath);
+			return new S3Storage(s3Config);
+		}
+
+		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
 	}
 
 	/**
@@ -494,6 +541,11 @@ public class StorageProvider {
 		posixConfiguration.setMaxRequestAttempts(cfg.getMaxRequestAttempts());
 
 		posixConfiguration.setFileCheckWaitTime(cfg.getFileCheckWaitTime());
+		
+		if (logger.isTraceEnabled()) {
+			logger.trace("... POSIX config base path: {}", posixConfiguration.getBasePath());
+			logger.trace("... POSIX config source path: {}", posixConfiguration.getSourcePath());
+		}
 
 		return posixConfiguration;
 	}
@@ -544,50 +596,4 @@ public class StorageProvider {
 
 	}
 	
-	/**
-	 * Initializes storage(s) from Application.yml
-	 *
-	 * @throws IOException if an error occurs during initialization
-	 */
-	@PostConstruct
-	private void init() throws IOException {
-		theStorageProvider = this;
-		StorageType storageType = StorageType.valueOf(cfg.getDefaultStorageType());
-		defaultStorage = createStorage(storageType, 
-				StorageType.POSIX.equals(storageType) ? cfg.getPosixBackendPath() : cfg.getS3DefaultBucket());
-
-		basePaths.add(defaultStorage.getBasePath());
-		basePaths.add(cfg.getDefaultSourcePath());
-		basePaths.add(cfg.getPosixCachePath());
-
-		loadDefaultPaths();
-	}
-	
-	/**
-	 * Creates a storage instance based on the specified storage type and storage
-	 * path.
-	 *
-	 * @param storageType the storage type (S3 or POSIX)
-	 * @param storagePath the base path for a POSIX storage and the bucket for an S3 storage
-	 * @return the created storage instance
-	 * @throws IOException if an error occurs during storage creation
-	 */
-	private Storage createStorage(StorageType storageType, String storagePath) throws IOException {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> createStorage({}, {})", storageType.toString(), storagePath);
-
-		sourcePath = cfg.getDefaultSourcePath();
-
-		if (StorageType.POSIX.equals(storageType)) {
-			PosixConfiguration posixConfig = getPosixConfigurationFromFile();
-			posixConfig.setBasePath(storagePath);
-			return new PosixStorage(posixConfig);
-		} else if (StorageType.S3.equals(storageType)) {
-			S3Configuration s3Config = getS3ConfigurationFromFile();
-			s3Config.setBucket(storagePath);
-			return new S3Storage(s3Config);
-		}
-
-		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
-	}
 }

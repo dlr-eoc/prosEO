@@ -1,3 +1,8 @@
+/**
+ * TestUtils.java
+ * 
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr;
 
 import java.io.File;
@@ -9,8 +14,6 @@ import java.io.FileOutputStream;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-
-import javax.annotation.PostConstruct;
 
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +28,8 @@ import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.utils.FileUtils;
 
 /**
+ * Utility methods for unit test execution
+ * 
  * @author Denys Chaykovskiy
  *
  */
@@ -44,21 +49,8 @@ public class TestUtils {
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
-	private static TestUtils theTestUtils;
-
-	public static TestUtils getInstance() {
-
-		return theTestUtils;
-	}
-
-	@PostConstruct
-	public void init() {
-
-		theTestUtils = this;
-	}
-
 	/**
-	 * @return
+	 * @return the Storage Manager configuration
 	 */
 	public StorageManagerConfiguration getCfg() {
 
@@ -66,7 +58,7 @@ public class TestUtils {
 	}
 
 	/**
-	 * @return
+	 * @return the test storage path
 	 */
 	public String getStoragePath() {
 
@@ -74,7 +66,7 @@ public class TestUtils {
 	}
 
 	/**
-	 * @return
+	 * @return the test source path
 	 */
 	public String getSourcePath() {
 
@@ -82,7 +74,7 @@ public class TestUtils {
 	}
 
 	/**
-	 * @return
+	 * @return the test cache path
 	 */
 	public String getCachePath() {
 
@@ -90,7 +82,7 @@ public class TestUtils {
 	}
 
 	/**
-	 * @return
+	 * @return the test source directory path
 	 */
 
 	public String getTestSourcePath() {
@@ -99,7 +91,7 @@ public class TestUtils {
 	}
 
 	/**
-	 * @return
+	 * @return the test storage directory path
 	 */
 	public String getTestStoragePath() {
 
@@ -107,7 +99,7 @@ public class TestUtils {
 	}
 
 	/**
-	 * @return
+	 * @return the test cache directory path
 	 */
 	public String getTestCachePath() {
 
@@ -115,14 +107,137 @@ public class TestUtils {
 	}
 
 	/**
-	 * @param path
-	 * @return
+	 * @param path the path to add the test directory name to
+	 * @return a test directory path relative to the input path
 	 */
 	private String getTestPath(String path) {
 		return Paths.get(path, TEST_DIRECTORY).toString();
 	}
 
-	public static String getTestFolder() {
+	/**
+	 * Create a set of empty test directories
+	 */
+	public void createEmptyTestDirectories() {
+
+		deleteDirectory(getTestCachePath());
+		createDirectory(getTestCachePath());
+
+		deleteDirectory(getTestStoragePath());
+		createDirectory(getTestStoragePath());
+	}
+
+	/**
+	 * Create a set of empty storage directories
+	 */
+	public void createEmptyStorageDirectories() {
+
+		deleteDirectory(getSourcePath());
+		createDirectory(getSourcePath());
+
+		deleteDirectory(getStoragePath());
+		createDirectory(getStoragePath());
+
+		deleteDirectory(getCachePath());
+		createDirectory(getCachePath());
+	}
+
+	/**
+	 * Delete the test storage directories
+	 */
+	public void deleteStorageDirectories() {
+
+		deleteDirectory(getSourcePath());
+		deleteDirectory(getStoragePath());
+		deleteDirectory(getCachePath());
+	}
+
+	/**
+	 * Delete the test data folders
+	 */
+	public void deleteTestDirectories() {
+
+		deleteDirectory(getTestCachePath());
+		deleteDirectory(getTestStoragePath());
+	}
+
+	/**
+	 * Create a directory at the given path (restricted to the test folder)
+	 * 
+	 * @param path the requested directory path
+	 */
+	public void createDirectory(String path) {
+
+		File file = new File(path);
+
+		if (!file.getPath().contains(TEST_DIRECTORY)) {
+
+			System.out.println("Attempt to create dir not in test dir: " + file.getPath());
+			return;
+		}
+
+		if (!file.exists()) {
+
+			file.mkdirs();
+		}
+	}
+
+	/**
+	 * Delete all test files from the S3 backend storage
+	 * 
+	 * @throws IOException on any S3-related error
+	 */
+	public void deleteFilesinS3Storage() throws IOException {
+
+		deleteFilesInStorage(StorageType.S3);
+	}
+
+	/**
+	 * Delete all test files from the POSIX backend storage
+	 * 
+	 * @throws IOException on any file system-related error
+	 */
+	public void deleteFilesinPosixStorage() throws IOException {
+
+		deleteFilesInStorage(StorageType.POSIX);
+	}
+
+	/**
+	 * Delete all test files for the given storage type
+	 * 
+	 * @throws IOException on any storage-related error
+	 */
+	private void deleteFilesInStorage(StorageType storageType) throws IOException {
+
+		File file = new File(getStoragePath());
+
+		if (!file.getPath().contains(TEST_DIRECTORY)) {
+
+			System.out.println("Attempt to delete " + storageType.toString() + " storage files not from unit test: "
+					+ getStoragePath());
+			return;
+		}
+
+		Storage storage = storageProvider.getDefaultStorage(storageType);
+		List<String> relativePaths = storage.getRelativeFiles();
+
+		for (String relativePath : relativePaths) {
+			StorageFile storageFile = storage.getStorageFile(relativePath);
+			try {
+				storage.delete(storageFile);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		List<String> storageFilesAfterDelete = storage.getRelativeFiles();
+		TestUtils.printList("Storage after delete all " + storageType + " files:", storageFilesAfterDelete);
+	}
+
+	/**
+	 * 
+	 * @return the path to the newly created test folde
+	 */
+	public String getTestFolder() {
 
 		String testPath = Paths.get(TARGET_DIRECTORY, TEST_DIRECTORY).toString(); // str-mgr/target/testdata
 		testPath = new File(testPath).getAbsolutePath();
@@ -133,7 +248,7 @@ public class TestUtils {
 	}
 
 	/**
-	 * 
+	 * Formatted output of the name of the method under test
 	 */
 	public static void printMethodName(Object object, TestInfo testInfo) {
 
@@ -144,7 +259,9 @@ public class TestUtils {
 	}
 
 	/**
-	 * @param path
+	 * Create a file with the given content with the given path (restricted to the test folder)
+	 * 
+	 * @param path the requested file path (including file name)
 	 */
 	public static void createFile(String path, String content) {
 
@@ -161,13 +278,13 @@ public class TestUtils {
 	}
 
 	/**
-	 * Creates a large file
+	 * Create a large file at the given path (restricted to the test folder)
 	 * 
 	 * For example: 
 	 * long fileSizeInBytes = 100L * 1024 * 1024; // 100 MB
 	 * 
-	 * @param filePath 
-	 * @param fileSizeInBytes
+	 * @param filePath the requested file path (including file name)
+	 * @param fileSizeInBytes the requested minimum file size (will be rounded up to full 1k blocks)
 	 */
 	public static void createLargeFile(String filePath, long fileSizeInBytes) {
 		
@@ -201,15 +318,19 @@ public class TestUtils {
 	}
 
 	/**
-	 * @param path
+	 * Test whether the file at the given path exists
+	 * 
+	 * @param path file path (including file name) as String
 	 */
 	public static boolean fileExists(String path) {
-
+		
 		return new File(path).exists();
 	}
 
 	/**
-	 * @param path
+	 * Test whether the given path exists and points to a directory
+	 * 
+	 * @param path the directory path to test
 	 */
 	public static boolean directoryExists(String path) {
 
@@ -217,7 +338,9 @@ public class TestUtils {
 	}
 
 	/**
-	 * @param path
+	 * Delete the file at the given path (restricted to the test folder)
+	 * 
+	 * @param path file path (including file name) as String
 	 */
 	public static void deleteFile(String path) {
 
@@ -238,73 +361,9 @@ public class TestUtils {
 	}
 
 	/**
+	 * Delete the directory at the given path (restricted to test folder)
 	 * 
-	 */
-	public static void createEmptyTestDirectories() {
-
-		deleteDirectory(TestUtils.getInstance().getTestCachePath());
-		createDirectory(TestUtils.getInstance().getTestCachePath());
-
-		deleteDirectory(TestUtils.getInstance().getTestStoragePath());
-		createDirectory(TestUtils.getInstance().getTestStoragePath());
-	}
-
-	/**
-	 * 
-	 */
-	public static void createEmptyStorageDirectories() {
-
-		deleteDirectory(TestUtils.getInstance().getSourcePath());
-		createDirectory(TestUtils.getInstance().getSourcePath());
-
-		deleteDirectory(TestUtils.getInstance().getStoragePath());
-		createDirectory(TestUtils.getInstance().getStoragePath());
-
-		deleteDirectory(TestUtils.getInstance().getCachePath());
-		createDirectory(TestUtils.getInstance().getCachePath());
-	}
-
-	/**
-	 * 
-	 */
-	public static void deleteStorageDirectories() {
-
-		deleteDirectory(TestUtils.getInstance().getSourcePath());
-		deleteDirectory(TestUtils.getInstance().getStoragePath());
-		deleteDirectory(TestUtils.getInstance().getCachePath());
-	}
-
-	/**
-	 * 
-	 */
-	public static void deleteTestDirectories() {
-
-		deleteDirectory(TestUtils.getInstance().getTestCachePath());
-		deleteDirectory(TestUtils.getInstance().getTestStoragePath());
-	}
-
-	/**
-	 * @param path
-	 */
-	public static void createDirectory(String path) {
-
-		File file = new File(path);
-
-		if (!file.getPath().contains(TEST_DIRECTORY)) {
-
-			System.out.println("Attempt to create dir not in test dir: " + file.getPath());
-			return;
-		}
-
-		if (!file.exists()) {
-
-			file.mkdirs();
-		}
-	}
-
-	/**
-	 * @param path
-	 * @throws Exception
+	 * @param path the path of the directory to delete
 	 */
 	public static void deleteDirectory(String path) {
 
@@ -336,7 +395,9 @@ public class TestUtils {
 	}
 
 	/**
-	 * @param path
+	 * List the files in the given directory on Standard Output
+	 * 
+	 * @param path the path of the directory to list
 	 */
 	public static void printDirectory(String path) {
 
@@ -352,8 +413,10 @@ public class TestUtils {
 	}
 
 	/**
-	 * @param message
-	 * @param arrayList
+	 * Print a numbered list of strings on Standard Output
+	 * 
+	 * @param message the message to print before the list of strings
+	 * @param arrayList the list of strings to print
 	 */
 	public static void printList(String message, List<String> list) {
 
@@ -367,8 +430,10 @@ public class TestUtils {
 	}
 
 	/**
-	 * @param message
-	 * @param directoryPath
+	 * Print an indented list of nested directories with an introductory message on Standard Output
+	 * 
+	 * @param message the message to output before the directory list
+	 * @param directoryPath the root path of the directory structure to print
 	 */
 	public static void printDirectoryTree(String message, String directoryPath) {
 
@@ -379,7 +444,9 @@ public class TestUtils {
 	}
 
 	/**
-	 * @param directoryPath
+	 * Print an indented list of nested directories on Standard Output
+	 * 
+	 * @param directoryPath the root path of the directory structure to print
 	 */
 	public static void printDirectoryTree(String directoryPath) {
 
@@ -403,8 +470,10 @@ public class TestUtils {
 	}
 
 	/**
-	 * @param directoryPath
-	 * @param depth
+	 * Recursively print an indented list of nested directories on Standard Output
+	 * 
+	 * @param directoryPath the sub-path of the directory structure to print
+	 * @param depth the requested indentation of the sub-structure
 	 */
 	private static void printDirectoryTreeWithDepth(String directoryPath, String depth) {
 
@@ -436,11 +505,23 @@ public class TestUtils {
 		}
 	}
 
+	/**
+	 * Count the files in the given directory including nested directories
+	 * 
+	 * @param directory the path to the directory
+	 * @return the number of files in the directory structure
+	 */
 	public static int countFilesInDirectory(String directory) {
 
 		return countFilesInDirectory(new File(directory));
 	}
 
+	/**
+	 * Recursively count the files in the given directory
+	 * 
+	 * @param directory the path to the directory
+	 * @return the number of files in the directory structure
+	 */
 	private static int countFilesInDirectory(File directory) {
 
 		if ((null == directory) || !directory.exists()) {
@@ -460,6 +541,12 @@ public class TestUtils {
 		return count;
 	}
 
+	/**
+	 * Count the nested directories in the given directory
+	 * 
+	 * @param directory the path to the directory
+	 * @return the number of directories in the directory structure (excluding the top-level directory)
+	 */
 	public static int countDirectoriesInDirectory(String directory) {
 
 		return countDirectoriesInDirectory(new File(directory));
@@ -482,6 +569,12 @@ public class TestUtils {
 		return count;
 	}
 
+	/**
+	 * Convert the given object to a JSON structure (re-throwing any exceptions as RuntimeException)
+	 * 
+	 * @param obj the object to convert
+	 * @return a JSON string representing the object
+	 */
 	public static String asJsonString(final Object obj) {
 		try {
 			return new ObjectMapper().writeValueAsString(obj);
@@ -491,51 +584,11 @@ public class TestUtils {
 	}
 
 	/**
-	 * @throws IOException
+	 * Print the result of an HTTP request on Standard Output
+	 * 
+	 * @param requestString the request that was sent
+	 * @param mvcResult the result that was received
 	 */
-	public void deleteFilesinS3Storage() throws IOException {
-
-		deleteFilesInStorage(StorageType.S3);
-	}
-
-	/**
-	 * @throws IOException
-	 */
-	public void deleteFilesinPosixStorage() throws IOException {
-
-		deleteFilesInStorage(StorageType.POSIX);
-	}
-
-	/**
-	 * @throws IOException
-	 */
-	private void deleteFilesInStorage(StorageType storageType) throws IOException {
-
-		File file = new File(getStoragePath());
-
-		if (!file.getPath().contains(TEST_DIRECTORY)) {
-
-			System.out.println("Attempt to delete " + storageType.toString() + " storage files not from unit test: "
-					+ getStoragePath());
-			return;
-		}
-
-		Storage storage = storageProvider.getDefaultStorage(storageType);
-		List<String> relativePaths = storage.getRelativeFiles();
-
-		for (String relativePath : relativePaths) {
-			StorageFile storageFile = storage.getStorageFile(relativePath);
-			try {
-				storage.delete(storageFile);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		List<String> storageFilesAfterDelete = storage.getRelativeFiles();
-		TestUtils.printList("Storage after delete all " + storageType + " files:", storageFilesAfterDelete);
-	}
-
 	public static void printMvcResult(String requestString, MvcResult mvcResult) {
 
 		System.out.println();

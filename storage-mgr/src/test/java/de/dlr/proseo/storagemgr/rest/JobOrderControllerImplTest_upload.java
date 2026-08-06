@@ -1,3 +1,8 @@
+/**
+ * JobOrderControllerImplTest_upload.java
+ * 
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.rest;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,7 +33,7 @@ import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
 
 /**
- * Job Order Upload test for Product Controller
+ * Job Order Upload test for JobOrderControllerImpl
  * 
  * @author Denys Chaykovskiy
  * 

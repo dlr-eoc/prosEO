@@ -3,7 +3,7 @@ package de.dlr.proseo.storagemgr;
 import java.io.File;
 import java.util.Arrays;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 /**
  * StorageManagerConfiguration.java

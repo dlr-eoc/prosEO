@@ -1,3 +1,8 @@
+/**
+ * ProductControllerImplTest_getAll.java
+ * 
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -98,7 +103,6 @@ public class ProductControllerImplTest_getAll {
 	 * 
 	 * s3://<bucket>/<relativePath> // no storage path in s3
 	 * /<storagePath>/<relativePath> // no bucket in posix currently
-	 * @param testInfo TODO
 	 * 
 	 */
 	private void getProductFiles(StorageType storageType, TestInfo testInfo) throws Exception {

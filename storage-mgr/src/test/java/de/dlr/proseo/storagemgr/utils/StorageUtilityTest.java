@@ -1,8 +1,11 @@
+/**
+ * StorageUtilityTest.java
+ * 
+ * (C) 2024 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.utils;
 
 import java.io.IOException;
-
-import javax.annotation.PostConstruct;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -11,37 +14,27 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 
-import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageProvider;
 import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
+import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.Storage;
 import de.dlr.proseo.storagemgr.model.StorageType;
 
+/**
+ * Test class for Storage
+ * 
+ * @author Denys Chaykovskiy
+ */
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class StorageUtilityTest {
-
-	@Autowired
-	private TestUtils testUtils;
 
 	@Autowired
 	private BaseStorageTestUtils storageTestUtils;
 	
 	@Autowired
 	private StorageProvider storageProvider;
-
-	String testCachePath;
-	String cachePath;
-	String testSourcePath;
-
-	@PostConstruct
-	private void init() {
-		testCachePath = testUtils.getTestCachePath();
-		cachePath = testUtils.getCachePath();
-
-		testSourcePath = testUtils.getTestSourcePath();
-	}
 
 	@Test
 	public void testUtility(TestInfo testInfo) throws IOException {

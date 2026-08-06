@@ -1,3 +1,8 @@
+/**
+ * PathConverterTest.java
+ * 
+ * (C) 2024 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.utils;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -7,6 +12,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+/**
+ * Test class for PathConverter
+ * 
+ * @author Denys Chaykovskiy
+ */
 public class PathConverterTest {
 
 	@Test

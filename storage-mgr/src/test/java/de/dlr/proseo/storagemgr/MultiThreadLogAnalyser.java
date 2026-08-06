@@ -1,3 +1,8 @@
+/**
+ * MultiThreadLogAnalyser.java
+ * 
+ * (C) 2024 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr;
 
 import java.util.List;
@@ -6,6 +11,8 @@ import java.io.IOException;
 
 /**
  * MultiThreadLogAnalyser Class
+ * 
+ * Utility class for log analysis by unit test classes
  * 
  * There are 2 for common thread roles during synchronization for a common
  * resource 1) blocking thread - blocks a free common resource, later releases

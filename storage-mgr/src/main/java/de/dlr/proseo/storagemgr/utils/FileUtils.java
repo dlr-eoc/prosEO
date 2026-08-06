@@ -57,6 +57,8 @@ public class FileUtils {
 	 * @param path Path to file
 	 */
 	public FileUtils(String path) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> FileUtils({})", path);
 
 		this.path = path;
 	}

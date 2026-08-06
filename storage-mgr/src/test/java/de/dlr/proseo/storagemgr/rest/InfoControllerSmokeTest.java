@@ -1,3 +1,8 @@
+/**
+ * InfoControllerSmokeTest.java
+ * 
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.rest;
 
 import org.junit.jupiter.api.Test;import org.springframework.beans.factory.annotation.Autowired;

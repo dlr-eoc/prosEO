@@ -1,9 +1,14 @@
+/**
+ * LogRecord.java
+ * 
+ * (C) 2024 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr;
 
 import java.time.Instant;
 
 /**
- * LogRecord Class
+ * LogRecord Class representing a single log file entry
  * 
  * Examples: - Intercepted: 2024-02-22 20:23:08.000 TRACE 14224 --- [ Thread-6]
  * d.dlr.proseo.storagemgr.utils.FileUtils : >>>

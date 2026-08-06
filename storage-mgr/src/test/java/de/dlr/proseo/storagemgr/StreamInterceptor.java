@@ -1,3 +1,8 @@
+/**
+ * StreamInterceptor.java
+ * 
+ * (C) 2024 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr;
 
 import java.io.ByteArrayOutputStream;

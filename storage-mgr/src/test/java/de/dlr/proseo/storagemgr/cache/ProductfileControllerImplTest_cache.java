@@ -1,3 +1,8 @@
+/**
+ * ProductfileControllerImplTest_cache.java
+ * 
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.cache;
 
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -9,7 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -32,6 +37,11 @@ import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.utils.FileUtils;
 import de.dlr.proseo.storagemgr.utils.PathConverter;
 
+/**
+ * Test class for cache-related methods of ProductfileControllerImpl
+ * 
+ * @author Denys Chaykovskiy
+ */
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class ProductfileControllerImplTest_cache {
@@ -113,8 +123,8 @@ public class ProductfileControllerImplTest_cache {
 	 */
 	private void testCache(TestInfo testInfo) throws Exception {
 
-		TestUtils.getInstance().deleteFilesinS3Storage();
-		TestUtils.getInstance().deleteFilesinPosixStorage();
+		testUtils.deleteFilesinS3Storage();
+		testUtils.deleteFilesinPosixStorage();
 		
 		TestUtils.printMethodName(this, testInfo);
 		

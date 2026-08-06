@@ -1,3 +1,8 @@
+/**
+ * InfoControllerTest.java
+ * 
+ * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.storagemgr.rest;
 
 import static org.hamcrest.Matchers.containsString;
