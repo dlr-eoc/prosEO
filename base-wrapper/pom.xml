@@ -55,6 +55,11 @@
       <artifactId>proseo-interfaces</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

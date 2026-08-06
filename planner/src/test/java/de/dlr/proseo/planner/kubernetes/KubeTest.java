@@ -2,13 +2,10 @@ package de.dlr.proseo.planner.kubernetes;
 
 import java.nio.file.FileSystems;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -21,36 +18,21 @@ import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.ProductionPlanner;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+
 @SpringBootTest(classes = ProductionPlanner.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 //@DirtiesContext
 @WithMockUser(username = "PTM-proseo", roles = { "ORDER_APPROVER", "ORDER_MGR" })
 @Transactional
-@AutoConfigureTestEntityManager
 @Sql("/ptm.sql")
 public class KubeTest {
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(KubeTest.class);
 
-//    @Autowired
-//    private JobStepRepository jobSteps;
-//
-//    @Autowired
-//    private ProductionPlanner productionPlanner;
-
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 

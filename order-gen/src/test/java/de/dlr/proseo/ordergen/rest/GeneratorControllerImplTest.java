@@ -5,18 +5,13 @@
  */
 package de.dlr.proseo.ordergen.rest;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +21,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.DataDrivenOrderTrigger;
@@ -43,7 +37,6 @@ import de.dlr.proseo.model.rest.model.RestOrder;
  * 
  * @author Dr. Thomas Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = OrderGenerator.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @WithMockUser(username = "UTM-testuser", password = "password")
 @Transactional
@@ -64,34 +57,6 @@ public class GeneratorControllerImplTest {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(GeneratorControllerImplTest.class);
 	
-	/**
-	 * @throws java.lang.Exception if an error occurs
-	 */
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	/**
-	 * @throws java.lang.Exception if an error occurs
-	 */
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
-	/**
-	 * @throws java.lang.Exception if an error occurs
-	 */
-	@Before
-	public void setUp() throws Exception {
-	}
-
-	/**
-	 * @throws java.lang.Exception if an error occurs
-	 */
-	@After
-	public void tearDown() throws Exception {
-	}
-
 	/**
 	 * Test the additional repository methods
 	 */
@@ -135,7 +100,7 @@ public class GeneratorControllerImplTest {
 
 		ResponseEntity<List<RestOrder>> responseEntity = generatorController.generateForProduct(product1.getId(), testHeader);
 		
-		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, responseEntity.getStatusCode());
-		assertEquals("Unexpected number of response products: ", 1, responseEntity.getBody().size());
+		assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode(), "Unexpected HTTP status code: ");
+		assertEquals(1, responseEntity.getBody().size(), "Unexpected number of response products: ");
 	}	
 }

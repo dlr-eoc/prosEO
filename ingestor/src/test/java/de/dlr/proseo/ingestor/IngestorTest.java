@@ -9,12 +9,15 @@ package de.dlr.proseo.ingestor;
 import java.util.Arrays;
 import java.util.Map;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.*;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -23,22 +26,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Unit test cases for prosEO Ingestor
  *
  * @author Dr. Thomas Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(classes = IngestorApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
+
+@AutoConfigureTestRestTemplate
 @DirtiesContext
 public class IngestorTest {
 
@@ -63,9 +61,9 @@ public class IngestorTest {
 		@SuppressWarnings("rawtypes")
 		ResponseEntity<Map> entity = new TestRestTemplate().getForEntity(
 				"http://localhost:" + this.port, Map.class);
-		assertEquals(HttpStatus.UNAUTHORIZED, entity.getStatusCode());
-		assertFalse("Wrong headers: " + entity.getHeaders(), entity.getHeaders()
-				.containsKey("Set-Cookie"));
+		assertEquals(entity.getStatusCode(), HttpStatus.UNAUTHORIZED);
+		assertFalse(entity.getHeaders()
+				.containsHeader("Set-Cookie"), "Wrong headers: " + entity.getHeaders());
 
 		logger.trace("<<< testHomeIsSecure()");
 	}
@@ -77,16 +75,16 @@ public class IngestorTest {
 		@SuppressWarnings("rawtypes")
 		ResponseEntity<Map> entity = new TestRestTemplate().getForEntity(
 				"http://localhost:" + this.port + "/metrics", Map.class);
-		assertEquals(HttpStatus.UNAUTHORIZED, entity.getStatusCode());
+		assertEquals(entity.getStatusCode(), HttpStatus.UNAUTHORIZED);
 		entity = new TestRestTemplate().getForEntity("http://localhost:" + this.port
 				+ "/metrics/", Map.class);
-		assertEquals(HttpStatus.UNAUTHORIZED, entity.getStatusCode());
+		assertEquals(entity.getStatusCode(), HttpStatus.UNAUTHORIZED);
 		entity = new TestRestTemplate().getForEntity("http://localhost:" + this.port
 				+ "/metrics/foo", Map.class);
-		assertEquals(HttpStatus.UNAUTHORIZED, entity.getStatusCode());
+		assertEquals(entity.getStatusCode(), HttpStatus.UNAUTHORIZED);
 		entity = new TestRestTemplate().getForEntity("http://localhost:" + this.port
 				+ "/metrics.json", Map.class);
-		assertEquals(HttpStatus.UNAUTHORIZED, entity.getStatusCode());
+		assertEquals(entity.getStatusCode(), HttpStatus.UNAUTHORIZED);
 
 		logger.trace("<<< testMetricsIsSecure()");
 	}
@@ -97,9 +95,8 @@ public class IngestorTest {
 
 		ResponseEntity<String> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity("http://localhost:" + this.port + "/actuator/info", String.class);
-		assertEquals(HttpStatus.OK, entity.getStatusCode());
-		assertTrue("Wrong body: " + entity.getBody(),
-				entity.getBody().equals("{}"));
+		assertEquals(entity.getStatusCode(), HttpStatus.OK);
+		assertTrue(	entity.getBody().equals("{}"), "Wrong body: " + entity.getBody());
 
 		logger.trace("<<< testInfo()");
 	}
@@ -110,9 +107,8 @@ public class IngestorTest {
 
 		ResponseEntity<String> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity("http://localhost:" + this.port + "/actuator/health", String.class);
-		assertEquals(HttpStatus.OK, entity.getStatusCode());
-		assertTrue("Wrong body: " + entity.getBody(),
-				entity.getBody().contains("\"status\":\"UP\""));
+		assertEquals(entity.getStatusCode(), HttpStatus.OK);
+		assertTrue(	entity.getBody().contains("\"status\":\"UP\""), "Wrong body: " + entity.getBody());
 
 		logger.trace("<<< testHealth()");
 	}
@@ -123,10 +119,10 @@ public class IngestorTest {
 
 		ResponseEntity<String> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity("http://localhost:" + this.port + "/foo", String.class);
-		assertEquals(HttpStatus.NOT_FOUND, entity.getStatusCode());
+		assertEquals(entity.getStatusCode(), HttpStatus.NOT_FOUND);
 		String body = entity.getBody();
 		assertNotNull(body);
-		assertTrue("Wrong body: " + body, body.contains("Not Found"));
+		assertTrue(body.contains("Not Found"), "Wrong body: " + body);
 
 		logger.trace("<<< testErrorPage()");
 	}
@@ -141,11 +137,10 @@ public class IngestorTest {
 		ResponseEntity<String> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.exchange("http://localhost:" + this.port + "/foo", HttpMethod.GET,
 						request, String.class);
-		assertEquals(HttpStatus.NOT_FOUND, entity.getStatusCode());
+		assertEquals(entity.getStatusCode(), HttpStatus.NOT_FOUND);
 		String body = entity.getBody();
 		assertNotNull("Body was null", body);
-		assertTrue("Wrong body: " + body,
-				body.contains("This application has no explicit mapping for /error"));
+		assertTrue(body.contains("This application has no explicit mapping for /error"), "Wrong body: " + body);
 
 		logger.trace("<<< testHtmlErrorPage()");
 	}

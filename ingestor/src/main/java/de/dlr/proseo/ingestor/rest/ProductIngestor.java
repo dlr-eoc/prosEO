@@ -321,8 +321,11 @@ public class ProductIngestor {
 		List<String> filePaths = new ArrayList<>();
 		filePaths.add(
 				ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath() + "/" + ingestorProduct.getProductFileName());
-		for (String auxFile : ingestorProduct.getAuxFileNames()) {
-			filePaths.add(ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath() + "/" + auxFile);
+
+		if (ingestorProduct.getAuxFileNames() != null) {
+			for (String auxFile : ingestorProduct.getAuxFileNames()) {
+				filePaths.add(ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath() + "/" + auxFile);
+			}
 		}
 		postData.put("sourceFilePaths", filePaths);
 		postData.put("sourceStorageType", ingestorProduct.getSourceStorageType());
@@ -396,8 +399,10 @@ public class ProductIngestor {
 			newProductFile.setFilePath(ingestorProduct.getProductFile().get(0).getFilePath());
 
 			newProductFile.setProductFileName(ingestorProduct.getProductFileName());
-			for (String auxFile : ingestorProduct.getAuxFileNames()) {
-				newProductFile.getAuxFileNames().add(auxFile);
+			if (ingestorProduct.getAuxFileNames() != null) {
+				for (String auxFile : ingestorProduct.getAuxFileNames()) {
+					newProductFile.getAuxFileNames().add(auxFile);
+				}
 			}
 			try {
 				newProductFile.setStorageType(StorageType.valueOf(facility.getDefaultStorageType().toString()));

@@ -6,7 +6,11 @@
  */
 package de.dlr.proseo.basewrap;
 
-import static org.junit.Assert.assertEquals;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.api.BeforeAll;
 
 import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
@@ -16,8 +20,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +84,7 @@ public class BaseWrapperTest {
 	 *
 	 * @throws java.lang.Exception if any of the input fails is missing
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 		if (!Files.isReadable(FileSystems.getDefault().getPath(JOB_ORDER_FILE_NAME))) {
 			throw new FileNotFoundException(JOB_ORDER_FILE_NAME);
@@ -118,7 +120,7 @@ public class BaseWrapperTest {
 
 		//		TEST SKIPPED, DOES NOT WORK
 //		int rc = (new SampleWrapper()).run();
-//		assertEquals("Return code should be 0", 0L, (long) rc);
+//		assertEquals(0L, (long) rc, "Return code should be 0");
 
 		/** JOF-path is wrong */
 		envmap.clear();
@@ -139,7 +141,7 @@ public class BaseWrapperTest {
 		}
 		logger.info(ANSI_YELLOW + "**TEST: JOF-path is wrong " + envmap + ANSI_RESET);
 		int rc = (new BaseWrapper()).run();
-		assertEquals("Return code should be 255", 255L, rc);
+		assertEquals(255L, rc, "Return code should be 255");
 
 		/** FS_TYPE is wrong */
 		envmap.clear();
@@ -162,7 +164,7 @@ public class BaseWrapperTest {
 		
 		logger.info(ANSI_YELLOW + "**TEST: FS_TYPE is wrong " + envmap + ANSI_RESET);
 		rc = (new BaseWrapper()).run();
-		assertEquals("Return code should be 255", 255L, rc);
+		assertEquals(255L, rc, "Return code should be 255");
 
 		/** FS_TYPE is S3, but JOBORDER_FILE refers to non s3 URI */
 		envmap.clear();
@@ -184,7 +186,7 @@ public class BaseWrapperTest {
 		}
 		logger.info(ANSI_YELLOW + "**TEST: FS_TYPE is S3, but JOBORDER_FILE refers to non s3 URI " + envmap + ANSI_RESET);
 		rc = (new BaseWrapper()).run();
-		assertEquals("Return code should be 255", 255L, rc);
+		assertEquals(255L, rc, "Return code should be 255");
 
 		/** working run using S3-JOF */
 		envmap.clear();
@@ -206,7 +208,7 @@ public class BaseWrapperTest {
 		logger.info(ANSI_YELLOW + "**TEST: working run using S3-JOF " + envmap + ANSI_RESET);
 //		TEST SKIPPED, DOES NOT WORK
 //		rc = (new SampleWrapper()).run();
-//		assertEquals("Return code should be 0", 0L, (long) rc);
+//		assertEquals(0L, (long) rc, "Return code should be 0");
 
 		/** S3-JOF but using wrong s3-credentials */
 		envmap.clear();
@@ -227,7 +229,7 @@ public class BaseWrapperTest {
 		}
 		logger.info(ANSI_YELLOW + "**TEST: S3-JOF but using wrong s3-credentials " + envmap + ANSI_RESET);
 		rc = (new BaseWrapper()).run();
-		assertEquals("Return code should be 255", 255L, rc);
+		assertEquals(255L, rc, "Return code should be 255");
 
 		/** S3-JOF but using wrong s3-URI */
 		envmap.clear();
@@ -249,6 +251,6 @@ public class BaseWrapperTest {
 		logger.info(ANSI_YELLOW + "**TEST: S3-JOF but using wrong s3-URI " + envmap + ANSI_RESET);
 
 		rc = (new BaseWrapper()).run();
-		assertEquals("Return code should be 255", 255L, rc);
+		assertEquals(255L, rc, "Return code should be 255");
 	}
 }

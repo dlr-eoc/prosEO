@@ -5,7 +5,6 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
 import java.text.ParseException;
@@ -15,12 +14,16 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -30,7 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nimbusds.jose.JOSEException;
@@ -61,7 +63,6 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  *
  * @author Dr. Thomas Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = IngestorApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
 @Transactional
@@ -219,21 +220,21 @@ public class ProductManagerTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		MockitoAnnotations.openMocks(this).close();
 
@@ -252,7 +253,7 @@ public class ProductManagerTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -331,7 +332,7 @@ public class ProductManagerTest {
 			fail("Exception testing 'downloadProductById'");
 		}
 
-		assertTrue("'token' query parameter not found", redirectLink.contains(STORAGE_MGER_LINK_TOKEN));
+		assertTrue(redirectLink.contains(STORAGE_MGER_LINK_TOKEN), "'token' query parameter not found");
 		String[] redirectLinkParts = redirectLink.split(STORAGE_MGER_LINK_TOKEN);
 		redirectLink = redirectLinkParts[0];
 
@@ -348,7 +349,7 @@ public class ProductManagerTest {
 			e.printStackTrace();
 			fail("Exception in 'String.format'");
 		}
-		assertEquals("Incorrect download link", STORAGE_MGR_EXPECTED_LINK, redirectLink);
+		assertEquals(redirectLink, "Incorrect download link", STORAGE_MGR_EXPECTED_LINK);
 
 		JWTClaimsSet claimsSet = extractJwtClaimsSet(redirectLinkParts[1]);
 
