@@ -11,6 +11,8 @@ spring:
         url: jdbc:postgresql://proseo-db:5432/proseo
         username: <db_user>
         password: <db_pwd>
+management:
+    endpoints.web.exposure.include: "health,info"
 logging:
     file:
         name: /proseo/log/proseo-ingestor.log

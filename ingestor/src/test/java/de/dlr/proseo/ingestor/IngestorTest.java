@@ -18,6 +18,7 @@ import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -36,6 +37,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
  * @author Dr. Thomas Bassler
  */
 
+@SpringBootTest(classes = IngestorApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @DirtiesContext
 public class IngestorTest {
@@ -51,7 +53,10 @@ public class IngestorTest {
 	@LocalServerPort
 	private int port;
 
-	/** A logger for this class */
+    @Autowired
+    private TestRestTemplate testRestTemplate;
+    
+    /** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(IngestorTest.class);
 	
 	@Test
@@ -59,7 +64,7 @@ public class IngestorTest {
 		logger.trace(">>> testHomeIsSecure()");
 
 		@SuppressWarnings("rawtypes")
-		ResponseEntity<Map> entity = new TestRestTemplate().getForEntity(
+		ResponseEntity<Map> entity = testRestTemplate.getForEntity(
 				"http://localhost:" + this.port, Map.class);
 		assertEquals(entity.getStatusCode(), HttpStatus.UNAUTHORIZED);
 		assertFalse(entity.getHeaders()
@@ -73,16 +78,16 @@ public class IngestorTest {
 		logger.trace(">>> testMetricsIsSecure()");
 
 		@SuppressWarnings("rawtypes")
-		ResponseEntity<Map> entity = new TestRestTemplate().getForEntity(
+		ResponseEntity<Map> entity = testRestTemplate.getForEntity(
 				"http://localhost:" + this.port + "/metrics", Map.class);
 		assertEquals(entity.getStatusCode(), HttpStatus.UNAUTHORIZED);
-		entity = new TestRestTemplate().getForEntity("http://localhost:" + this.port
+		entity = testRestTemplate.getForEntity("http://localhost:" + this.port
 				+ "/metrics/", Map.class);
 		assertEquals(entity.getStatusCode(), HttpStatus.UNAUTHORIZED);
-		entity = new TestRestTemplate().getForEntity("http://localhost:" + this.port
+		entity = testRestTemplate.getForEntity("http://localhost:" + this.port
 				+ "/metrics/foo", Map.class);
 		assertEquals(entity.getStatusCode(), HttpStatus.UNAUTHORIZED);
-		entity = new TestRestTemplate().getForEntity("http://localhost:" + this.port
+		entity = testRestTemplate.getForEntity("http://localhost:" + this.port
 				+ "/metrics.json", Map.class);
 		assertEquals(entity.getStatusCode(), HttpStatus.UNAUTHORIZED);
 

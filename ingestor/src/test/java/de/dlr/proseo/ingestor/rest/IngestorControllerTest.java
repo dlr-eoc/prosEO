@@ -300,15 +300,15 @@ public class IngestorControllerTest {
 		// Check result attributes
 		RestProduct responseProduct = postEntity.getBody().get(0);
 		assertNotEquals(0L, responseProduct.getId().longValue(), "Unexpected database ID: ");
-		assertEquals("Unexpected product class: ", ingestorProduct.getProductClass(),
-				responseProduct.getProductClass());
+		assertEquals(ingestorProduct.getProductClass(),
+				responseProduct.getProductClass(), "Unexpected product class: ");
 		assertEquals(ingestorProduct.getMode(), responseProduct.getMode(), "Unexpected processing mode: ");
-		assertEquals("Unexpected sensing start time: ", ingestorProduct.getSensingStartTime(),
-				responseProduct.getSensingStartTime());
-		assertEquals("Unexpected sensing stop time: ", ingestorProduct.getSensingStopTime(),
-				responseProduct.getSensingStopTime());
-		assertEquals("Unexpected generation time: ", ingestorProduct.getGenerationTime(),
-				responseProduct.getGenerationTime());
+		assertEquals(ingestorProduct.getSensingStartTime(),
+				responseProduct.getSensingStartTime(), "Unexpected sensing start time: ");
+		assertEquals(ingestorProduct.getSensingStopTime(),
+				responseProduct.getSensingStopTime(), "Unexpected sensing stop time: ");
+		assertEquals(ingestorProduct.getGenerationTime(),
+				responseProduct.getGenerationTime(), "Unexpected generation time: ");
 
 		de.dlr.proseo.ingestor.rest.model.Orbit responseOrbit = responseProduct.getOrbit();
 		assertNotNull(responseOrbit, "Orbit missing");
