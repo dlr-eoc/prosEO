@@ -5,21 +5,22 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+
+import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -50,11 +51,11 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  * @author Dr. Thomas Bassler
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+
 @SpringBootTest(classes = IngestorApplication.class)
 @WithMockUser(username = "UTM-testuser", password = "password")
 @Transactional
-@AutoConfigureTestEntityManager
+
 public class ProductControllerTest {
 
 	/* Test products */
@@ -96,7 +97,7 @@ public class ProductControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 		wireMockServer = new WireMockServer(WIREMOCK_PORT);
 		wireMockServer.start();
@@ -110,7 +111,7 @@ public class ProductControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 		wireMockServer.stop();
 	}
@@ -120,7 +121,7 @@ public class ProductControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 
 		Mission mission = new Mission();
@@ -166,7 +167,7 @@ public class ProductControllerTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		RepositoryService.getProductRepository().deleteAll();
 		RepositoryService.getProductClassRepository().deleteAll();
@@ -196,9 +197,8 @@ public class ProductControllerTest {
 		ResponseEntity<?> response = pci.deleteProductById(testProduct.getId(), testHeader);
 
 		// Check that the deletion was successful
-		assertEquals("Unexpected HTTP status code: ", HttpStatus.NO_CONTENT, response.getStatusCode());
-		assertTrue("Product was not deleted.",
-				RepositoryService.getProductRepository().findById(Long.valueOf(testProductData[0][0])).isEmpty());
+		assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode(), "Unexpected HTTP status code: ");
+		assertTrue(RepositoryService.getProductRepository().findById(Long.valueOf(testProductData[0][0])).isEmpty(), "Product was not deleted.");
 	}
 
 	/**
@@ -220,8 +220,8 @@ public class ProductControllerTest {
 		ResponseEntity<List<RestProduct>> response = pci.getProducts(null, null, null, null, null, null, null, null,
 				null, null, null, false, null, null, testHeader);
 
-		assertEquals("Unexpected HTTP status code: ", HttpStatus.OK, response.getStatusCode());
-		assertEquals("Unexpected number of results: ", testProductData.length, response.getBody().size());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Unexpected HTTP status code: ");
+		assertEquals(testProductData.length, response.getBody().size(), "Unexpected number of results: ");
 	}
 
 	/**
@@ -249,7 +249,7 @@ public class ProductControllerTest {
 		ResponseEntity<RestProduct> response = pci.createProduct(testProduct, testHeader);
 
 		// Check that the creation was successful
-		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, response.getStatusCode());
+		assertEquals(HttpStatus.CREATED, response.getStatusCode(), "Unexpected HTTP status code: ");
 	}
 
 	/**
@@ -274,8 +274,8 @@ public class ProductControllerTest {
 		ResponseEntity<RestProduct> response = pci.getProductById(testProduct.getId(), testHeader);
 
 		// Check that the product was retrieved correctly
-		assertEquals("Unexpected HTTP status code: ", HttpStatus.OK, response.getStatusCode());
-		assertEquals("Wrong product UUID retrieved: ", testProduct.getUuid().toString(), response.getBody().getUuid());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Unexpected HTTP status code: ");
+		assertEquals(testProduct.getUuid().toString(), response.getBody().getUuid(), "Wrong product UUID retrieved: ");
 	}
 
 	/**
@@ -305,8 +305,8 @@ public class ProductControllerTest {
 		ResponseEntity<RestProduct> response = pci.modifyProduct(testProduct.getId(), modifiedProduct, testHeader);
 
 		// Check that the modification was successful
-		assertEquals("Unexpected HTTP status code: ", HttpStatus.OK, response.getStatusCode());
-		assertEquals("Modification unsuccessful: ", modifiedProduct.getMode(), response.getBody().getMode());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Unexpected HTTP status code: ");
+		assertEquals(modifiedProduct.getMode(), response.getBody().getMode(), "Modification unsuccessful: ");
 	}
 
 }

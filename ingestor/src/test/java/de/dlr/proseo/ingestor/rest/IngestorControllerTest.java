@@ -5,9 +5,10 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.time.Instant;
@@ -17,20 +18,16 @@ import java.util.UUID;
 
 import javax.validation.Valid;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -63,7 +60,6 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  * @author Dr. Thomas Bassler
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = IngestorApplication.class)
 @WithMockUser(username = "UTM-testuser", password = "password")
 @Transactional
@@ -119,7 +115,6 @@ public class IngestorControllerTest {
 
 	/** Mocking the storage manager and planner */
 	private static int WIREMOCK_PORT = 8080;
-	@ClassRule
 	public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
 	//private static WireMockServer wireMockServer;
 
@@ -130,7 +125,7 @@ public class IngestorControllerTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 		wireMockRule.start();
 
@@ -150,7 +145,7 @@ public class IngestorControllerTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		// Make sure processing facility and product class exist
 		Mission mission = new Mission();
@@ -232,7 +227,7 @@ public class IngestorControllerTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		RepositoryService.getProductFileRepository().deleteAll();
 		RepositoryService.getProductRepository().deleteAll();
@@ -245,7 +240,7 @@ public class IngestorControllerTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 		wireMockRule.stop();
 	}
@@ -299,15 +294,15 @@ public class IngestorControllerTest {
 
 		ResponseEntity<List<RestProduct>> postEntity = ici.ingestProducts(TEST_NAME, false, ingestorProducts,
 				testHeader);
-		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, postEntity.getStatusCode());
-		assertEquals("Unexpected number of response products: ", 1, postEntity.getBody().size());
+		assertEquals(HttpStatus.CREATED, postEntity.getStatusCode(), "Unexpected HTTP status code: ");
+		assertEquals(1, postEntity.getBody().size(), "Unexpected number of response products: ");
 
 		// Check result attributes
 		RestProduct responseProduct = postEntity.getBody().get(0);
-		assertNotEquals("Unexpected database ID: ", 0L, responseProduct.getId().longValue());
+		assertNotEquals(0L, responseProduct.getId().longValue(), "Unexpected database ID: ");
 		assertEquals("Unexpected product class: ", ingestorProduct.getProductClass(),
 				responseProduct.getProductClass());
-		assertEquals("Unexpected processing mode: ", ingestorProduct.getMode(), responseProduct.getMode());
+		assertEquals(ingestorProduct.getMode(), responseProduct.getMode(), "Unexpected processing mode: ");
 		assertEquals("Unexpected sensing start time: ", ingestorProduct.getSensingStartTime(),
 				responseProduct.getSensingStartTime());
 		assertEquals("Unexpected sensing stop time: ", ingestorProduct.getSensingStopTime(),
@@ -316,18 +311,17 @@ public class IngestorControllerTest {
 				responseProduct.getGenerationTime());
 
 		de.dlr.proseo.ingestor.rest.model.Orbit responseOrbit = responseProduct.getOrbit();
-		assertNotNull("Orbit missing", responseOrbit);
-		assertEquals("Unexpected orbit number: ", ingestorProduct.getOrbit().getOrbitNumber().intValue(),
-				responseOrbit.getOrbitNumber().intValue());
+		assertNotNull(responseOrbit, "Orbit missing");
+		assertEquals(ingestorProduct.getOrbit().getOrbitNumber().intValue(), responseOrbit.getOrbitNumber().intValue(), "Unexpected orbit number: ");
 
 		@Valid
 		List<RestProductFile> responseProductFiles = responseProduct.getProductFile();
-		assertNotNull("Product files missing", responseProductFiles);
-		assertEquals("Unexpected number of product files: ", 1, responseProductFiles.size());
+		assertNotNull(responseProductFiles, "Product files missing");
+		assertEquals(1, responseProductFiles.size(), "Unexpected number of product files: ");
 		RestProductFile responseProductFile = responseProductFiles.get(0);
 		assertEquals("Unexpected product file name: ", ingestorProduct.getProductFileName(),
 				responseProductFile.getProductFileName());
-		assertEquals("Unexpected number of aux files: ", 0, responseProductFile.getAuxFileNames().size());
+		assertEquals(0, responseProductFile.getAuxFileNames().size(), "Unexpected number of aux files: ");
 
 		// Check triggering of production planner in log
 	}
@@ -353,8 +347,8 @@ public class IngestorControllerTest {
 		testHeader.add(HttpHeaders.AUTHORIZATION, HEADER_AUTH_BASIC);
 
 		ResponseEntity<RestProductFile> response = ici.getProductFile(testProduct.getId(), TEST_NAME, testHeader);
-		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, response.getStatusCode());
-		assertEquals("Wrong product file: ", TEST_PRODUCT_PATH_2, response.getBody().getFilePath());
+		assertEquals(HttpStatus.CREATED, response.getStatusCode(), "Unexpected HTTP status code: ");
+		assertEquals(TEST_PRODUCT_PATH_2, response.getBody().getFilePath(), "Wrong product file: ");
 
 	}
 
@@ -386,7 +380,7 @@ public class IngestorControllerTest {
 
 		ResponseEntity<RestProductFile> response = ici.ingestProductFile(testProduct.getId(), TEST_NAME,
 				ProductFileUtil.toRestProductFile(testProductFile), testHeader);
-		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, response.getStatusCode());
+		assertEquals(HttpStatus.CREATED, response.getStatusCode(), "Unexpected HTTP status code: ");
 
 		// Check logged calls for storage manager and production planner
 	}
@@ -414,7 +408,7 @@ public class IngestorControllerTest {
 		testHeader.add(HttpHeaders.AUTHORIZATION, HEADER_AUTH_BASIC);
 
 		ResponseEntity<?> response = ici.deleteProductFile(testProduct.getId(), TEST_NAME, true, testHeader);
-		assertEquals("Unexpected HTTP status code: ", HttpStatus.NO_CONTENT, response.getStatusCode());
+		assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode(), "Unexpected HTTP status code: ");
 
 		// Check logged calls for storage manager
 	}
@@ -443,7 +437,7 @@ public class IngestorControllerTest {
 
 		ResponseEntity<RestProductFile> response = ici.modifyProductFile(testProduct.getId(), TEST_NAME,
 				testProductFile, testHeader);
-		assertEquals("Unexpected HTTP status code: ", HttpStatus.OK, response.getStatusCode());
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "Unexpected HTTP status code: ");
 
 		// Check logged calls for storage manager
 	}

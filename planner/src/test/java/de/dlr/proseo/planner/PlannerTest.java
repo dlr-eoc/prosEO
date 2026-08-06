@@ -1,8 +1,9 @@
 package de.dlr.proseo.planner;
 
-import static org.junit.Assert.*;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,13 +12,10 @@ import java.util.Optional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -42,11 +40,9 @@ import de.dlr.proseo.planner.util.JobUtil;
  * @author melchinger
  *
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProductionPlanner.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 // @DirtiesContext
 @WithMockUser(username = "PTM-proseo", roles = { "ORDER_APPROVER", "ORDER_MGR" })
-@AutoConfigureTestEntityManager
 // @EnableConfigurationProperties
 @ComponentScan(basePackages = { "de.dlr.proseo" })
 // @EnableJpaRepositories("de.dlr.proseo.model.dao")
@@ -455,7 +451,7 @@ public class PlannerTest {
 		if (i < 0) {
 
 		} else {
-			assertEquals("Order state error", expectedStates[0], order.getOrderState());
+			assertEquals(expectedStates[0], order.getOrderState(), "Order state error");
 		}
 		return order;
 	};
@@ -471,7 +467,7 @@ public class PlannerTest {
 		if (i < 0) {
 
 		} else {
-			assertEquals("Order state error", expectedStates[0], job.getJobState());
+			assertEquals(expectedStates[0], job.getJobState(), "Order state error");
 		}
 		return job;
 	};
@@ -487,7 +483,7 @@ public class PlannerTest {
 		if (i < 0) {
 
 		} else {
-			assertEquals("Order state error", expectedStates[0], jobStep.getJobStepState());
+			assertEquals(expectedStates[0], jobStep.getJobStepState(), "Order state error");
 		}
 		return jobStep;
 	};
@@ -553,7 +549,7 @@ public class PlannerTest {
 			if (optOrder != null) {
 				orderLoc = optOrder.get();
 				PlannerResultMessage resMsg = orderUtil.delete(orderLoc);
-				assertEquals("Delete order failed.", resMsg.getSuccess(), true);
+				assertEquals(resMsg.getSuccess(), true, "Delete order failed.");
 				return resMsg;
 			}
 			return null;
@@ -854,12 +850,12 @@ public class PlannerTest {
 				}
 				for (Job job : orderLoc.getJobs()) {
 					if (!jobStates.contains(job.getJobState())) {
-						assertEquals("Job state error: ", jobStates.get(0), job.getJobState());
+						assertEquals(jobStates.get(0), job.getJobState(), "Job state error: ");
 //						logger.debug("Job state error: unexpected state {}", job.getJobState());
 					}
 					for (JobStep jobStep : job.getJobSteps()) {
 						if (!jobStepStates.contains(jobStep.getJobStepState())) {
-							assertEquals("Job step state error: ", jobStepStates.get(0), jobStep.getJobStepState());
+							assertEquals(jobStepStates.get(0), jobStep.getJobStepState(), "Job step state error: ");
 //							logger.debug("Job step state error: unexpected state {}", jobStep.getJobStepState());
 						}
 					}
