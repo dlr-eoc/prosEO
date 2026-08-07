@@ -5,23 +5,24 @@
  */
 package de.dlr.proseo.procmgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -46,11 +47,10 @@ import de.dlr.proseo.procmgr.rest.model.RestConfiguredProcessor;
  *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProcessorManagerApplication.class)
 @WithMockUser(username = "UTM-testuser", roles = {})
-@AutoConfigureTestEntityManager
 @Transactional
+@TestInstance(Lifecycle.PER_CLASS)
 public class ConfiguredProcessorManagerTest {
 
 	/** A logger for this class */
@@ -94,7 +94,7 @@ public class ConfiguredProcessorManagerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 	}
 
@@ -104,8 +104,19 @@ public class ConfiguredProcessorManagerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
+		logger.debug(">>> Starting to delete test data in database");
+		RepositoryService.getOrderRepository().deleteAll();
+		RepositoryService.getProductClassRepository().deleteAll();
+		RepositoryService.getConfiguredProcessorRepository().deleteAll();
+		RepositoryService.getConfigurationRepository().deleteAll();
+		RepositoryService.getProcessorRepository().deleteAll();
+		RepositoryService.getProcessorClassRepository().deleteAll();
+		RepositoryService.getWorkflowRepository().deleteAll();
+		RepositoryService.getSpacecraftRepository().deleteAll();
+		RepositoryService.getMissionRepository().deleteAll();
+		logger.debug("<<< Finished deleting test data in database");
 	}
 
 	/**
@@ -225,14 +236,14 @@ public class ConfiguredProcessorManagerTest {
 		fillDatabase();
 
 		// Count configuredProcessors and assert success.
-		assertEquals("Wrong configuredProcessor count.", "2",
-				configuredProcessorMgr.countConfiguredProcessors("UTM", null, null, null, null, null, null));
-		assertEquals("Wrong configuredProcessor count.", "0",
-				configuredProcessorMgr.countConfiguredProcessors("UTM", null, testConfigurationData[0][1], null, null, null, null));
-		assertEquals("Wrong configuredProcessor count.", "1",
-				configuredProcessorMgr.countConfiguredProcessors("UTM", null, null, null, null, testConfigurationData[0][2], null));
-		assertEquals("Wrong configuredProcessor count.", "1",
-				configuredProcessorMgr.countConfiguredProcessors("UTM", null, null, null, testConfigurationData[0][3], null, null));
+		assertEquals("2",
+				configuredProcessorMgr.countConfiguredProcessors("UTM", null, null, null, null, null, null), "Wrong configuredProcessor count.");
+		assertEquals("0",
+				configuredProcessorMgr.countConfiguredProcessors("UTM", null, testConfigurationData[0][1], null, null, null, null), "Wrong configuredProcessor count.");
+		assertEquals("1",
+				configuredProcessorMgr.countConfiguredProcessors("UTM", null, null, null, null, testConfigurationData[0][2], null), "Wrong configuredProcessor count.");
+		assertEquals("1",
+				configuredProcessorMgr.countConfiguredProcessors("UTM", null, null, null, testConfigurationData[0][3], null, null), "Wrong configuredProcessor count.");
 	}
 
 	/**
@@ -266,8 +277,8 @@ public class ConfiguredProcessorManagerTest {
 		RestConfiguredProcessor restConfiguredProcessor = ConfiguredProcessorUtil
 				.toRestConfiguredProcessor(testConfiguredProcessor);
 		configuredProcessorMgr.deleteConfiguredProcessorById(restConfiguredProcessor.getId());
-		assertTrue("The configuredProcessor was not deleted.", RepositoryService.getConfiguredProcessorRepository()
-				.findById(restConfiguredProcessor.getId()).isEmpty());
+		assertTrue(RepositoryService.getConfiguredProcessorRepository()
+				.findById(restConfiguredProcessor.getId()).isEmpty(), "The configuredProcessor was not deleted.");
 	}
 
 	/**
@@ -285,8 +296,8 @@ public class ConfiguredProcessorManagerTest {
 				.toRestConfiguredProcessor(RepositoryService.getConfiguredProcessorRepository().findAll().get(0));
 
 		// Retrieve configuredProcessor and assert success.
-		assertNotNull("No configuredProcessor was retrieved.",
-				configuredProcessorMgr.getConfiguredProcessorById(testConfiguredProcessor.getId()));
+		assertNotNull(
+				configuredProcessorMgr.getConfiguredProcessorById(testConfiguredProcessor.getId()), "No configuredProcessor was retrieved.");
 	}
 
 	/**
@@ -320,19 +331,19 @@ public class ConfiguredProcessorManagerTest {
 		 * returns all configuredProcessors for the given mission.
 		 */
 
-		assertTrue("More or less configuredProcessors retrieved than expected.",
-				configuredProcessorMgr.getConfiguredProcessors(null, null, null, null, null, null, null, 0, 10, null).size() == 2);
-		assertTrue("More or less configuredProcessors retrieved than expected.", configuredProcessorMgr
-				.getConfiguredProcessors(testMissionData[0], null, null, null, null, null, null, 0, 100, null).size() == 2);
-//		assertTrue("More or less configuredProcessors retrieved than expected.",
+		assertTrue(
+				configuredProcessorMgr.getConfiguredProcessors(null, null, null, null, null, null, null, 0, 10, null).size() == 2, "More or less configuredProcessors retrieved than expected.");
+		assertTrue(configuredProcessorMgr
+				.getConfiguredProcessors(testMissionData[0], null, null, null, null, null, null, 0, 100, null).size() == 2, "More or less configuredProcessors retrieved than expected.");
+//		assertTrue(
 //				configuredProcessorMgr.getConfiguredProcessors(testMissionData[0], null, testConfigurationData[0][1],
-//						null, null, null, null, null, null, null).size() == 0);
-		assertTrue("More or less configuredProcessors retrieved than expected.",
+//						null, null, null, null, null, null, null).size() == 0, "More or less configuredProcessors retrieved than expected.");
+		assertTrue(
 				configuredProcessorMgr.getConfiguredProcessors(testMissionData[0], null, null,
-						null, testConfigurationData[0][3], null, null, null, null, null).size() == 1);
-		assertTrue("More or less configuredProcessors retrieved than expected.",
+						null, testConfigurationData[0][3], null, null, null, null, null).size() == 1, "More or less configuredProcessors retrieved than expected.");
+		assertTrue(
 				configuredProcessorMgr.getConfiguredProcessors(testMissionData[0], null, null, null, null,
-						testConfigurationData[0][2], null, null, null, null).size() == 1);
+						testConfigurationData[0][2], null, null, null, null).size() == 1, "More or less configuredProcessors retrieved than expected.");
 	}
 
 }

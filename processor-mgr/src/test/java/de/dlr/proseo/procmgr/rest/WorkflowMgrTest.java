@@ -5,26 +5,24 @@
  */
 package de.dlr.proseo.procmgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.UUID;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -52,11 +50,10 @@ import de.dlr.proseo.procmgr.rest.model.WorkflowUtil;
  *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProcessorManagerApplication.class)
 @WithMockUser(username = "UTM-testuser", roles = {})
-@AutoConfigureTestEntityManager
 @Transactional
+@TestInstance(Lifecycle.PER_CLASS)
 public class WorkflowMgrTest {
 
 	/** A logger for this class */
@@ -89,7 +86,7 @@ public class WorkflowMgrTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeAll
 	public void setUp() throws Exception {
 		logger.trace(">>> Starting to create test data in the database");
 		
@@ -107,9 +104,19 @@ public class WorkflowMgrTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterAll
 	public void tearDown() throws Exception {
-		// Nothing to do, test data will be deleted by automatic rollback of test transaction
+		logger.debug(">>> Starting to delete test data in database");
+		RepositoryService.getWorkflowRepository().deleteAll();
+		RepositoryService.getOrderRepository().deleteAll();
+		RepositoryService.getProductClassRepository().deleteAll();
+		RepositoryService.getConfiguredProcessorRepository().deleteAll();
+		RepositoryService.getConfigurationRepository().deleteAll();
+		RepositoryService.getProcessorRepository().deleteAll();
+		RepositoryService.getProcessorClassRepository().deleteAll();
+		RepositoryService.getSpacecraftRepository().deleteAll();
+		RepositoryService.getMissionRepository().deleteAll();
+		logger.debug("<<< Finished deleting test data in database");
 	}
 
 	/**
@@ -233,16 +240,16 @@ public class WorkflowMgrTest {
 		logger.trace(">>> testCountWorkflows()");
 
 		// Count workflows and assert success.
-		assertEquals("Wrong workflow count.", "2", workflowMgr.countWorkflows("UTM", null, null, null, null, true));
-		assertEquals("Wrong workflow count.", "1",
-				workflowMgr.countWorkflows("UTM", testWorkflowData[0][0], null, null, null, null));
-		assertEquals("Wrong workflow count.", "1",
-				workflowMgr.countWorkflows("UTM", null, testWorkflowData[0][2], null, null, null));
-		assertEquals("Wrong workflow count.", "1",
-				workflowMgr.countWorkflows("UTM", null, null, testWorkflowData[0][3], null, null));
-		assertEquals("Wrong workflow count.", "1",
-				workflowMgr.countWorkflows("UTM", null, null, null, testWorkflowData[0][5], null));
-		assertEquals("Wrong workflow count.", "2", workflowMgr.countWorkflows("UTM", null, null, null, null, true));
+		assertEquals("2", workflowMgr.countWorkflows("UTM", null, null, null, null, true), "Wrong workflow count.");
+		assertEquals("1",
+				workflowMgr.countWorkflows("UTM", testWorkflowData[0][0], null, null, null, null), "Wrong workflow count.");
+		assertEquals("1",
+				workflowMgr.countWorkflows("UTM", null, testWorkflowData[0][2], null, null, null), "Wrong workflow count.");
+		assertEquals("1",
+				workflowMgr.countWorkflows("UTM", null, null, testWorkflowData[0][3], null, null), "Wrong workflow count.");
+		assertEquals("1",
+				workflowMgr.countWorkflows("UTM", null, null, null, testWorkflowData[0][5], null), "Wrong workflow count.");
+		assertEquals("2", workflowMgr.countWorkflows("UTM", null, null, null, null, true), "Wrong workflow count.");
 
 		logger.trace("<<< testCountWorkflows()");
 	}
@@ -255,7 +262,7 @@ public class WorkflowMgrTest {
 	public final void testCreateWorkflow() {
 		logger.trace(">>> testCreateWorkflow()");
 
-		assertEquals("Wrong workflow count.", "2", workflowMgr.countWorkflows("UTM", null, null, null, null, true));
+		assertEquals("2", workflowMgr.countWorkflows("UTM", null, null, null, null, true), "Wrong workflow count.");
 		
 		List<Workflow> workflowList = RepositoryService.getWorkflowRepository().findAll();
 		for (Workflow wf: workflowList) {
@@ -265,7 +272,7 @@ public class WorkflowMgrTest {
 		logger.debug("... looking for workflow {} / {} / {}", testMissionData[0], testWorkflowData[0][0], testWorkflowData[0][2]);
 		Workflow modelWorkflow = RepositoryService.getWorkflowRepository().findByMissionCodeAndNameAndVersion(
 				testMissionData[0], testWorkflowData[0][0], testWorkflowData[0][2]);
-		assertNotNull("Test workflow not found", modelWorkflow);
+		assertNotNull(modelWorkflow, "Test workflow not found");
 		
 		// Get a valid sample workflow and workflow option from which deviations can be
 		// tested.
@@ -522,8 +529,8 @@ public class WorkflowMgrTest {
 
 		// Delete workflow and assert success.
 		workflowMgr.deleteWorkflowById(testWorkflow.getId());
-		assertTrue("The workflow was not deleted.",
-				RepositoryService.getWorkflowRepository().findById(testWorkflow.getId()).isEmpty());
+		assertTrue(
+				RepositoryService.getWorkflowRepository().findById(testWorkflow.getId()).isEmpty(), "The workflow was not deleted.");
 
 		logger.trace("<<< testDeleteWorkflowById()");
 	}
@@ -540,7 +547,7 @@ public class WorkflowMgrTest {
 		RestWorkflow testWorkflow = WorkflowUtil.toRestWorkflow(RepositoryService.getWorkflowRepository().findAll().get(0));
 
 		// Retrieve workflow and assert success.
-		assertNotNull("No workflow was retrieved.", workflowMgr.getWorkflowById(testWorkflow.getId()));
+		assertNotNull(workflowMgr.getWorkflowById(testWorkflow.getId()), "No workflow was retrieved.");
 
 		logger.trace("<<< testGetWorkflowById()");
 	}
@@ -573,8 +580,8 @@ public class WorkflowMgrTest {
 		assertThrows(ConcurrentModificationException.class, () -> workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow));
 		testWorkflow.setVersion(originalWorkflow.getVersion());
 		testWorkflow.setWorkflowVersion("someOtherVersion");
-		assertTrue("Version was not incremented.",
-				workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow).getVersion() == 1 + originalWorkflow.getVersion());
+		assertTrue(
+				workflowMgr.modifyWorkflow(testWorkflow.getId(), testWorkflow).getVersion() == 1 + originalWorkflow.getVersion(), "Version was not incremented.");
 		testWorkflow.setVersion(testWorkflow.getVersion() + 1);
 
 		// Mandatory fields may not be null
@@ -802,21 +809,21 @@ public class WorkflowMgrTest {
 		 * If no mission was specified, it is acquired from the security service. Not
 		 * specifying additional parameters returns all workflows for the given mission.
 		 */
-		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(null, null, null, null, null, null, 0, 10, null).size() == 2);
-		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(testMissionData[0], null, null, null, null, null, 0, 100, null).size() == 2);
-		assertTrue("More or less workflows retrieved than expected.",
+		assertTrue(
+				workflowMgr.getWorkflows(null, null, null, null, null, null, 0, 10, null).size() == 2, "More or less workflows retrieved than expected.");
+		assertTrue(
+				workflowMgr.getWorkflows(testMissionData[0], null, null, null, null, null, 0, 100, null).size() == 2, "More or less workflows retrieved than expected.");
+		assertTrue(
 				workflowMgr.getWorkflows(testMissionData[0], null, testWorkflowData[0][2], null, null, null, null, null, null)
-					.size() == 1);
-		assertTrue("More or less workflows retrieved than expected.",
+					.size() == 1, "More or less workflows retrieved than expected.");
+		assertTrue(
 				workflowMgr.getWorkflows(testMissionData[0], null, null, testWorkflowData[0][3], null, null, null, null, null)
-					.size() == 1);
-		assertTrue("More or less workflows retrieved than expected.",
+					.size() == 1, "More or less workflows retrieved than expected.");
+		assertTrue(
 				workflowMgr.getWorkflows(testMissionData[0], null, null, null, testWorkflowData[0][5], null, null, null, null)
-					.size() == 1);
-		assertTrue("More or less workflows retrieved than expected.",
-				workflowMgr.getWorkflows(null, null, null, null, null, true, null, null, null).size() == 2);
+					.size() == 1, "More or less workflows retrieved than expected.");
+		assertTrue(
+				workflowMgr.getWorkflows(null, null, null, null, null, true, null, null, null).size() == 2, "More or less workflows retrieved than expected.");
 
 		logger.trace("<<< testGetWorkflows()");
 	}

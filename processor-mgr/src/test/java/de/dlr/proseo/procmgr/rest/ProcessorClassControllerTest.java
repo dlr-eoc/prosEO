@@ -5,25 +5,23 @@
  */
 package de.dlr.proseo.procmgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,11 +42,10 @@ import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
  *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProcessorManagerApplication.class)
 @WithMockUser(username = "UTM-testuser", roles = {})
-@AutoConfigureTestEntityManager
 @Transactional
+@TestInstance(Lifecycle.PER_CLASS)
 public class ProcessorClassControllerTest {
 
 	/** A logger for this class */
@@ -80,7 +77,7 @@ public class ProcessorClassControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeAll
 	public void setUp() throws Exception {
 		logger.trace(">>> Starting to create test data in the database");
 
@@ -95,9 +92,20 @@ public class ProcessorClassControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterAll
 	public void tearDown() throws Exception {
 		// Nothing to do, test data will be deleted by automatic rollback of test transaction
+		logger.debug(">>> Starting to delete test data in database");
+		RepositoryService.getOrderRepository().deleteAll();
+		RepositoryService.getProductClassRepository().deleteAll();
+		RepositoryService.getConfiguredProcessorRepository().deleteAll();
+		RepositoryService.getConfigurationRepository().deleteAll();
+		RepositoryService.getProcessorRepository().deleteAll();
+		RepositoryService.getProcessorClassRepository().deleteAll();
+		RepositoryService.getWorkflowRepository().deleteAll();
+		RepositoryService.getSpacecraftRepository().deleteAll();
+		RepositoryService.getMissionRepository().deleteAll();
+		logger.debug("<<< Finished deleting test data in database");
 	}
 
 	/**
@@ -154,8 +162,8 @@ public class ProcessorClassControllerTest {
 			// testing processorClass creation with the processorClass controller
 			toBeCreated.setId(null);
 			ResponseEntity<RestProcessorClass> created = pcci.createProcessorClass(toBeCreated);
-			assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, created.getStatusCode());
-			assertEquals("Error during processorClass creation.", toBeCreated.getProcessorName(), created.getBody().getProcessorName());
+			assertEquals(HttpStatus.CREATED, created.getStatusCode(), "Wrong HTTP status: ");
+			assertEquals(toBeCreated.getProcessorName(), created.getBody().getProcessorName(), "Error during processorClass creation.");
 
 			return true;
 		});
@@ -176,9 +184,9 @@ public class ProcessorClassControllerTest {
 		// count all processorClasss with the same mission as the test processorClasss
 		// from the database via the processorClass controller
 		ResponseEntity<String> retrievedProcessorClasss = pcci.countProcessorClasses(testMissionData[0], null, null, null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedProcessorClasss.getStatusCode());
-		assertTrue("Wrong number of processorClasss retrieved.",
-				Integer.toUnsignedString(expectedProcessorClasss.size()).equals(retrievedProcessorClasss.getBody()));
+		assertEquals(HttpStatus.OK, retrievedProcessorClasss.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(
+				Integer.toUnsignedString(expectedProcessorClasss.size()).equals(retrievedProcessorClasss.getBody()), "Wrong number of processorClasss retrieved.");
 	}
 
 	/**
@@ -200,9 +208,9 @@ public class ProcessorClassControllerTest {
 		// database via the processorClass controller
 		ResponseEntity<List<RestProcessorClass>> retrievedProcessorClasss = pcci.getProcessorClasses(testMissionData[0],
 				null, null, null, null, null, null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedProcessorClasss.getStatusCode());
-		assertTrue("Wrong number of processorClasss retrieved.",
-				expectedProcessorClasss.size() == retrievedProcessorClasss.getBody().size());
+		assertEquals(HttpStatus.OK, retrievedProcessorClasss.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(
+				expectedProcessorClasss.size() == retrievedProcessorClasss.getBody().size(), "Wrong number of processorClasss retrieved.");
 	}
 
 	/**
@@ -221,9 +229,9 @@ public class ProcessorClassControllerTest {
 		// test processorClass
 		ResponseEntity<RestProcessorClass> retrievedProcessorClass = pcci
 				.getProcessorClassById(expectedProcessorClass.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedProcessorClass.getStatusCode());
-		assertTrue("Wrong processorClass retrieved.",
-				expectedProcessorClass.getProcessorName().equals(retrievedProcessorClass.getBody().getProcessorName()));
+		assertEquals(HttpStatus.OK, retrievedProcessorClass.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(
+				expectedProcessorClass.getProcessorName().equals(retrievedProcessorClass.getBody().getProcessorName()), "Wrong processorClass retrieved.");
 	}
 
 	/**
@@ -239,11 +247,11 @@ public class ProcessorClassControllerTest {
 
 		// delete the chosen processor class via the processor class controller
 		ResponseEntity<?> entity = pcci.deleteProcessorClassById(toBeDeleted.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.NO_CONTENT, entity.getStatusCode());
+		assertEquals(HttpStatus.NO_CONTENT, entity.getStatusCode(), "Wrong HTTP status: ");
 
 		// assert that the processor class was deleted
-		assertTrue("ProcessorClass not deleted.",
-				RepositoryService.getProcessorClassRepository().findById(toBeDeleted.getId()).isEmpty());
+		assertTrue(
+				RepositoryService.getProcessorClassRepository().findById(toBeDeleted.getId()).isEmpty(), "ProcessorClass not deleted.");
 	}
 
 	/**
@@ -260,9 +268,9 @@ public class ProcessorClassControllerTest {
 		toBeModified.setProcessorName("newName");
 
 		ResponseEntity<RestProcessorClass> entity = pcci.modifyProcessorClass(toBeModified.getId(), toBeModified);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
-		assertTrue("Modification unsuccessfull", toBeModified.getVersion() + 1 == entity.getBody().getVersion());
-		assertNotEquals("Modification unsuccessfull", oldName, entity.getBody().getProcessorName());
+		assertEquals(HttpStatus.OK, entity.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(toBeModified.getVersion() + 1 == entity.getBody().getVersion(), "Modification unsuccessfull");
+		assertNotEquals(oldName, entity.getBody().getProcessorName(), "Modification unsuccessfull");
 	}
 
 }

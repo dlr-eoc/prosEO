@@ -5,26 +5,25 @@
  */
 package de.dlr.proseo.procmgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.Configuration;
@@ -49,11 +48,10 @@ import de.dlr.proseo.procmgr.rest.model.RestConfigurationInputFile;
  *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProcessorManagerApplication.class)
 @WithMockUser(username = "UTM-testuser", roles = {})
-@AutoConfigureTestEntityManager
 @Transactional
+@TestInstance(Lifecycle.PER_CLASS)
 public class ConfigurationControllerTest {
 
 	/** A logger for this class */
@@ -97,7 +95,7 @@ public class ConfigurationControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeAll
 	public void setUp() throws Exception {
 		logger.trace(">>> Starting to create test data in the database");
 
@@ -112,9 +110,19 @@ public class ConfigurationControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterAll
 	public void tearDown() throws Exception {
-		// Nothing to do, test data will be deleted by automatic rollback of test transaction
+		logger.debug(">>> Starting to delete test data in database");
+		RepositoryService.getOrderRepository().deleteAll();
+		RepositoryService.getProductClassRepository().deleteAll();
+		RepositoryService.getConfiguredProcessorRepository().deleteAll();
+		RepositoryService.getConfigurationRepository().deleteAll();
+		RepositoryService.getProcessorRepository().deleteAll();
+		RepositoryService.getProcessorClassRepository().deleteAll();
+		RepositoryService.getWorkflowRepository().deleteAll();
+		RepositoryService.getSpacecraftRepository().deleteAll();
+		RepositoryService.getMissionRepository().deleteAll();
+		logger.debug("<<< Finished deleting test data in database");
 	}
 
 	/**
@@ -249,8 +257,8 @@ public class ConfigurationControllerTest {
 
 		// testing configuration creation with the configuration controller
 		ResponseEntity<RestConfiguration> created = cci.createConfiguration(toBeCreated);
-		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, created.getStatusCode());
-		assertEquals("Error during configuration creation.", toBeCreated.getProcessorName(), created.getBody().getProcessorName());
+		assertEquals(HttpStatus.CREATED, created.getStatusCode(), "Wrong HTTP status: ");
+		assertEquals(toBeCreated.getProcessorName(), created.getBody().getProcessorName(), "Error during configuration creation.");
 	}
 
 	/**
@@ -270,9 +278,8 @@ public class ConfigurationControllerTest {
 		// configurations
 		// from the database via the configuration controller
 		ResponseEntity<String> retrievedConfigurations = cci.countConfigurations(testMissionData[0], null, null, null, null, null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedConfigurations.getStatusCode());
-		assertTrue("Wrong number of configurations retrieved.",
-				Integer.toUnsignedString(expectedConfigurations.size()).equals(retrievedConfigurations.getBody()));
+		assertEquals(HttpStatus.OK, retrievedConfigurations.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(Integer.toUnsignedString(expectedConfigurations.size()).equals(retrievedConfigurations.getBody()), "Wrong number of configurations retrieved.");
 	}
 
 	/**
@@ -292,9 +299,8 @@ public class ConfigurationControllerTest {
 		// database via the configuration controller
 		ResponseEntity<List<RestConfiguration>> retrievedConfigurations = cci.getConfigurations(testMissionData[0], null, null,
 				null, null, null, null, null, null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedConfigurations.getStatusCode());
-		assertTrue("Wrong number of configurations retrieved.",
-				expectedConfigurations.size() == retrievedConfigurations.getBody().size());
+		assertEquals(HttpStatus.OK, retrievedConfigurations.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(	expectedConfigurations.size() == retrievedConfigurations.getBody().size(), "Wrong number of configurations retrieved.");
 	}
 
 	/**
@@ -312,9 +318,8 @@ public class ConfigurationControllerTest {
 
 		// retrieve a configuration with the configuration controller by using the id from the test configuration
 		ResponseEntity<RestConfiguration> retrievedConfiguration = cci.getConfigurationById(expectedConfiguration.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedConfiguration.getStatusCode());
-		assertTrue("Wrong configuration retrieved.", expectedConfiguration.getProcessorClass().getProcessorName()
-				.equals(retrievedConfiguration.getBody().getProcessorName()));
+		assertEquals(HttpStatus.OK, retrievedConfiguration.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(expectedConfiguration.getProcessorClass().getProcessorName().equals(retrievedConfiguration.getBody().getProcessorName()), "Wrong configuration retrieved.");
 	}
 
 	/**
@@ -335,11 +340,10 @@ public class ConfigurationControllerTest {
 
 		// delete the chosen configuration via the configuration controller
 		ResponseEntity<?> entity = cci.deleteConfigurationById(toBeDeleted.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.NO_CONTENT, entity.getStatusCode());
+		assertEquals(HttpStatus.NO_CONTENT, entity.getStatusCode(), "Wrong HTTP status: ");
 
 		// assert that the configuration was deleted
-		assertTrue("Configuration not deleted.",
-				RepositoryService.getConfigurationRepository().findById(toBeDeleted.getId()).isEmpty());
+		assertTrue(RepositoryService.getConfigurationRepository().findById(toBeDeleted.getId()).isEmpty(), "Configuration not deleted.");
 	}
 
 	/**
@@ -358,9 +362,9 @@ public class ConfigurationControllerTest {
 		toBeModified.setConfigurationVersion("10.1");
 
 		ResponseEntity<RestConfiguration> entity = cci.modifyConfiguration(toBeModified.getId(), toBeModified);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
-		assertTrue("Modification unsuccessfull", toBeModified.getVersion() + 1 == entity.getBody().getVersion());
-		assertNotEquals("Modification unsuccessfull", previousConfigurationVersion, entity.getBody().getConfigurationVersion());
+		assertEquals(HttpStatus.OK, entity.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(toBeModified.getVersion() + 1 == entity.getBody().getVersion(), "Modification unsuccessfull");
+		assertNotEquals(previousConfigurationVersion, entity.getBody().getConfigurationVersion(), "Modification unsuccessfull");
 	}
 
 }

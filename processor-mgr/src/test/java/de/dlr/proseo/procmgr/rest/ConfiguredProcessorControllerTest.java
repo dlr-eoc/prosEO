@@ -5,26 +5,24 @@
  */
 package de.dlr.proseo.procmgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,11 +50,10 @@ import de.dlr.proseo.procmgr.rest.model.RestConfiguredProcessor;
  *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProcessorManagerApplication.class)
 @WithMockUser(username = "UTM-testuser", roles = {})
-@AutoConfigureTestEntityManager
 @Transactional
+@TestInstance(Lifecycle.PER_CLASS)
 public class ConfiguredProcessorControllerTest {
 
 	/** A logger for this class */
@@ -104,7 +101,7 @@ public class ConfiguredProcessorControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeAll
 	public void setUp() throws Exception {
 	}
 
@@ -114,7 +111,7 @@ public class ConfiguredProcessorControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterAll
 	public void tearDown() throws Exception {
 	}
 
@@ -248,9 +245,9 @@ public class ConfiguredProcessorControllerTest {
 			// controller
 			toBeCreated.setId(null);
 			ResponseEntity<RestConfiguredProcessor> created = cci.createConfiguredProcessor(toBeCreated);
-			assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, created.getStatusCode());
-			assertEquals("Error during configuredProcessor creation.", toBeCreated.getProcessorName(),
-					created.getBody().getProcessorName());
+			assertEquals(HttpStatus.CREATED, created.getStatusCode(), "Wrong HTTP status: ");
+			assertEquals(toBeCreated.getProcessorName(),
+					created.getBody().getProcessorName(), "Error during configuredProcessor creation.");
 
 			return true;
 		});
@@ -277,9 +274,9 @@ public class ConfiguredProcessorControllerTest {
 		// from the database via the configuredProcessor controller
 		ResponseEntity<String> retrievedConfiguredProcessors = cci.countConfiguredProcessors(testMissionData[0], null,
 				null, null, null, null, null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedConfiguredProcessors.getStatusCode());
-		assertTrue("Wrong number of configuredProcessors retrieved.", Integer
-				.toUnsignedString(expectedConfiguredProcessors.size()).equals(retrievedConfiguredProcessors.getBody()));
+		assertEquals(HttpStatus.OK, retrievedConfiguredProcessors.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(Integer
+				.toUnsignedString(expectedConfiguredProcessors.size()).equals(retrievedConfiguredProcessors.getBody()), "Wrong number of configuredProcessors retrieved.");
 	}
 
 	/**
@@ -305,9 +302,9 @@ public class ConfiguredProcessorControllerTest {
 		// database via the configuredProcessor controller
 		ResponseEntity<List<RestConfiguredProcessor>> retrievedConfiguredProcessors = cci
 				.getConfiguredProcessors(testMissionData[0], null, null, null, null, null, null, null, null, null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedConfiguredProcessors.getStatusCode());
-		assertTrue("Wrong number of configuredProcessors retrieved.",
-				expectedConfiguredProcessors.size() == retrievedConfiguredProcessors.getBody().size());
+		assertEquals(HttpStatus.OK, retrievedConfiguredProcessors.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(
+				expectedConfiguredProcessors.size() == retrievedConfiguredProcessors.getBody().size(), "Wrong number of configuredProcessors retrieved.");
 	}
 
 	/**
@@ -330,10 +327,10 @@ public class ConfiguredProcessorControllerTest {
 		// test configuredProcessor
 		ResponseEntity<RestConfiguredProcessor> retrievedConfiguredProcessor = cci
 				.getConfiguredProcessorById(expectedConfiguredProcessor.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedConfiguredProcessor.getStatusCode());
-		assertTrue("Wrong configuredProcessor retrieved.",
+		assertEquals(HttpStatus.OK, retrievedConfiguredProcessor.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(
 				expectedConfiguredProcessor.getProcessor().getProcessorClass().getProcessorName()
-						.equals(retrievedConfiguredProcessor.getBody().getProcessorName()));
+						.equals(retrievedConfiguredProcessor.getBody().getProcessorName()), "Wrong configuredProcessor retrieved.");
 	}
 
 	/**
@@ -351,11 +348,11 @@ public class ConfiguredProcessorControllerTest {
 
 		// delete the chosen configuredProcessor via the configuredProcessor controller
 		ResponseEntity<?> entity = cci.deleteConfiguredProcessorById(toBeDeleted.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.NO_CONTENT, entity.getStatusCode());
+		assertEquals(HttpStatus.NO_CONTENT, entity.getStatusCode(), "Wrong HTTP status: ");
 
 		// assert that the configuredProcessor was deleted
-		assertTrue("ConfiguredProcessor not deleted.",
-				RepositoryService.getConfiguredProcessorRepository().findById(toBeDeleted.getId()).isEmpty());
+		assertTrue(
+				RepositoryService.getConfiguredProcessorRepository().findById(toBeDeleted.getId()).isEmpty(), "ConfiguredProcessor not deleted.");
 	}
 
 	/**
@@ -376,9 +373,9 @@ public class ConfiguredProcessorControllerTest {
 
 		ResponseEntity<RestConfiguredProcessor> entity = cci.modifyConfiguredProcessor(toBeModified.getId(),
 				toBeModified);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
-		assertTrue("Modification unsuccessfull", toBeModified.getVersion() + 1 == entity.getBody().getVersion());
-		assertNotEquals("Modification unsuccessfull", previousIdentifier, entity.getBody().getIdentifier());
+		assertEquals(HttpStatus.OK, entity.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(toBeModified.getVersion() + 1 == entity.getBody().getVersion(), "Modification unsuccessfull");
+		assertNotEquals(previousIdentifier, entity.getBody().getIdentifier(), "Modification unsuccessfull");
 	}
 
 }

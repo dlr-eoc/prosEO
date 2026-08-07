@@ -5,11 +5,10 @@
  */
 package de.dlr.proseo.procmgr.rest.model;
 
-import static org.junit.Assert.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 import java.util.UUID;
 
-import org.junit.Test;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 

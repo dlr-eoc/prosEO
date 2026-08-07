@@ -5,21 +5,19 @@
  */
 package de.dlr.proseo.procmgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -36,11 +34,10 @@ import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
  *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProcessorManagerApplication.class)
 @WithMockUser(username = "UTM-testuser", roles = {})
-@AutoConfigureTestEntityManager
 @Transactional
+@TestInstance(Lifecycle.PER_CLASS)
 public class ProcessorClassManagerTest {
 
 	/** A logger for this class */
@@ -68,7 +65,7 @@ public class ProcessorClassManagerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeAll
 	public void setUp() throws Exception {
 		logger.trace(">>> Starting to create test data in the database");
 
@@ -83,9 +80,19 @@ public class ProcessorClassManagerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterAll
 	public void tearDown() throws Exception {
-		// Nothing to do, test data will be deleted by automatic rollback of test transaction
+		logger.debug(">>> Starting to delete test data in database");
+		RepositoryService.getOrderRepository().deleteAll();
+		RepositoryService.getProductClassRepository().deleteAll();
+		RepositoryService.getConfiguredProcessorRepository().deleteAll();
+		RepositoryService.getConfigurationRepository().deleteAll();
+		RepositoryService.getProcessorRepository().deleteAll();
+		RepositoryService.getProcessorClassRepository().deleteAll();
+		RepositoryService.getWorkflowRepository().deleteAll();
+		RepositoryService.getSpacecraftRepository().deleteAll();
+		RepositoryService.getMissionRepository().deleteAll();
+		logger.debug("<<< Finished deleting test data in database");
 	}
 
 	/**
@@ -131,9 +138,9 @@ public class ProcessorClassManagerTest {
 		logger.trace(">>> testCountProcessorClasses()");
 
 		// Count processors and assert success.
-		assertEquals("Wrong processor count.", "2", processorMgr.countProcessorClasses("UTM", null, null, null));
-		assertEquals("Wrong processor count.", "1",
-				processorMgr.countProcessorClasses("UTM", null, null, testProcessorClassData[0]));
+		assertEquals("2", processorMgr.countProcessorClasses("UTM", null, null, null), "Wrong processor count.");
+		assertEquals("1",
+				processorMgr.countProcessorClasses("UTM", null, null, testProcessorClassData[0]), "Wrong processor count.");
 	}
 
 	/**
@@ -160,8 +167,8 @@ public class ProcessorClassManagerTest {
 		// Delete processor and assert success.
 		RestProcessorClass restProcessorClass = ProcessorClassUtil.toRestProcessorClass(testProcessorClass);
 		processorMgr.deleteProcessorClassById(restProcessorClass.getId());
-		assertTrue("The processor was not deleted.",
-				RepositoryService.getProcessorClassRepository().findById(restProcessorClass.getId()).isEmpty());
+		assertTrue(
+				RepositoryService.getProcessorClassRepository().findById(restProcessorClass.getId()).isEmpty(), "The processor was not deleted.");
 	}
 
 	/**
@@ -177,7 +184,7 @@ public class ProcessorClassManagerTest {
 				.toRestProcessorClass(RepositoryService.getProcessorClassRepository().findAll().get(0));
 
 		// Retrieve processor and assert success.
-		assertNotNull("No processor was retrieved.", processorMgr.getProcessorClassById(testProcessorClass.getId()));
+		assertNotNull(processorMgr.getProcessorClassById(testProcessorClass.getId()), "No processor was retrieved.");
 	}
 
 	/**
@@ -205,12 +212,12 @@ public class ProcessorClassManagerTest {
 		 * specifying additional parameters returns all processors for the given
 		 * mission.
 		 */
-		assertTrue("More or less processors retrieved than expected.",
-				processorMgr.getProcessorClasses(null, null, null, null, 0, 10, null).size() == 2);
-		assertTrue("More or less processors retrieved than expected.",
-				processorMgr.getProcessorClasses(testMissionData[0], null, null, null, 0, 100, null).size() == 2);
-		assertTrue("More or less processors retrieved than expected.", processorMgr
-				.getProcessorClasses(testMissionData[0], null, null, testProcessorClassData[0], null, null, null).size() == 1);
+		assertTrue(
+				processorMgr.getProcessorClasses(null, null, null, null, 0, 10, null).size() == 2, "More or less processors retrieved than expected.");
+		assertTrue(
+				processorMgr.getProcessorClasses(testMissionData[0], null, null, null, 0, 100, null).size() == 2, "More or less processors retrieved than expected.");
+		assertTrue(processorMgr
+				.getProcessorClasses(testMissionData[0], null, null, testProcessorClassData[0], null, null, null).size() == 1, "More or less processors retrieved than expected.");
 	}
 
 }

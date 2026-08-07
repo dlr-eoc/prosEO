@@ -5,23 +5,24 @@
  */
 package de.dlr.proseo.procmgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -46,11 +47,10 @@ import de.dlr.proseo.procmgr.rest.model.RestConfiguration;
  *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProcessorManagerApplication.class)
 @WithMockUser(username = "UTM-testuser", roles = {})
-@AutoConfigureTestEntityManager
 @Transactional
+@TestInstance(Lifecycle.PER_CLASS)
 public class ConfigurationManagerTest {
 
 	/** A logger for this class */
@@ -94,7 +94,7 @@ public class ConfigurationManagerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.trace(">>> Starting to create test data in the database");
 
@@ -109,9 +109,19 @@ public class ConfigurationManagerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
-		// Nothing to do, test data will be deleted by automatic rollback of test transaction
+		logger.debug(">>> Starting to delete test data in database");
+		RepositoryService.getOrderRepository().deleteAll();
+		RepositoryService.getProductClassRepository().deleteAll();
+		RepositoryService.getConfiguredProcessorRepository().deleteAll();
+		RepositoryService.getConfigurationRepository().deleteAll();
+		RepositoryService.getProcessorRepository().deleteAll();
+		RepositoryService.getProcessorClassRepository().deleteAll();
+		RepositoryService.getWorkflowRepository().deleteAll();
+		RepositoryService.getSpacecraftRepository().deleteAll();
+		RepositoryService.getMissionRepository().deleteAll();
+		logger.debug("<<< Finished deleting test data in database");
 	}
 
 	/**
@@ -231,11 +241,9 @@ public class ConfigurationManagerTest {
 
 		String[] names = {testConfigurationData[0][1]};
 		// Count configurations and assert success.
-		assertEquals("Wrong configuration count.", "2", configurationMgr.countConfigurations("UTM", null, null, null, null, null));
-		assertEquals("Wrong configuration count.", "1",
-				configurationMgr.countConfigurations("UTM", null, names, null, null, null));
-		assertEquals("Wrong configuration count.", "1",
-				configurationMgr.countConfigurations("UTM", null, null, testConfigurationData[0][2], null, null));
+		assertEquals("2", configurationMgr.countConfigurations("UTM", null, null, null, null, null), "Wrong configuration count.");
+		assertEquals("1", configurationMgr.countConfigurations("UTM", null, names, null, null, null), "Wrong configuration count.");
+		assertEquals("1", configurationMgr.countConfigurations("UTM", null, null, testConfigurationData[0][2], null, null), "Wrong configuration count.");
 	}
 
 	/**
@@ -267,8 +275,7 @@ public class ConfigurationManagerTest {
 		// Delete configuration and assert success.
 		RestConfiguration restConfiguration = ConfigurationUtil.toRestConfiguration(testConfiguration);
 		configurationMgr.deleteConfigurationById(restConfiguration.getId());
-		assertTrue("The configuration was not deleted.",
-				RepositoryService.getConfigurationRepository().findById(restConfiguration.getId()).isEmpty());
+		assertTrue(RepositoryService.getConfigurationRepository().findById(restConfiguration.getId()).isEmpty(), "The configuration was not deleted.");
 	}
 
 	/**
@@ -286,8 +293,7 @@ public class ConfigurationManagerTest {
 				.toRestConfiguration(RepositoryService.getConfigurationRepository().findAll().get(0));
 
 		// Retrieve configuration and assert success.
-		assertNotNull("No configuration was retrieved.",
-				configurationMgr.getConfigurationById(testConfiguration.getId()));
+		assertNotNull(configurationMgr.getConfigurationById(testConfiguration.getId()), "No configuration was retrieved.");
 	}
 
 	/**
@@ -318,14 +324,10 @@ public class ConfigurationManagerTest {
 		 * the given mission.
 		 */
 		String[] names = {testConfigurationData[0][1]};
-		assertTrue("More or less configurations retrieved than expected.",
-				configurationMgr.getConfigurations(null, null, null, null, null, null, 0, 10, null).size() == 2);
-		assertTrue("More or less configurations retrieved than expected.",
-				configurationMgr.getConfigurations(testMissionData[0], null, null, null, null, null, 0, 100, null).size() == 2);
-		assertTrue("More or less configurations retrieved than expected.", configurationMgr
-				.getConfigurations(testMissionData[0], null, names, null, null, null, null, null, null).size() == 1);
-		assertTrue("More or less configurations retrieved than expected.", configurationMgr
-				.getConfigurations(testMissionData[0], null, null, testConfigurationData[0][2], null, null, null, null, null).size() == 1);
+		assertTrue(configurationMgr.getConfigurations(null, null, null, null, null, null, 0, 10, null).size() == 2, "More or less configurations retrieved than expected.");		assertTrue(configurationMgr.getConfigurations(testMissionData[0], null, null, null, null, null, 0, 100, null).size() == 2, "More or less configurations retrieved than expected.");
+		assertTrue(configurationMgr.getConfigurations(testMissionData[0], null, names, null, null, null, null, null, null).size() == 1, "More or less configurations retrieved than expected.");
+		assertTrue(configurationMgr.getConfigurations(testMissionData[0], null, null,
+                                                  testConfigurationData[0][2], null, null, null, null, null).size() == 1, "More or less configurations retrieved than expected.");
 	}
 
 }

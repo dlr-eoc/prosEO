@@ -5,26 +5,24 @@
  */
 package de.dlr.proseo.procmgr.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -48,11 +46,10 @@ import de.dlr.proseo.procmgr.rest.model.WorkflowUtil;
  *
  * @author Katharina Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProcessorManagerApplication.class)
 @WithMockUser(username = "UTM-testuser", roles = {})
-@AutoConfigureTestEntityManager
 @Transactional
+@TestInstance(Lifecycle.PER_CLASS)
 public class WorkflowControllerTest {
 
 	/** A logger for this class */
@@ -87,7 +84,7 @@ public class WorkflowControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeAll
 	public void setUp() throws Exception {
 		logger.trace(">>> Starting to create test data in the database");
 
@@ -105,9 +102,19 @@ public class WorkflowControllerTest {
 	 *
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterAll
 	public void tearDown() throws Exception {
-		// Nothing to do, test data will be deleted by automatic rollback of test transaction
+		logger.debug(">>> Starting to delete test data in database");
+		RepositoryService.getWorkflowRepository().deleteAll();
+		RepositoryService.getOrderRepository().deleteAll();
+		RepositoryService.getProductClassRepository().deleteAll();
+		RepositoryService.getConfiguredProcessorRepository().deleteAll();
+		RepositoryService.getConfigurationRepository().deleteAll();
+		RepositoryService.getProcessorRepository().deleteAll();
+		RepositoryService.getProcessorClassRepository().deleteAll();
+		RepositoryService.getSpacecraftRepository().deleteAll();
+		RepositoryService.getMissionRepository().deleteAll();
+		logger.debug("<<< Finished deleting test data in database");
 	}
 
 	/**
@@ -240,8 +247,8 @@ public class WorkflowControllerTest {
 
 		// testing workflow creation with the workflow controller
 		ResponseEntity<RestWorkflow> created = wci.createWorkflow(toBeCreated);
-		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, created.getStatusCode());
-		assertEquals("Error during workflow creation.", toBeCreated.getName(), created.getBody().getName());
+		assertEquals(HttpStatus.CREATED, created.getStatusCode(), "Wrong HTTP status: ");
+		assertEquals(toBeCreated.getName(), created.getBody().getName(), "Error during workflow creation.");
 	}
 
 	/**
@@ -260,9 +267,9 @@ public class WorkflowControllerTest {
 		// database via the workflow controller
 		ResponseEntity<List<RestWorkflow>> retrievedWorkflows = wci.getWorkflows(testMissionData[0], null, null, null,
 				null, null, null, null, null);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedWorkflows.getStatusCode());
-		assertTrue("Wrong number of workflows retrieved.",
-				expectedWorkflows.size() == retrievedWorkflows.getBody().size());
+		assertEquals(HttpStatus.OK, retrievedWorkflows.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(
+				expectedWorkflows.size() == retrievedWorkflows.getBody().size(), "Wrong number of workflows retrieved.");
 	}
 
 	/**
@@ -279,9 +286,9 @@ public class WorkflowControllerTest {
 		// retrieve a workflow with the workflow controller by using the id from the
 		// test workflow
 		ResponseEntity<RestWorkflow> retrievedWorkflow = wci.getWorkflowById(expectedWorkflow.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedWorkflow.getStatusCode());
-		assertTrue("Wrong workflow retrieved.",
-				expectedWorkflow.getName().equals(retrievedWorkflow.getBody().getName()));
+		assertEquals(HttpStatus.OK, retrievedWorkflow.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(
+				expectedWorkflow.getName().equals(retrievedWorkflow.getBody().getName()), "Wrong workflow retrieved.");
 	}
 
 	/**
@@ -297,11 +304,11 @@ public class WorkflowControllerTest {
 
 		// delete the chosen workflow via the workflow controller
 		ResponseEntity<?> entity = wci.deleteWorkflowById(toBeDeleted.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.NO_CONTENT, entity.getStatusCode());
+		assertEquals(HttpStatus.NO_CONTENT, entity.getStatusCode(), "Wrong HTTP status: ");
 
 		// assert that the workflow was deleted
-		assertTrue("Workflow not deleted.",
-				RepositoryService.getWorkflowRepository().findById(toBeDeleted.getId()).isEmpty());
+		assertTrue(
+				RepositoryService.getWorkflowRepository().findById(toBeDeleted.getId()).isEmpty(), "Workflow not deleted.");
 	}
 
 	/**
@@ -318,9 +325,9 @@ public class WorkflowControllerTest {
 		toBeModified.setWorkflowVersion("10.1");
 
 		ResponseEntity<RestWorkflow> entity = wci.modifyWorkflow(toBeModified.getId(), toBeModified);
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
-		assertTrue("Modification unsuccessfull", toBeModified.getVersion() + 1 == entity.getBody().getVersion());
-		assertNotEquals("Modification unsuccessfull", previousWorkflowVersion, entity.getBody().getWorkflowVersion());
+		assertEquals(HttpStatus.OK, entity.getStatusCode(), "Wrong HTTP status: ");
+		assertTrue(toBeModified.getVersion() + 1 == entity.getBody().getVersion(), "Modification unsuccessfull");
+		assertNotEquals(previousWorkflowVersion, entity.getBody().getWorkflowVersion(), "Modification unsuccessfull");
 	}
 
 }
