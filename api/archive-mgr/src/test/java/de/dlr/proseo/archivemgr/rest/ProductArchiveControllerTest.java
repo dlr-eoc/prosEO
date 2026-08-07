@@ -5,22 +5,21 @@
  */
 package de.dlr.proseo.archivemgr.rest;
 
-import static org.junit.Assert.assertEquals;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.Set;
 import java.util.HashSet;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.archivemgr.ProductArchiveManagerApplication;
@@ -39,9 +38,7 @@ import de.dlr.proseo.model.service.RepositoryService;
  *
  * @author Denys Chaykovskiy
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProductArchiveManagerApplication.class)
-@AutoConfigureTestEntityManager
 @Transactional
 @WithMockUser(username = "UTM-testuser")
 public class ProductArchiveControllerTest {
@@ -80,7 +77,7 @@ public class ProductArchiveControllerTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		createProductArchive(testArchiveData[0]);
 		createProductArchive(testArchiveData[1]);
@@ -90,7 +87,7 @@ public class ProductArchiveControllerTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		RepositoryService.getProductArchiveRepository().deleteAll();
 	}
@@ -162,7 +159,7 @@ public class ProductArchiveControllerTest {
 
 		// Create a archive with the archive controller
 		ResponseEntity<RestProductArchive> getEntity = paci.createArchive(restArchive);
-		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, getEntity.getStatusCode());
+		assertEquals(HttpStatus.CREATED, getEntity.getStatusCode(), "Wrong HTTP status: ");
 	}
 
 	/**
@@ -181,7 +178,7 @@ public class ProductArchiveControllerTest {
 
 		// Delete the test archive with the product archive controller
 		ResponseEntity<?> entity = paci.deleteArchiveById(testArchive.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.NO_CONTENT, entity.getStatusCode());
+		assertEquals(HttpStatus.NO_CONTENT, entity.getStatusCode(), "Wrong HTTP status: ");
 	}
 
 	/**
@@ -198,8 +195,8 @@ public class ProductArchiveControllerTest {
 
 		// Retrieve the test product archive with the product archive controller
 		ResponseEntity<RestProductArchive> getEntity = paci.getArchiveById(testArchive.getId());
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
-		assertEquals("Wrong product archive: ", testArchive.getName(), getEntity.getBody().getName());
+		assertEquals(HttpStatus.OK, getEntity.getStatusCode(), "Wrong HTTP status: ");
+		assertEquals(testArchive.getName(), getEntity.getBody().getName(), "Wrong product archive: ");
 	}
 
 	/**
@@ -216,18 +213,18 @@ public class ProductArchiveControllerTest {
 //
 //		// Get archives using different selection criteria
 //		ResponseEntity<List<RestProductArchive>> retrievedArchives = paci.getArchives(null, null, null, null, null);
-//		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedArchives.getStatusCode());
-//		assertEquals("Wrong number of archives retrieved: ", testArchives.size(),
-//				retrievedArchives.getBody().size());
+//		assertEquals(HttpStatus.OK, retrievedArchives.getStatusCode(), "Wrong HTTP status: ");
+//		assertEquals(testArchives.size(),
+//				retrievedArchives.getBody().size(), "Wrong number of archives retrieved: ");
 //
 //		retrievedArchives = paci.getArchives("invalid", "invalid", "invalid", null, null);
-//		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_FOUND, retrievedArchives.getStatusCode());
+//		assertEquals(HttpStatus.NOT_FOUND, retrievedArchives.getStatusCode(), "Wrong HTTP status: ");
 //
 //		// TODO:
 //		/*
 //		retrievedArchives = paci.getArchives(testArchiveData[0][5], testArchiveData[0][6], testArchiveData[0][1]);
-//		assertEquals("Wrong HTTP status: ", HttpStatus.OK, retrievedArchives.getStatusCode());
-//		assertEquals("Wrong number of archives retrieved: ", 1, retrievedArchives.getBody().size());
+//		assertEquals(HttpStatus.OK, retrievedArchives.getStatusCode(), "Wrong HTTP status: ");
+//		assertEquals(1, retrievedArchives.getBody().size(), "Wrong number of archives retrieved: ");
 //		*/
 	}
 
@@ -249,7 +246,7 @@ public class ProductArchiveControllerTest {
 		ResponseEntity<RestProductArchive> getEntity = paci.modifyArchive(restArchive.getId(), restArchive);
 
 		// Test that the product archive attribute was changed as expected
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
-		assertEquals("Wrong Name: ", restArchive.getName(), getEntity.getBody().getName());
+		assertEquals(HttpStatus.OK, getEntity.getStatusCode(), "Wrong HTTP status: ");
+		assertEquals(restArchive.getName(), getEntity.getBody().getName(), "Wrong Name: ");
 	}
 }

@@ -5,7 +5,15 @@
  */
 package de.dlr.proseo.api.xbipmon;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,12 +24,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +34,6 @@ import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.api.xbipmon.rest.model.RestInterfaceStatus;
 
@@ -40,7 +41,6 @@ import de.dlr.proseo.api.xbipmon.rest.model.RestInterfaceStatus;
  * @author thomas
  *
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = XbipMonitorApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 public class XbipMonitorTest {
@@ -56,14 +56,14 @@ public class XbipMonitorTest {
 	/** REST template builder */
 	@Autowired
 	RestTemplateBuilder rtb;
-	
+ 		
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(XbipMonitorTest.class);
 	
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 		// Make sure target directory does not exist
 		Path testDataPath = Path.of(TEST_DATA_DIR);
@@ -118,21 +118,21 @@ public class XbipMonitorTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -153,18 +153,18 @@ public class XbipMonitorTest {
 				restInterfaceStatus.getBody().getAvailable(),
 				restInterfaceStatus.getBody().getPerformance()));
 		
-		assertEquals("Unexpected XBIP Monitor identifier: ", TEST_XBIP_MONITOR_ID, restInterfaceStatus.getBody().getId());
-		assertEquals("Unexpected availability: ", true, restInterfaceStatus.getBody().getAvailable());
-		assertTrue("Unexpected performance: ", Double.valueOf(0.0) < restInterfaceStatus.getBody().getPerformance());
+		assertEquals(TEST_XBIP_MONITOR_ID, restInterfaceStatus.getBody().getId(), "Unexpected XBIP Monitor identifier: ");
+		assertEquals(true, restInterfaceStatus.getBody().getAvailable(), "Unexpected availability: ");
+		assertTrue(Double.valueOf(0.0) < restInterfaceStatus.getBody().getPerformance(), "Unexpected performance: ");
 		
 		Path historyFilePath = Paths.get(TEST_DATA_DIR + File.separator + "history.file");
-		assertTrue("History file not found", Files.exists(historyFilePath));
+		assertTrue(Files.exists(historyFilePath), "History file not found");
 		try {
-			assertEquals("History file has unexpected size: ", 106, Files.size(historyFilePath));
+			assertEquals(106, Files.size(historyFilePath), "History file has unexpected size: ");
 		} catch (IOException e) {
 			fail("Cannot access history file, cause: " + e.getMessage());
 		}
-		assertTrue("DSIB file for ch. 1 of first session not found", Files.exists(Paths.get(TEST_DATA_DIR, "cadu/DCS_01_S1B_20210726001122345678_dat/ch_1", "DCS_01_S1B_20210726001122345678_ch1_DSIB.xml")));
+		assertTrue(Files.exists(Paths.get(TEST_DATA_DIR, "cadu/DCS_01_S1B_20210726001122345678_dat/ch_1", "DCS_01_S1B_20210726001122345678_ch1_DSIB.xml")), "DSIB file for ch. 1 of first session not found");
 	}
 
 }

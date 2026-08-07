@@ -3,7 +3,14 @@
  */
 package de.dlr.proseo.api.odip.odata;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -31,11 +38,6 @@ import org.apache.olingo.server.api.uri.queryoption.SkipOption;
 import org.apache.olingo.server.api.uri.queryoption.TopOption;
 import org.apache.olingo.server.api.uri.queryoption.expression.Expression;
 import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitException;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,7 +109,7 @@ public class TestSqlFilterExpressionVisitor {
 					logger.trace("filterExpression = " + filterExpression);
 					result = filterExpression.accept(expressionVisitor);
 					logger.trace("accept() returns [" + result + "]");
-					assertNotNull("Unexpected null result from expressionVisitor", result);
+					assertNotNull(result, "Unexpected null result from expressionVisitor");
 				} catch (ODataApplicationException | ExpressionVisitException e) {
 					logger.error("Exception thrown in filter expression: ", e);
 					response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
@@ -164,7 +166,7 @@ public class TestSqlFilterExpressionVisitor {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 		OData odata = OData.newInstance();
 		ServiceMetadata edm = odata.createServiceMetadata(edmProvider, new ArrayList<EdmxReference>());
@@ -181,14 +183,14 @@ public class TestSqlFilterExpressionVisitor {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		testRequest = new ODataRequest();
 		testRequest.setMethod(HttpMethod.GET);
@@ -201,7 +203,7 @@ public class TestSqlFilterExpressionVisitor {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		testRequest = null;
 	}
@@ -397,7 +399,7 @@ public class TestSqlFilterExpressionVisitor {
 //			fail("Cannot read OData response due to exception " + e.getMessage());
 //		}
 //
-//		assertEquals("Unexpected where clause", sqlQuery, result);
+//		assertEquals(sqlQuery, result, "Unexpected where clause");
 	}
 
 }

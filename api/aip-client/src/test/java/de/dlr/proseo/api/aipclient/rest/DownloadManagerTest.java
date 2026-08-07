@@ -5,7 +5,17 @@
  */
 package de.dlr.proseo.api.aipclient.rest;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+
 import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -19,16 +29,9 @@ import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpHeaders;
@@ -37,8 +40,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -66,7 +67,6 @@ import de.dlr.proseo.model.service.SecurityService;
  * @author Dr. Thomas Bassler
  * 
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = AipClientApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @Transactional
 public class DownloadManagerTest {
@@ -423,7 +423,7 @@ public class DownloadManagerTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 		if (logger.isTraceEnabled()) logger.trace(">>> setUpBeforeClass()");
 		
@@ -482,12 +482,13 @@ public class DownloadManagerTest {
 		if (failed) {
 			throw new RuntimeException("Test data validation failed");
 		}
+		
 	}
 
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 		if (logger.isTraceEnabled()) logger.trace(">>> tearDownAfterClass()");
 
@@ -504,7 +505,7 @@ public class DownloadManagerTest {
 		// Ensure test user is set up from data.sql file
 		String query = "select * from users;";
 		List<?> queryResult = em.createNativeQuery(query).getResultList();
-		assertTrue("No user created in database", 0 < queryResult.size());
+		assertTrue(0 < queryResult.size(), "No user created in database");
 
 		// Create test processing facility
 		ProcessingFacility facility = new ProcessingFacility();
@@ -772,7 +773,7 @@ public class DownloadManagerTest {
 	 * 
 	 * @throws java.lang.Exception if any error condition arises
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		if (logger.isTraceEnabled()) logger.trace(">>> setUp()");
 		
@@ -803,7 +804,7 @@ public class DownloadManagerTest {
 	 * 
 	 * @throws java.lang.Exception if any error condition arises
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		if (logger.isTraceEnabled()) logger.trace(">>> tearDown()");
 		
@@ -813,6 +814,15 @@ public class DownloadManagerTest {
 		// Remove downloaded files
 		Files.deleteIfExists(Path.of(config.getClientTargetDir(), TEST_FILENAME_1));
 		Files.deleteIfExists(Path.of(config.getClientTargetDir(), TEST_FILENAME_2));
+		// Ensure test user is set up from data.sql file
+		
+		
+		RepositoryService.getProductArchiveRepository().deleteAll();
+		RepositoryService.getProductFileRepository().deleteAll();
+		RepositoryService.getProductRepository().deleteAll();
+		RepositoryService.getProductClassRepository().deleteAll();
+		RepositoryService.getFacilityRepository().deleteAll();
+		RepositoryService.getMissionRepository().deleteAll();
 
 	}
 
@@ -877,7 +887,7 @@ public class DownloadManagerTest {
 		try {
 			RestProduct restProduct = downloadManager.downloadByName(filename, facility, null);
 			
-			assertEquals("Unexpected filename", filename, restProduct.getProductFile().get(0).getProductFileName());
+			assertEquals(filename, restProduct.getProductFile().get(0).getProductFileName(), "Unexpected filename");
 			
 		} catch (Exception e) {
 			fail("Unexpected exception when testing locally available file: " + e.getClass().getName() + "/" + e.getMessage());
@@ -891,12 +901,12 @@ public class DownloadManagerTest {
 		try {
 			RestProduct restProduct = downloadManager.downloadByName(filename, facility, null);
 			
-			assertEquals("Unexpected filename", filename, restProduct.getProductFile().get(0).getProductFileName());
+			assertEquals(filename, restProduct.getProductFile().get(0).getProductFileName(), "Unexpected filename");
 			
 			// Wait for download completion and check existence of file
 			logger.info("Waiting for product download ...");
 			Thread.sleep(2000L);
-			assertTrue("File " + TEST_FILENAME_1 + " not present", Files.exists(Path.of(config.getClientTargetDir(), TEST_FILENAME_1)));
+			assertTrue(Files.exists(Path.of(config.getClientTargetDir(), TEST_FILENAME_1)), "File " + TEST_FILENAME_1 + " not present");
 			
 		} catch (Exception e) {
 			fail("Unexpected exception when testing successful product download: " + e.getClass().getName() + "/" + e.getMessage());
@@ -952,7 +962,7 @@ public class DownloadManagerTest {
 		// --- Test REST service stub ---
 		try {
 			RestProduct product = downloadManager.downloadBySensingTime(productType, sensingStartTime, sensingStopTime, facility, null);
-			assertEquals("Unexpected product class when testing REST service stub:", TEST_PRODUCT_TYPE, product.getProductClass());
+			assertEquals(TEST_PRODUCT_TYPE, product.getProductClass(), "Unexpected product class when testing REST service stub:");
 		} catch (Exception e) {
 			fail("Unexpected exception when testing REST service stub: " + e.getClass().getName() + "/" + e.getMessage());
 		}
@@ -1023,13 +1033,13 @@ public class DownloadManagerTest {
 		try {
 			RestProduct restProduct = downloadManager.downloadBySensingTime(productType, sensingStartTime, sensingStopTime, facility, null);
 			
-			assertEquals("Unexpected product type", productType, restProduct.getProductClass());
-			assertEquals("Unexpected start time", sensingStartTime.replaceAll("Z", "000"), restProduct.getSensingStartTime());
-			assertEquals("Unexpected stop time", sensingStopTime.replaceAll("Z", "000"), restProduct.getSensingStopTime());
+			assertEquals(productType, restProduct.getProductClass(), "Unexpected product type");
+			assertEquals(sensingStartTime.replaceAll("Z", "000"), restProduct.getSensingStartTime(), "Unexpected start time");
+			assertEquals(sensingStopTime.replaceAll("Z", "000"), restProduct.getSensingStopTime(), "Unexpected stop time");
 			
 			// Wait for download completion and check existence of file
 			Thread.sleep(2000L);
-			assertTrue("File " + TEST_FILENAME_1 + " not present", Files.exists(Path.of(config.getClientTargetDir(), TEST_FILENAME_1)));
+			assertTrue(Files.exists(Path.of(config.getClientTargetDir(), TEST_FILENAME_1)), "File " + TEST_FILENAME_1 + " not present");
 			
 		} catch (Exception e) {
 			fail("Unexpected exception when testing successful product download: " + e.getClass().getName() + "/" + e.getMessage());
@@ -1147,15 +1157,15 @@ public class DownloadManagerTest {
 			List<RestProduct> restProducts = downloadManager.downloadAllBySensingTime(productType, sensingStartTime, sensingStopTime, facility, null);
 			
 			for (RestProduct restProduct: restProducts) {
-				assertEquals("Unexpected product type", productType, restProduct.getProductClass());
-				assertTrue("Unexpected start time", sensingStartTime.replaceAll("Z", "000").compareTo(restProduct.getSensingStopTime()) <= 0); // hopefully it's as easy as that ...
-				assertTrue("Unexpected stop time", sensingStopTime.replaceAll("Z", "000").compareTo(restProduct.getSensingStartTime()) >= 0);
+				assertEquals(productType, restProduct.getProductClass(), "Unexpected product type");
+				assertTrue(sensingStartTime.replaceAll("Z", "000").compareTo(restProduct.getSensingStopTime()) <= 0, "Unexpected start time"); // hopefully it's as easy as that ...
+				assertTrue(sensingStopTime.replaceAll("Z", "000").compareTo(restProduct.getSensingStartTime()) >= 0, "Unexpected stop time");
 			}
 			
 			// Wait for download completion and check existence of file
 			Thread.sleep(2000L);
-			assertTrue("File " + TEST_FILENAME_1 + " not present", Files.exists(Path.of(config.getClientTargetDir(), TEST_FILENAME_1)));
-			assertTrue("File " + TEST_FILENAME_2 + " not present", Files.exists(Path.of(config.getClientTargetDir(), TEST_FILENAME_2)));
+			assertTrue(Files.exists(Path.of(config.getClientTargetDir(), TEST_FILENAME_1)), "File " + TEST_FILENAME_1 + " not present");
+			assertTrue(Files.exists(Path.of(config.getClientTargetDir(), TEST_FILENAME_2)), "File " + TEST_FILENAME_2 + " not present");
 			
 		} catch (Exception e) {
 			fail("Unexpected exception when testing successful product download: " + e.getClass().getName() + "/" + e.getMessage());

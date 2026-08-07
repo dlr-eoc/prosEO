@@ -5,9 +5,17 @@
  */
 package de.dlr.proseo.api.cadipmon.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+
 
 import java.io.File;
 import java.io.FileWriter;
@@ -17,12 +25,6 @@ import java.nio.file.Path;
 
 import org.apache.commons.io.FileUtils;
 import org.joda.time.Instant;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +33,6 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import tools.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -45,7 +46,6 @@ import de.dlr.proseo.api.cadipmon.CadipMonitorConfiguration;
  *
  * @author Dr. Thomas Bassler
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = CadipMonitorApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 public class CadipMonitorTest {
 
@@ -148,7 +148,7 @@ public class CadipMonitorTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setUpBeforeClass()");
@@ -186,7 +186,7 @@ public class CadipMonitorTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 	}
 
@@ -239,7 +239,7 @@ public class CadipMonitorTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setUp()");
@@ -266,7 +266,7 @@ public class CadipMonitorTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> tearDown()");
@@ -306,21 +306,21 @@ public class CadipMonitorTest {
 		logger.info("CADIP Monitor run completed, checking outcome");
 
 		// Check download result
-		assertTrue("Session directory missing", Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH)));
-		assertTrue("Session ch.1 directory missing",
-				Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1")));
-		assertTrue("Session ch.2 directory missing",
-				Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1")));
-		assertTrue("Session file 1 missing",
-				Files.exists(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1", TEST_FILE1_NAME)));
-		assertTrue("Session file 2 missing",
-				Files.exists(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_2", TEST_FILE2_NAME)));
+		assertTrue(Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH)), "Session directory missing");
+		assertTrue(
+				Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1")), "Session ch.1 directory missing");
+		assertTrue(
+				Files.isDirectory(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1")), "Session ch.2 directory missing");
+		assertTrue(
+				Files.exists(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1", TEST_FILE1_NAME)), "Session file 1 missing");
+		assertTrue(
+				Files.exists(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_2", TEST_FILE2_NAME)), "Session file 2 missing");
 
 		try {
-			assertEquals("Session file 1 has wrong size", TEST_FILE1_SIZE.longValue(),
-					Files.size(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1", TEST_FILE1_NAME)));
-			assertEquals("Session file 2 has wrong size", TEST_FILE2_SIZE.longValue(),
-					Files.size(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_2", TEST_FILE2_NAME)));
+			assertEquals(TEST_FILE1_SIZE.longValue(),
+					Files.size(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_1", TEST_FILE1_NAME)), "Session file 1 has wrong size");
+			assertEquals(TEST_FILE2_SIZE.longValue(),
+					Files.size(Path.of(config.getL0CaduDirectoryPath(), TEST_SESSION_PATH, "ch_2", TEST_FILE2_NAME)), "Session file 2 has wrong size");
 		} catch (IOException e) {
 			logger.error("Cannot check file size (cause: {} / {})", e.getClass(), e.getMessage());
 			fail("File size validation failed");
