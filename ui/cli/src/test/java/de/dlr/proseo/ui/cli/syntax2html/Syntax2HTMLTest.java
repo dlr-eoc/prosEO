@@ -1,12 +1,12 @@
 /**
  * Syntax2HTMLTest.java
- * 
+ *
  * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
  */
 
 package de.dlr.proseo.ui.cli.syntax2html;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,8 +14,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Katharina Bassler
@@ -28,15 +28,14 @@ public class Syntax2HTMLTest {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		Files.delete(output);
 	}
 
 	/**
-	 * Test method for
-	 * {@link de.dlr.proseo.logging.ui.cli.syntax2html.Syntax2HTML#main(java.lang.String...)}.
-	 * 
+	 * Test method for {@link de.dlr.proseo.logging.ui.cli.syntax2html.Syntax2HTML#main(java.lang.String...)}.
+	 *
 	 * @throws IOException
 	 */
 	@Test

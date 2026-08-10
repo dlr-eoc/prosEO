@@ -1,16 +1,17 @@
 /**
  * CLIUtilTest.java
- * 
+ *
  * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ui.cli.parser;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.DateTimeException;
-
 import java.time.Instant;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +25,7 @@ public class CLIUtilTest {
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CLIUtilTest.class);
-	
+
 	/**
 	 * Test method for {@link de.dlr.proseo.ui.cli.CLIUtil#parseObjectFile(java.io.File, java.lang.String, java.lang.Class)}.
 	 */
@@ -54,15 +55,18 @@ public class CLIUtilTest {
 	 */
 	@Test
 	public final void testParseDateTime() {
-		assertEquals("Fail date only", Instant.parse("2020-04-08T00:00:00.0Z"), CLIUtil.parseDateTime("2020-04-08"));
-		assertEquals("Fail date+TZ", Instant.parse("2020-04-07T22:00:00.0Z"), CLIUtil.parseDateTime("2020-04-08GMT+02"));
-		assertEquals("Fail date+hour+min", Instant.parse("2020-04-08T11:30:00.0Z"), CLIUtil.parseDateTime("2020-04-08T11:30"));
-		assertEquals("Fail date+hour+min+TZ", Instant.parse("2020-04-08T11:30:00.0Z"), CLIUtil.parseDateTime("2020-04-08T11:30Z"));
-		assertEquals("Fail date+time", Instant.parse("2020-04-08T11:30:45.0Z"), CLIUtil.parseDateTime("2020-04-08T11:30:45"));
-		assertEquals("Fail date+time+TZ", Instant.parse("2020-04-08T09:30:45.0Z"), CLIUtil.parseDateTime("2020-04-08T11:30:45+02:00"));
-		assertEquals("Fail date+time+nano", Instant.parse("2020-04-08T11:30:45.123Z"), CLIUtil.parseDateTime("2020-04-08T11:30:45.123"));
-		assertEquals("Fail date+time+nano+TZ", Instant.parse("2020-04-08T13:30:45.123456Z"), CLIUtil.parseDateTime("2020-04-08T11:30:45.123456-0200"));
-		
+		assertEquals(Instant.parse("2020-04-08T00:00:00.0Z"), CLIUtil.parseDateTime("2020-04-08"), "Fail date only");
+		assertEquals(Instant.parse("2020-04-07T22:00:00.0Z"), CLIUtil.parseDateTime("2020-04-08GMT+02"), "Fail date+TZ");
+		assertEquals(Instant.parse("2020-04-08T11:30:00.0Z"), CLIUtil.parseDateTime("2020-04-08T11:30"), "Fail date+hour+min");
+		assertEquals(Instant.parse("2020-04-08T11:30:00.0Z"), CLIUtil.parseDateTime("2020-04-08T11:30Z"), "Fail date+hour+min+TZ");
+		assertEquals(Instant.parse("2020-04-08T11:30:45.0Z"), CLIUtil.parseDateTime("2020-04-08T11:30:45"), "Fail date+time");
+		assertEquals(Instant.parse("2020-04-08T09:30:45.0Z"), CLIUtil.parseDateTime("2020-04-08T11:30:45+02:00"),
+				"Fail date+time+TZ");
+		assertEquals(Instant.parse("2020-04-08T11:30:45.123Z"), CLIUtil.parseDateTime("2020-04-08T11:30:45.123"),
+				"Fail date+time+nano");
+		assertEquals(Instant.parse("2020-04-08T13:30:45.123456Z"), CLIUtil.parseDateTime("2020-04-08T11:30:45.123456-0200"),
+				"Fail date+time+nano+TZ");
+
 		try {
 			CLIUtil.parseDateTime("wrong");
 			fail("No exception on 'wrong'");
