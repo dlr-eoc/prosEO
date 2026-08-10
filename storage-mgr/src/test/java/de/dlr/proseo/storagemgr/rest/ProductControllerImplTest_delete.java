@@ -1,14 +1,11 @@
 /**
  * ProductControllerImplTest_delete.java
- * 
+ *
  * (C) 2022 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.storagemgr.rest;
 
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
@@ -17,25 +14,26 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.StorageManager;
 import de.dlr.proseo.storagemgr.StorageProvider;
-import de.dlr.proseo.storagemgr.BaseStorageTestUtils;
 import de.dlr.proseo.storagemgr.TestUtils;
 import de.dlr.proseo.storagemgr.model.StorageType;
 import de.dlr.proseo.storagemgr.utils.PathConverter;
 
 /**
  * Mock Mvc test for Product Controller
- * 
+ *
  * @author Denys Chaykovskiy
- * 
+ *
  */
 /**
  * @throws Exception
@@ -57,9 +55,9 @@ public class ProductControllerImplTest_delete {
 
 	/**
 	 * Delete/remove product by product path info from prosEO storage
-	 * 
+	 *
 	 * DELETE /products pathInfo="/.."
-	 * 
+	 *
 	 * @return RestProductFS
 	 */
 	@Test
@@ -76,9 +74,9 @@ public class ProductControllerImplTest_delete {
 
 	/**
 	 * Delete/remove product by product path info from prosEO storage
-	 * 
+	 *
 	 * DELETE /products pathInfo="/.."
-	 * 
+	 *
 	 * @return RestProductFS
 	 */
 	@Test
@@ -113,7 +111,7 @@ public class ProductControllerImplTest_delete {
 			storageTestUtils.createSourceFile(relativePath);
 			storageProvider.getStorage().uploadSourceFile(relativePath);
 		}
-			
+
 		// show storage files before http-delete-call
 		BaseStorageTestUtils.printStorageFiles("Before http-call", storageProvider.getStorage());
 

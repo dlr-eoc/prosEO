@@ -16,12 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
-
 import de.dlr.proseo.api.prip.OAuth2TokenManager;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.PripMessage;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Spring MVC controller for requesting an access token for the prosEO PRIP API; implements the services required to provide a

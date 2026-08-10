@@ -1,6 +1,6 @@
 /**
  * CLIUtil.java
- * 
+ *
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ui.cli;
@@ -19,30 +19,28 @@ import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
-import tools.jackson.core.exc.StreamWriteException;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.UIMessage;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import tools.jackson.core.JacksonException;
+import tools.jackson.core.exc.StreamWriteException;
 import tools.jackson.databind.DatabindException;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.dataformat.xml.XmlMapper;
 import tools.jackson.dataformat.xml.XmlWriteFeature;
-import tools.jackson.dataformat.xml.ser.ToXmlGenerator;
 import tools.jackson.dataformat.yaml.YAMLFactory;
 import tools.jackson.dataformat.yaml.YAMLMapper;
-import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.logging.messages.GeneralMessage;
-import de.dlr.proseo.logging.messages.UIMessage;
-import de.dlr.proseo.model.util.OrbitTimeFormatter;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Utility methods for command interpretation
- * 
+ *
  * @author Dr. Thomas Bassler
  */
 public class CLIUtil {
@@ -53,10 +51,10 @@ public class CLIUtil {
 	public static final String FILE_FORMAT_JSON = "JSON";
 	/** XML file format */
 	public static final String FILE_FORMAT_XML = "XML";
-	
+
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(CLIUtil.class);
-	
+
 	/**
 	 * Helper class to return username and password from a method
 	 */
@@ -64,7 +62,7 @@ public class CLIUtil {
 		public String username;
 		public String password;
 	}
-	
+
 	/**
 	 * Read the description for an object of the given type from a file in Json, XML or Yaml format
 	 * @param <T> the type parameter
@@ -79,7 +77,7 @@ public class CLIUtil {
 	public static <T> T parseObjectFile(File objectFile, String fileFormat, Class<T> clazz)
 			throws IllegalArgumentException, IOException {
 		if (logger.isTraceEnabled()) logger.trace(">>> parseObjectFile({}, {}, {})", objectFile, fileFormat, clazz);
-		
+
 		ObjectMapper mapper = null;
 		switch(fileFormat.toUpperCase()) {
 		case FILE_FORMAT_JSON:
@@ -95,7 +93,7 @@ public class CLIUtil {
 			String message = logger.log(UIMessage.INVALID_FILE_TYPE, fileFormat);
 			throw new IllegalArgumentException(message);
 		}
-		
+
 		try {
 			return mapper.readValue(objectFile, clazz);
 		} catch (DatabindException e) {
@@ -106,11 +104,11 @@ public class CLIUtil {
 			throw new IOException(message, e);
 		}
 	}
-	
+
 	/**
 	 * Print the given object to the given output stream according to the requested file format; if the object is a list or set
 	 * of size 1, then the single element of the collection is printed, not the list/set itself
-	 * 
+	 *
 	 * @param out the output stream to print to
 	 * @param object the object to print
 	 * @param fileFormat the file format requested (one of JSON, XML, YAML)
@@ -120,7 +118,7 @@ public class CLIUtil {
 	@SuppressWarnings("rawtypes")
 	public static void printObject(PrintStream out, Object object, String fileFormat) throws IllegalArgumentException, IOException {
 		if (logger.isTraceEnabled()) logger.trace(">>> printObject({}, object, {})", out, object, fileFormat);
-		
+
 		ObjectMapper mapper = null;
 		switch(fileFormat.toUpperCase()) {
 		case FILE_FORMAT_JSON:
@@ -139,7 +137,7 @@ public class CLIUtil {
 			String message = logger.log(UIMessage.INVALID_FILE_TYPE, fileFormat);
 			throw new IllegalArgumentException(message);
 		}
-		
+
 		try {
 			Object objectToPrint = object;
 			if (object instanceof List && 1 == ((List) object).size()) {
@@ -159,11 +157,11 @@ public class CLIUtil {
 			throw e;
 		}
 	}
-	
+
 	/**
 	 * Set an object attribute from an "attribute=value" parameter using reflection. Supported attribute types are
 	 * String, Date, Long and List&lt;String&gt;.
-	 * 
+	 *
 	 * @param restObject the object to set the attribute in
 	 * @param attributeParameter a string of the form "attribute=value", where "value" may be a comma-separated string list
 	 * @throws IllegalArgumentException if the given attribute name does not exist or is not accessible in the given object
@@ -171,7 +169,7 @@ public class CLIUtil {
 	 */
 	public static void setAttribute(Object restObject, String attributeParameter) throws IllegalArgumentException, ClassCastException {
 		if (logger.isTraceEnabled()) logger.trace(">>> setAttribute({}, {})", restObject.getClass().toString(), attributeParameter);
-		
+
 		String[] paramParts = attributeParameter.split("=");
 		Field attributeField = null;
 		try {
@@ -219,9 +217,9 @@ public class CLIUtil {
 			throw new RuntimeException(message, e);
 		}
 	}
-	
+
 	/**
-	 * Parse a date and time string in the format "yyyy-MM-dd'T'HH:mm:ss.SSSSSS[zZX]", whereby all of the following variants 
+	 * Parse a date and time string in the format "yyyy-MM-dd'T'HH:mm:ss.SSSSSS[zZX]", whereby all of the following variants
 	 * are allowed:
 	 * <ul>
 	 *   <li>yyyy-MM-dd</li>
@@ -231,31 +229,31 @@ public class CLIUtil {
 	 *   <li>any of the above plus a time zone in general, RFC 822 or ISO 8601 format</li>
 	 * </ul>
 	 * Missing parts are set to zero, a missing time zone is set to UTC.
-	 * 
+	 *
 	 * @param dateTime the date and time string to parse
 	 * @return the parsed point in time
 	 * @throws DateTimeException if the given string cannot be parsed according to the format given above
 	 */
 	public static Instant parseDateTime(String dateTime) throws DateTimeException {
 		if (logger.isTraceEnabled()) logger.trace(">>> parseDateTime({})", dateTime);
-		
+
 		Instant result;
 		try {
 			result = Instant.from(OrbitTimeFormatter.parse(dateTime));
 		} catch (DateTimeParseException e) {
 			throw new DateTimeException(e.getMessage(), e);
 		}
-		
+
 		if (logger.isTraceEnabled()) logger.trace(String.format("... converted input string %s to Instant %s", dateTime, result.toString()));
-		
+
 		return result;
 	}
-	
+
 	/**
 	 * Read the user credentials from a file consisting of one or two lines, the first line containing the username (without mission
 	 * prefix) and the second line the password.
 	 * The file will only be read, if it is only readable by the current system user (as far as warranted by the operating system).
-	 * 
+	 *
 	 * @param filePathString path to the file containing the credentials
 	 * @return a Credentials object with username and password set from the file
 	 * @throws SecurityException if the file denoted by the file path does not meet the security criteria
@@ -266,7 +264,7 @@ public class CLIUtil {
 		if (logger.isTraceEnabled()) logger.trace(">>> readIdentFile({})", filePathString);
 
 		Credentials credentials = new Credentials();
-		
+
 		try {
 			// Check file permissions
 			Path filePath = Path.of(filePathString);
@@ -279,8 +277,8 @@ public class CLIUtil {
 					logger.log(UIMessage.WARN_CREDENTIALS_INSECURE, filePathString);
 					permissions = null;
 				}
-				if (null != permissions && 
-						(permissions.contains(PosixFilePermission.GROUP_READ) 
+				if (null != permissions &&
+						(permissions.contains(PosixFilePermission.GROUP_READ)
 					  || permissions.contains(PosixFilePermission.OTHERS_READ))) {
 					String message = logger.log(UIMessage.CREDENTIALS_INSECURE, filePathString);
 					System.err.println(message);
@@ -291,7 +289,7 @@ public class CLIUtil {
 				System.err.println(message);
 				throw new FileNotFoundException(message);
 			}
-			
+
 			// Read the credentials from the file
 			BufferedReader credentialFile = new BufferedReader(new FileReader(filePathString));
 			credentials.username = credentialFile.readLine();
@@ -310,12 +308,12 @@ public class CLIUtil {
 			}
 		} catch (IOException e) {
 			if (e instanceof FileNotFoundException) throw e;
-			
+
 			String message = logger.log(UIMessage.CREDENTIALS_NOT_READABLE, filePathString, e.getMessage());
 			System.err.println(message);
 			throw new IOException(message, e);
 		}
-		
+
 		logger.trace("<<< readIdentFile()");
 		return credentials;
 	}

@@ -6,16 +6,12 @@
 package de.dlr.proseo.ui.gui;
 
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.restclient.RestTemplateBuilder;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,28 +20,21 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.logging.messages.PripMessage;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -95,15 +84,15 @@ public class GUIProductController extends GUIBaseController {
 	}
 
 
-	
+
 	/**
-	 * Download the file 
-	 * 
+	 * Download the file
+	 *
 	 * @param productId     The product id of the file
 	 * @param filePath      The file path
 	 * @param fileName      The file name
 	 * @param facilityName  The facility name
-	 * 
+	 *
 	 * @return The ResponseEntity to download the file
 	 */
 	@GetMapping("/productfile/download")
@@ -114,16 +103,16 @@ public class GUIProductController extends GUIBaseController {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> download({}, {}, {}, {})", productId, filePath, fileName, facilityName);
-		
+
 		// get facility for storageMgr URL
 		String storageMgrUrl = getStorageMgrUrl(facilityName);
-		
+
 		// get download token
-		String downloadToken = retrieveDownloadToken(productId, fileName);		
-		
+		String downloadToken = retrieveDownloadToken(productId, fileName);
+
 		return downloadProductFromStorageMgr(storageMgrUrl, filePath, fileName, downloadToken);
 	}
-			
+
 	/**
 	 * Retrieve products matching the provided parameters
 	 *
@@ -211,15 +200,15 @@ public class GUIProductController extends GUIBaseController {
 			.subscribe(entityList -> {
 				logger.trace("Now in Consumer::accept({})", entityList);
 
-				if (entityList.getStatusCode().is2xxSuccessful() 
+				if (entityList.getStatusCode().is2xxSuccessful()
 						|| entityList.getStatusCode().value() ==  HttpStatus.NOT_FOUND.value()) {
 					if (entityList.getBody() instanceof Collection) {
-						products.addAll((Collection<? extends Object>) entityList.getBody());
+						products.addAll(entityList.getBody());
 
 						model.addAttribute("products", products);
 
 						modelAddAttributes(model, count, pageSize, pages, page);
-						
+
 						if (logger.isTraceEnabled())
 							logger.trace(model.toString() + "MODEL TO STRING");
 						if (logger.isTraceEnabled())
@@ -231,7 +220,7 @@ public class GUIProductController extends GUIBaseController {
 						products.add(entityList.getBody());
 
 						model.addAttribute("products", products);
-						
+
 						model.addAttribute("count", 1);
 						model.addAttribute("pageSize", 1);
 						model.addAttribute("pageCount", 1);
@@ -474,7 +463,7 @@ public class GUIProductController extends GUIBaseController {
 	 * @return a Mono containing the HTTP response
 	 */
 	private ResponseSpec get(Long id, String productClass, String mode, String fileClass, String quality, String startTimeFrom,
-			String startTimeTo, String genTimeFrom, String genTimeTo, Long recordFrom, Long recordTo, Boolean onlyWithFile, 
+			String startTimeTo, String genTimeFrom, String genTimeTo, Long recordFrom, Long recordTo, Boolean onlyWithFile,
 			Long jobStepId, String sortby, Boolean up) {
 
 		// Provide authentication

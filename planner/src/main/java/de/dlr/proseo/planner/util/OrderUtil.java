@@ -45,7 +45,6 @@ import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.ProcessingOrderHistory;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
-import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.service.RepositoryService;
