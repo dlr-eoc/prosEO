@@ -14,7 +14,6 @@ import java.util.List;
 import reactor.netty.http.client.HttpClient;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -66,21 +65,21 @@ public class GUIOrderTemplateController extends GUIBaseController {
 	/** Date formatter for input type date */
 	// private static final SimpleDateFormat simpleDateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
 
-	/** HTTP Warning header */
-	private static final String HTTP_HEADER_WARNING = "Warning";
-
-	/**
-	 * Create an HTTP "Warning" header with the given text message
-	 *
-	 * @param message the message text
-	 * @return an HttpHeaders object with a warning message
-	 */
-	private HttpHeaders errorHeaders(String message) {
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message.replaceAll("\n", " "));
-		responseHeaders.set("error", message.replaceAll("\n", " "));
-		return responseHeaders;
-	}
+//	/** HTTP Warning header */
+//	private static final String HTTP_HEADER_WARNING = "Warning";
+//
+//	/**
+//	 * Create an HTTP "Warning" header with the given text message
+//	 *
+//	 * @param message the message text
+//	 * @return an HttpHeaders object with a warning message
+//	 */
+//	private HttpHeaders errorHeaders(String message) {
+//		HttpHeaders responseHeaders = new HttpHeaders();
+//		responseHeaders.set(HTTP_HEADER_WARNING, message.replaceAll("\n", " "));
+//		responseHeaders.set("error", message.replaceAll("\n", " "));
+//		return responseHeaders;
+//	}
 
 	/**
 	 * Show the order view

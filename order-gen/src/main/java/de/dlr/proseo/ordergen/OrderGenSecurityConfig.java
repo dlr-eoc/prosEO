@@ -46,7 +46,7 @@ public class OrderGenSecurityConfig {
 	 */
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		String base ="/proseo/order-gen/v0.1";
+//		String base ="/proseo/order-gen/v0.1";
 		http.httpBasic(it -> {})
 			.authorizeHttpRequests(requests -> requests
 			.requestMatchers("/actuator/health")

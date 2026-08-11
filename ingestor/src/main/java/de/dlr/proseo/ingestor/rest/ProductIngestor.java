@@ -828,7 +828,7 @@ public class ProductIngestor {
 		transactionTemplate.setReadOnly(true);
 		List<Long> productFileIds = new ArrayList<Long>(); 
 		transactionTemplate.execute((status) -> {
-			List<Long> productIds = RepositoryService.getProductRepository().findByEvictionTimeLessThanAndWithoutFile(t);
+//			List<Long> productIds = RepositoryService.getProductRepository().findByEvictionTimeLessThanAndWithoutFile(t);
 			List<Product> products = RepositoryService.getProductRepository().findByEvictionTimeLessThan(t);
 			for (Product product : products) {
 				for (ProductFile aProductFile : product.getProductFile()) {
@@ -978,7 +978,7 @@ public class ProductIngestor {
 	/**
 	 * Delete a product 
 	 *
-	 * @param id the product to delete
+	 * @param product the product to delete
 	 * @throws EntityNotFoundException if the product to delete does not exist in
 	 *                                 the database
 	 * @throws IllegalStateException   if the product to delete still as files at
@@ -991,7 +991,7 @@ public class ProductIngestor {
 
 		// Test whether the product id is valid
 		if (product == null) {
-			throw new EntityNotFoundException(logger.log(IngestorMessage.PRODUCT_NOT_FOUND, product.getId()));
+			throw new EntityNotFoundException(logger.log(IngestorMessage.PRODUCT_NOT_FOUND, "not provided"));
 		}
 
 		// Make sure product (including all component products) does not exist on any

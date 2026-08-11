@@ -13,7 +13,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.PlatformTransactionManager;
-import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.ordergen.quartz.OrderGenScheduler;
 import de.dlr.proseo.ordergen.service.ServiceConnection;
 import de.dlr.proseo.ordergen.util.TriggerUtil;
@@ -31,10 +30,6 @@ import jakarta.persistence.PersistenceContext;
 @ComponentScan(basePackages = { "de.dlr.proseo" })
 @EnableJpaRepositories(basePackages = { "de.dlr.proseo.model.dao" })
 public class OrderGenerator implements CommandLineRunner {
-
-	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(OrderGenerator.class);
-	
 
 	/** Transaction manager for transaction control */
 	@Autowired

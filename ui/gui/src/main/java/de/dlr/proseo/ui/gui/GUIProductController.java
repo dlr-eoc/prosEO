@@ -32,8 +32,6 @@ import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.dlr.proseo.logging.http.HttpPrefix;
-import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -59,9 +57,6 @@ public class GUIProductController extends GUIBaseController {
 	/** The connector service to the prosEO backend services */
 	@Autowired
 	private ServiceConnection serviceConnection;
-
-	/** HTTP utility class */
-	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.UI);
 
 	/**
 	 * Show the product view

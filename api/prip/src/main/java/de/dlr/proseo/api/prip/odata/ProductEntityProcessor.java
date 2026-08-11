@@ -77,8 +77,8 @@ import tools.jackson.databind.ObjectMapper;
 @Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 public class ProductEntityProcessor implements EntityProcessor, MediaEntityProcessor {
 
-	// Unformatted message
-	private static final String MSG_CANNOT_FILTER_SERIALIZED_OUTPUT = "Cannot filter serialized output";
+//	// Unformatted message
+//	private static final String MSG_CANNOT_FILTER_SERIALIZED_OUTPUT = "Cannot filter serialized output";
 
 	/* Other string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";

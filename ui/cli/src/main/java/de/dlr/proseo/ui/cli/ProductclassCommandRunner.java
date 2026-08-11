@@ -656,7 +656,7 @@ public class ProductclassCommandRunner {
 		
 		/* Check input data for completeness */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
-		ObjectMapper mapper = new ObjectMapper();
+		
 		for (SelectionRuleString restSelectionRule: selectionRuleList) {
 			
 			/* Set values from attribute parameters */

@@ -33,7 +33,7 @@ public class PathConverter {
 
 	private static String S3PREFIX = "s3://";
 	private static String SLASH = "/";
-	private static String DOUBLESLASH = "//";
+//	private static String DOUBLESLASH = "//";
 	private static String BACKSLASH = "\\";
 
 	/**

@@ -1367,7 +1367,7 @@ public class JobStepUtil {
 											transactionTemplate.setReadOnly(false);
 											for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 												try {
-													Object x = transactionTemplate.execute((status) -> {
+													transactionTemplate.execute((status) -> {
 														JobStep jobStepX = null;
 														Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(idLoc);
 														if (opt.isPresent()) {
@@ -1389,7 +1389,7 @@ public class JobStepUtil {
 													}
 
 												} catch (Exception e) {
-													String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+													logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 
 													if (logger.isDebugEnabled())
 														logger.debug("... exception stack trace: ", e);
@@ -1398,7 +1398,7 @@ public class JobStepUtil {
 											}
 											for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 												try {
-													Object x = transactionTemplate.execute((status) -> {
+													transactionTemplate.execute((status) -> {
 														JobStep jobStepX = null;
 														Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(idLoc);
 														if (opt.isPresent()) {
@@ -1421,7 +1421,7 @@ public class JobStepUtil {
 													}
 
 												} catch (Exception e) {
-													String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+													logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 
 													if (logger.isDebugEnabled())
 														logger.debug("... exception stack trace: ", e);
