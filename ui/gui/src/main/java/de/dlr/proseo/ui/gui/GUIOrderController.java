@@ -15,8 +15,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,8 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -52,6 +48,7 @@ import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.gui.service.OrderService;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * A controller for retrieving and handling order data
@@ -1052,10 +1049,11 @@ public class GUIOrderController extends GUIBaseController {
 			logger.log(UIMessage.EXCEPTION, e.getMessage());
 		}
 
-		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-		map.add("Content-Type", "text/plain");
-		map.add("Content-Length", String.valueOf(result.length()));
-		return new ResponseEntity<>(result, map, HttpStatus.OK);
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.TEXT_PLAIN);
+		headers.setContentLength(result.length());
+
+		return new ResponseEntity<>(result, headers, HttpStatus.OK);
 	}
 
 	@GetMapping("/joborderfile")
@@ -1065,7 +1063,7 @@ public class GUIOrderController extends GUIBaseController {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> jobOrderFile({}, {})", jobOrderFilename, facilityName);
-		
+
 		// get facility for storageMgr URL
 		String storageMgrUrl = getStorageMgrUrl(facilityName);
 
@@ -1098,10 +1096,11 @@ public class GUIOrderController extends GUIBaseController {
 			logger.log(UIMessage.EXCEPTION, e.getMessage());
 		}
 
-		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-		map.add("Content-Type", "application/xml");
-		map.add("Content-Length", String.valueOf(result.length()));
-		return new ResponseEntity<>(result, map, HttpStatus.OK);
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_XML);
+		headers.setContentLength(result.length());
+
+		return new ResponseEntity<>(result, headers, HttpStatus.OK);
 	}
 
 	/**
