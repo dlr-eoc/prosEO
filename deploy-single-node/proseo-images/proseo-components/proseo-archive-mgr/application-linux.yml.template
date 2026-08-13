@@ -1,0 +1,18 @@
+spring:
+    maxResults: 10000
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: ${POSTGRES_USER}
+        password: ${POSTGRES_PWD}
+    packagesToScan: de.dlr.proseo.model
+logging:
+    file: 
+        name: /proseo/log/proseo-archive-mgr.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE

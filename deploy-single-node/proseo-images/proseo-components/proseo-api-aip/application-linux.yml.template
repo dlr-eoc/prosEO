@@ -1,0 +1,55 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: ${POSTGRES_USER}
+        password: ${POSTGRES_PWD}
+logging:
+    file:
+        name: /proseo/log/proseo-api-aipclient.log
+    level:
+        root: INFO
+        de.dlr.proseo: INFO
+        org.hibernate.engine.jdbc.env.internal: WARN
+proseo:
+    aipclient:
+        # Path to the directory to download files to (must be readable for Storage Manager, see below)
+        targetdir: /proseo/transfer/aip/downloads
+        
+    ingestor:
+        # URL of the Ingestor Service
+        url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
+        # Timeout for Ingestor connections in milliseconds (e. g. 30 s)
+        timeout: 30000
+        # Retention period for ingested products in days (e. g. 7 days; 0 means never evict)
+        product.retention: 7
+        
+    storagemgr:
+        # The Storage Manager mount point for product ingestion
+        mountpoint: /mnt 
+        # The directory for the Storage Manager to upload from (Storage Manager perspective on proseo.aipclient.targetdir)
+        sourcedir: aip/downloads
+
+    order:
+        # Interval between product order status checks in milliseconds (e. g. every second)
+        check.interval: 1000
+        
+    archive:
+        # Timeout for archive connections in milliseconds (e. g. 30 s)
+        timeout: 30000
+        # Maximum number of parallel archive order threads
+        orderthreads: 100
+        # Maximum number of parallel download threads
+        threads: 6
+    
+    notification:
+        # URL of the Notification Service
+        url: http://proseo-notification:8080/proseo/notification/v1
+        # URL of the message recipient (supports protocols as per Notification Service API, including "mailto:" and "http[s]:")
+        recipient: "mailto:${NOTIFICATION_RECIPIENT}"
+        # Sender identification
+        sender: "${NOTIFICATION_SENDER}"

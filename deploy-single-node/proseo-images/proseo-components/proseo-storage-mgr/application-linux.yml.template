@@ -1,0 +1,54 @@
+logging:
+    file:
+        name: /proseo/log/proseo-storage-mgr.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+proseo:
+    global:
+      storageIdPrefix: proseo
+
+      # Default mount point for files to upload
+      sourcePath: /proseo/data/source
+
+    s3:
+      s3AccessKey: ${PROSEO_S3_KEY}
+      s3SecretAccessKey: ${PROSEO_S3_SECRET}
+      s3EndPoint: ${PROSEO_S3_URL}
+      s3Region: ${PROSEO_S3_REGION}
+      s3MaxNumberOfBuckets: 50
+      s3DefaultBucket: proseo-backend
+      s3DefaultEndPoint: false
+
+    posix:
+      # Mount point for backend storage (must be different from cachePath)
+      backendPath: /proseo/data/backend
+      # Mount point for file cache
+      cachePath: /proseo/data/cache
+      
+    joborder:
+      bucket: internal
+      prefix: joborders
+      
+    storageManager:
+      # Default type for backend storage
+      defaultStorageType: POSIX
+      
+      # Control checks on input files
+      filecheck:
+        # Wait time between checks
+        waittime: 500
+        # Maximum number of checks
+        maxcycles: 600
+        # Maximum request attempts
+        maxRequestAttempts: 3 
+      
+      # Shared secret for download token
+      secret: ${PROSEO_STORAGE_MANAGER_SECRET}
+       
+      # File cache control
+      cache:
+        # Recommended minimum cache usage for efficient operation (percentage of file system size)
+        expectedUsage: 75
+        # Maximum cache usage (percentage of file system size)
+        maximumUsage: 85
