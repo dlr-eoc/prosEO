@@ -56,10 +56,10 @@ public abstract class OrderTemplateBase extends PersistentObject {
 	private String processingMode;
 	
 	/**
-	 * Method for slicing the orbit time interval into jobs for product generation (default "ORBIT")
+	 * Method for slicing the orbit time interval into jobs for product generation (default "NONE")
 	 */
 	@Enumerated(EnumType.STRING)
-	private OrderSlicingType slicingType = OrderSlicingType.ORBIT;
+	private OrderSlicingType slicingType = OrderSlicingType.NONE;
 	
 	/**
 	 * Duration of a time slice for slicing type TIME_SLICE

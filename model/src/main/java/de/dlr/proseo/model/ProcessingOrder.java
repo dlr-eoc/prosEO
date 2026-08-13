@@ -133,7 +133,7 @@ public class ProcessingOrder extends PersistentObject {
 	private Instant actualCompletionTime;
 	
 	/**
-	 * Date and time at which the  ProcessingOrder was closed
+	 * Date and time at which the ProcessingOrder was closed
 	 */
 	@Column(name = "closing_time", columnDefinition = "TIMESTAMP")
 	private Instant closingTime;

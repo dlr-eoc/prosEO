@@ -45,7 +45,7 @@
         description: Expected execution time (optional, used for scheduling)
       releaseTime?:
         type: datetime-only
-        description: Date and time at which the ProcessingOrder was received (mandatory for ProcessingOrders created via the ODIP)
+        description: Date and time at which the ProcessingOrder was released
       estimatedCompletionTime?:
         type: datetime-only
         description: |
@@ -56,6 +56,9 @@
         description: |
           Date and time when the output product(s) was/were available for download from the (OD)PRIP
           (mandatory for ProcessingOrders created via the ODIP, once they are in state "COMPLETED")
+      closingTime?:
+        type: datetime-only
+        description: Date and time at which the ProcessingOrder was closed
       evictionTime?:
         type: datetime-only
         description: Eviction time (optional, used for automatic order deletion)

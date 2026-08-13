@@ -202,6 +202,10 @@ public class RestUtil {
 				restJobStep.setJobStepState(JobStepState.valueOf(jobStep.getJobStepState().toString()));
 			}
 
+			if (jobStep.getPriority() != null) {
+				restJobStep.setPriority(jobStep.getPriority());
+			}
+
 			restJobStep.setVersion((long) jobStep.getVersion());
 
 			restJobStep.setProcessingMode(jobStep.getProcessingMode());

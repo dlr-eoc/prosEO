@@ -100,6 +100,9 @@ public class OrderUtil {
 		if (null != processingOrder.getActualCompletionTime()) {
 			restOrder.setActualCompletionTime(Date.from(processingOrder.getActualCompletionTime()));
 		}
+		if (null != processingOrder.getClosingTime()) {
+			restOrder.setClosingTime(Date.from(processingOrder.getClosingTime());
+		}
 		if (null != processingOrder.getEvictionTime()) {
 			restOrder.setEvictionTime(Date.from(processingOrder.getEvictionTime()));
 		}
@@ -448,7 +451,7 @@ public class OrderUtil {
 			try {
 				processingOrder.setStopTime(Instant.from(OrbitTimeFormatter.parse(restOrder.getStopTime())));
 			} catch (DateTimeException e) {
-				throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrder.getStartTime()));
+				throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrder.getStopTime()));
 			} 
 		}
 		if (null != restOrder.getExecutionTime()) {
@@ -471,7 +474,15 @@ public class OrderUtil {
 				processingOrder.setActualCompletionTime(restOrder.getActualCompletionTime().toInstant());
 			} catch (DateTimeException e) {
 				throw new IllegalArgumentException(
-						String.format("Invalid actual completion time '%s'", restOrder.getReleaseTime()));
+						String.format("Invalid actual completion time '%s'", restOrder.getActualCompletionTime()));
+			}
+		}
+		if (null != restOrder.getClosingTime()) {
+			try {
+				processingOrder.setClosingTime(restOrder.getClosingTime().toInstant());
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(
+						String.format("Invalid closing time '%s'", restOrder.getClosingTime()));
 			}
 		}
 		if (null != restOrder.getEvictionTime()) {

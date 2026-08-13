@@ -13,7 +13,7 @@ import jakarta.persistence.Embeddable;
 import jakarta.persistence.ManyToOne;
 
 /**
- * History of product downloads; while originially bound to a ProductFile, the entry persists even after deletion
+ * History of product downloads; while originally bound to a ProductFile, the entry persists even after deletion
  * of the ProductFile to give a full history of the Product downloads
  * 
  * @author Dr. Thomas Bassler

@@ -49,7 +49,7 @@ public abstract class OrderTrigger extends PersistentObject {
     /**
      * Priority to be set for generated processing orders; if set, overrides priority of associated workflow
      */
-    private Integer priority;
+    private Integer priority = 50;
     
 	/**
 	 * Gets the mission this trigger belongs to
