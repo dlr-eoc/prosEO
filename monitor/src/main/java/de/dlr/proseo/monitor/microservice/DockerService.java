@@ -1,11 +1,9 @@
 package de.dlr.proseo.monitor.microservice;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 
-import tools.jackson.databind.ObjectMapper;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.okhttp.OkDockerHttpClient;
@@ -17,6 +15,8 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.model.util.MonServiceStates;
 import de.dlr.proseo.monitor.MonitorConfiguration;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 
 /**
@@ -109,27 +109,20 @@ public class DockerService {
 		try (Response response = httpClient.execute(request)) {
 			String x = IOUtils.toString(response.getBody(), StandardCharsets.UTF_8);
 			ObjectMapper mapper = new ObjectMapper();
-			Map<String, Object> map = mapper.readValue(x, Map.class);
-			if (map != null) {
-				if (map.get("State") != null) {
-					if ((boolean) ((Map)(map.get("State"))).get("Running")) {
-						if (ms.getHasActuator()) {
-							// actuator does not answer "up", assume it is starting.
-							ms.setState(MonServiceStates.STARTING_ID);
-						} else {
-							ms.setState(MonServiceStates.RUNNING_ID);
-						}
-					} else if ((boolean) ((Map)(map.get("State"))).get("Restarting")) {
-						ms.setState(MonServiceStates.STARTING_ID);
-					} else {
-						// all other cases are "stopped"
-						ms.setState(MonServiceStates.STOPPED_ID);
-					}
-				} else {
-					ms.setState(MonServiceStates.STOPPED_ID);
-				}
+			JsonNode state = mapper.readTree(x).path("State");
+
+			if (state.isMissingNode() || state.isNull()) {
+			    ms.setState(MonServiceStates.STOPPED_ID);
+			} else if (state.path("Running").asBoolean()) {
+			    if (ms.getHasActuator()) {
+			        ms.setState(MonServiceStates.STARTING_ID);
+			    } else {
+			        ms.setState(MonServiceStates.RUNNING_ID);
+			    }
+			} else if (state.path("Restarting").asBoolean()) {
+			    ms.setState(MonServiceStates.STARTING_ID);
 			} else {
-				ms.setState(MonServiceStates.STOPPED_ID);
+			    ms.setState(MonServiceStates.STOPPED_ID);
 			}
 //			ms.createEntry(monitor);
 			return;

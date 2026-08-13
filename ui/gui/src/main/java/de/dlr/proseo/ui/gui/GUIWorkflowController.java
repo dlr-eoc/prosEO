@@ -182,7 +182,7 @@ public class GUIWorkflowController extends GUIBaseController {
 					// In case of errors, display an error message
 					error -> {
 						if (error instanceof WebClientResponseException.NotFound) {
-							model.addAttribute("workflows", new ArrayList());
+							model.addAttribute("workflows", new ArrayList<>());
 
 							modelAddAttributes(model, count, pageSize, 1L, 1L);
 

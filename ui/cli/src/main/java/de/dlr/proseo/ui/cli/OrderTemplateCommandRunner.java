@@ -9,8 +9,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +66,7 @@ public class OrderTemplateCommandRunner {
 
 	private static final String URI_PATH_ORDERTEMPLATES = "/ordertemplates";
 	
-	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
+//	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
 
 	/** The user manager used by all command runners */
 	@Autowired

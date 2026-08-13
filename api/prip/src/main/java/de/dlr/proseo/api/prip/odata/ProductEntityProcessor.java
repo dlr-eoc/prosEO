@@ -7,23 +7,14 @@ package de.dlr.proseo.api.prip.odata;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.NoResultException;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
-import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.hc.core5.net.URIBuilder;
 import org.apache.olingo.commons.api.data.ContextURL;
@@ -63,8 +54,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import tools.jackson.databind.ObjectMapper;
-
 import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
 import de.dlr.proseo.api.prip.ProductionInterfaceSecurity;
 import de.dlr.proseo.logging.logger.ProseoLogger;
@@ -72,6 +61,11 @@ import de.dlr.proseo.logging.messages.PripMessage;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.enums.UserRole;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Retrieve product information from the prosEO metadata database (via the Ingestor component) and download product data from the
@@ -83,8 +77,8 @@ import de.dlr.proseo.model.enums.UserRole;
 @Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
 public class ProductEntityProcessor implements EntityProcessor, MediaEntityProcessor {
 
-	// Unformatted message
-	private static final String MSG_CANNOT_FILTER_SERIALIZED_OUTPUT = "Cannot filter serialized output";
+//	// Unformatted message
+//	private static final String MSG_CANNOT_FILTER_SERIALIZED_OUTPUT = "Cannot filter serialized output";
 
 	/* Other string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
@@ -593,7 +587,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	}
 
 	/*
-	 * ------------------------------------------------------------------------------------ 
+	 * ------------------------------------------------------------------------------------
 	 * The methods below are not available on the PRIP, since this is a read-only interface
 	 * ------------------------------------------------------------------------------------
 	 */

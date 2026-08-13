@@ -124,10 +124,6 @@ public class ProcessorClassManager {
 	}
 
 	private Query createProcessorClassesQuery(String mission, Long id, String[] productClasses, String processorName, Boolean count) {
-		String join = "";
-		if (null != productClasses && 0 < productClasses.length) {
-			join = "join ProductClass rpc on rpc.processorClass = pc ";
-		}
 		String jpqlQuery = "";
 		if (count) {
 			jpqlQuery = "select count(pc) from ProcessorClass pc ";

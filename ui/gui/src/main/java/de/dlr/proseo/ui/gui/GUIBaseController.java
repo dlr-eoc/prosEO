@@ -67,9 +67,6 @@ public class GUIBaseController {
 	private static ProseoLogger logger = new ProseoLogger(GUIBaseController.class);
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.UI);
 
-	/* Other string constants */
-	private static final String HTTP_HEADER_WARNING = "Warning";
-
 	/** The connector service to the prosEO backend services */
 	@Autowired
 	private ServiceConnection serviceConnection;

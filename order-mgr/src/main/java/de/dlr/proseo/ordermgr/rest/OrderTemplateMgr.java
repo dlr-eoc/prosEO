@@ -13,16 +13,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.NoResultException;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.OrderMgrMessage;
@@ -30,8 +27,8 @@ import de.dlr.proseo.model.ClassOutputParameter;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.InputFilter;
 import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.OrderTemplate;
+import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.enums.UserRole;
@@ -42,6 +39,12 @@ import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.ordermgr.rest.model.OrderTemplateUtil;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 
 /**
  * Service methods required to create, modify and delete order template in the prosEO database, and to query the database about
@@ -110,21 +113,21 @@ public class OrderTemplateMgr {
 
 		// If list attributes were set to null explicitly, initialize with empty lists
 		if (null == restOrderTemplate.getInputProductClasses()) {
-			restOrderTemplate.setInputProductClasses(new ArrayList<String>());
+			restOrderTemplate.setInputProductClasses(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getInputFilters()) {
-			restOrderTemplate.setInputFilters(new ArrayList<RestInputFilter>());
+			restOrderTemplate.setInputFilters(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getOutputParameters()) {
-			restOrderTemplate.setOutputParameters(new ArrayList<RestParameter>());
+			restOrderTemplate.setOutputParameters(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getClassOutputParameters()) {
-			restOrderTemplate.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
+			restOrderTemplate.setClassOutputParameters(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getConfiguredProcessors()) {
-			restOrderTemplate.setConfiguredProcessors(new ArrayList<String>());
+			restOrderTemplate.setConfiguredProcessors(new ArrayList<>());
 		}
-		
+
 		// Prepare the database restOrderTemplate, but make sure ID and version are not copied if present
 		restOrderTemplate.setId(null);
 		restOrderTemplate.setVersion(null);
@@ -233,7 +236,7 @@ public class OrderTemplateMgr {
 			// Everything OK, store new order in database
 			modelOrderTemplate = RepositoryService.getOrderTemplateRepository().save(modelOrderTemplate);
 			logger.log(OrderMgrMessage.ORDERTEMPLATE_CREATED, restOrderTemplate.getName(), restOrderTemplate.getMissionCode());
-			
+
 			// Create and initialize the history element of the processing order.
 			return OrderTemplateUtil.toRestOrderTemplate(modelOrderTemplate);
 
@@ -400,19 +403,19 @@ public class OrderTemplateMgr {
 
 		// If list attributes were set to null explicitly, initialize with empty lists
 		if (null == restOrderTemplate.getInputProductClasses()) {
-			restOrderTemplate.setInputProductClasses(new ArrayList<String>());
+			restOrderTemplate.setInputProductClasses(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getInputFilters()) {
-			restOrderTemplate.setInputFilters(new ArrayList<RestInputFilter>());
+			restOrderTemplate.setInputFilters(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getOutputParameters()) {
-			restOrderTemplate.setOutputParameters(new ArrayList<RestParameter>());
+			restOrderTemplate.setOutputParameters(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getClassOutputParameters()) {
-			restOrderTemplate.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
+			restOrderTemplate.setClassOutputParameters(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getConfiguredProcessors()) {
-			restOrderTemplate.setConfiguredProcessors(new ArrayList<String>());
+			restOrderTemplate.setConfiguredProcessors(new ArrayList<>());
 		}
 
 
@@ -424,7 +427,7 @@ public class OrderTemplateMgr {
 		if (!modelOrderTemplate.getMission().equals(changedOrderTemplate.getMission()))
 			throw new IllegalArgumentException(
 					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "mission", modelOrderTemplate.getName()));
-		
+
 		// Modify attributes
 		if (!modelOrderTemplate.getName().equals(changedOrderTemplate.getName())) {
 			orderChanged = true;
@@ -482,7 +485,7 @@ public class OrderTemplateMgr {
 			modelOrderTemplate.setEnabled(changedOrderTemplate.isEnabled());
 			orderChanged = true;
 		}
-		
+
 		// Check for changes in input filters
 		Map<ProductClass, InputFilter> newInputFilters = new HashMap<>();
 		if (null != restOrderTemplate.getInputFilters()) {
@@ -829,7 +832,7 @@ public class OrderTemplateMgr {
 	public List<RestOrderTemplate> getOrderTemplates(String mission, String name, String[] requestedProductClasses,
 			Long recordFrom, Long recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getOrderTemplates({}, {}, {}, {}, {}, {})", mission, name, 
+			logger.trace(">>> getOrderTemplates({}, {}, {}, {}, {}, {})", mission, name,
 					requestedProductClasses, recordFrom, recordTo, orderBy);
 
 		if (null == mission)
@@ -865,7 +868,7 @@ public class OrderTemplateMgr {
 	public String countOrderTemplates(String mission, String name, String[] requestedProductClasses,
 			Long recordFrom, Long recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countOrderTemplates({}, {}, {}, {}, {}, {})", mission, name, 
+			logger.trace(">>> countOrderTemplates({}, {}, {}, {}, {}, {})", mission, name,
 					requestedProductClasses, recordFrom, recordTo, orderBy);
 
 		if (null == mission)
