@@ -48,7 +48,7 @@ spec:
       containers:
         - name: proseo-storage-mgr
           image: localhost:5000/proseo-storage-mgr:latest
-          imagePullPolicy: Never
+          imagePullPolicy: Always
           resources:
             requests:
               cpu: "1.0"

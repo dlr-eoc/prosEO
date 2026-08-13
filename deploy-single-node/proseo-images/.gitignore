@@ -1,2 +1,4 @@
 /*.sh
 /docker-compose.yml
+/proseo-ui-cli*
+/.env
