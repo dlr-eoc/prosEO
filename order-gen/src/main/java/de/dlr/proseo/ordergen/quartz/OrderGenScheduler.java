@@ -186,7 +186,7 @@ public class OrderGenScheduler {
 					for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 						try {
 							transactionTemplate.setReadOnly(false);
-							Object o = transactionTemplate.execute((status) -> {
+							transactionTemplate.execute((status) -> {
 								OrbitOrderTrigger trigger = RepositoryService.getOrbitOrderTriggerRepository()
 										.findByMissionCodeAndName(orderTrigger.getMission().getCode(), orderTrigger.getName());
 								Orbit orbit = trigger.getLastOrbit();

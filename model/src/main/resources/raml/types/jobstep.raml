@@ -1,5 +1,5 @@
 #%RAML 1.0 DataType
-#  PlannerJobstep:
+#  RestJobStep:
     type: object
     properties:
       id?:
@@ -22,6 +22,9 @@
         enum: [ PLANNED, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, CLOSED ]
         default: PLANNED
         description: The currenet status of the job step
+      priority:
+        type: integer
+        description: A processing priority (lower numbers indicate lower priority, higher numbers higher priority)
       outputParameters:
         type: RestParameter[]
         description: A set of parameters to set for the generated products.

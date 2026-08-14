@@ -5,38 +5,20 @@
  */
 package de.dlr.proseo.ordermgr.rest;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
 import java.util.ConcurrentModificationException;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
-
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.NoResultException;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
-import javax.ws.rs.ProcessingException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.restclient.RestTemplateBuilder;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
@@ -44,30 +26,25 @@ import de.dlr.proseo.logging.messages.OrderMgrMessage;
 import de.dlr.proseo.model.ClassOutputParameter;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.InputFilter;
-import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.Orbit;
-import de.dlr.proseo.model.Parameter;
-import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.OrderTemplate;
-import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProductClass;
-import de.dlr.proseo.model.ProductQuery;
-import de.dlr.proseo.model.Workflow;
-import de.dlr.proseo.model.enums.OrderSlicingType;
-import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
-import de.dlr.proseo.model.rest.model.RestOrbitQuery;
-import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestOrderTemplate;
 import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.ordermgr.rest.model.OrderTemplateUtil;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 
 /**
  * Service methods required to create, modify and delete order template in the prosEO database, and to query the database about
@@ -94,7 +71,7 @@ public class OrderTemplateMgr {
 	private static ProseoLogger logger = new ProseoLogger(OrderTemplateMgr.class);
 
 	/**
-	 * Create an order from the given Json object
+	 * Create an order template from the given Json object
 	 *
 	 * @param order the Json object to create the order from
 	 * @return a Json object corresponding to the order after persistence (with ID and version for all contained objects)
@@ -136,21 +113,21 @@ public class OrderTemplateMgr {
 
 		// If list attributes were set to null explicitly, initialize with empty lists
 		if (null == restOrderTemplate.getInputProductClasses()) {
-			restOrderTemplate.setInputProductClasses(new ArrayList<String>());
+			restOrderTemplate.setInputProductClasses(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getInputFilters()) {
-			restOrderTemplate.setInputFilters(new ArrayList<RestInputFilter>());
+			restOrderTemplate.setInputFilters(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getOutputParameters()) {
-			restOrderTemplate.setOutputParameters(new ArrayList<RestParameter>());
+			restOrderTemplate.setOutputParameters(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getClassOutputParameters()) {
-			restOrderTemplate.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
+			restOrderTemplate.setClassOutputParameters(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getConfiguredProcessors()) {
-			restOrderTemplate.setConfiguredProcessors(new ArrayList<String>());
+			restOrderTemplate.setConfiguredProcessors(new ArrayList<>());
 		}
-		
+
 		// Prepare the database restOrderTemplate, but make sure ID and version are not copied if present
 		restOrderTemplate.setId(null);
 		restOrderTemplate.setVersion(null);
@@ -259,7 +236,7 @@ public class OrderTemplateMgr {
 			// Everything OK, store new order in database
 			modelOrderTemplate = RepositoryService.getOrderTemplateRepository().save(modelOrderTemplate);
 			logger.log(OrderMgrMessage.ORDERTEMPLATE_CREATED, restOrderTemplate.getName(), restOrderTemplate.getMissionCode());
-			
+
 			// Create and initialize the history element of the processing order.
 			return OrderTemplateUtil.toRestOrderTemplate(modelOrderTemplate);
 
@@ -273,10 +250,10 @@ public class OrderTemplateMgr {
 	}
 
 	/**
-	 * Delete an order by entity
+	 * Delete an order template by entity
 	 *
-	 * @param orderTemplate the order to delete
-	 * @throws EntityNotFoundException if the order to delete does not exist in the database
+	 * @param orderTemplate the order template to delete
+	 * @throws EntityNotFoundException if the order template to delete does not exist in the database
 	 * @throws RuntimeException        if the deletion was not performed as expected
 	 */
 	private void deleteOrderTemplate(OrderTemplate orderTemplate) throws EntityNotFoundException, RuntimeException {
@@ -296,10 +273,10 @@ public class OrderTemplateMgr {
 	}
 
 	/**
-	 * Delete an order by ID
+	 * Delete an order template by ID
 	 *
 	 * @param id the ID of the order to delete
-	 * @throws EntityNotFoundException if the order to delete does not exist in the database
+	 * @throws EntityNotFoundException if the order template to delete does not exist in the database
 	 * @throws SecurityException       if a cross-mission data access was attempted
 	 * @throws RuntimeException        if the deletion was not performed as expected
 	 */
@@ -323,12 +300,12 @@ public class OrderTemplateMgr {
 	}
 
 	/**
-	 * Find the oder with the given ID
+	 * Find the order template with the given ID
 	 *
 	 * @param id the ID to look for
-	 * @return a Json object corresponding to the order found
-	 * @throws IllegalArgumentException if no order ID was given
-	 * @throws NoResultException        if no order with the given ID exists
+	 * @return a Json object corresponding to the order template found
+	 * @throws IllegalArgumentException if no order template ID was given
+	 * @throws NoResultException        if no order template with the given ID exists
 	 * @throws SecurityException        if a cross-mission data access was attempted
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
@@ -370,16 +347,16 @@ public class OrderTemplateMgr {
 	}
 
 	/**
-	 * Update the order with the given ID with the attribute values of the given Json object. Orders may only be changed while they
+	 * Update the order template with the given ID with the attribute values of the given Json object. Orders may only be changed while they
 	 * are in state "INITIAL". The only state modification allowed here is from INITIAL to APPROVED.
 	 *
-	 * @param id    the ID of the product to update
+	 * @param id    the ID of the order template to update
 	 * @param restOrderTemplate a Json object containing the modified (and unmodified) attributes
-	 * @return a Json object corresponding to the product after modification (with ID and version for all contained objects)
-	 * @throws EntityNotFoundException         if no product with the given ID exists
+	 * @return a Json object corresponding to the order template after modification (with ID and version for all contained objects)
+	 * @throws EntityNotFoundException         if no order template with the given ID exists
 	 * @throws IllegalArgumentException        if any of the input data was invalid
 	 * @throws SecurityException               if a cross-mission data access was attempted
-	 * @throws ConcurrentModificationException if the order has been modified since retrieval by the client
+	 * @throws ConcurrentModificationException if the order template has been modified since retrieval by the client
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
 	public RestOrderTemplate modifyOrderTemplate(Long id, RestOrderTemplate restOrderTemplate)
@@ -426,19 +403,19 @@ public class OrderTemplateMgr {
 
 		// If list attributes were set to null explicitly, initialize with empty lists
 		if (null == restOrderTemplate.getInputProductClasses()) {
-			restOrderTemplate.setInputProductClasses(new ArrayList<String>());
+			restOrderTemplate.setInputProductClasses(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getInputFilters()) {
-			restOrderTemplate.setInputFilters(new ArrayList<RestInputFilter>());
+			restOrderTemplate.setInputFilters(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getOutputParameters()) {
-			restOrderTemplate.setOutputParameters(new ArrayList<RestParameter>());
+			restOrderTemplate.setOutputParameters(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getClassOutputParameters()) {
-			restOrderTemplate.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
+			restOrderTemplate.setClassOutputParameters(new ArrayList<>());
 		}
 		if (null == restOrderTemplate.getConfiguredProcessors()) {
-			restOrderTemplate.setConfiguredProcessors(new ArrayList<String>());
+			restOrderTemplate.setConfiguredProcessors(new ArrayList<>());
 		}
 
 
@@ -450,7 +427,7 @@ public class OrderTemplateMgr {
 		if (!modelOrderTemplate.getMission().equals(changedOrderTemplate.getMission()))
 			throw new IllegalArgumentException(
 					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "mission", modelOrderTemplate.getName()));
-		
+
 		// Modify attributes
 		if (!modelOrderTemplate.getName().equals(changedOrderTemplate.getName())) {
 			orderChanged = true;
@@ -508,7 +485,7 @@ public class OrderTemplateMgr {
 			modelOrderTemplate.setEnabled(changedOrderTemplate.isEnabled());
 			orderChanged = true;
 		}
-		
+
 		// Check for changes in input filters
 		Map<ProductClass, InputFilter> newInputFilters = new HashMap<>();
 		if (null != restOrderTemplate.getInputFilters()) {
@@ -751,18 +728,18 @@ public class OrderTemplateMgr {
 	}
 
 	/**
-	 * List of all orders filtered by mission, name, product class, execution time range; selection is restricted to the
+	 * List of all order templates filtered by mission, name, product class, execution time range; selection is restricted to the
 	 * mission the current user is logged in to
 	 *
 	 * @param mission                 the mission code
-	 * @param name              the order name
+	 * @param name              the order template name
 	 * @param requestedProductClasses an array of product types
-	 * @param startTimeFrom           earliest sensing start time
-	 * @param startTimeTo             latest sensing start time
-	 * @param executionTimeFrom       earliest order execution time
-	 * @param executionTimeTo         latest order execution time
-	 * @return a list of orders
-	 * @throws NoResultException if no orders matching the given search criteria could be found
+	 * @param startTimeFrom           earliest sensing start time TODO Remove - does not make sense for order templates
+	 * @param startTimeTo             latest sensing start time TODO Remove - does not make sense for order templates
+	 * @param executionTimeFrom       earliest order execution time TODO Remove - does not make sense for order templates
+	 * @param executionTimeTo         latest order execution time TODO Remove - does not make sense for order templates
+	 * @return a list of order templates
+	 * @throws NoResultException if no order templates matching the given search criteria could be found
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
@@ -838,14 +815,12 @@ public class OrderTemplateMgr {
 	}
 
 	/**
-	 * Retrieve a list of orders satisfying the selection parameters. Mission code is mandatory.
+	 * Retrieve a list of order templates satisfying the selection parameters. Mission code is mandatory.
 	 *
 	 * @param mission                 the mission code
-	 * @param name              the order name pattern
+	 * @param name              the order template name pattern
 	 * @param state                   an array of states
 	 * @param requestedProductClasses an array of product types
-	 * @param startTimeFrom           earliest sensing start time
-	 * @param startTimeTo             latest sensing start time
 	 * @param recordFrom              first record of filtered and ordered result to return
 	 * @param recordTo                last record of filtered and ordered result to return
 	 * @param orderBy                 an array of strings containing a column name and an optional sort direction (ASC/DESC),
@@ -857,7 +832,7 @@ public class OrderTemplateMgr {
 	public List<RestOrderTemplate> getOrderTemplates(String mission, String name, String[] requestedProductClasses,
 			Long recordFrom, Long recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getOrderTemplates({}, {}, {}, {}, {}, {})", mission, name, 
+			logger.trace(">>> getOrderTemplates({}, {}, {}, {}, {}, {})", mission, name,
 					requestedProductClasses, recordFrom, recordTo, orderBy);
 
 		if (null == mission)
@@ -877,14 +852,12 @@ public class OrderTemplateMgr {
 	}
 
 	/**
-	 * Calculate the amount of orders satisfying the selection parameters. Mission code is mandatory.
+	 * Calculate the amount of order templates satisfying the selection parameters. Mission code is mandatory.
 	 *
 	 * @param mission                 the mission code
 	 * @param name              the order name pattern
 	 * @param state                   an array of states
 	 * @param requestedProductClasses an array of product types
-	 * @param startTimeFrom           earliest sensing start time
-	 * @param startTimeTo             latest sensing start time
 	 * @param recordFrom              first record of filtered and ordered result to return
 	 * @param recordTo                last record of filtered and ordered result to return
 	 * @param orderBy                 an array of strings containing a column name and an optional sort direction (ASC/DESC),
@@ -895,7 +868,7 @@ public class OrderTemplateMgr {
 	public String countOrderTemplates(String mission, String name, String[] requestedProductClasses,
 			Long recordFrom, Long recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> countOrderTemplates({}, {}, {}, {}, {}, {})", mission, name, 
+			logger.trace(">>> countOrderTemplates({}, {}, {}, {}, {}, {})", mission, name,
 					requestedProductClasses, recordFrom, recordTo, orderBy);
 
 		if (null == mission)
@@ -942,14 +915,12 @@ public class OrderTemplateMgr {
 	}
 
 	/**
-	 * Create a JPQL query to retrieve the requested set of products
+	 * Create a JPQL query to retrieve the requested set of order templates
 	 *
 	 * @param mission       the mission code
 	 * @param name    the order name pattern
 	 * @param state         an array of states
 	 * @param productClass  an array of product types
-	 * @param startTimeFrom earliest sensing start time
-	 * @param startTimeTo   latest sensing start time
 	 * @param recordFrom    first record of filtered and ordered result to return
 	 * @param recordTo      last record of filtered and ordered result to return
 	 * @param orderBy       an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by

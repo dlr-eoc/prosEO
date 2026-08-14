@@ -1,6 +1,6 @@
 /**
  * OrderControllerImpl.java
- * 
+ *
  * © 2019 Prophos Informatik GmbH
  */
 package de.dlr.proseo.planner.rest;
@@ -8,31 +8,6 @@ package de.dlr.proseo.planner.rest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import de.dlr.proseo.logging.http.HttpPrefix;
-import de.dlr.proseo.logging.http.ProseoHttp;
-import de.dlr.proseo.logging.logger.ProseoLogger;
-import de.dlr.proseo.planner.PlannerResultMessage;
-import de.dlr.proseo.logging.messages.GeneralMessage;
-import de.dlr.proseo.logging.messages.PlannerMessage;
-import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.JobStep;
-import de.dlr.proseo.model.JobStep.JobStepState;
-import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.ProcessingOrder;
-import de.dlr.proseo.model.enums.FacilityState;
-import de.dlr.proseo.model.enums.OrderSource;
-import de.dlr.proseo.model.enums.ProductionType;
-import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.service.SecurityService;
-import de.dlr.proseo.model.util.ProseoUtil;
-import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.ProductionPlannerSecurityConfig;
-import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.model.rest.OrderController;
-import de.dlr.proseo.model.rest.model.RestOrder;
-import de.dlr.proseo.planner.rest.model.RestUtil;
-import de.dlr.proseo.planner.util.OrderUtil;
 
 import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,9 +19,33 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
+import de.dlr.proseo.logging.messages.PlannerMessage;
+import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.JobStep;
+import de.dlr.proseo.model.JobStep.JobStepState;
+import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.enums.FacilityState;
+import de.dlr.proseo.model.enums.ProductionType;
+import de.dlr.proseo.model.rest.OrderController;
+import de.dlr.proseo.model.rest.model.RestOrder;
+import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.model.util.ProseoUtil;
+import de.dlr.proseo.planner.PlannerResultMessage;
+import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.ProductionPlannerSecurityConfig;
+import de.dlr.proseo.planner.kubernetes.KubeConfig;
+import de.dlr.proseo.planner.rest.model.RestUtil;
+import de.dlr.proseo.planner.util.OrderUtil;
+
 /**
  * Spring MVC controller for the prosEO planner; implements the services required to plan and handle processing orders.
- * 
+ *
  * @author Ernst Melchinger
  */
 @Component
@@ -76,7 +75,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Get all processing orders (deprecated).
-	 * 
+	 *
 	 * @param httpHeaders the HTTP request headers (injected)
 	 * @return ResponseEntity containing a list of RestOrder and HTTP status
 	 */
@@ -87,7 +86,7 @@ public class OrderControllerImpl implements OrderController {
 			logger.trace(">>> getOrders()");
 
 		try {
-			List<RestOrder> list = new ArrayList<RestOrder>();
+			List<RestOrder> list = new ArrayList<>();
 			try {
 				TransactionTemplate transactionTemplate = new TransactionTemplate(productionPlanner.getTxManager());
 				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
@@ -123,7 +122,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Get processing order by ID (deprecated).
-	 * 
+	 *
 	 * @param orderId     the ID of the processing order
 	 * @param httpHeaders the HTTP request headers (injected)
 	 * @return ResponseEntity containing a RestOrder and HTTP status
@@ -160,7 +159,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Approve processing order by ID (deprecated).
-	 * 
+	 *
 	 * @param orderId     the ID of the processing order
 	 * @param httpHeaders the HTTP request headers (injected)
 	 * @return ResponseEntity containing a RestOrder and HTTP status
@@ -207,7 +206,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Reset processing order by ID.
-	 * 
+	 *
 	 * @param orderId     the ID of the processing order
 	 * @param httpHeaders the HTTP request headers (injected)
 	 * @return ResponseEntity containing a RestOrder and HTTP status
@@ -253,7 +252,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Delete processing order by ID.
-	 * 
+	 *
 	 * @param orderId     the ID of the processing order
 	 * @param httpHeaders the HTTP request headers (injected)
 	 * @return ResponseEntity containing a RestOrder and HTTP status
@@ -331,7 +330,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Plan processing order of id on processing facility
-	 * 
+	 *
 	 * @param releaseId   the processing order database ID
 	 * @param facility    the processing facility name
 	 * @param wait        indicates whether to wait for the order planning to complete
@@ -423,7 +422,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Release processing order of id (at the moment the same functionality as resumeOrder)
-	 * 
+	 *
 	 * @param orderId     the processing order database ID
 	 * @param wait        indicates whether to wait for the order releasing to complete
 	 * @param httpHeaders the HTTP request headers (injected)
@@ -548,7 +547,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Resume processing order (currently an alias for releaseOrder).
-	 * 
+	 *
 	 * @param orderId     the processing order database ID
 	 * @param wait        indicates whether to wait for the order releasing to complete
 	 * @param httpHeaders the HTTP request headers (injected)
@@ -567,7 +566,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Cancel processing order by ID.
-	 * 
+	 *
 	 * @param orderId     the ID of the processing order
 	 * @param httpHeaders the HTTP request headers (injected)
 	 * @return ResponseEntity containing a RestOrder and HTTP status
@@ -636,7 +635,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Close processing order by ID.
-	 * 
+	 *
 	 * @param orderId     the ID of the processing order
 	 * @param httpHeaders the HTTP request headers (injected)
 	 * @return ResponseEntity containing a RestOrder and HTTP status
@@ -683,7 +682,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Suspend processing order by ID.
-	 * 
+	 *
 	 * @param orderId     the ID of the processing order
 	 * @param force       indicates whether to force suspend the order
 	 * @param httpHeaders the HTTP request headers (injected)
@@ -769,7 +768,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Retry processing order by ID.
-	 * 
+	 *
 	 * @param orderId     the ID of the processing order
 	 * @param httpHeaders the HTTP request headers (injected)
 	 * @return ResponseEntity containing a RestOrder and HTTP status
@@ -862,7 +861,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Find a processing order by DB id or identifier.
-	 * 
+	 *
 	 * @param orderId DB id or identifier
 	 * @return Order found
 	 */
@@ -910,7 +909,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Find a processing order by ID.
-	 * 
+	 *
 	 * @param orderId the ID of the processing order
 	 * @return ProcessingOrder found
 	 */
@@ -931,7 +930,7 @@ public class OrderControllerImpl implements OrderController {
 
 	/**
 	 * Get a REST order by ID.
-	 * 
+	 *
 	 * @param id the ID of the processing order
 	 * @return RestOrder found
 	 */

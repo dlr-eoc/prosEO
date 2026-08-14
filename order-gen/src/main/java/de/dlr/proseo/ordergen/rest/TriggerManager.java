@@ -252,6 +252,7 @@ public class TriggerManager {
 
 		Query query = createTriggersQuery(mission, name, type, orderTemplate, inputProductClass, outputProductClass, orderBy, false);
 		
+		@SuppressWarnings("unchecked") // interface returns raw list
 		List<Object> objList = query.getResultList();
 		for (Object obj : objList) {
 			if (obj instanceof DataDrivenOrderTrigger) {

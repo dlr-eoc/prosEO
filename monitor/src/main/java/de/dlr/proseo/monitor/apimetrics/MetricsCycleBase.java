@@ -30,12 +30,15 @@ public abstract class MetricsCycleBase extends Thread {
 	protected Metrics metrics;
 	
 	/** The static monitor configuration */
+	@SuppressWarnings("unused") // used by Metrics field
 	private MonitorConfiguration config;
 	
 	/** Transaction manager for transaction control */
+	@SuppressWarnings("unused") // used by Metrics field
 	private PlatformTransactionManager txManager;
 	
-	/** JPA entity manager */
+	/** JPA entity manager */ // used by Metrics field
+	@SuppressWarnings("unused")
 	private EntityManager em;
 
 	/** Milliseconds to wait between the calls */

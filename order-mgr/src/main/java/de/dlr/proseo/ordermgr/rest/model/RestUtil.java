@@ -108,6 +108,10 @@ public class RestUtil {
 			if (modelJobStep.getJobStepState() != null) {
 				pjs.setJobStepState(JobStepState.valueOf(modelJobStep.getJobStepState().toString()));
 			}
+			
+			if (modelJobStep.getPriority() != null) {
+				pjs.setPriority(modelJobStep.getPriority());
+			}
 
 			pjs.setVersion((long) modelJobStep.getVersion());
 			pjs.setProcessingMode(modelJobStep.getProcessingMode());

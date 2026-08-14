@@ -40,7 +40,7 @@ public class ProductArchive extends PersistentObject {
 	
 	/** Interface protocol for this archive */
 	@Enumerated(EnumType.STRING)
-	private ArchiveType archiveType;
+	private ArchiveType archiveType = ArchiveType.AIP;
 	
 	/** Base URI to access the archive (of the form "http[s]://<hostname>[:<port>]", no trailing slash) */
 	private String baseUri;
@@ -49,7 +49,7 @@ public class ProductArchive extends PersistentObject {
 	private String context;
 	
 	/** Flag indicating whether token-based authentication shall be used */
-	private Boolean tokenRequired;
+	private Boolean tokenRequired = false;
 	
 	/** The full URI for token requests (may be routed to a different host from the archive service itself) */
 	private String tokenUri;
@@ -71,7 +71,7 @@ public class ProductArchive extends PersistentObject {
 	private String clientSecret;
 	
 	/** Flag indicating whether credentials for OpenID-based token requests shall be sent in request body */
-	private Boolean sendAuthInBody;
+	private Boolean sendAuthInBody = false;
 	
 	/** List of product classes retrievable from this archive */
 	@ManyToMany

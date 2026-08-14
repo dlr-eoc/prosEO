@@ -9,11 +9,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import de.dlr.proseo.model.enums.UserRole;
-import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.cli.CommandLineInterface;
 
 /**

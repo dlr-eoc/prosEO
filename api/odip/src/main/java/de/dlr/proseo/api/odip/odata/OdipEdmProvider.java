@@ -583,8 +583,8 @@ public class OdipEdmProvider extends CsdlAbstractEdmProvider {
 				.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
 			CsdlProperty orderOutputSize = new CsdlProperty().setName(ET_PRODUCTIONORDER_PROP_ORDEROUTPUTSIZE)
 				.setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName());
-			CsdlProperty orderProductId = new CsdlProperty().setName(ET_PRODUCTIONORDER_PROP_PRODUCTID)
-					.setType(EdmPrimitiveTypeKind.Guid.getFullQualifiedName());
+//			CsdlProperty orderProductId = new CsdlProperty().setName(ET_PRODUCTIONORDER_PROP_PRODUCTID)
+//					.setType(EdmPrimitiveTypeKind.Guid.getFullQualifiedName());
 			CsdlProperty submissionDate = new CsdlProperty().setName(ET_PRODUCTIONORDER_PROP_SUBMISSIONDATE)
 				.setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName())
 				.setPrecision(3);

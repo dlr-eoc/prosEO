@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,16 +22,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.NoResultException;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
 import javax.ws.rs.ProcessingException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.restclient.RestTemplateBuilder;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,6 +63,11 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.OrderUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 
 /**
  * Service methods required to create, modify and delete processing order in the prosEO database, and to query the database about
@@ -141,25 +139,25 @@ public class ProcessingOrderMgr {
 
 		// If list attributes were set to null explicitly, initialize with empty lists
 		if (null == order.getOrbits()) {
-			order.setOrbits(new ArrayList<RestOrbitQuery>());
+			order.setOrbits(new ArrayList<>());
 		}
 		if (null == order.getInputProductClasses()) {
-			order.setInputProductClasses(new ArrayList<String>());
+			order.setInputProductClasses(new ArrayList<>());
 		}
 		if (null == order.getInputFilters()) {
-			order.setInputFilters(new ArrayList<RestInputFilter>());
+			order.setInputFilters(new ArrayList<>());
 		}
 		if (null == order.getOutputParameters()) {
-			order.setOutputParameters(new ArrayList<RestParameter>());
+			order.setOutputParameters(new ArrayList<>());
 		}
 		if (null == order.getClassOutputParameters()) {
-			order.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
+			order.setClassOutputParameters(new ArrayList<>());
 		}
 		if (null == order.getConfiguredProcessors()) {
-			order.setConfiguredProcessors(new ArrayList<String>());
+			order.setConfiguredProcessors(new ArrayList<>());
 		}
 		if (null == order.getJobStepStates()) {
-			order.setJobStepStates(new ArrayList<String>());
+			order.setJobStepStates(new ArrayList<>());
 		}
 
 		// Prepare the database order, but make sure ID and version are not copied if present
@@ -186,7 +184,7 @@ public class ProcessingOrderMgr {
 					throw new IllegalArgumentException(logger.log(OrderMgrMessage.DUPLICATE_ORDER_UUID, modelOrder.getUuid()));
 				}
 			}
-			
+
 			// Make sure order identifier is not yet in use
 			if (null != RepositoryService.getOrderRepository()
 				.findByMissionCodeAndIdentifier(order.getMissionCode(), modelOrder.getIdentifier())) {
@@ -346,7 +344,7 @@ public class ProcessingOrderMgr {
 			// Everything OK, store new order in database
 			modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
 			logger.log(OrderMgrMessage.ORDER_CREATED, order.getIdentifier(), order.getMissionCode());
-			
+
 			// Create and initialize the history element of the processing order.
 			ProcessingOrderHistory orderHistory = RepositoryService.getProcessingOrderHistoryRepository()
 					.findByMissionCodeAndIdentifier(modelOrder.getMission().getCode(), modelOrder.getIdentifier());
@@ -688,25 +686,25 @@ public class ProcessingOrderMgr {
 
 		// If list attributes were set to null explicitly, initialize with empty lists
 		if (null == order.getOrbits()) {
-			order.setOrbits(new ArrayList<RestOrbitQuery>());
+			order.setOrbits(new ArrayList<>());
 		}
 		if (null == order.getInputProductClasses()) {
-			order.setInputProductClasses(new ArrayList<String>());
+			order.setInputProductClasses(new ArrayList<>());
 		}
 		if (null == order.getInputFilters()) {
-			order.setInputFilters(new ArrayList<RestInputFilter>());
+			order.setInputFilters(new ArrayList<>());
 		}
 		if (null == order.getOutputParameters()) {
-			order.setOutputParameters(new ArrayList<RestParameter>());
+			order.setOutputParameters(new ArrayList<>());
 		}
 		if (null == order.getClassOutputParameters()) {
-			order.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
+			order.setClassOutputParameters(new ArrayList<>());
 		}
 		if (null == order.getConfiguredProcessors()) {
-			order.setConfiguredProcessors(new ArrayList<String>());
+			order.setConfiguredProcessors(new ArrayList<>());
 		}
 		if (null == order.getJobStepStates()) {
-			order.setJobStepStates(new ArrayList<String>());
+			order.setJobStepStates(new ArrayList<>());
 		}
 
 		// Make sure order is in INITIAL state
@@ -726,7 +724,7 @@ public class ProcessingOrderMgr {
 		if (!modelOrder.getUuid().equals(changedOrder.getUuid()))
 			throw new IllegalArgumentException(
 					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "UUID", modelOrder.getIdentifier()));
-	
+
 		// Workflow and input product reference may not be changed
 		if ((null != modelOrder.getInputProductReference() && null == order.getInputProductReference())
 				|| (null != modelOrder.getInputProductReference() && !modelOrder.getInputProductReference()
@@ -741,14 +739,14 @@ public class ProcessingOrderMgr {
 			throw new IllegalArgumentException(
 					logger.log(OrderMgrMessage.MODIFICATION_NOT_ALLOWED, "workflow", modelOrder.getIdentifier()));
 		}
-		
+
 		// Modify attributes
 		if (!modelOrder.getIdentifier().equals(changedOrder.getIdentifier())) {
 			orderChanged = true;
 			stateChangeOnly = false;
 			modelOrder.setIdentifier(changedOrder.getIdentifier());
 		}
-		
+
 		if (!modelOrder.getOrderSource().equals(changedOrder.getOrderSource())) {
 			orderChanged = true;
 			stateChangeOnly = false;
@@ -852,7 +850,7 @@ public class ProcessingOrderMgr {
 			orderChanged = true;
 			stateChangeOnly = false;
 			modelOrder.setHasFailedJobSteps(changedOrder.getHasFailedJobSteps());
-		}		
+		}
 
 		// Check for changes in input filters
 		Map<ProductClass, InputFilter> newInputFilters = new HashMap<>();
@@ -1321,7 +1319,7 @@ public class ProcessingOrderMgr {
 	public List<RestOrder> getAndSelectOrders(String mission, String identifier, String[] state, String[] requestedProductClasses,
 			String startTimeFrom, String startTimeTo, Long recordFrom, Long recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state, 
+			logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state,
 					requestedProductClasses, startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
 
 		if (null == mission)
@@ -1393,7 +1391,7 @@ public class ProcessingOrderMgr {
 	public String countSelectOrders(String mission, String identifier, String[] state, String[] requestedProductClasses,
 			String startTimeFrom, String startTimeTo, Long recordFrom, Long recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state, 
+			logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state,
 					requestedProductClasses, startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
 
 		if (null == mission)

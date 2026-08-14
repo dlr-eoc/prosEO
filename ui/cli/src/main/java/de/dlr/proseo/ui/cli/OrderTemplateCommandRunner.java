@@ -73,7 +73,6 @@ public class OrderTemplateCommandRunner {
 	private static final String PROMPT_PRODUCT_CLASSES = "Product classes to deliver (comma-separated list; empty field cancels): ";
 
 	private static final String URI_PATH_ORDERTEMPLATES = "/ordertemplates";
-	
 	/** The user manager used by all command runners */
 	@Autowired
 	private LoginManager loginManager;

@@ -29,10 +29,10 @@
                      checked against product parameter values by equality.
       targetProductClass:
         type: string
-        description: The product class which uses the selection rule
+        description: The product type of the product class which uses the selection rule
       sourceProductClass:
         type: string
-        description: The product class which is selected by this rule
+        description: The product type of the product class which is selected by this rule
       configuredProcessors:
         type: string[]
         description: A list of identifiers for processor configurations, for which this rule is applicable
@@ -41,4 +41,4 @@
         description: The selection policies applied for selecting target products (the first applicable policy in the list holds)
       ruleString:
         type: string
-        description: The rule string of this selection rule
+        description: The selection rule in prosEO Rule Language

@@ -86,7 +86,7 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	private Integer priority = 50;
 	
-	/** State of the processing order */
+	/** State of the processing order - the default value INITIAL is *not* set here in order not to break setOrderState() */
 	@Enumerated(EnumType.STRING)
 	private OrderState orderState;
 	
@@ -133,7 +133,7 @@ public class ProcessingOrder extends PersistentObject {
 	private Instant actualCompletionTime;
 	
 	/**
-	 * Date and time at which the  ProcessingOrder was closed
+	 * Date and time at which the ProcessingOrder was closed
 	 */
 	@Column(name = "closing_time", columnDefinition = "TIMESTAMP")
 	private Instant closingTime;

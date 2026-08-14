@@ -1,0 +1,38 @@
+spring:
+    maxResults: 10000
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate:
+            jdbc.time_zone: UTC
+            #id.db_structure_naming_strategy: standard
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: ${POSTGRES_USER}
+        password: ${POSTGRES_PWD}
+management:
+    endpoints.web.exposure.include: "health"
+logging:
+    file: 
+        name: /proseo/log/proseo-order-generator.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+proseo:
+    http:
+        # Timeout for HTTP connections
+        timeout: 30000
+    productionPlanner:
+        # The URL of the prosEO Production Planner
+        url: http://proseo-prodplanner:8080/proseo/planner/v0.1
+    orderManager:
+        # The URL of the prosEO Order Manager
+        url: http://proseo-order-mgr:8080/proseo/order-mgr/v0.1
+
+    orderGenerator:
+        # User and password for access to Order Manager and Production Planner
+        user: ${PROSEO_AIP_USER}
+        password: ${PROSEO_AIP_PWD}
+        # Processing facility for order planning
+        facility: facility

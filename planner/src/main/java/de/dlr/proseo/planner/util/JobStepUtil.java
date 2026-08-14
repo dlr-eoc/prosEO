@@ -12,7 +12,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,15 +23,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Isolation;
@@ -56,7 +50,6 @@ import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.SimplePolicy;
-import de.dlr.proseo.model.enums.OrderSource;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.rest.model.RestProduct;
@@ -71,6 +64,9 @@ import de.dlr.proseo.planner.ProductionPlannerSecurityConfig;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
 import de.dlr.proseo.planner.service.ServiceConnection;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 
 /**
  * Utility class for managing job steps.
@@ -83,7 +79,7 @@ public class JobStepUtil {
 
 	/** Logger of this class */
 	private static ProseoLogger logger = new ProseoLogger(JobStepUtil.class);
-	
+
 	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd' 'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
 
 	/** Allbytime download path */
@@ -199,7 +195,7 @@ public class JobStepUtil {
 					List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
 						.findUnsatisfiedByProductClass(pcId);
 					for (ProductQuery pq : productQueries) {
-						if (pq.getJobStep().getJob().getProcessingOrder().getExecutionTime() != null 
+						if (pq.getJobStep().getJob().getProcessingOrder().getExecutionTime() != null
 								? pq.getJobStep().getJob().getProcessingOrder().getExecutionTime().isBefore(now) : true) {
 							if (pq.getJobStep().getJobStepState().equals(JobStepState.WAITING_INPUT)
 									&& pq.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
@@ -228,7 +224,7 @@ public class JobStepUtil {
 
 					for (ProductQuery productQuery : productQueries) {
 						if (productQuery.getJobStep().getJob().getProcessingFacility().getId() == pfId) {
-							if (productQuery.getJobStep().getJob().getProcessingOrder().getExecutionTime() != null 
+							if (productQuery.getJobStep().getJob().getProcessingOrder().getExecutionTime() != null
 									? productQuery.getJobStep().getJob().getProcessingOrder().getExecutionTime().isBefore(now) : true) {
 								if (productQuery.getJobStep().getJobStepState().equals(JobStepState.WAITING_INPUT)
 										&& productQuery.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
@@ -306,14 +302,14 @@ public class JobStepUtil {
 			break;
 		case SENSING_TIME:
 			nativeQuery = "SELECT j.start_time, js.id " + "FROM job j " + "JOIN job_step js ON j.id = js.job_id "
-					+ "JOIN processing_order po ON po.id = j.processing_order_id " 
+					+ "JOIN processing_order po ON po.id = j.processing_order_id "
 					+ "WHERE j.processing_facility_id = :pfId " + "AND js.job_step_state IN :jsStates "
 					+ "AND job_state IN ('RELEASED', 'RUNNING', 'STARTED') " + "AND (po.execution_time IS NULL OR po.execution_time < '" + timeString + "') "
 					+ "ORDER BY js.priority desc, j.start_time, js.id";
 			break;
 		default:
 			nativeQuery = "SELECT j.start_time, js.id " + "FROM job j " + "JOIN job_step js ON j.id = js.job_id "
-					+ "JOIN processing_order po ON po.id = j.processing_order_id " 
+					+ "JOIN processing_order po ON po.id = j.processing_order_id "
 					+ "WHERE j.processing_facility_id = :pfId " + "AND js.job_step_state IN :jsStates "
 					+ "AND job_state IN ('RELEASED', 'RUNNING', 'STARTED') " + "AND (po.execution_time IS NULL OR po.execution_time < '" + timeString + "') "
 					+ "ORDER BY js.priority desc, j.start_time, js.id";
@@ -1050,7 +1046,7 @@ public class JobStepUtil {
 					&& (js.getJob().getProcessingOrder().getExecutionTime() != null ? Instant.now().isAfter(js.getJob().getProcessingOrder().getExecutionTime()) : true)
 					&& (force || js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)) {
 				logger.trace("Looking for product queries of job step: " + js.getId());
-				Boolean saveJS = false;
+				boolean saveJS = false;
 				if (js.getProcessingStartTime() == null) {
 					js.setProcessingStartTime(Instant.now());
 					saveJS = true;
@@ -1067,7 +1063,7 @@ public class JobStepUtil {
 						// Execute the product query
 						if (productQueryService.executeQuery(productQuery, false)) {
 							// If the query is successfully executed, update its state and save
-							
+
 							if (js.getJob().getProcessingOrder().getProductionType() == ProductionType.ON_DEMAND_DEFAULT
 									|| js.getJob().getProcessingOrder().getProductionType() == ProductionType.ON_DEMAND_NON_DEFAULT) {
 								if (!productQuery.getInDownload() && productQuery.getSatisfyingProducts().isEmpty()) {
@@ -1110,7 +1106,7 @@ public class JobStepUtil {
 
 				// Update the state of the job step based on the query results
 				if (hasUnsatisfiedInputQueries) {
-					Boolean setWaitingInput = true;
+					boolean setWaitingInput = true;
 					Duration timeoutPeriod = js.getJob().getProcessingOrder().getInputDataTimeoutPeriod();
 					if (timeoutPeriod != null) {
 						if (js.getProcessingStartTime() != null
@@ -1321,7 +1317,7 @@ public class JobStepUtil {
 								throw new RuntimeException("Invalid query result: " + jobStepObject);
 							}
 						}
-						
+
 
 						jobStepList = transactionTemplate.execute((status) -> {
 
@@ -1371,7 +1367,7 @@ public class JobStepUtil {
 											transactionTemplate.setReadOnly(false);
 											for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 												try {
-													Object x = transactionTemplate.execute((status) -> {
+													transactionTemplate.execute((status) -> {
 														JobStep jobStepX = null;
 														Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(idLoc);
 														if (opt.isPresent()) {
@@ -1393,7 +1389,7 @@ public class JobStepUtil {
 													}
 
 												} catch (Exception e) {
-													String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+													logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 
 													if (logger.isDebugEnabled())
 														logger.debug("... exception stack trace: ", e);
@@ -1402,7 +1398,7 @@ public class JobStepUtil {
 											}
 											for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 												try {
-													Object x = transactionTemplate.execute((status) -> {
+													transactionTemplate.execute((status) -> {
 														JobStep jobStepX = null;
 														Optional<JobStep> opt = RepositoryService.getJobStepRepository().findById(idLoc);
 														if (opt.isPresent()) {
@@ -1425,7 +1421,7 @@ public class JobStepUtil {
 													}
 
 												} catch (Exception e) {
-													String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
+													logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 
 													if (logger.isDebugEnabled())
 														logger.debug("... exception stack trace: ", e);

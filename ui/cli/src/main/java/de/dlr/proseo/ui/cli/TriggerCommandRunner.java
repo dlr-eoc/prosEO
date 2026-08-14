@@ -62,7 +62,7 @@ public class TriggerCommandRunner {
 	private static final String PROMPT_TRIGGER_INPUT_TYPE = "Trigger input product type (empty field cancels); ";
 	private static final String PROMPT_TRIGGER_SPACECRAFT = "Trigger spacecarft code (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_LAST_ORBIT = "Trigger last orbit number (empty field cancels): ";
-	private static final String PROMPT_TRIGGER_DELTA_TIME = "Trigger delta time (empty field cancels): ";
+//	private static final String PROMPT_TRIGGER_DELTA_TIME = "Trigger delta time (empty field cancels): ";
 	private static final String PROMPT_TRIGGER_TIMEINTERVAL = "Trigger time interval (empty field cancels): ";
 	private static final String PROMPT_ORDERTEMPLATE_NAME = "Trigger order template name (empty field cancels): ";
 	private static final String URI_PATH_TRIGGERS = "/triggers";

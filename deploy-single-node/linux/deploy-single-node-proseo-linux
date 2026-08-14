@@ -1,0 +1,185 @@
+#!/bin/bash
+set -ex
+
+
+
+# -------------------------
+# Check parameters
+# -------------------------
+PROSEO_STORAGE_PATH=$1
+# /data/proseo-dev-1-vm
+PROSEO_ROOT_PATH=$2
+# /data/corti-nicolas/01-projects/proseo/prosEO-learn
+PROSEO_VERSION=$3
+# 1.2.0-proseo
+
+if [ "x$PROSEO_STORAGE_PATH" = "x" ] || [ "x$PROSEO_ROOT_PATH" = "x" ] || [ "x$PROSEO_VERSION" = "x" ]; then
+    echo "Usage: $0 <Proseo Storage Path i.e. /data/proseo-dev-1-vm (don't set trailing slash)> <path to proseo root directory - git> <proseo version i.e. 1.2.0-proseo>"
+    exit 1
+fi
+
+docker compose -p proseo down
+minikube stop
+docker container rm -f registry
+docker container rm -f minikube
+docker volume rm minikube
+docker system prune --all --volumes --force
+minikube delete --all --purge
+
+sudo systemctl stop docker.service
+sudo systemctl stop docker.socket
+
+sudo rm -rf ${PROSEO_STORAGE_PATH}/
+
+mkdir -p ${PROSEO_STORAGE_PATH}/{docker-storage,proseo-data,proseo-shared-storage,registry-bind-mount}
+
+chmod 757 -R ${PROSEO_STORAGE_PATH}/proseo-shared-storage/
+
+sudo rm -rf /etc/docker/daemon.json
+# Define output path
+CONFIG_FILE="/etc/docker/daemon.json"
+# Define the JSON configuration directly in the script
+JSON_CONTENT="{
+    \"insecure-registries\": [
+    \"localhost:5000\"
+    ],
+    \"data-root\":\"${PROSEO_STORAGE_PATH}/docker-storage\"
+}"
+# Ensure the Docker config directory exists
+sudo mkdir -p "$(dirname "$CONFIG_FILE")"
+# Write the JSON to the config file
+echo "$JSON_CONTENT" | sudo tee "$CONFIG_FILE" > /dev/null
+echo "Docker daemon.json has been created at $CONFIG_FILE"
+
+
+sudo systemctl start docker.socket
+sudo systemctl start docker.service
+sudo systemctl status docker.socket
+sudo systemctl --no-pager status docker.service
+
+docker run -d -p 5000:5000 --restart always -e STORAGE_DELETE_ENABLED=true -v ${PROSEO_STORAGE_PATH}/registry-bind-mount:/var/lib/registry --name registry registry:3
+
+
+# minikube start --cpus 6 --memory 32GB --driver docker --mount=true  --mount-string="${PROSEO_STORAGE_PATH}/proseo-shared-storage:/minikube-host"  --insecure-registry="host.minikube.internal:5000"
+minikube start --cpus 6 --memory 32GB --apiserver-ips=192.168.49.2,10.104.105.207  --apiserver-names=proseo-dev1.eoc.dlr.de,kubernetes --driver docker --mount=true  --mount-string="${PROSEO_STORAGE_PATH}/proseo-shared-storage:/minikube-host"  --insecure-registry="host.minikube.internal:5000"
+
+sleep 20
+minikube cp ca.crt /etc/docker/certs.d/proseo-registry.eoc.dlr.de/ca.crt
+minikube ssh "sudo systemctl restart docker"
+
+sleep 10
+
+kubectl create secret generic proseo-regcred --from-file=.dockerconfigjson=${HOME}/.docker/config-proseo.json --type=kubernetes.io/dockerconfigjson
+
+sudo sed -i '/host.minikube.internal/d' /etc/hosts
+MINI_IP=$(minikube ip)
+echo "${MINI_IP}    host.minikube.internal" | sudo tee -a /etc/hosts
+# echo "10.104.105.207    host.minikube.internal" | sudo tee -a /etc/hosts
+
+
+cd ${PROSEO_ROOT_PATH}
+# time mvn clean install -Dmaven.test.skip=true
+time mvn clean install -Dmaven.test.skip=true -Pskip-dependency-check
+
+
+cd ${PROSEO_ROOT_PATH}/deploy-single-node/proseo-images
+
+export $(cat .env | xargs)
+
+cd ${PROSEO_ROOT_PATH}/deploy-single-node/proseo-images/proseo-components/
+
+cp ${HOME}/.kube/config ${PROSEO_ROOT_PATH}/deploy-single-node/proseo-images/proseo-components/proseo-planner/kube_config
+
+./build-components-linux.sh
+
+# export REGISTRY_URL=localhost:5000
+
+# for component in proseo-* ; do   cd $component ;   COMPONENT_NAME=$(cat Dockerfile | grep FROM | awk '{gsub("localhost:5000/",""); split($0,a," "); print a[2]}') ;   TAGGED_NAME=${REGISTRY_URL}/${COMPONENT_NAME}-proseo;   docker build -t ${TAGGED_NAME} .;   docker push ${TAGGED_NAME};   cd -; done
+
+cd ${PROSEO_ROOT_PATH}/deploy-single-node/proseo-images/
+
+VERSION=$(echo "$PROSEO_VERSION" | cut -d'-' -f1)
+sed -i "s/^VERSION=.*/VERSION=${VERSION}/" .env
+cat .env
+
+docker compose -f docker-compose-linux.yml -p proseo up -d
+
+sleep 40
+
+docker network connect minikube proseo-proseo-ingestor-1
+
+docker network connect minikube proseo-proseo-prodplanner-1
+
+
+
+docker container exec proseo-proseo-db-1 psql -U postgres -d proseo -f /proseo/create_view_product_processing_facilities.sql
+
+docker container exec proseo-proseo-db-1 psql -U postgres -d proseo -f /proseo/populate_mon_service_state.sql
+
+
+# kubectl apply -f /users/cort_ni/prosEO/deploy/hands/kubernetes/planner-account.yaml
+kubectl apply -f ${PROSEO_ROOT_PATH}/deploy-single-node/kubernetes/planner-account-single-node-linux.yaml
+
+cd ${PROSEO_ROOT_PATH}/samples/testdata/
+
+cat > sysadm.cred << EOF
+sysadm
+sysadm
+EOF
+
+chmod 600 sysadm.cred
+
+sed -i 's/localhost/host.minikube.internal/g' configure_proseo_test_mission.pl
+
+./configure_proseo_test_mission.pl
+
+java -jar ${PROSEO_ROOT_PATH}/ui/cli/target/proseo-ui-cli.jar < cli_script.txt 
+
+cd ${PROSEO_ROOT_PATH}/deploy-single-node/kubernetes
+
+
+sed -i 's|localhost|host.minikube.internal|g' storage-mgr-local.yaml
+# sed -i 's|mountPath: "/mnt|mountPath: "/proseo/transfer|g' storage-mgr-local.yaml
+
+./create-k8s-resources-linux.sh ${PROSEO_VERSION} ${PROSEO_STORAGE_PATH}/proseo-shared-storage
+
+
+cd ${PROSEO_ROOT_PATH}/deploy-single-node/ptm-config
+
+
+cp ./create_data_local.sh ./create_data_local-linux.sh
+
+sed -i '31,32s/^/# /' ./create_data_local-linux.sh
+sed -i '40s/^/# /' ./create_data_local-linux.sh
+sed -i '42s/^/# /' ./create_data_local-linux.sh
+sed -i '45s/^/# /' ./create_data_local-linux.sh
+sed -i '48s/^/# /' ./create_data_local-linux.sh
+sed -i '142s/^/# /' ./create_data_local-linux.sh
+sed -i '150,151s/^/# /' ./create_data_local-linux.sh
+# sed -i 's|INGEST_MOUNT_POINT=/mnt|INGEST_MOUNT_POINT=/proseo/transfer|g' ./create_data_local-linux.sh
+sed -i 's|processingEngineUrl": "http://host.docker.internal:8001/|processingEngineUrl": "https://minikube:8443/|g' ./create_data_local-linux.sh
+sed -i 's|http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1|http://minikube:30001/proseo/storage-mgr/v0.1|g' ./create_data_local-linux.sh
+sed -i 's|http://localhost:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1|http://minikube:30001/proseo/storage-mgr/v0.1|g' ./create_data_local-linux.sh
+
+
+
+./create_data_local-linux.sh ${PROSEO_VERSION} ${PROSEO_STORAGE_PATH}/proseo-shared-storage
+
+TOKEN=$(kubectl get secret proseo-planner-secret -o jsonpath="{.data.token}" | base64 --decode)
+sed -i "s/TBD/${TOKEN}/" testproducts/facility.json
+
+cat > proseo.cred << EOF
+proseo
+prosEO.789
+EOF
+
+chmod 600 proseo.cred
+
+cat cli_data_script.txt
+
+sleep 60
+# java -jar ${PROSEO_ROOT_PATH}/ui/cli/target/proseo-ui-cli.jar  -iproseo.cred -mPTM
+java -jar ${PROSEO_ROOT_PATH}/ui/cli/target/proseo-ui-cli.jar  -iproseo.cred -mPTM < cli_data_script.txt
+
+sleep 10
+

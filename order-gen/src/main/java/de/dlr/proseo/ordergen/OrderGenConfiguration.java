@@ -10,8 +10,6 @@ import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-import de.dlr.proseo.logging.logger.ProseoLogger;
-
 /**
  * Configuration class for the prosEO OrderGenerator component
  *
@@ -22,9 +20,6 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 @ConfigurationProperties(prefix = "proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class OrderGenConfiguration {
-
-	/** A logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(OrderGenConfiguration.class);
 
 	/** The maximum number of results to be retrieved by REST requests */
 	@Value("${spring.maxResults}")

@@ -12,3 +12,4 @@ bin/
 /integration-tests
 /dev/
 **/META-INF
+s4-wrappers

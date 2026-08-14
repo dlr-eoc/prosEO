@@ -64,6 +64,7 @@
         description: List of internal product types provided as input to the order (may be empty) 
       productionType?:
         type: string
+        default: ON_DEMAND_DEFAULT
         description: Production type context, in which the order is running (SYSTEMATIC, ON_DEMAND_DEFAULT, ON_DEMAND_NON_DEFAULT)
       notificationEndpoint?:
         type: RestNotificationEndpoint
@@ -94,5 +95,8 @@
         description: Flag determining whether the order template is usable
       autoGenerateSteps?:    
         type: string
-        description: Indicates whether automatic job step derivation is done. If attribute is not set (null), the default as configured for the Production Planner will be used.
+        default: DEFAULT
+        description: |
+            Indicates whether automatic job step derivation is done. If attribute is not set (null), the default as configured
+            for the Production Planner will be used. One of { 'TRUE', 'FALSE', 'DEFAULT' }.
         
