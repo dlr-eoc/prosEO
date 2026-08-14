@@ -13,6 +13,7 @@ import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -30,9 +31,16 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.enums.ProductionType;
+import de.dlr.proseo.model.enums.ThreeValueBool;
+import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
+import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
+import de.dlr.proseo.model.rest.model.RestParameter;
+import de.dlr.proseo.model.util.ListUtils;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
+import de.dlr.proseo.model.util.StringUtils;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.backend.LoginManager;
@@ -227,12 +235,8 @@ public class OrderCommandRunner {
 		if (null == restOrder.getMissionCode() || 0 == restOrder.getMissionCode().length()) {
 			restOrder.setMissionCode(loginManager.getMission());
 		}
-		if (null == restOrder.getOrderState() || 0 == restOrder.getOrderState().length()) {
-			restOrder.setOrderState(OrderState.INITIAL.toString());
-		}
-		if (null == restOrder.getSliceOverlap()) {
-			restOrder.setSliceOverlap(0L);
-		}
+		initValues(restOrder);
+		initLists(restOrder);
 		
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
@@ -582,6 +586,7 @@ public class OrderCommandRunner {
 		} else {
 			try {
 				updatedOrder = CLIUtil.parseObjectFile(orderFile, orderFileFormat, RestOrder.class);
+				initLists(updatedOrder);
 			} catch (IllegalArgumentException | IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
@@ -1486,6 +1491,63 @@ public class OrderCommandRunner {
 		default:
 			System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 			return;
+		}
+	}
+
+	private void initValues(RestOrder restOrder) {
+		if (null == restOrder.getSliceOverlap()) {
+			restOrder.setSliceOverlap(0L);
+		}
+		if (null == restOrder.getPriority()) {
+			restOrder.setPriority(50);
+		}
+		if (StringUtils.isNullOrEmpty(restOrder.getOrderState())) {
+			restOrder.setOrderState(OrderState.INITIAL.name());
+		}
+		if (StringUtils.isNullOrEmpty(restOrder.getSlicingType())) {
+			restOrder.setSlicingType(OrderSlicingType.NONE.name());
+		}
+		if (StringUtils.isNullOrEmpty(restOrder.getProductionType())) {
+			restOrder.setProductionType(ProductionType.ON_DEMAND_DEFAULT.name());
+		}
+		if (StringUtils.isNullOrEmpty(restOrder.getAutoGenerateSteps())) {
+			restOrder.setAutoGenerateSteps(ThreeValueBool.DEFAULT.name());
+		}
+		if (null == restOrder.getSliceDuration()) {
+			restOrder.setSliceDuration(0L);
+		}
+		if (restOrder.getAutoRelease() == null) {
+			restOrder.setAutoRelease(false);
+		}
+		if (restOrder.getAutoClose() == null) {
+			restOrder.setAutoClose(false);
+		}
+		if (restOrder.getOnInputDataTimeoutFail() == null) {
+			restOrder.setOnInputDataTimeoutFail(false);
+		}
+	}
+
+	private void initLists(RestOrder restOrder) {
+		if (ListUtils.isNullOrEmpty(restOrder.getInputFilters())) {
+			restOrder.setInputFilters(new ArrayList<RestInputFilter>());
+		}
+		if (ListUtils.isNullOrEmpty(restOrder.getDynamicProcessingParameters())) {
+			restOrder.setDynamicProcessingParameters(new ArrayList<RestParameter>());
+		}
+		if (ListUtils.isNullOrEmpty(restOrder.getOutputParameters())) {
+			restOrder.setOutputParameters(new ArrayList<RestParameter>());
+		}
+		if (ListUtils.isNullOrEmpty(restOrder.getClassOutputParameters())) {
+			restOrder.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
+		}
+		if (ListUtils.isNullOrEmpty(restOrder.getConfiguredProcessors())) {
+			restOrder.setConfiguredProcessors(new ArrayList<String>());
+		}
+		if (ListUtils.isNullOrEmpty(restOrder.getInputProductClasses())) {
+			restOrder.setInputProductClasses(new ArrayList<String>());
+		}
+		if (ListUtils.isNullOrEmpty(restOrder.getJobStepStates())) {
+			restOrder.setJobStepStates(new ArrayList<String>());
 		}
 	}
 }

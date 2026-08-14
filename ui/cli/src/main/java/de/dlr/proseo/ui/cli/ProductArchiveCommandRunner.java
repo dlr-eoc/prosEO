@@ -23,6 +23,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.ArchiveType;
 import de.dlr.proseo.model.rest.model.RestProductArchive;
+import de.dlr.proseo.model.util.ListUtils;
 import de.dlr.proseo.model.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -283,17 +284,8 @@ public class ProductArchiveCommandRunner {
 		}
 		
 		/* Set default rest attribute values where appropriate */
-		if (null == restArchive.getArchiveType()) {
-			restArchive.setArchiveType(ArchiveType.AIP.toString());
-		}
-				
-		if (null == restArchive.getTokenRequired()) {
-			restArchive.setTokenRequired(false);			
-		}
-		
-		if (null == restArchive.getSendAuthInBody()) {
-			restArchive.setSendAuthInBody(false);			
-		}
+		initValues(restArchive);
+		initLists(restArchive);
 				
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
@@ -555,6 +547,7 @@ public class ProductArchiveCommandRunner {
 		} else {
 			try {
 				updatedArchive = CLIUtil.parseObjectFile(archiveFile, archiveFileFormat, RestProductArchive.class);
+				initLists(updatedArchive);
 			} catch (IllegalArgumentException | IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
@@ -595,7 +588,8 @@ public class ProductArchiveCommandRunner {
 		/* Compare attributes of database archive with updated archive */
 		// No modification of ID, version and archive name allowed
 		setRestArchiveAttributes(restArchive, updatedArchive, isDeleteAttributes);
-		
+
+		initValues(restArchive);
 		
 		/* Update product archive using Archive Manager service */
 		try {
@@ -735,6 +729,24 @@ public class ProductArchiveCommandRunner {
 		default:
 			System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 			return;
+		}
+	}
+
+	private void initValues(RestProductArchive restArchive) {
+		if (StringUtils.isNullOrEmpty(restArchive.getArchiveType())) {
+			restArchive.setArchiveType(ArchiveType.AIP.toString());
+		}
+		if (restArchive.getSendAuthInBody() == null) {
+			restArchive.setSendAuthInBody(false);
+		}
+		if (null == restArchive.getTokenRequired()) {
+			restArchive.setTokenRequired(false);			
+		}
+	}
+
+	private void initLists(RestProductArchive restArchive) {
+		if (ListUtils.isNullOrEmpty(restArchive.getAvailableProductClasses())) {
+			restArchive.setAvailableProductClasses(new ArrayList<String>());
 		}
 	}
 }

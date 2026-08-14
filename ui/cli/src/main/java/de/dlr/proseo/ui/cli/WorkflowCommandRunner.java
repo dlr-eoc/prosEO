@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +21,14 @@ import tools.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
+import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
+import de.dlr.proseo.model.rest.model.RestInputFilter;
+import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.rest.model.RestWorkflow;
+import de.dlr.proseo.model.rest.model.RestWorkflowOption;
+import de.dlr.proseo.model.util.ListUtils;
+import de.dlr.proseo.model.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -142,6 +150,9 @@ public class WorkflowCommandRunner {
 		if (null == restWorkflow.getMissionCode() || 0 == restWorkflow.getMissionCode().length()) {
 			restWorkflow.setMissionCode(loginManager.getMission());
 		}
+		
+		initValues(restWorkflow);
+		initLists(restWorkflow);
 
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
@@ -392,6 +403,7 @@ public class WorkflowCommandRunner {
 		} else {
 			try {
 				updatedWorkflow = CLIUtil.parseObjectFile(workflowFile, workflowFileFormat, RestWorkflow.class);
+				initLists(updatedWorkflow);
 			} catch (IllegalArgumentException | IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
@@ -521,6 +533,7 @@ public class WorkflowCommandRunner {
 		} else if (isDeleteAttributes) {
 			restWorkflow.getWorkflowOptions().clear();
 		}
+		initValues(restWorkflow);
 
 		/* Update workflow using Workflow Manager service */
 		try {
@@ -712,6 +725,30 @@ public class WorkflowCommandRunner {
 				return;
 			}
 
+		}
+	}
+
+	private void initValues(RestWorkflow restWorkflow) {
+		if (null == restWorkflow.getSliceOverlap()) {
+			restWorkflow.setSliceOverlap(0L);
+		}
+		if (StringUtils.isNullOrEmpty(restWorkflow.getSlicingType())) {
+			restWorkflow.setSlicingType(OrderSlicingType.NONE.name());
+		}
+	}
+
+	private void initLists(RestWorkflow restWorkflow) {
+		if (ListUtils.isNullOrEmpty(restWorkflow.getInputFilters())) {
+			restWorkflow.setInputFilters(new ArrayList<RestInputFilter>());
+		}
+		if (ListUtils.isNullOrEmpty(restWorkflow.getWorkflowOptions())) {
+			restWorkflow.setWorkflowOptions(new ArrayList<RestWorkflowOption>());
+		}
+		if (ListUtils.isNullOrEmpty(restWorkflow.getOutputParameters())) {
+			restWorkflow.setOutputParameters(new ArrayList<RestParameter>());
+		}
+		if (ListUtils.isNullOrEmpty(restWorkflow.getClassOutputParameters())) {
+			restWorkflow.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
 		}
 	}
 }

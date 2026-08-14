@@ -26,9 +26,16 @@ import tools.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
+import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.ProductQuality;
+import de.dlr.proseo.model.rest.model.RestDownloadHistory;
+import de.dlr.proseo.model.rest.model.RestOrderTemplate;
+import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.rest.model.RestProduct;
 import de.dlr.proseo.model.rest.model.RestProductFile;
+import de.dlr.proseo.model.util.ListUtils;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
+import de.dlr.proseo.model.util.StringUtils;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.backend.LoginManager;
@@ -213,6 +220,10 @@ public class IngestorCommandRunner {
 				System.err.println(ProseoLogger.format(UIMessage.INVALID_TIME, response));
 			}
 		}
+		// Set default values 
+		initValues(restProduct);
+		initLists(restProduct);
+		
 		
 		/* Create product */
 		try {
@@ -404,6 +415,7 @@ public class IngestorCommandRunner {
 		} else {
 			try {
 				updatedProduct = CLIUtil.parseObjectFile(productFile, productFileFormat, RestProduct.class);
+				initLists(updatedProduct);
 			} catch (IllegalArgumentException | IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
@@ -512,6 +524,7 @@ public class IngestorCommandRunner {
 		if (isDeleteAttributes || !updatedProduct.getParameters().isEmpty()) {
 			restProduct.setParameters(updatedProduct.getParameters());
 		}
+		initValues(restProduct);
 		
 		/* Update product using Ingestor service */
 		try {
@@ -944,6 +957,27 @@ public class IngestorCommandRunner {
 		default:
 			System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 			return;
+		}
+	}
+	
+	private void initValues(RestProduct restProduct) {
+		if (StringUtils.isNullOrEmpty(restProduct.getProductQuality())) {
+			restProduct.setProductQuality(ProductQuality.NOMINAL.name());
+		}
+	}
+	
+	private void initLists(RestProduct restProduct) {
+		if (ListUtils.isNullOrEmpty(restProduct.getDownloadHistory())) {
+			restProduct.setDownloadHistory(new ArrayList<RestDownloadHistory>());
+		}
+		if (ListUtils.isNullOrEmpty(restProduct.getComponentProductIds())) {
+			restProduct.setComponentProductIds(new ArrayList<Long>());
+		}
+		if (ListUtils.isNullOrEmpty(restProduct.getProductFile())) {
+			restProduct.setProductFile(new ArrayList<RestProductFile>());
+		}
+		if (ListUtils.isNullOrEmpty(restProduct.getParameters())) {
+			restProduct.setParameters(new ArrayList<RestParameter>());
 		}
 	}
 }

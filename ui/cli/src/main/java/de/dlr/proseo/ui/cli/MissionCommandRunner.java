@@ -23,6 +23,7 @@ import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.model.rest.model.RestOrbit;
 import de.dlr.proseo.model.rest.model.RestSpacecraft;
+import de.dlr.proseo.model.util.ListUtils;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -238,6 +239,9 @@ public class MissionCommandRunner {
 			}
 			restMission.setProductFileTemplate(response);
 		}
+
+		// Set default values 
+		initLists(restMission);
 		
 		/* Create mission */
 		try {
@@ -396,6 +400,7 @@ public class MissionCommandRunner {
 		} else {
 			try {
 				updatedMission = CLIUtil.parseObjectFile(missionFile, missionFileFormat, RestMission.class);
+				initLists(updatedMission);
 			} catch (IllegalArgumentException | IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
@@ -422,10 +427,10 @@ public class MissionCommandRunner {
 		if (null != updatedMission.getName() && 0 != updatedMission.getName().length()) { // mandatory, must not be empty
 			restMission.setName(updatedMission.getName());
 		}
-		if (!updatedMission.getFileClasses().isEmpty()) {
+		if (!ListUtils.isNullOrEmpty(updatedMission.getFileClasses())) {
 			restMission.setFileClasses(updatedMission.getFileClasses());
 		}
-		if (!updatedMission.getProcessingModes().isEmpty()) {
+		if (!ListUtils.isNullOrEmpty(updatedMission.getProcessingModes())) {
 			restMission.setProcessingModes(updatedMission.getProcessingModes());
 		}
 		if (null != updatedMission.getProductFileTemplate()) {
@@ -436,6 +441,9 @@ public class MissionCommandRunner {
 		}
 		if (isDeleteAttributes || null != updatedMission.getProductRetentionPeriod()) {
 			restMission.setProductRetentionPeriod(updatedMission.getProductRetentionPeriod());
+		}
+		if (isDeleteAttributes || null != updatedMission.getOrderRetentionPeriod()) {
+			restMission.setOrderRetentionPeriod(updatedMission.getOrderRetentionPeriod());
 		}
 		if (isDeleteAttributes || null != updatedMission.getOrderRetentionPeriod()) {
 			restMission.setOrderRetentionPeriod(updatedMission.getOrderRetentionPeriod());
@@ -1448,6 +1456,18 @@ public class MissionCommandRunner {
 				System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 				return;
 			}
+		}
+	}
+	
+	private void initLists(RestMission restMission) {
+		if (ListUtils.isNullOrEmpty(restMission.getFileClasses())) {
+			restMission.setFileClasses(new ArrayList<String>());
+		}
+		if (ListUtils.isNullOrEmpty(restMission.getProcessingModes())) {
+			restMission.setProcessingModes(new ArrayList<String>());
+		}
+		if (ListUtils.isNullOrEmpty(restMission.getSpacecrafts())) {
+			restMission.setSpacecrafts(new ArrayList<RestSpacecraft>());
 		}
 	}
 }

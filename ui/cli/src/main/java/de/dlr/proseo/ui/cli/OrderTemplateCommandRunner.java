@@ -9,8 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +25,14 @@ import tools.jackson.databind.ObjectMapper;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.ProductionType;
+import de.dlr.proseo.model.enums.ThreeValueBool;
+import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
+import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrderTemplate;
+import de.dlr.proseo.model.rest.model.RestParameter;
+import de.dlr.proseo.model.util.ListUtils;
+import de.dlr.proseo.model.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -68,8 +74,6 @@ public class OrderTemplateCommandRunner {
 
 	private static final String URI_PATH_ORDERTEMPLATES = "/ordertemplates";
 	
-	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
-
 	/** The user manager used by all command runners */
 	@Autowired
 	private LoginManager loginManager;
@@ -196,10 +200,8 @@ public class OrderTemplateCommandRunner {
 		if (null == restOrderTemplate.getMissionCode() || 0 == restOrderTemplate.getMissionCode().length()) {
 			restOrderTemplate.setMissionCode(loginManager.getMission());
 		}
-		if (null == restOrderTemplate.getSliceOverlap()) {
-			restOrderTemplate.setSliceOverlap(0L);
-		}
-		
+		initValues(restOrderTemplate);
+		initLists(restOrderTemplate);
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
 		if (null == restOrderTemplate.getName() || 0 == restOrderTemplate.getName().length()) {
@@ -437,6 +439,7 @@ public class OrderTemplateCommandRunner {
 		} else {
 			try {
 				updatedOrderTemplate = CLIUtil.parseObjectFile(orderFile, orderFileFormat, RestOrderTemplate.class);
+				initLists(updatedOrderTemplate);
 			} catch (IllegalArgumentException | IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
@@ -705,6 +708,58 @@ public class OrderTemplateCommandRunner {
 		default:
 			System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 			return;
+		}
+	}
+	
+
+	private void initValues(RestOrderTemplate restOrderTemplate) {
+		if (null == restOrderTemplate.getSliceOverlap()) {
+			restOrderTemplate.setSliceOverlap(0L);
+		}
+		if (null == restOrderTemplate.getPriority()) {
+			restOrderTemplate.setPriority(50);
+		}
+		if (StringUtils.isNullOrEmpty(restOrderTemplate.getSlicingType())) {
+			restOrderTemplate.setSlicingType(OrderSlicingType.NONE.name());
+		}
+		if (StringUtils.isNullOrEmpty(restOrderTemplate.getProductionType())) {
+			restOrderTemplate.setProductionType(ProductionType.ON_DEMAND_DEFAULT.name());
+		}
+		if (StringUtils.isNullOrEmpty(restOrderTemplate.getAutoGenerateSteps())) {
+			restOrderTemplate.setAutoGenerateSteps(ThreeValueBool.DEFAULT.name());
+		}
+		if (null == restOrderTemplate.getSliceDuration()) {
+			restOrderTemplate.setSliceDuration(0L);
+		}
+		if (restOrderTemplate.getAutoRelease() == null) {
+			restOrderTemplate.setAutoRelease(false);
+		}
+		if (restOrderTemplate.getAutoClose() == null) {
+			restOrderTemplate.setAutoClose(false);
+		}
+		if (restOrderTemplate.getOnInputDataTimeoutFail() == null) {
+			restOrderTemplate.setOnInputDataTimeoutFail(false);
+		}
+	}
+	
+	private void initLists(RestOrderTemplate restOrderTemplate) {
+		if (ListUtils.isNullOrEmpty(restOrderTemplate.getInputFilters())) {
+			restOrderTemplate.setInputFilters(new ArrayList<RestInputFilter>());
+		}
+		if (ListUtils.isNullOrEmpty(restOrderTemplate.getDynamicProcessingParameters())) {
+			restOrderTemplate.setDynamicProcessingParameters(new ArrayList<RestParameter>());
+		}
+		if (ListUtils.isNullOrEmpty(restOrderTemplate.getOutputParameters())) {
+			restOrderTemplate.setOutputParameters(new ArrayList<RestParameter>());
+		}
+		if (ListUtils.isNullOrEmpty(restOrderTemplate.getClassOutputParameters())) {
+			restOrderTemplate.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
+		}
+		if (ListUtils.isNullOrEmpty(restOrderTemplate.getConfiguredProcessors())) {
+			restOrderTemplate.setConfiguredProcessors(new ArrayList<String>());
+		}
+		if (ListUtils.isNullOrEmpty(restOrderTemplate.getInputProductClasses())) {
+			restOrderTemplate.setInputProductClasses(new ArrayList<String>());
 		}
 	}
 }

@@ -28,7 +28,9 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.rest.model.RestGroup;
+import de.dlr.proseo.model.rest.model.RestTrigger;
 import de.dlr.proseo.model.rest.model.RestUser;
+import de.dlr.proseo.model.util.ListUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -351,9 +353,8 @@ public class UserCommandRunner {
 		}
 		
 		/* Set missing attributes to default values where possible */
-		if (null == restUser.getEnabled()) {
-			restUser.setEnabled(true);
-		}
+		initValues(restUser);
+		initLists(restUser);
 		
 		/* Prompt user for missing mandatory attributes */
 		if (null != System.console()) System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
@@ -567,6 +568,7 @@ public class UserCommandRunner {
 		} else {
 			try {
 				updatedUser = CLIUtil.parseObjectFile(userFile, userFileFormat, RestUser.class);
+				initLists(updatedUser);
 			} catch (IllegalArgumentException | IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
@@ -623,7 +625,8 @@ public class UserCommandRunner {
 		if (isDeleteAttributes || null != updatedUser.getQuota()) {
 			restUser.setQuota(updatedUser.getQuota());
 		}
-		
+
+		initValues(restUser);
 		/* Update user using User Manager service */
 		restUser = modifyUser(restUser);
 		if (null == restUser) {
@@ -1043,7 +1046,7 @@ public class UserCommandRunner {
 			}
 			restGroup.setGroupname(loginManager.getMissionPrefix() + response);
 		}
-		
+		initLists(restGroup);
 		/* Create user group */
 		try {
 			restGroup = serviceConnection.postToService(serviceConfig.getUserManagerUrl(), URI_PATH_GROUPS, 
@@ -1196,6 +1199,7 @@ public class UserCommandRunner {
 		} else {
 			try {
 				updatedGroup = CLIUtil.parseObjectFile(groupFile, groupFileFormat, RestGroup.class);
+				initLists(updatedGroup);
 			} catch (IllegalArgumentException | IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
@@ -1755,4 +1759,21 @@ public class UserCommandRunner {
 		}
 	}
 
+	private void initValues(RestUser restUser) {
+		if (restUser.getEnabled() == null) {
+			restUser.setEnabled(true);
+		}
+	}
+
+	private void initLists(RestUser restUser) {
+		if (ListUtils.isNullOrEmpty(restUser.getAuthorities())) {
+			restUser.setAuthorities(new ArrayList<String>());
+		}
+	}
+
+	private void initLists(RestGroup restGroup) {
+		if (ListUtils.isNullOrEmpty(restGroup.getAuthorities())) {
+			restGroup.setAuthorities(new ArrayList<String>());
+		}
+	}
 }

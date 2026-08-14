@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -20,11 +21,18 @@ import tools.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
+import de.dlr.proseo.model.enums.JobOrderVersion;
 import de.dlr.proseo.model.rest.model.RestConfiguration;
+import de.dlr.proseo.model.rest.model.RestConfigurationFile;
+import de.dlr.proseo.model.rest.model.RestConfigurationInputFile;
 import de.dlr.proseo.model.rest.model.RestConfiguredProcessor;
+import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.rest.model.RestProcessor;
 import de.dlr.proseo.model.rest.model.RestProcessorClass;
+import de.dlr.proseo.model.rest.model.RestStringParameter;
 import de.dlr.proseo.model.rest.model.RestTask;
+import de.dlr.proseo.model.util.ListUtils;
+import de.dlr.proseo.model.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -147,6 +155,7 @@ public class ProcessorCommandRunner {
 		if (null == restProcessorClass.getMissionCode() || 0 == restProcessorClass.getMissionCode().length()) {
 			restProcessorClass.setMissionCode(loginManager.getMission());
 		}
+		initLists(restProcessorClass);
 		
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
@@ -300,6 +309,7 @@ public class ProcessorCommandRunner {
 		} else {
 			try {
 				updatedProcessorClass = CLIUtil.parseObjectFile(processorClassFile, processorClassFileFormat, RestProcessorClass.class);
+				initLists(updatedProcessorClass);
 			} catch (IllegalArgumentException | IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
@@ -551,9 +561,11 @@ public class ProcessorCommandRunner {
 		}
 		
 		/* Set missing attributes to default values where possible */
-		if (null == restProcessor.getMissionCode() || 0 == restProcessor.getMissionCode().length()) {
+		if (StringUtils.isNullOrEmpty(restProcessor.getMissionCode())) {
 			restProcessor.setMissionCode(loginManager.getMission());
 		}
+		initValues(restProcessor);
+		initLists(restProcessor);
 		
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
@@ -779,6 +791,7 @@ public class ProcessorCommandRunner {
 		} else {
 			try {
 				updatedProcessor = CLIUtil.parseObjectFile(processorFile, processorFileFormat, RestProcessor.class);
+				initLists(updatedProcessor);
 			} catch (IllegalArgumentException | IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
@@ -880,7 +893,7 @@ public class ProcessorCommandRunner {
 		if (isDeleteAttributes || (null != updatedProcessor.getDockerRunParameters() && !updatedProcessor.getDockerRunParameters().isEmpty())) {
 			restProcessor.setDockerRunParameters(updatedProcessor.getDockerRunParameters());
 		}
-		
+		initValues(restProcessor);
 		/* Update processor using Processor Manager service */
 		try {
 			restProcessor = serviceConnection.patchToService(serviceConfig.getProcessorManagerUrl(),
@@ -1067,6 +1080,9 @@ public class ProcessorCommandRunner {
 		if (null == restConfiguration.getMissionCode() || 0 == restConfiguration.getMissionCode().length()) {
 			restConfiguration.setMissionCode(loginManager.getMission());
 		}
+
+		initValues(restConfiguration);
+		initLists(restConfiguration);
 		
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
@@ -1241,6 +1257,7 @@ public class ProcessorCommandRunner {
 		} else {
 			try {
 				updatedConfiguration = CLIUtil.parseObjectFile(configurationFile, configurationFileFormat, RestConfiguration.class);
+				initLists(updatedConfiguration);
 			} catch (IllegalArgumentException | IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
@@ -1335,7 +1352,8 @@ public class ProcessorCommandRunner {
 		if (isDeleteAttributes || (null != updatedConfiguration.getDockerRunParameters() && !updatedConfiguration.getDockerRunParameters().isEmpty())) {
 			restConfiguration.setDockerRunParameters(updatedConfiguration.getDockerRunParameters());
 		}
-		
+
+		initValues(restConfiguration);
 		/* Update configuration using Processor Manager service */
 		try {
 			restConfiguration = serviceConnection.patchToService(serviceConfig.getProcessorManagerUrl(),
@@ -2036,6 +2054,69 @@ public class ProcessorCommandRunner {
 				System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 				return;
 			}
+		}
+	}
+	
+	private void initValues(RestProcessor restProcessor) {
+		if (StringUtils.isNullOrEmpty(restProcessor.getJobOrderVersion())) {
+			restProcessor.setJobOrderVersion(JobOrderVersion.MMFI_1_8.name());
+		}
+		if (restProcessor.getUseInputFileTimeIntervals() == null) {
+			restProcessor.setUseInputFileTimeIntervals(false);
+		}
+		if (restProcessor.getIsTest() == null) {
+			restProcessor.setIsTest(false);
+		}
+		if (restProcessor.getMinDiskSpace() == null) {
+			restProcessor.setMinDiskSpace(1024L);
+		}
+		if (restProcessor.getMaxTime() == null) {
+			restProcessor.setMaxTime(0L);
+		}
+		if (restProcessor.getSensingTimeFlag() == null) {
+			restProcessor.setSensingTimeFlag(true);
+		}
+	}
+
+	private void initLists(RestProcessor restProcessor) {
+		if (ListUtils.isNullOrEmpty(restProcessor.getConfiguredProcessors())) {
+			restProcessor.setConfiguredProcessors(new ArrayList<String>());
+		}
+		if (ListUtils.isNullOrEmpty(restProcessor.getTasks())) {
+			restProcessor.setTasks(new ArrayList<RestTask>());
+		}
+		if (ListUtils.isNullOrEmpty(restProcessor.getDockerRunParameters())) {
+			restProcessor.setDockerRunParameters( new ArrayList<RestStringParameter>());
+		}
+	}
+	
+	private void initLists(RestProcessorClass restProcessorClass) {
+		if (ListUtils.isNullOrEmpty(restProcessorClass.getProductClasses())) {
+			restProcessorClass.setProductClasses(new ArrayList<String>());
+		}
+	}
+
+	private void initValues(RestConfiguration restConfiguration) {
+		if (StringUtils.isNullOrEmpty(restConfiguration.getProductQuality())) {
+			restConfiguration.setProductQuality("NOMINAL");
+		}
+	}
+
+	private void initLists(RestConfiguration restConfiguration) {
+		if (ListUtils.isNullOrEmpty(restConfiguration.getDynProcParameters())) {
+			restConfiguration.setDynProcParameters(new ArrayList<RestParameter>());
+		}
+		if (ListUtils.isNullOrEmpty(restConfiguration.getConfigurationFiles())) {
+			restConfiguration.setConfigurationFiles(new ArrayList<RestConfigurationFile>());
+		}
+		if (ListUtils.isNullOrEmpty(restConfiguration.getStaticInputFiles())) {
+			restConfiguration.setStaticInputFiles(new ArrayList<RestConfigurationInputFile>());
+		}
+		if (ListUtils.isNullOrEmpty(restConfiguration.getConfiguredProcessors())) {
+			restConfiguration.setConfiguredProcessors(new ArrayList<String>());
+		}
+		if (ListUtils.isNullOrEmpty(restConfiguration.getDockerRunParameters())) {
+			restConfiguration.setDockerRunParameters(new ArrayList<RestStringParameter>());
 		}
 	}
 }

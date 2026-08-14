@@ -31,6 +31,8 @@ import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.rest.model.RestProductClass;
+import de.dlr.proseo.model.rest.model.RestSimpleSelectionRule;
+import de.dlr.proseo.model.util.ListUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -409,6 +411,7 @@ public class ProductclassCommandRunner {
 		} else {
 			try {
 				updatedProductClass = CLIUtil.parseObjectFile(productClassFile, productClassFileFormat, RestProductClass.class);
+				initLists(updatedProductClass);
 			} catch (IllegalArgumentException | IOException e) {
 				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
 				return;
@@ -653,10 +656,9 @@ public class ProductclassCommandRunner {
 			// Already handled
 			return;
 		}
-		
+		initLists(restProductClass);
 		/* Check input data for completeness */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
-		ObjectMapper mapper = new ObjectMapper();
 		for (SelectionRuleString restSelectionRule: selectionRuleList) {
 			
 			/* Set values from attribute parameters */
@@ -1166,6 +1168,15 @@ public class ProductclassCommandRunner {
 		default:
 			System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 			return;
+		}
+	}
+	
+	private void initLists(RestProductClass restProductClass) {
+		if (ListUtils.isNullOrEmpty(restProductClass.getComponentClasses())) {
+			restProductClass.setComponentClasses(new ArrayList<String>());
+		}
+		if (ListUtils.isNullOrEmpty(restProductClass.getSelectionRule())) {
+			restProductClass.setSelectionRule(new ArrayList<RestSimpleSelectionRule>());
 		}
 	}
 }

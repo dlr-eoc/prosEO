@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.TriggerType;
 import de.dlr.proseo.model.rest.model.RestTrigger;
+import de.dlr.proseo.model.util.ListUtils;
 import de.dlr.proseo.model.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -228,7 +230,8 @@ public class TriggerCommandRunner {
 		if (null == restTrigger.getMissionCode() || 0 == restTrigger.getMissionCode().length()) {
 			restTrigger.setMissionCode(loginManager.getMission());
 		}
-
+		initValues(restTrigger);
+		initLists(restTrigger);
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
 		if (StringUtils.isNullOrEmpty(restTrigger.getType())) {
@@ -510,6 +513,7 @@ public class TriggerCommandRunner {
 		} else {
 			try {
 				updatedTrigger = CLIUtil.parseObjectFile(triggerFile, triggerFileFormat, RestTrigger.class);
+				initLists(updatedTrigger);
 				try {
 					type = TriggerType.valueOf(updatedTrigger.getType());
 				} catch (Exception e) {
@@ -653,6 +657,8 @@ public class TriggerCommandRunner {
 		} else if (isDeleteAttributes) {
 			restTrigger.getParametersToCopy().clear();
 		}
+
+		initValues(restTrigger);
 
 //
 //		/* Update trigger using Trigger Manager service */
@@ -881,4 +887,18 @@ public class TriggerCommandRunner {
 		System.out.println(message);
 	}
 
+	private void initValues(RestTrigger restTrigger) {
+		if (restTrigger.getPriority() == null) {
+			restTrigger.setPriority(50L);
+		}
+		if (restTrigger.getExecutionDelay() == null) {
+			restTrigger.setExecutionDelay(50L);
+		}
+	}
+
+	private void initLists(RestTrigger restTrigger) {
+		if (ListUtils.isNullOrEmpty(restTrigger.getParametersToCopy())) {
+			restTrigger.setParametersToCopy(new ArrayList<String>());
+		}
+	}
 }
