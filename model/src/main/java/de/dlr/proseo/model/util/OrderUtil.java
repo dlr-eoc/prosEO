@@ -101,7 +101,7 @@ public class OrderUtil {
 			restOrder.setActualCompletionTime(Date.from(processingOrder.getActualCompletionTime()));
 		}
 		if (null != processingOrder.getClosingTime()) {
-			restOrder.setClosingTime(Date.from(processingOrder.getClosingTime());
+			restOrder.setClosingTime(Date.from(processingOrder.getClosingTime()));
 		}
 		if (null != processingOrder.getEvictionTime()) {
 			restOrder.setEvictionTime(Date.from(processingOrder.getEvictionTime()));

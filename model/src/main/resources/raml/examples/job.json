@@ -19,6 +19,7 @@
             "inputProductClasses": [ "L1B" ],
             "outputProductClass": "CH4",
             "outputProduct": 1234,
+            "priority": 10,
             "isFailed": false
         }
     ]

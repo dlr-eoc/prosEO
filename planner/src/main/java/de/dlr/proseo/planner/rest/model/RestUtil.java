@@ -203,7 +203,7 @@ public class RestUtil {
 			}
 
 			if (jobStep.getPriority() != null) {
-				restJobStep.setPriority(jobStep.getPriority());
+				restJobStep.setPriority(jobStep.getPriority().longValue());
 			}
 
 			restJobStep.setVersion((long) jobStep.getVersion());

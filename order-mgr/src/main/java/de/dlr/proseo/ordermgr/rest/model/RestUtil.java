@@ -110,7 +110,7 @@ public class RestUtil {
 			}
 			
 			if (modelJobStep.getPriority() != null) {
-				pjs.setPriority(modelJobStep.getPriority());
+				pjs.setPriority(modelJobStep.getPriority().longValue());
 			}
 
 			pjs.setVersion((long) modelJobStep.getVersion());
