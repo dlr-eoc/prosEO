@@ -824,7 +824,7 @@ public class MissionCommandRunner {
 		}
 		
 		/* If the orbit list is empty, we create a single orbit from user input */
-		if (orbitList.isEmpty()) {
+		if (ListUtils.isNullOrEmpty(orbitList)) {
 			RestOrbit restOrbit = new RestOrbit();
 			restOrbit.setMissionCode(loginManager.getMission());
 			/* Check command parameters (overriding values from processor class file) */
@@ -1097,7 +1097,7 @@ public class MissionCommandRunner {
 		}
 		
 		/* Update a single orbit from user input, if no file is given (or the file is empty) */
-		if (orbitList.isEmpty()) {
+		if (ListUtils.isNullOrEmpty(orbitList)) {
 			RestOrbit restOrbit = new RestOrbit();
 			restOrbit.setMissionCode(loginManager.getMission());
 			/* Check command parameters */

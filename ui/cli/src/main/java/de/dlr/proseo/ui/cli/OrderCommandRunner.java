@@ -378,7 +378,7 @@ public class OrderCommandRunner {
 			restOrder.setOutputFileClass(response);
 		}
 		// Get requested product classes
-		if (restOrder.getRequestedProductClasses().isEmpty()) {
+		if (ListUtils.isNullOrEmpty(restOrder.getRequestedProductClasses())) {
 			System.out.print(PROMPT_PRODUCT_CLASSES);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -700,26 +700,26 @@ public class OrderCommandRunner {
 		if (null != updatedOrder.getSliceOverlap()) { // mandatory
 			restOrder.setSliceOverlap(updatedOrder.getSliceOverlap());
 		}
-		if (isDeleteAttributes || !updatedOrder.getInputFilters().isEmpty()) {
+		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrder.getInputFilters())) {
 			restOrder.setInputFilters(updatedOrder.getInputFilters());
 		}
-		if (isDeleteAttributes || !updatedOrder.getClassOutputParameters().isEmpty()) {
+		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrder.getClassOutputParameters())) {
 			restOrder.setClassOutputParameters(updatedOrder.getClassOutputParameters());
 		}
-		if (isDeleteAttributes || !updatedOrder.getOutputParameters().isEmpty()) {
+		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrder.getOutputParameters())) {
 			restOrder.setOutputParameters(updatedOrder.getOutputParameters());
 		}
-		if (isDeleteAttributes || !updatedOrder.getConfiguredProcessors().isEmpty()) {
+		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrder.getConfiguredProcessors())) {
 			restOrder.setConfiguredProcessors(updatedOrder.getConfiguredProcessors());
 		}
 		if ((isDeleteAttributes && !OrderSlicingType.ORBIT.toString().equals(restOrder.getSlicingType()))
-				|| !updatedOrder.getOrbits().isEmpty()) {
+				|| !ListUtils.isNullOrEmpty(updatedOrder.getOrbits())) {
 			restOrder.setOrbits(updatedOrder.getOrbits());
 		}
-		if (!updatedOrder.getRequestedProductClasses().isEmpty()) { // mandatory
+		if (!ListUtils.isNullOrEmpty(updatedOrder.getRequestedProductClasses())) { // mandatory
 			restOrder.setRequestedProductClasses(updatedOrder.getRequestedProductClasses());
 		}
-		if (isDeleteAttributes || !updatedOrder.getInputProductClasses().isEmpty()) {
+		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrder.getInputProductClasses())) {
 			restOrder.setInputProductClasses(updatedOrder.getInputProductClasses());
 		}
 		if (null != updatedOrder.getOutputFileClass()) { // mandatory
@@ -1512,9 +1512,6 @@ public class OrderCommandRunner {
 		}
 		if (StringUtils.isNullOrEmpty(restOrder.getAutoGenerateSteps())) {
 			restOrder.setAutoGenerateSteps(ThreeValueBool.DEFAULT.name());
-		}
-		if (null == restOrder.getSliceDuration()) {
-			restOrder.setSliceDuration(0L);
 		}
 		if (restOrder.getAutoRelease() == null) {
 			restOrder.setAutoRelease(false);

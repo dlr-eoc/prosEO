@@ -1324,7 +1324,7 @@ public class UserCommandRunner {
 		for (int i = 1; i < command.getParameters().size(); ++i) {
 			usernames.add(loginManager.getMissionPrefix() + command.getParameters().get(i).getValue());
 		}
-		if (usernames.isEmpty()) {
+		if (ListUtils.isNullOrEmpty(usernames)) {
 			// No users to add given
 			System.err.println(ProseoLogger.format(UIMessage.NO_USERS_GIVEN));
 			return;
@@ -1409,7 +1409,7 @@ public class UserCommandRunner {
 		for (int i = 1; i < command.getParameters().size(); ++i) {
 			usernames.add(loginManager.getMissionPrefix() + command.getParameters().get(i).getValue());
 		}
-		if (usernames.isEmpty()) {
+		if (ListUtils.isNullOrEmpty(usernames)) {
 			// No users to add given
 			System.err.println(ProseoLogger.format(UIMessage.NO_USERS_GIVEN));
 			return;
@@ -1590,7 +1590,7 @@ public class UserCommandRunner {
 			}
 			authorities.add(authority);
 		}
-		if (authorities.isEmpty()) {
+		if (ListUtils.isNullOrEmpty(authorities)) {
 			// No authorities to grant given
 			System.err.println(ProseoLogger.format(UIMessage.NO_AUTHORITIES_GIVEN));
 			return;
@@ -1650,7 +1650,7 @@ public class UserCommandRunner {
 			}
 			authorities.add(authority);
 		}
-		if (authorities.isEmpty()) {
+		if (ListUtils.isNullOrEmpty(authorities)) {
 			// No authorities to grant given
 			System.err.println(ProseoLogger.format(UIMessage.NO_AUTHORITIES_GIVEN));
 			return;

@@ -519,22 +519,22 @@ public class OrderTemplateCommandRunner {
 		if (null != updatedOrderTemplate.getSliceOverlap()) { // mandatory
 			restOrderTemplate.setSliceOverlap(updatedOrderTemplate.getSliceOverlap());
 		}
-		if (isDeleteAttributes || !updatedOrderTemplate.getInputFilters().isEmpty()) {
+		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrderTemplate.getInputFilters())) {
 			restOrderTemplate.setInputFilters(updatedOrderTemplate.getInputFilters());
 		}
-		if (isDeleteAttributes || !updatedOrderTemplate.getClassOutputParameters().isEmpty()) {
+		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrderTemplate.getClassOutputParameters())) {
 			restOrderTemplate.setClassOutputParameters(updatedOrderTemplate.getClassOutputParameters());
 		}
-		if (isDeleteAttributes || !updatedOrderTemplate.getOutputParameters().isEmpty()) {
+		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrderTemplate.getOutputParameters())) {
 			restOrderTemplate.setOutputParameters(updatedOrderTemplate.getOutputParameters());
 		}
-		if (isDeleteAttributes || !updatedOrderTemplate.getConfiguredProcessors().isEmpty()) {
+		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrderTemplate.getConfiguredProcessors())) {
 			restOrderTemplate.setConfiguredProcessors(updatedOrderTemplate.getConfiguredProcessors());
 		}
-		if (!updatedOrderTemplate.getRequestedProductClasses().isEmpty()) { // mandatory
+		if (!ListUtils.isNullOrEmpty(updatedOrderTemplate.getRequestedProductClasses())) { // mandatory
 			restOrderTemplate.setRequestedProductClasses(updatedOrderTemplate.getRequestedProductClasses());
 		}
-		if (isDeleteAttributes || !updatedOrderTemplate.getInputProductClasses().isEmpty()) {
+		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrderTemplate.getInputProductClasses())) {
 			restOrderTemplate.setInputProductClasses(updatedOrderTemplate.getInputProductClasses());
 		}
 		if (null != updatedOrderTemplate.getOutputFileClass()) { // mandatory
@@ -726,9 +726,6 @@ public class OrderTemplateCommandRunner {
 		}
 		if (StringUtils.isNullOrEmpty(restOrderTemplate.getAutoGenerateSteps())) {
 			restOrderTemplate.setAutoGenerateSteps(ThreeValueBool.DEFAULT.name());
-		}
-		if (null == restOrderTemplate.getSliceDuration()) {
-			restOrderTemplate.setSliceDuration(0L);
 		}
 		if (restOrderTemplate.getAutoRelease() == null) {
 			restOrderTemplate.setAutoRelease(false);

@@ -509,7 +509,7 @@ public class IngestorCommandRunner {
 		if (isDeleteAttributes || null != updatedProduct.getProductionType()) {
 			restProduct.setProductionType(updatedProduct.getProductionType());
 		}
-		if (isDeleteAttributes || !updatedProduct.getComponentProductIds().isEmpty()) {
+		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedProduct.getComponentProductIds())) {
 			restProduct.setComponentProductIds(updatedProduct.getComponentProductIds());
 		}
 		if (isDeleteAttributes || null != updatedProduct.getEnclosingProductId()) {
@@ -518,10 +518,10 @@ public class IngestorCommandRunner {
 		if (isDeleteAttributes || null != updatedProduct.getOrbit()) {
 			restProduct.setOrbit(updatedProduct.getOrbit());
 		}
-		if (isDeleteAttributes || !updatedProduct.getProductFile().isEmpty()) {
+		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedProduct.getProductFile())) {
 			restProduct.setProductFile(updatedProduct.getProductFile());
 		}
-		if (isDeleteAttributes || !updatedProduct.getParameters().isEmpty()) {
+		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedProduct.getParameters())) {
 			restProduct.setParameters(updatedProduct.getParameters());
 		}
 		initValues(restProduct);
