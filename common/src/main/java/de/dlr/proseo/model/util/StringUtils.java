@@ -8,9 +8,12 @@ package de.dlr.proseo.model.util;
 /**
  * String Utils
  * 
+ * @deprecated as of prosEO 2.2.0: Use org.springframework.util.StringUtils instead
+ * 
  * @author Denys Chaykovskiy
  */
 
+@Deprecated
 public class StringUtils {
 		
 	/**

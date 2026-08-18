@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriUtils;
 
@@ -26,16 +27,13 @@ import tools.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
-import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.rest.model.RestDownloadHistory;
-import de.dlr.proseo.model.rest.model.RestOrderTemplate;
 import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.rest.model.RestProduct;
 import de.dlr.proseo.model.rest.model.RestProductFile;
-import de.dlr.proseo.model.util.ListUtils;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
-import de.dlr.proseo.model.util.StringUtils;
+import org.springframework.util.StringUtils;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.backend.LoginManager;
@@ -509,7 +507,7 @@ public class IngestorCommandRunner {
 		if (isDeleteAttributes || null != updatedProduct.getProductionType()) {
 			restProduct.setProductionType(updatedProduct.getProductionType());
 		}
-		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedProduct.getComponentProductIds())) {
+		if (isDeleteAttributes || !CollectionUtils.isEmpty(updatedProduct.getComponentProductIds())) {
 			restProduct.setComponentProductIds(updatedProduct.getComponentProductIds());
 		}
 		if (isDeleteAttributes || null != updatedProduct.getEnclosingProductId()) {
@@ -518,10 +516,10 @@ public class IngestorCommandRunner {
 		if (isDeleteAttributes || null != updatedProduct.getOrbit()) {
 			restProduct.setOrbit(updatedProduct.getOrbit());
 		}
-		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedProduct.getProductFile())) {
+		if (isDeleteAttributes || !CollectionUtils.isEmpty(updatedProduct.getProductFile())) {
 			restProduct.setProductFile(updatedProduct.getProductFile());
 		}
-		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedProduct.getParameters())) {
+		if (isDeleteAttributes || !CollectionUtils.isEmpty(updatedProduct.getParameters())) {
 			restProduct.setParameters(updatedProduct.getParameters());
 		}
 		initValues(restProduct);
@@ -961,22 +959,22 @@ public class IngestorCommandRunner {
 	}
 	
 	private void initValues(RestProduct restProduct) {
-		if (StringUtils.isNullOrEmpty(restProduct.getProductQuality())) {
+		if (StringUtils.isEmpty(restProduct.getProductQuality())) {
 			restProduct.setProductQuality(ProductQuality.NOMINAL.name());
 		}
 	}
 	
 	private void initLists(RestProduct restProduct) {
-		if (ListUtils.isNullOrEmpty(restProduct.getDownloadHistory())) {
+		if (CollectionUtils.isEmpty(restProduct.getDownloadHistory())) {
 			restProduct.setDownloadHistory(new ArrayList<RestDownloadHistory>());
 		}
-		if (ListUtils.isNullOrEmpty(restProduct.getComponentProductIds())) {
+		if (CollectionUtils.isEmpty(restProduct.getComponentProductIds())) {
 			restProduct.setComponentProductIds(new ArrayList<Long>());
 		}
-		if (ListUtils.isNullOrEmpty(restProduct.getProductFile())) {
+		if (CollectionUtils.isEmpty(restProduct.getProductFile())) {
 			restProduct.setProductFile(new ArrayList<RestProductFile>());
 		}
-		if (ListUtils.isNullOrEmpty(restProduct.getParameters())) {
+		if (CollectionUtils.isEmpty(restProduct.getParameters())) {
 			restProduct.setParameters(new ArrayList<RestParameter>());
 		}
 	}

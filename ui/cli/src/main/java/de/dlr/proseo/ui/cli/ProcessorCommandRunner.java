@@ -15,6 +15,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestClientResponseException;
 
 import tools.jackson.databind.ObjectMapper;
@@ -31,8 +32,7 @@ import de.dlr.proseo.model.rest.model.RestProcessor;
 import de.dlr.proseo.model.rest.model.RestProcessorClass;
 import de.dlr.proseo.model.rest.model.RestStringParameter;
 import de.dlr.proseo.model.rest.model.RestTask;
-import de.dlr.proseo.model.util.ListUtils;
-import de.dlr.proseo.model.util.StringUtils;
+import org.springframework.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -561,7 +561,7 @@ public class ProcessorCommandRunner {
 		}
 		
 		/* Set missing attributes to default values where possible */
-		if (StringUtils.isNullOrEmpty(restProcessor.getMissionCode())) {
+		if (StringUtils.isEmpty(restProcessor.getMissionCode())) {
 			restProcessor.setMissionCode(loginManager.getMission());
 		}
 		initValues(restProcessor);
@@ -2058,7 +2058,7 @@ public class ProcessorCommandRunner {
 	}
 	
 	private void initValues(RestProcessor restProcessor) {
-		if (StringUtils.isNullOrEmpty(restProcessor.getJobOrderVersion())) {
+		if (StringUtils.isEmpty(restProcessor.getJobOrderVersion())) {
 			restProcessor.setJobOrderVersion(JobOrderVersion.MMFI_1_8.name());
 		}
 		if (restProcessor.getUseInputFileTimeIntervals() == null) {
@@ -2079,43 +2079,43 @@ public class ProcessorCommandRunner {
 	}
 
 	private void initLists(RestProcessor restProcessor) {
-		if (ListUtils.isNullOrEmpty(restProcessor.getConfiguredProcessors())) {
+		if (CollectionUtils.isEmpty(restProcessor.getConfiguredProcessors())) {
 			restProcessor.setConfiguredProcessors(new ArrayList<String>());
 		}
-		if (ListUtils.isNullOrEmpty(restProcessor.getTasks())) {
+		if (CollectionUtils.isEmpty(restProcessor.getTasks())) {
 			restProcessor.setTasks(new ArrayList<RestTask>());
 		}
-		if (ListUtils.isNullOrEmpty(restProcessor.getDockerRunParameters())) {
+		if (CollectionUtils.isEmpty(restProcessor.getDockerRunParameters())) {
 			restProcessor.setDockerRunParameters( new ArrayList<RestStringParameter>());
 		}
 	}
 	
 	private void initLists(RestProcessorClass restProcessorClass) {
-		if (ListUtils.isNullOrEmpty(restProcessorClass.getProductClasses())) {
+		if (CollectionUtils.isEmpty(restProcessorClass.getProductClasses())) {
 			restProcessorClass.setProductClasses(new ArrayList<String>());
 		}
 	}
 
 	private void initValues(RestConfiguration restConfiguration) {
-		if (StringUtils.isNullOrEmpty(restConfiguration.getProductQuality())) {
+		if (StringUtils.isEmpty(restConfiguration.getProductQuality())) {
 			restConfiguration.setProductQuality("NOMINAL");
 		}
 	}
 
 	private void initLists(RestConfiguration restConfiguration) {
-		if (ListUtils.isNullOrEmpty(restConfiguration.getDynProcParameters())) {
+		if (CollectionUtils.isEmpty(restConfiguration.getDynProcParameters())) {
 			restConfiguration.setDynProcParameters(new ArrayList<RestParameter>());
 		}
-		if (ListUtils.isNullOrEmpty(restConfiguration.getConfigurationFiles())) {
+		if (CollectionUtils.isEmpty(restConfiguration.getConfigurationFiles())) {
 			restConfiguration.setConfigurationFiles(new ArrayList<RestConfigurationFile>());
 		}
-		if (ListUtils.isNullOrEmpty(restConfiguration.getStaticInputFiles())) {
+		if (CollectionUtils.isEmpty(restConfiguration.getStaticInputFiles())) {
 			restConfiguration.setStaticInputFiles(new ArrayList<RestConfigurationInputFile>());
 		}
-		if (ListUtils.isNullOrEmpty(restConfiguration.getConfiguredProcessors())) {
+		if (CollectionUtils.isEmpty(restConfiguration.getConfiguredProcessors())) {
 			restConfiguration.setConfiguredProcessors(new ArrayList<String>());
 		}
-		if (ListUtils.isNullOrEmpty(restConfiguration.getDockerRunParameters())) {
+		if (CollectionUtils.isEmpty(restConfiguration.getDockerRunParameters())) {
 			restConfiguration.setDockerRunParameters(new ArrayList<RestStringParameter>());
 		}
 	}

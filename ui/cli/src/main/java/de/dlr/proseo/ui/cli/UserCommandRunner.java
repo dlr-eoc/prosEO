@@ -19,6 +19,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriUtils;
 
@@ -30,7 +31,6 @@ import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.rest.model.RestGroup;
 import de.dlr.proseo.model.rest.model.RestTrigger;
 import de.dlr.proseo.model.rest.model.RestUser;
-import de.dlr.proseo.model.util.ListUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -1324,7 +1324,7 @@ public class UserCommandRunner {
 		for (int i = 1; i < command.getParameters().size(); ++i) {
 			usernames.add(loginManager.getMissionPrefix() + command.getParameters().get(i).getValue());
 		}
-		if (ListUtils.isNullOrEmpty(usernames)) {
+		if (CollectionUtils.isEmpty(usernames)) {
 			// No users to add given
 			System.err.println(ProseoLogger.format(UIMessage.NO_USERS_GIVEN));
 			return;
@@ -1409,7 +1409,7 @@ public class UserCommandRunner {
 		for (int i = 1; i < command.getParameters().size(); ++i) {
 			usernames.add(loginManager.getMissionPrefix() + command.getParameters().get(i).getValue());
 		}
-		if (ListUtils.isNullOrEmpty(usernames)) {
+		if (CollectionUtils.isEmpty(usernames)) {
 			// No users to add given
 			System.err.println(ProseoLogger.format(UIMessage.NO_USERS_GIVEN));
 			return;
@@ -1590,7 +1590,7 @@ public class UserCommandRunner {
 			}
 			authorities.add(authority);
 		}
-		if (ListUtils.isNullOrEmpty(authorities)) {
+		if (CollectionUtils.isEmpty(authorities)) {
 			// No authorities to grant given
 			System.err.println(ProseoLogger.format(UIMessage.NO_AUTHORITIES_GIVEN));
 			return;
@@ -1650,7 +1650,7 @@ public class UserCommandRunner {
 			}
 			authorities.add(authority);
 		}
-		if (ListUtils.isNullOrEmpty(authorities)) {
+		if (CollectionUtils.isEmpty(authorities)) {
 			// No authorities to grant given
 			System.err.println(ProseoLogger.format(UIMessage.NO_AUTHORITIES_GIVEN));
 			return;
@@ -1766,13 +1766,13 @@ public class UserCommandRunner {
 	}
 
 	private void initLists(RestUser restUser) {
-		if (ListUtils.isNullOrEmpty(restUser.getAuthorities())) {
+		if (CollectionUtils.isEmpty(restUser.getAuthorities())) {
 			restUser.setAuthorities(new ArrayList<String>());
 		}
 	}
 
 	private void initLists(RestGroup restGroup) {
-		if (ListUtils.isNullOrEmpty(restGroup.getAuthorities())) {
+		if (CollectionUtils.isEmpty(restGroup.getAuthorities())) {
 			restGroup.setAuthorities(new ArrayList<String>());
 		}
 	}

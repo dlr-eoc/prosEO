@@ -15,6 +15,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestClientResponseException;
 
 import tools.jackson.databind.ObjectMapper;
@@ -23,8 +24,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.TriggerType;
 import de.dlr.proseo.model.rest.model.RestTrigger;
-import de.dlr.proseo.model.util.ListUtils;
-import de.dlr.proseo.model.util.StringUtils;
+import org.springframework.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -234,7 +234,7 @@ public class TriggerCommandRunner {
 		initLists(restTrigger);
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
-		if (StringUtils.isNullOrEmpty(restTrigger.getType())) {
+		if (StringUtils.isEmpty(restTrigger.getType())) {
 			System.out.print(PROMPT_TRIGGER_TYPE);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -250,7 +250,7 @@ public class TriggerCommandRunner {
 			}
 			restTrigger.setType(response);
 		}
-		if (StringUtils.isNullOrEmpty(restTrigger.getName())) {
+		if (StringUtils.isEmpty(restTrigger.getName())) {
 			System.out.print(PROMPT_TRIGGER_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -259,7 +259,7 @@ public class TriggerCommandRunner {
 			}
 			restTrigger.setName(response);
 		}
-		if (StringUtils.isNullOrEmpty(restTrigger.getOrderTemplateName())) {
+		if (StringUtils.isEmpty(restTrigger.getOrderTemplateName())) {
 			System.out.print(PROMPT_ORDERTEMPLATE_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -270,7 +270,7 @@ public class TriggerCommandRunner {
 		}
 		switch (type) {
 		case Calendar:
-			if (StringUtils.isNullOrEmpty(restTrigger.getCronExpression())) {
+			if (StringUtils.isEmpty(restTrigger.getCronExpression())) {
 				System.out.print(PROMPT_TRIGGER_CRON_EXP);
 				String response = System.console().readLine();
 				if (response.isBlank()) {
@@ -281,7 +281,7 @@ public class TriggerCommandRunner {
 			}
 			break;
 		case DataDriven:
-			if (StringUtils.isNullOrEmpty(restTrigger.getInputProductType())) {
+			if (StringUtils.isEmpty(restTrigger.getInputProductType())) {
 				System.out.print(PROMPT_TRIGGER_INPUT_TYPE);
 				String response = System.console().readLine();
 				if (response.isBlank()) {
@@ -295,7 +295,7 @@ public class TriggerCommandRunner {
 
 			break;
 		case Orbit:
-			if (StringUtils.isNullOrEmpty(restTrigger.getSpacecraftCode())) {
+			if (StringUtils.isEmpty(restTrigger.getSpacecraftCode())) {
 				System.out.print(PROMPT_TRIGGER_SPACECRAFT);
 				String response = System.console().readLine();
 				if (response.isBlank()) {
@@ -897,7 +897,7 @@ public class TriggerCommandRunner {
 	}
 
 	private void initLists(RestTrigger restTrigger) {
-		if (ListUtils.isNullOrEmpty(restTrigger.getParametersToCopy())) {
+		if (CollectionUtils.isEmpty(restTrigger.getParametersToCopy())) {
 			restTrigger.setParametersToCopy(new ArrayList<String>());
 		}
 	}

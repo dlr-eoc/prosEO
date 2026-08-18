@@ -15,6 +15,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestClientResponseException;
 
 import tools.jackson.databind.ObjectMapper;
@@ -27,8 +28,7 @@ import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.rest.model.RestWorkflow;
 import de.dlr.proseo.model.rest.model.RestWorkflowOption;
-import de.dlr.proseo.model.util.ListUtils;
-import de.dlr.proseo.model.util.StringUtils;
+import org.springframework.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -732,22 +732,22 @@ public class WorkflowCommandRunner {
 		if (null == restWorkflow.getSliceOverlap()) {
 			restWorkflow.setSliceOverlap(0L);
 		}
-		if (StringUtils.isNullOrEmpty(restWorkflow.getSlicingType())) {
+		if (StringUtils.isEmpty(restWorkflow.getSlicingType())) {
 			restWorkflow.setSlicingType(OrderSlicingType.NONE.name());
 		}
 	}
 
 	private void initLists(RestWorkflow restWorkflow) {
-		if (ListUtils.isNullOrEmpty(restWorkflow.getInputFilters())) {
+		if (CollectionUtils.isEmpty(restWorkflow.getInputFilters())) {
 			restWorkflow.setInputFilters(new ArrayList<RestInputFilter>());
 		}
-		if (ListUtils.isNullOrEmpty(restWorkflow.getWorkflowOptions())) {
+		if (CollectionUtils.isEmpty(restWorkflow.getWorkflowOptions())) {
 			restWorkflow.setWorkflowOptions(new ArrayList<RestWorkflowOption>());
 		}
-		if (ListUtils.isNullOrEmpty(restWorkflow.getOutputParameters())) {
+		if (CollectionUtils.isEmpty(restWorkflow.getOutputParameters())) {
 			restWorkflow.setOutputParameters(new ArrayList<RestParameter>());
 		}
-		if (ListUtils.isNullOrEmpty(restWorkflow.getClassOutputParameters())) {
+		if (CollectionUtils.isEmpty(restWorkflow.getClassOutputParameters())) {
 			restWorkflow.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
 		}
 	}

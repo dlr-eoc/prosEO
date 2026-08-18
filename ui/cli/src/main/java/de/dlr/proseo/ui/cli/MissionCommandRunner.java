@@ -14,6 +14,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestClientResponseException;
 
 import tools.jackson.databind.ObjectMapper;
@@ -23,7 +24,6 @@ import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.model.rest.model.RestOrbit;
 import de.dlr.proseo.model.rest.model.RestSpacecraft;
-import de.dlr.proseo.model.util.ListUtils;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -427,10 +427,10 @@ public class MissionCommandRunner {
 		if (null != updatedMission.getName() && 0 != updatedMission.getName().length()) { // mandatory, must not be empty
 			restMission.setName(updatedMission.getName());
 		}
-		if (!ListUtils.isNullOrEmpty(updatedMission.getFileClasses())) {
+		if (!CollectionUtils.isEmpty(updatedMission.getFileClasses())) {
 			restMission.setFileClasses(updatedMission.getFileClasses());
 		}
-		if (!ListUtils.isNullOrEmpty(updatedMission.getProcessingModes())) {
+		if (!CollectionUtils.isEmpty(updatedMission.getProcessingModes())) {
 			restMission.setProcessingModes(updatedMission.getProcessingModes());
 		}
 		if (null != updatedMission.getProductFileTemplate()) {
@@ -824,7 +824,7 @@ public class MissionCommandRunner {
 		}
 		
 		/* If the orbit list is empty, we create a single orbit from user input */
-		if (ListUtils.isNullOrEmpty(orbitList)) {
+		if (CollectionUtils.isEmpty(orbitList)) {
 			RestOrbit restOrbit = new RestOrbit();
 			restOrbit.setMissionCode(loginManager.getMission());
 			/* Check command parameters (overriding values from processor class file) */
@@ -1097,7 +1097,7 @@ public class MissionCommandRunner {
 		}
 		
 		/* Update a single orbit from user input, if no file is given (or the file is empty) */
-		if (ListUtils.isNullOrEmpty(orbitList)) {
+		if (CollectionUtils.isEmpty(orbitList)) {
 			RestOrbit restOrbit = new RestOrbit();
 			restOrbit.setMissionCode(loginManager.getMission());
 			/* Check command parameters */
@@ -1460,13 +1460,13 @@ public class MissionCommandRunner {
 	}
 	
 	private void initLists(RestMission restMission) {
-		if (ListUtils.isNullOrEmpty(restMission.getFileClasses())) {
+		if (CollectionUtils.isEmpty(restMission.getFileClasses())) {
 			restMission.setFileClasses(new ArrayList<String>());
 		}
-		if (ListUtils.isNullOrEmpty(restMission.getProcessingModes())) {
+		if (CollectionUtils.isEmpty(restMission.getProcessingModes())) {
 			restMission.setProcessingModes(new ArrayList<String>());
 		}
-		if (ListUtils.isNullOrEmpty(restMission.getSpacecrafts())) {
+		if (CollectionUtils.isEmpty(restMission.getSpacecrafts())) {
 			restMission.setSpacecrafts(new ArrayList<RestSpacecraft>());
 		}
 	}
