@@ -61,7 +61,10 @@ public class SimpleSelectionRule extends PersistentObject {
 	@ManyToOne
 	private ProductClass targetProductClass;
 	
-	/** The product class which is selected by this rule */
+	/** 
+	 * The product class which is selected by this rule. Only product classes without component classes ("leaf" classes) 
+	 * may be referenced as source product classes. 
+	 * */
 	@ManyToOne
 	private ProductClass sourceProductClass;
 	
@@ -443,6 +446,8 @@ public class SimpleSelectionRule extends PersistentObject {
 	 * Format this rule as a JPQL (Java Persistence Query Language) query. The condition in the "where" clause
 	 * is set in parentheses, so further conditions/filters can be appended to the resulting query.
 	 * <p>
+	 * The method using the resulting query has to provide the ":facility" parameter when executing the query.
+	 * <p>
 	 * Limitation: For LatestValidityClosest the query may return two products, one to each side of the centre of the
 	 * given time interval. It is up to the calling program to select the applicable product.
 	 * 
@@ -458,7 +463,7 @@ public class SimpleSelectionRule extends PersistentObject {
 		}
 
 		// Generate query projection
-		StringBuilder simpleRuleQuery = new StringBuilder("select p from Product p ");
+		StringBuilder simpleRuleQuery = new StringBuilder("select p from Product p join ProductFile pf ");
 
 		// Join with as many instances of the product_parameters table as there are filter conditions
 		int i = 0;
@@ -475,7 +480,9 @@ public class SimpleSelectionRule extends PersistentObject {
 			}
 		}
 		
-		simpleRuleQuery.append("where (p.productClass.id = ").append(sourceProductClass.getId()).append(" and ");
+		simpleRuleQuery.append("where (p.productClass.id = ").append(sourceProductClass.getId())
+			.append(" and pf.processingFacility = :facility")
+			.append(" and ");
 		
 		// Ensure canonical ordering of policies
 		simplePolicies.sort(new Comparator<SimplePolicy>() {
@@ -527,8 +534,12 @@ public class SimpleSelectionRule extends PersistentObject {
 	 * Format this rule as a native SQL query. The condition in the "where" clause
 	 * is set in parentheses, so further conditions/filters can be appended to the resulting query.
 	 * <p>
+	 * The method using the resulting query has to provide the ":facility_id" parameter when executing the query.
+	 * <p>
 	 * Limitation: For LatestValidityClosest the query may return two products, one to each side of the centre of the
 	 * given time interval. It is up to the calling program to select the applicable product.
+	 * 
+	 * @deprecated since prosEO 2.2.0: Use asSqlQuery(Instant, Instant, Map, Map) instead (facility query parameters are obsolete)
 	 * 
 	 * @param startTime the start time to use in the database query
 	 * @param stopTime the stop time to use in the database query
@@ -538,19 +549,37 @@ public class SimpleSelectionRule extends PersistentObject {
 	 * @param facilityQuerySqlSubselect an SQL selection string to add to sub-SELECTs in selection policy SQL query conditions
 	 * @return an SQL string representing this rule
 	 */
+	@Deprecated
 	public String asSqlQuery(final Instant startTime, final Instant stopTime, Map<String, Parameter> additionalFilterConditions,
 			Map<String, String> productColumnMapping, String facilityQuerySql, String facilityQuerySqlSubselect) {
+				return asSqlQuery(startTime, stopTime, additionalFilterConditions, productColumnMapping);
+			}
+
+	/**
+	 * Format this rule as a native SQL query. The condition in the "where" clause
+	 * is set in parentheses, so further conditions/filters can be appended to the resulting query.
+	 * <p>
+	 * The method using the resulting query has to provide the ":facility_id" parameter when executing the query.
+	 * <p>
+	 * Limitation: For LatestValidityClosest the query may return two products, one to each side of the centre of the
+	 * given time interval. It is up to the calling program to select the applicable product.
+	 * 
+	 * @param startTime the start time to use in the database query
+	 * @param stopTime the stop time to use in the database query
+	 * @param additionalFilterConditions filter conditions to apply in addition to the rule's own filters (optional)
+	 * @param productColumnMapping a mapping from attribute names of the Product class to the corresponding SQL column names
+	 * @return an SQL string representing this rule
+	 */
+	public String asSqlQuery(final Instant startTime, final Instant stopTime, Map<String, Parameter> additionalFilterConditions,
+			Map<String, String> productColumnMapping) {
 		
 		Map<String, Parameter> allFilterConditions = new HashMap<>(filterConditions);
 		if (null != additionalFilterConditions) {
 			allFilterConditions.putAll(additionalFilterConditions);
 		}
-		if (null == facilityQuerySql) {
-			facilityQuerySql = "";
-		}
 
 		// Generate query projection
-		StringBuilder simpleRuleQuery = new StringBuilder("SELECT * FROM product p ");
+		StringBuilder simpleRuleQuery = new StringBuilder("SELECT p.* FROM product p JOIN product_file pf ON p.id = pf.product_id ");
 		
 		// Join with as many instances of the product_parameters table as there are filter conditions
 		int i = 0;
@@ -568,7 +597,8 @@ public class SimpleSelectionRule extends PersistentObject {
 		}
 		
 		// Select correct product class		
-		simpleRuleQuery.append("WHERE (p.product_class_id = ").append(sourceProductClass.getId()).append(" AND ");
+		simpleRuleQuery.append("WHERE (p.product_class_id = ").append(sourceProductClass.getId())
+			.append(" AND :facility_id = pf.processing_facility_id AND ");
 		
 		// Ensure canonical ordering of policies
 		simplePolicies.sort(new Comparator<SimplePolicy>() {
@@ -591,7 +621,7 @@ public class SimpleSelectionRule extends PersistentObject {
 			else
 				simpleRuleQuery.append(" OR ");
 			simpleRuleQuery.append(simplePolicy.asSqlQueryCondition(
-					sourceProductClass, startTime, stopTime, allFilterConditions, productColumnMapping, facilityQuerySqlSubselect));
+					sourceProductClass, startTime, stopTime, allFilterConditions, productColumnMapping));
 		}
 		if (1 < simplePolicies.size()) {
 			// Close parentheses for multiple policies
@@ -614,7 +644,7 @@ public class SimpleSelectionRule extends PersistentObject {
 			}
 		}
 
-		return simpleRuleQuery.append(facilityQuerySql).append(')').toString();
+		return simpleRuleQuery.append(')').toString();
 	}
 	
 	/* (non-Javadoc)

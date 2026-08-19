@@ -325,7 +325,8 @@ $processing_levels{'PTM_L2_A'} = 'L2A';
 $slicing_types{'PTM_L2_A'} = 'ORBIT';
 $product_processor_class{'PTM_L2_A'} = 'PTML2';
 $selection_rules{'PTM_L2_A'} = '
-    FOR PTM_L1B SELECT LatestValCover(0, 0)';
+    FOR PTM_L1B_P1 SELECT LatestValCover(0, 0);
+    FOR PTM_L1B_P2 SELECT LatestValCover(0, 0)';
 $applicable_processors{'PTM_L2_A'} = [ 'PTML2_2.2.0-SNAPSHOT_OPER_2020-03-25' ];
 # Output PTM_L2_B
 push @product_types, 'PTM_L2_B';

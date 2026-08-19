@@ -1072,8 +1072,7 @@ public class OrderDispatcher {
 			if (!exist) {
 				// Create a new product query based on the selection rule
 				ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep,
-						productQueryService.getProductColumnMapping(), ProductQueryService.FACILITY_QUERY_SQL,
-						ProductQueryService.FACILITY_QUERY_SQL_SUBSELECT);
+						productQueryService.getProductColumnMapping());
 				pq = RepositoryService.getProductQueryRepository().save(pq);
 				jobStep.getInputProductQueries().add(pq);
 

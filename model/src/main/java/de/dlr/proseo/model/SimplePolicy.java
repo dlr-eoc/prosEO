@@ -776,7 +776,7 @@ public class SimplePolicy extends PersistentObject {
 	 * given time interval. It is up to the calling program to select the applicable product.
 	 * </li>
 	 * <li>
-	 * For LargestOverlap and LargestOverlap85 the query returns all items intersecting the interal (like ValIntersect),
+	 * For LargestOverlap and LargestOverlap85 the query returns all items intersecting the interval (like ValIntersect),
 	 * further selection by the calling program using either selectLargestOverlap(...) or selectLargestOverlap85(...)
 	 * is required.
 	 * </li>
@@ -834,16 +834,20 @@ public class SimplePolicy extends PersistentObject {
 		case LatestStartValidity:
 			simplePolicyQuery.append("p.sensingStartTime >= ")
 					.append("(select max(p2.sensingStartTime) from Product p2 ")
+					.append("join ProductFile pf2 ")
 					.append(subSelectQuery)
 					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and pf2.processingFacility = :facility")
 					.append(filterQuery)
 					.append(")");
 			break;
 		case LatestStopValidity:
 			simplePolicyQuery.append("p.sensingStopTime >= ")
 					.append("(select max(p2.sensingStopTime) from Product p2 ")
+					.append("join ProductFile pf2 ")
 					.append(subSelectQuery)
 					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and pf2.processingFacility = :facility")
 					.append(filterQuery)
 					.append(")");
 			break;
@@ -857,16 +861,20 @@ public class SimplePolicy extends PersistentObject {
 			simplePolicyQuery.append("(p.sensingStartTime <= '").append(selectionCentreString)
 				.append("' and p.sensingStartTime >= ")
 					.append("(select max(p2.sensingStartTime) from Product p2 ")
+					.append("join ProductFile pf2 ")
 					.append(subSelectQuery)
 					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and pf2.processingFacility = :facility")
 					.append(" and p2.sensingStartTime <= '").append(selectionCentreString).append("'")
 					.append(filterQuery)
 					.append(") ")
 				.append("or p.sensingStartTime > '").append(selectionCentreString)
 				.append("' and p.sensingStartTime <= ")
 					.append("(select min(p2.sensingStartTime) from Product p2 ")
+					.append("join ProductFile pf2 ")
 					.append(subSelectQuery)
 					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and pf2.processingFacility = :facility")
 					.append(" and p2.sensingStartTime > '").append(selectionCentreString).append("'")
 					.append(filterQuery)
 					.append("))");
@@ -878,16 +886,20 @@ public class SimplePolicy extends PersistentObject {
 			simplePolicyQuery.append("(p.sensingStartTime <= '").append(selectionStartString)
 				.append("' and p.sensingStartTime >= ")
 					.append("(select max(p2.sensingStartTime) from Product p2 ")
+					.append("join ProductFile pf2 ")
 					.append(subSelectQuery)
 					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and pf2.processingFacility = :facility")
 					.append(" and p2.sensingStartTime <= '").append(selectionStartString).append("'")
 					.append(filterQuery)
 					.append(") ")
 				.append("or p.sensingStartTime > '").append(selectionStartString)
 				.append("' and p.sensingStartTime <= ")
 					.append("(select min(p2.sensingStartTime) from Product p2 ")
+					.append("join ProductFile pf2 ")
 					.append(subSelectQuery)
 					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and pf2.processingFacility = :facility")
 					.append(" and p2.sensingStartTime > '").append(selectionStartString).append("'")
 					.append(filterQuery)
 					.append("))");
@@ -899,16 +911,20 @@ public class SimplePolicy extends PersistentObject {
 			simplePolicyQuery.append("(p.sensingStopTime <= '").append(selectionStopString)
 				.append("' and p.sensingStopTime >= ")
 					.append("(select max(p2.sensingStopTime) from Product p2 ")
+					.append("join ProductFile pf2 ")
 					.append(subSelectQuery)
 					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and pf2.processingFacility = :facility")
 					.append(" and p2.sensingStopTime <= '").append(selectionStopString).append("'")
 					.append(filterQuery)
 					.append(") ")
 				.append("or p.sensingStopTime > '").append(selectionStopString)
 				.append("' and p.sensingStopTime <= ")
 					.append("(select min(p2.sensingStopTime) from Product p2 ")
+					.append("join ProductFile pf2 ")
 					.append(subSelectQuery)
 					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and pf2.processingFacility = :facility")
 					.append(" and p2.sensingStopTime > '").append(selectionStopString).append("'")
 					.append(filterQuery)
 					.append("))");
@@ -920,8 +936,10 @@ public class SimplePolicy extends PersistentObject {
 				.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
 				.append("' and p.generationTime >= ")
 					.append("(select max(p2.generationTime) from Product p2 ")
+					.append("join ProductFile pf2 ")
 					.append(subSelectQuery)
 					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and pf2.processingFacility = :facility")
 					.append(" and p2.sensingStartTime <= '")
 					.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
 					.append("' and p2.sensingStopTime >= '")
@@ -947,8 +965,10 @@ public class SimplePolicy extends PersistentObject {
 				.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
 				.append("' and p.generationTime >= ")
 					.append("(select max(p2.generationTime) from Product p2 ")
+					.append("join ProductFile pf2 ")
 					.append(subSelectQuery)
 					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and pf2.processingFacility = :facility")
 					.append(" and p2.sensingStartTime < '")
 					.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
 					.append("' and p2.sensingStopTime > '")
@@ -959,8 +979,10 @@ public class SimplePolicy extends PersistentObject {
 		case LastCreated:
 			simplePolicyQuery.append("p.generationTime >= ")
 					.append("(select max(p2.generationTime) from Product p2 ")
+					.append("join ProductFile pf2 ")
 					.append(subSelectQuery)
 					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and pf2.processingFacility = :facility")
 					.append(filterQuery)
 					.append(")");
 			break;
@@ -983,13 +1005,17 @@ public class SimplePolicy extends PersistentObject {
 	 * given time interval. It is up to the calling program to select the applicable product.
 	 * </li>
 	 * <li>
-	 * For LargestOverlap and LargestOverlap85 the query returns all items intersecting the interal (like ValIntersect),
+	 * For LargestOverlap and LargestOverlap85 the query returns all items intersecting the interval (like ValIntersect),
 	 * further selection by the calling program using either selectLargestOverlap(...) or selectLargestOverlap85(...)
 	 * is required.
 	 * </li>
 	 * </ul>
 	 * 
-	 * @param sourceProductClass the source product class to use for the query (only required for LatestValidity and LatestValidityClosest)
+	 * @deprecated since prosEO 2.2.0: Use asSqlQuery(ProductClass, Instant, Instant, Map, Map) instead
+	 *     (facility query parameter is obsolete)
+	 * 
+	 * @param sourceProductClass the source product class to use for the query
+	 * 				(only required for LatestValidity and LatestValidityClosest)
 	 * @param startTime the start time to use in the condition
 	 * @param stopTime the stop time to use in the condition
 	 * @param filterConditions filter conditions to apply
@@ -997,14 +1023,42 @@ public class SimplePolicy extends PersistentObject {
 	 * @param facilityQuerySqlSubselect an SQL selection string to add to sub-SELECTs in selection policy SQL query conditions
 	 * @return a ProductQuery object representing this policy
 	 */
+	@Deprecated
 	public String asSqlQueryCondition(ProductClass sourceProductClass, final Instant startTime, final Instant stopTime, 
 			Map<String, Parameter> filterConditions, Map<String, String> productColumnMapping, String facilityQuerySqlSubselect) {
+				return asSqlQueryCondition(sourceProductClass, startTime, stopTime, filterConditions, productColumnMapping);
+			}
+
+	/**
+	 * Format this policy as a query condition in native SQL. It is assumed that the Product and ProductClass
+	 * classes are denoted as "SELECT ... FROM product p JOIN product_class pc ON p.product_class_id = pc.id" in the SQL query,
+	 * to which the resulting condition is to be appended.
+	 * <p>
+	 * Limitations:
+	 * <ul>
+	 * <li>
+	 * For LatestValidityClosest the query may return two products, one to each side of the centre of the
+	 * given time interval. It is up to the calling program to select the applicable product.
+	 * </li>
+	 * <li>
+	 * For LargestOverlap and LargestOverlap85 the query returns all items intersecting the interval (like ValIntersect),
+	 * further selection by the calling program using either selectLargestOverlap(...) or selectLargestOverlap85(...)
+	 * is required.
+	 * </li>
+	 * </ul>
+	 * 
+	 * @param sourceProductClass the source product class to use for the query
+	 * 				(only required for LatestValidity and LatestValidityClosest)
+	 * @param startTime the start time to use in the condition
+	 * @param stopTime the stop time to use in the condition
+	 * @param filterConditions filter conditions to apply
+	 * @param productColumnMapping a mapping from attribute names of the Product class to the corresponding SQL column names
+	 * @return a ProductQuery object representing this policy
+	 */
+	public String asSqlQueryCondition(ProductClass sourceProductClass, final Instant startTime, final Instant stopTime, 
+			Map<String, Parameter> filterConditions, Map<String, String> productColumnMapping) {
 		StringBuilder simplePolicyQuery = new StringBuilder();
 		
-		if (null == facilityQuerySqlSubselect) {
-			facilityQuerySqlSubselect = "";
-		}
-
 		/* Build JOIN and WHERE clauses for sub-SELECT clauses */
 		
 		// Join with as many instances of the product_parameters table as there are filter conditions
@@ -1047,19 +1101,21 @@ public class SimplePolicy extends PersistentObject {
 		case LatestStartValidity:
 			simplePolicyQuery.append("p.sensing_start_time >= ")
 				.append("(SELECT MAX(p2.sensing_start_time) FROM product p2 ")
+				.append("JOIN product_file pf2 ON p2.id = pf2.product_id ")
 				.append(subSelectQuery)
 				.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+				.append(" AND :facility_id = pf2.processing_facility_id")
 				.append(filterQuery)
-				.append(facilityQuerySqlSubselect)
 				.append(")");
 			break;
 		case LatestStopValidity:
 			simplePolicyQuery.append("p.sensing_stop_time >= ")
 				.append("(SELECT MAX(p2.sensing_stop_time) FROM product p2 ")
+				.append("JOIN product_file pf2 ON p2.id = pf2.product_id ")
 				.append(subSelectQuery)
 				.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+				.append(" AND :facility_id = pf2.processing_facility_id")
 				.append(filterQuery)
-				.append(facilityQuerySqlSubselect)
 				.append(")");
 			break;
 		case LatestValidityClosest:
@@ -1072,20 +1128,22 @@ public class SimplePolicy extends PersistentObject {
 			simplePolicyQuery.append("(p.sensing_start_time <= '").append(selectionCentreString)
 				.append("' AND p.sensing_start_time >= ")
 				    .append("(SELECT MAX(p2.sensing_start_time) FROM product p2 ")
+					.append("JOIN product_file pf2 ON p2.id = pf2.product_id ")
 					.append(subSelectQuery)
 				    .append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+					.append(" AND :facility_id = pf2.processing_facility_id")
 				    .append(" AND p2.sensing_start_time <= '").append(selectionCentreString).append("'")
 					.append(filterQuery)
-					.append(facilityQuerySqlSubselect)
 				    .append(") ")
 				.append("OR p.sensing_start_time > '").append(selectionCentreString)
 				.append("' AND p.sensing_start_time <= ")
 					.append("(SELECT MIN(p2.sensing_start_time) FROM product p2 ")
+					.append("JOIN product_file pf2 ON p2.id = pf2.product_id ")
 					.append(subSelectQuery)
 					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+					.append(" AND :facility_id = pf2.processing_facility_id")
 					.append(" AND p2.sensing_start_time > '").append(selectionCentreString).append("'")
 					.append(filterQuery)
-					.append(facilityQuerySqlSubselect)
 					.append("))");
 			break;
 		case ClosestStartValidity:
@@ -1095,20 +1153,22 @@ public class SimplePolicy extends PersistentObject {
 			simplePolicyQuery.append("(p.sensing_start_time <= '").append(selectionStartString)
 				.append("' AND p.sensing_start_time >= ")
 					.append("(SELECT MAX(p2.sensing_start_time) FROM product p2 ")
+					.append("JOIN product_file pf2 ON p2.id = pf2.product_id ")
 					.append(subSelectQuery)
 					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+					.append(" AND :facility_id = pf2.processing_facility_id")
 					.append(" AND p2.sensing_start_time <= '").append(selectionStartString).append("'")
 					.append(filterQuery)
-					.append(facilityQuerySqlSubselect)
 					.append(") ")
 				.append("OR p.sensing_start_time > '").append(selectionStartString)
 				.append("' AND p.sensing_start_time <= ")
 					.append("(SELECT MIN(p2.sensing_start_time) FROM product p2 ")
+					.append("JOIN product_file pf2 ON p2.id = pf2.product_id ")
 					.append(subSelectQuery)
 					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+					.append(" AND :facility_id = pf2.processing_facility_id")
 					.append(" AND p2.sensing_start_time > '").append(selectionStartString).append("'")
 					.append(filterQuery)
-					.append(facilityQuerySqlSubselect)
 					.append("))");
 			break;
 		case ClosestStopValidity:
@@ -1118,20 +1178,22 @@ public class SimplePolicy extends PersistentObject {
 			simplePolicyQuery.append("(p.sensing_stop_time <= '").append(selectionStopString)
 				.append("' AND p.sensing_stop_time >= ")
 					.append("(SELECT MAX(p2.sensing_stop_time) FROM product p2 ")
+					.append("JOIN product_file pf2 ON p2.id = pf2.product_id ")
 					.append(subSelectQuery)
 					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+					.append(" AND :facility_id = pf2.processing_facility_id")
 					.append(" AND p2.sensing_stop_time <= '").append(selectionStopString).append("'")
 					.append(filterQuery)
-					.append(facilityQuerySqlSubselect)
 					.append(") ")
 				.append("OR p.sensing_stop_time > '").append(selectionStopString)
 				.append("' AND p.sensing_stop_time <= ")
 					.append("(SELECT MIN(p2.sensing_stop_time) FROM product p2 ")
+					.append("JOIN product_file pf2 ON p2.id = pf2.product_id ")
 					.append(subSelectQuery)
 					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+					.append(" AND :facility_id = pf2.processing_facility_id")
 					.append(" AND p2.sensing_stop_time > '").append(selectionStopString).append("'")
 					.append(filterQuery)
-					.append(facilityQuerySqlSubselect)
 					.append("))");
 			break;
 		case LatestValCover:
@@ -1141,14 +1203,15 @@ public class SimplePolicy extends PersistentObject {
 				.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
 				.append("' AND p.generation_time >= ")
 					.append("(SELECT MAX(p2.generation_time) FROM product p2 ")
+					.append("JOIN product_file pf2 ON p2.id = pf2.product_id ")
 					.append(subSelectQuery)
 					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+					.append(" AND :facility_id = pf2.processing_facility_id")
 					.append(" AND p2.sensing_start_time <= '")
 					.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
 					.append("' AND p2.sensing_stop_time >= '")
 					.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds()))).append("'")
 					.append(filterQuery)
-					.append(facilityQuerySqlSubselect)
 					.append(")");
 			break;
 		case ValIntersect:
@@ -1169,23 +1232,25 @@ public class SimplePolicy extends PersistentObject {
 				.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
 				.append("' AND p.generation_time >= ")
 					.append("(SELECT MAX(p2.generation_time) FROM product p2 ")
+					.append("JOIN product_file pf2 ON p2.id = pf2.product_id ")
 					.append(subSelectQuery)
 					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+					.append(" AND :facility_id = pf2.processing_facility_id")
 					.append(" AND p2.sensing_start_time < '")
 					.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
 					.append("' AND p2.sensing_stop_time > '")
 					.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds()))).append("'")
 					.append(filterQuery)
-					.append(facilityQuerySqlSubselect)
 					.append(")");
 			break;
 		case LastCreated:
 			simplePolicyQuery.append("p.generation_time >= ")
 				.append("(SELECT MAX(p2.generation_time) FROM product p2 ")
+				.append("JOIN product_file pf2 ON p2.id = pf2.product_id ")
 				.append(subSelectQuery)
 				.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+				.append(" AND :facility_id = pf2.processing_facility_id")
 				.append(filterQuery)
-				.append(facilityQuerySqlSubselect)
 				.append(")");
 			break;
 		default:

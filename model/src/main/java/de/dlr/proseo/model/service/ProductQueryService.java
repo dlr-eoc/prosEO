@@ -38,8 +38,10 @@ import jakarta.persistence.metamodel.Metamodel;
 public class ProductQueryService {
 
 	/* Used by the Production Planner for the creation of product queries */
+	@Deprecated
 	public static final String FACILITY_QUERY_SQL =
 			" AND :facility_id IN (SELECT processing_facility_id FROM product_processing_facilities ppf WHERE ppf.product_id = p.id)";
+	@Deprecated
 	public static final String FACILITY_QUERY_SQL_SUBSELECT = FACILITY_QUERY_SQL.replace("ppf", "ppf2").replace("p.id", "p2.id");
 
 	/** Mapping from Product attributes to SQL column names */
@@ -164,7 +166,7 @@ public class ProductQueryService {
 		Job job = productQuery.getJobStep().getJob();
 		ProcessingFacility facility = job.getProcessingFacility();
 
-		// Execute the query (native SQL due to use of recursive SQL view product_processing_facilities)
+		// Execute the query (TODO optional: Change to JPQL query, since no recursive view is involved any more)
 		String sqlQuery = productQuery.getSqlQueryCondition();
 		if (logger.isDebugEnabled()) logger.debug("Executing SQL query: " + sqlQuery);
 

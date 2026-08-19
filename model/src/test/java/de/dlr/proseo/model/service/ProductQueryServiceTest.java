@@ -153,8 +153,6 @@ public class ProductQueryServiceTest {
 	@Test
 	public final void testExecuteQuery() {
 		
-		jdbcTemplate.execute("RUNSCRIPT FROM '" + "classpath:create_view_product_processing_facilities_simplified.sql" + "'");
-		
 		// Create test data: mission, product class, product, selection rules (with and without MINCOVER), order, job, job step
 		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
 		if (null == mission) {
@@ -239,16 +237,14 @@ public class ProductQueryServiceTest {
 
 		SimpleSelectionRule simpleSelectionRule = selectionRule.getSimpleRules().iterator().next();
 		ProductQuery query = ProductQuery.fromSimpleSelectionRule(
-				simpleSelectionRule, jobStepLate, queryService.getProductColumnMapping(),
-				ProductQueryService.FACILITY_QUERY_SQL, ProductQueryService.FACILITY_QUERY_SQL_SUBSELECT);
+				simpleSelectionRule, jobStepLate, queryService.getProductColumnMapping());
 		logger.trace("Starting test for product query 1 based on " + simpleSelectionRule);
 		assertTrue(queryService.executeQuery(query, true), "Product query 1 fails unexpectedly");
 		
 		// Test first product query with additional filter condition "revision:2" --> fails
 		inputFilter.getFilterConditions().clear();
 		inputFilter.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 2));
-		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepLate, queryService.getProductColumnMapping(),
-				ProductQueryService.FACILITY_QUERY_SQL, ProductQueryService.FACILITY_QUERY_SQL_SUBSELECT);
+		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepLate, queryService.getProductColumnMapping());
 		logger.trace("Starting test for product query 1 with filters " + query.getFilterConditions());
 		assertTrue(!queryService.executeQuery(query, true), "Product query 1 succeeds unexpectedly for filter 'revision:2'");
 		inputFilter.getFilterConditions().clear();
@@ -264,13 +260,11 @@ public class ProductQueryServiceTest {
 		assertTrue(!selectionRule.getSimpleRules().isEmpty(), "List of selection rules is empty");
 
 		simpleSelectionRule = selectionRule.getSimpleRules().iterator().next();
-		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepEarly, queryService.getProductColumnMapping(),
-				ProductQueryService.FACILITY_QUERY_SQL, ProductQueryService.FACILITY_QUERY_SQL_SUBSELECT);
+		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepEarly, queryService.getProductColumnMapping());
 		logger.trace("Starting test for product query 2 and early interval based on " + simpleSelectionRule);
 		assertTrue(queryService.executeQuery(query, true), "Product query 2 fails unexpectedly for early interval");
 
-		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepLate, queryService.getProductColumnMapping(),
-				ProductQueryService.FACILITY_QUERY_SQL, ProductQueryService.FACILITY_QUERY_SQL_SUBSELECT);
+		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepLate, queryService.getProductColumnMapping());
 		logger.trace("Starting test for product query 2 and late interval based on " + simpleSelectionRule);
 		assertTrue(!queryService.executeQuery(query, true), "Product query 2 succeeds unexpectedly for late interval");
 		

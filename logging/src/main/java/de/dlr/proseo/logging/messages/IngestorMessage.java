@@ -60,7 +60,7 @@ public enum IngestorMessage implements ProseoMessage {
 	PRODUCT_FILE_NOT_FOUND				(2047, Level.ERROR, false, "Product file for processing facility {0} not found", ""),
 	PRODUCT_FILE_NOT_MODIFIED			(2048, Level.INFO, true, "Product file {0} for product with id {1} not modified (no changes)", ""),
 	PRODUCT_FILE_RETRIEVED				(2049, Level.INFO, true, "Product file retrieved for product ID {0} at processing facility {1}", ""),
-	PRODUCT_HAS_FILES					(2050, Level.ERROR, false, "Product with ID {0} (or some component product) has existing files and cannot be deleted", ""),
+	PRODUCT_HAS_FILES					(2050, Level.ERROR, false, "Product with ID {0} (or some component product) has {1} existing files and cannot be deleted", ""),
 	PRODUCT_ID_MISSING					(2051, Level.ERROR, false, "Product ID not set", ""),
 	PRODUCT_INGESTION_FAILED			(2052, Level.ERROR, false, "Product ingestion failed (cause: {0})", ""),
 	PRODUCT_LIST_EMPTY					(2053, Level.ERROR, false, "No products found for search criteria", ""),

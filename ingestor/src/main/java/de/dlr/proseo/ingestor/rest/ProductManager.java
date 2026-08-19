@@ -78,9 +78,6 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
 @Component
 public class ProductManager {
 
-	/* Other string constants */
-	private static final String FACILITY_QUERY_SQL = "SELECT count(*) FROM product_processing_facilities ppf WHERE ppf.product_id = :product_id";
-
 	/** Ingestor configuration */
 	@Autowired
 	IngestorConfiguration ingestorConfig;
@@ -175,8 +172,10 @@ public class ProductManager {
 
 		// Make sure product (including all component products) does not exist on any
 		// Processing Facility
-		if (hasProductFiles(modelProduct.get())) {
-			throw new IllegalStateException(logger.log(IngestorMessage.PRODUCT_HAS_FILES, modelProduct.get().getId()));
+		int productFileCount = countProductFilesRecursive(modelProduct.get());
+		if (0 < productFileCount) {
+			throw new IllegalStateException(
+					logger.log(IngestorMessage.PRODUCT_HAS_FILES, modelProduct.get().getId(), productFileCount));
 		}
 
 		// Delete the product
@@ -192,25 +191,22 @@ public class ProductManager {
 	}
 
 	/**
-	 * Checks (recursively) whether the product or any of its component products has
-	 * files at a processing facility
+	 * Counts (recursively) all product files of the product or any of its component products
 	 *
 	 * @param product the product to check
-	 * @return true, if some processing facility with files for this product was
-	 *         found, false otherwise
+	 * @return the number of product files found
 	 */
-	private boolean hasProductFiles(Product product) {
+	private int countProductFilesRecursive(Product product) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> hasProductFiles({})", product.getId());
+			logger.trace(">>> countProductFilesRecursive({})", (null == product ? "null" : product.getId()));
 
-		Query query = em.createNativeQuery(FACILITY_QUERY_SQL);
-		query.setParameter("product_id", product.getId());
-
-		int resultCount = ((Number) query.getSingleResult()).intValue();
-		if (logger.isDebugEnabled())
-			logger.debug("Number of processing facility entries found: " + resultCount);
-
-		return 0 < resultCount;
+		int productFileCount = product.getProductFile().size();
+		
+		for (Product componentProduct: product.getComponentProducts()) {
+			productFileCount += countProductFilesRecursive(componentProduct);
+		}
+		
+		return productFileCount;
 	}
 
 	/**

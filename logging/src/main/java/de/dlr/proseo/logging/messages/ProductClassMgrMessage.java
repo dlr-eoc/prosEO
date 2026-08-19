@@ -67,6 +67,7 @@ public enum ProductClassMgrMessage implements ProseoMessage {
 	SELECTION_RULE_NOT_MODIFIED			(5051, Level.INFO, true, "Selection rule with ID {0} not modified (no changes)", ""),
 	SELECTION_RULE_RETRIEVED			(5052, Level.INFO, true, "Selection rule with ID {0} for product class with ID {1} retrieved", ""),
 	SELECTION_RULES_CREATED				(5053, Level.INFO, true, "{0} selection rules added to product class of type {1} in mission {2}", ""),
+	NO_COMPONENT_CLASSES_ALLOWED		(5054, Level.ERROR, false, "Product class {0} of mission {1} supports selection rules and therefore cannot have component classes", "")
 
 	;
 
