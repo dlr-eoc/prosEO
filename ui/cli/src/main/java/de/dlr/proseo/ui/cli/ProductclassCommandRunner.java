@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestClientResponseException;
 
 import tools.jackson.databind.ObjectMapper;
@@ -32,7 +33,6 @@ import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.rest.model.RestProductClass;
 import de.dlr.proseo.model.rest.model.RestSimpleSelectionRule;
-import de.dlr.proseo.model.util.ListUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -1172,10 +1172,10 @@ public class ProductclassCommandRunner {
 	}
 	
 	private void initLists(RestProductClass restProductClass) {
-		if (ListUtils.isNullOrEmpty(restProductClass.getComponentClasses())) {
+		if (CollectionUtils.isEmpty(restProductClass.getComponentClasses())) {
 			restProductClass.setComponentClasses(new ArrayList<String>());
 		}
-		if (ListUtils.isNullOrEmpty(restProductClass.getSelectionRule())) {
+		if (CollectionUtils.isEmpty(restProductClass.getSelectionRule())) {
 			restProductClass.setSelectionRule(new ArrayList<RestSimpleSelectionRule>());
 		}
 	}

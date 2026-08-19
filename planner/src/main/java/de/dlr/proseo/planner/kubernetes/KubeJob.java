@@ -1080,7 +1080,23 @@ public class KubeJob {
 								}
 
 							}
+							if (JobStepState.RUNNING.equals(jobStep.get().getJobStepState()) && pod != null && pod.getStatus().getConditions() != null) {
 
+								// Retrieve events related to the pod using field selector and append them to the message string
+								String fieldSelector = "involvedObject.name==" + pod.getMetadata().getName();
+								CoreV1EventList events = null;
+								events = kubeConfig.getApiV1()
+										.listEventForAllNamespaces(false, null, fieldSelector, null, 30, null, null, null, null, null, null);
+								
+								if (events != null) {
+									for (CoreV1Event event : events.getItems()) {
+										if (event.getType().equalsIgnoreCase("Warning")) {
+											jobStep.get().setJobStepState(JobStepState.FAILED);
+										}
+									}
+								}
+
+							}
 							// TODO Cancel pod and job, write reasons into job step log.
 							// TODO Check the pod for errors and warnings.
 							// kubeConfig.getApiV1().listNamespacedEvent("default",null,false,null,"involvedObject.name=proseojob733-bwzf4",null,null,null,null,false);
@@ -1088,6 +1104,12 @@ public class KubeJob {
 							if (logger.isTraceEnabled())
 								logger.trace("    updateInfo: status not found");
 						}
+					} catch (ApiException e) {
+						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+
+						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+						// Re-throw to roll back the transaction
+						throw new RuntimeException(e);
 					} catch (Exception e) {
 						logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 

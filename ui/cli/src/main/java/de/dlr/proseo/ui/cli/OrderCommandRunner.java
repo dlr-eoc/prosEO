@@ -22,6 +22,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientResponseException;
 
@@ -38,7 +39,6 @@ import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
-import de.dlr.proseo.model.util.ListUtils;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.StringUtils;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -378,7 +378,7 @@ public class OrderCommandRunner {
 			restOrder.setOutputFileClass(response);
 		}
 		// Get requested product classes
-		if (ListUtils.isNullOrEmpty(restOrder.getRequestedProductClasses())) {
+		if (CollectionUtils.isEmpty(restOrder.getRequestedProductClasses())) {
 			System.out.print(PROMPT_PRODUCT_CLASSES);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -700,26 +700,26 @@ public class OrderCommandRunner {
 		if (null != updatedOrder.getSliceOverlap()) { // mandatory
 			restOrder.setSliceOverlap(updatedOrder.getSliceOverlap());
 		}
-		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrder.getInputFilters())) {
+		if (isDeleteAttributes || !CollectionUtils.isEmpty(updatedOrder.getInputFilters())) {
 			restOrder.setInputFilters(updatedOrder.getInputFilters());
 		}
-		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrder.getClassOutputParameters())) {
+		if (isDeleteAttributes || !CollectionUtils.isEmpty(updatedOrder.getClassOutputParameters())) {
 			restOrder.setClassOutputParameters(updatedOrder.getClassOutputParameters());
 		}
-		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrder.getOutputParameters())) {
+		if (isDeleteAttributes || !CollectionUtils.isEmpty(updatedOrder.getOutputParameters())) {
 			restOrder.setOutputParameters(updatedOrder.getOutputParameters());
 		}
-		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrder.getConfiguredProcessors())) {
+		if (isDeleteAttributes || !CollectionUtils.isEmpty(updatedOrder.getConfiguredProcessors())) {
 			restOrder.setConfiguredProcessors(updatedOrder.getConfiguredProcessors());
 		}
 		if ((isDeleteAttributes && !OrderSlicingType.ORBIT.toString().equals(restOrder.getSlicingType()))
-				|| !ListUtils.isNullOrEmpty(updatedOrder.getOrbits())) {
+				|| !CollectionUtils.isEmpty(updatedOrder.getOrbits())) {
 			restOrder.setOrbits(updatedOrder.getOrbits());
 		}
-		if (!ListUtils.isNullOrEmpty(updatedOrder.getRequestedProductClasses())) { // mandatory
+		if (!CollectionUtils.isEmpty(updatedOrder.getRequestedProductClasses())) { // mandatory
 			restOrder.setRequestedProductClasses(updatedOrder.getRequestedProductClasses());
 		}
-		if (isDeleteAttributes || !ListUtils.isNullOrEmpty(updatedOrder.getInputProductClasses())) {
+		if (isDeleteAttributes || !CollectionUtils.isEmpty(updatedOrder.getInputProductClasses())) {
 			restOrder.setInputProductClasses(updatedOrder.getInputProductClasses());
 		}
 		if (null != updatedOrder.getOutputFileClass()) { // mandatory
@@ -1525,25 +1525,25 @@ public class OrderCommandRunner {
 	}
 
 	private void initLists(RestOrder restOrder) {
-		if (ListUtils.isNullOrEmpty(restOrder.getInputFilters())) {
+		if (CollectionUtils.isEmpty(restOrder.getInputFilters())) {
 			restOrder.setInputFilters(new ArrayList<RestInputFilter>());
 		}
-		if (ListUtils.isNullOrEmpty(restOrder.getDynamicProcessingParameters())) {
+		if (CollectionUtils.isEmpty(restOrder.getDynamicProcessingParameters())) {
 			restOrder.setDynamicProcessingParameters(new ArrayList<RestParameter>());
 		}
-		if (ListUtils.isNullOrEmpty(restOrder.getOutputParameters())) {
+		if (CollectionUtils.isEmpty(restOrder.getOutputParameters())) {
 			restOrder.setOutputParameters(new ArrayList<RestParameter>());
 		}
-		if (ListUtils.isNullOrEmpty(restOrder.getClassOutputParameters())) {
+		if (CollectionUtils.isEmpty(restOrder.getClassOutputParameters())) {
 			restOrder.setClassOutputParameters(new ArrayList<RestClassOutputParameter>());
 		}
-		if (ListUtils.isNullOrEmpty(restOrder.getConfiguredProcessors())) {
+		if (CollectionUtils.isEmpty(restOrder.getConfiguredProcessors())) {
 			restOrder.setConfiguredProcessors(new ArrayList<String>());
 		}
-		if (ListUtils.isNullOrEmpty(restOrder.getInputProductClasses())) {
+		if (CollectionUtils.isEmpty(restOrder.getInputProductClasses())) {
 			restOrder.setInputProductClasses(new ArrayList<String>());
 		}
-		if (ListUtils.isNullOrEmpty(restOrder.getJobStepStates())) {
+		if (CollectionUtils.isEmpty(restOrder.getJobStepStates())) {
 			restOrder.setJobStepStates(new ArrayList<String>());
 		}
 	}

@@ -15,6 +15,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestClientResponseException;
 
 import tools.jackson.databind.ObjectMapper;
@@ -23,7 +24,6 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.TriggerType;
 import de.dlr.proseo.model.rest.model.RestTrigger;
-import de.dlr.proseo.model.util.ListUtils;
 import de.dlr.proseo.model.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -897,7 +897,7 @@ public class TriggerCommandRunner {
 	}
 
 	private void initLists(RestTrigger restTrigger) {
-		if (ListUtils.isNullOrEmpty(restTrigger.getParametersToCopy())) {
+		if (CollectionUtils.isEmpty(restTrigger.getParametersToCopy())) {
 			restTrigger.setParametersToCopy(new ArrayList<String>());
 		}
 	}

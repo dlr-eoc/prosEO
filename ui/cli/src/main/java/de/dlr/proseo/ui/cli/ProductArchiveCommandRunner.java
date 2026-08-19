@@ -15,6 +15,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestClientResponseException;
 
 import tools.jackson.databind.ObjectMapper;
@@ -23,7 +24,6 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.ArchiveType;
 import de.dlr.proseo.model.rest.model.RestProductArchive;
-import de.dlr.proseo.model.util.ListUtils;
 import de.dlr.proseo.model.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -745,7 +745,7 @@ public class ProductArchiveCommandRunner {
 	}
 
 	private void initLists(RestProductArchive restArchive) {
-		if (ListUtils.isNullOrEmpty(restArchive.getAvailableProductClasses())) {
+		if (CollectionUtils.isEmpty(restArchive.getAvailableProductClasses())) {
 			restArchive.setAvailableProductClasses(new ArrayList<String>());
 		}
 	}
