@@ -28,7 +28,7 @@ import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.rest.model.RestWorkflow;
 import de.dlr.proseo.model.rest.model.RestWorkflowOption;
-import de.dlr.proseo.model.util.StringUtils;
+import org.springframework.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -732,7 +732,7 @@ public class WorkflowCommandRunner {
 		if (null == restWorkflow.getSliceOverlap()) {
 			restWorkflow.setSliceOverlap(0L);
 		}
-		if (StringUtils.isNullOrEmpty(restWorkflow.getSlicingType())) {
+		if (StringUtils.hasText(restWorkflow.getSlicingType())) {
 			restWorkflow.setSlicingType(OrderSlicingType.NONE.name());
 		}
 	}

@@ -8,7 +8,7 @@ package de.dlr.proseo.archivemgr.rest.model;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.dlr.proseo.archivemgr.utils.StringUtils;
+import org.springframework.util.StringUtils;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.ProductArchiveMgrMessage;
@@ -139,11 +139,11 @@ public class ProductArchiveRestMapper {
 	 */
 	private void checkMandatoryFields() {
 
-		if (StringUtils.isNullOrBlank(restArchive.getCode())) {
+		if (!StringUtils.hasText(restArchive.getCode())) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Code", "product archive model checker"));
 		}
 
-		if (StringUtils.isNullOrBlank(restArchive.getName())) {
+		if (!StringUtils.hasText(restArchive.getName())) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Name", "product archive model checker"));
 		}
 
@@ -152,7 +152,7 @@ public class ProductArchiveRestMapper {
 					logger.log(GeneralMessage.FIELD_NOT_SET, "ArchiveType", "product archive model checker"));
 		}
 
-		if (StringUtils.isNullOrBlank(restArchive.getBaseUri())) {
+		if (!StringUtils.hasText(restArchive.getBaseUri())) {
 			throw new IllegalArgumentException(
 					logger.log(GeneralMessage.FIELD_NOT_SET, "BaseUri", "product archive model checker"));
 		}
@@ -163,14 +163,14 @@ public class ProductArchiveRestMapper {
 		}
 
 		if (restArchive.getTokenRequired()) {
-			if (StringUtils.isNullOrBlank(restArchive.getTokenUri())) {
+			if (!StringUtils.hasText(restArchive.getTokenUri())) {
 				throw new IllegalArgumentException(
 						logger.log(GeneralMessage.FIELD_NOT_SET, "TokenUri", "product archive model checker"));
 			}
 		}
 
 		if (restArchive.getSendAuthInBody()) {
-			if (StringUtils.isNullOrBlank(restArchive.getUsername())) {
+			if (!StringUtils.hasText(restArchive.getUsername())) {
 				throw new IllegalArgumentException(
 						logger.log(GeneralMessage.FIELD_NOT_SET, "Username", "product archive model checker"));
 			}

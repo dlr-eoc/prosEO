@@ -32,7 +32,7 @@ import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrderTemplate;
 import de.dlr.proseo.model.rest.model.RestParameter;
-import de.dlr.proseo.model.util.StringUtils;
+import org.springframework.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -718,13 +718,13 @@ public class OrderTemplateCommandRunner {
 		if (null == restOrderTemplate.getPriority()) {
 			restOrderTemplate.setPriority(50);
 		}
-		if (StringUtils.isNullOrEmpty(restOrderTemplate.getSlicingType())) {
+		if (StringUtils.hasText(restOrderTemplate.getSlicingType())) {
 			restOrderTemplate.setSlicingType(OrderSlicingType.NONE.name());
 		}
-		if (StringUtils.isNullOrEmpty(restOrderTemplate.getProductionType())) {
+		if (StringUtils.hasText(restOrderTemplate.getProductionType())) {
 			restOrderTemplate.setProductionType(ProductionType.ON_DEMAND_DEFAULT.name());
 		}
-		if (StringUtils.isNullOrEmpty(restOrderTemplate.getAutoGenerateSteps())) {
+		if (StringUtils.hasText(restOrderTemplate.getAutoGenerateSteps())) {
 			restOrderTemplate.setAutoGenerateSteps(ThreeValueBool.DEFAULT.name());
 		}
 		if (restOrderTemplate.getAutoRelease() == null) {

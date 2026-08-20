@@ -74,7 +74,7 @@ public class FileUtils {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createFile(<content>)");
 
-		logger.debug("... file content (first 20 characters): " + new StringUtils(content).getMaxSubstring(20));
+		logger.debug("... file content (first 20 characters): " + (content.length() <= 20 ? content : content.substring(0, 20)));
 		logger.debug("... file size: " + content.length());
 
 		File file = new File(path);
@@ -115,7 +115,7 @@ public class FileUtils {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> synchroCreateFile(<content>, {}, {})", waitTime, fileCheckMaxCycles);
 
-		logger.debug("... file content (first 20 characters): " + new StringUtils(content).getMaxSubstring(20));
+		logger.debug("... file content (first 20 characters): " + (content.length() <= 20 ? content : content.substring(0, 20)));
 		logger.debug("... file size: " + content.length());
 
 		StorageFileLocker fileLocker = new StorageFileLocker(path, waitTime, fileCheckMaxCycles);

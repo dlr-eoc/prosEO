@@ -349,7 +349,7 @@ public class ProductManagerTest {
 			e.printStackTrace();
 			fail("Exception in 'String.format'");
 		}
-		assertEquals(redirectLink, "Incorrect download link", STORAGE_MGR_EXPECTED_LINK);
+		assertEquals(STORAGE_MGR_EXPECTED_LINK, redirectLink, "Incorrect download link");
 
 		JWTClaimsSet claimsSet = extractJwtClaimsSet(redirectLinkParts[1]);
 

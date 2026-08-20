@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -60,7 +61,7 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  * @author Dr. Thomas Bassler
  * @author Katharina Bassler
  */
-@SpringBootTest(classes = IngestorApplication.class)
+@SpringBootTest(classes = IngestorApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @WithMockUser(username = "UTM-testuser", password = "password")
 @Transactional
 public class IngestorControllerTest {
@@ -114,9 +115,7 @@ public class IngestorControllerTest {
 	IngestorTestConfiguration config;
 
 	/** Mocking the storage manager and planner */
-	private static int WIREMOCK_PORT = 8080;
-	public static WireMockRule wireMockRule = new WireMockRule(WIREMOCK_PORT);
-	//private static WireMockServer wireMockServer;
+	public static WireMockRule wireMockRule = new WireMockRule();
 
 	/** A logger for this class */
 	private static ProseoLogger logger = new ProseoLogger(IngestorControllerTest.class);
@@ -139,15 +138,16 @@ public class IngestorControllerTest {
 				.willReturn(WireMock.aResponse().withStatus(200).withHeader("Content-Type", "application/json")
 						.withBody("{\"foo\":\"bar\"}")));
 
-//		wireMockServer.getStubMappings().forEach(s -> logger.trace("Stub mapping: " + s));
 	}
 
 	/**
+	 * Before every test: Create required data environment (mission, product class etc.)
+	 * 
 	 * @throws java.lang.Exception
 	 */
 	@BeforeEach
 	public void setUp() throws Exception {
-		// Make sure processing facility and product class exist
+
 		Mission mission = new Mission();
 		mission.setCode(TEST_CODE);
 		mission.getFileClasses().add(TEST_FILE_CLASS);
@@ -319,8 +319,8 @@ public class IngestorControllerTest {
 		assertNotNull(responseProductFiles, "Product files missing");
 		assertEquals(1, responseProductFiles.size(), "Unexpected number of product files: ");
 		RestProductFile responseProductFile = responseProductFiles.get(0);
-		assertEquals("Unexpected product file name: ", ingestorProduct.getProductFileName(),
-				responseProductFile.getProductFileName());
+		assertEquals(ingestorProduct.getProductFileName(), responseProductFile.getProductFileName(),
+				"Unexpected product file name: ");
 		assertEquals(0, responseProductFile.getAuxFileNames().size(), "Unexpected number of aux files: ");
 
 		// Check triggering of production planner in log

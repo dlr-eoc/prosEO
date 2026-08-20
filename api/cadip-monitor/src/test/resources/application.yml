@@ -28,7 +28,7 @@ proseo:
         password: mypassword
         
         # Flag indicating whether token-based authentication shall be used (optional, default false)
-        usetoken: true
+        usetoken: false
         token:
           # The URI for requesting a bearer token (full URL, mandatory, if token authentication is used)
           uri: http://localhost:8080/cadip/token

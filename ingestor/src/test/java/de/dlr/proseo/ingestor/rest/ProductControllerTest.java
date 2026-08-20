@@ -20,6 +20,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,7 +50,7 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  * @author Katharina Bassler
  */
 
-@SpringBootTest(classes = IngestorApplication.class)
+@SpringBootTest(classes = IngestorApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @WithMockUser(username = "UTM-testuser", password = "password")
 @Transactional
 
@@ -83,7 +84,6 @@ public class ProductControllerTest {
 	private JdbcTemplate jdbcTemplate;
 
 	/** Mocking the storage manager and planner */
-	private static int WIREMOCK_PORT = 8080;
 	private static WireMockServer wireMockServer;
 
 	/** A logger for this class */
@@ -96,10 +96,8 @@ public class ProductControllerTest {
 	 */
 	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
-		wireMockServer = new WireMockServer(WIREMOCK_PORT);
+		wireMockServer = new WireMockServer();
 		wireMockServer.start();
-		
-//		wireMockServer.getStubMappings().forEach(s -> logger.trace("Stub mapping: " + s));
 
 	}
 
@@ -114,8 +112,8 @@ public class ProductControllerTest {
 	}
 
 	/**
-	 * Before every test: NOP (cannot use JPA here)
-	 *
+	 * Before every test: Create required data environment (mission, product class etc.)
+	 * 
 	 * @throws java.lang.Exception
 	 */
 	@BeforeEach

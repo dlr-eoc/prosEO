@@ -8,6 +8,7 @@ package de.dlr.proseo.archivemgr.rest;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.persistence.EntityManager;
@@ -26,7 +27,6 @@ import de.dlr.proseo.archivemgr.ProductArchiveManagerConfiguration;
 import de.dlr.proseo.archivemgr.rest.model.ProductArchiveModelMapper;
 import de.dlr.proseo.archivemgr.rest.model.ProductArchiveRestMapper;
 import de.dlr.proseo.archivemgr.rest.model.RestProductArchive;
-import de.dlr.proseo.archivemgr.utils.StringUtils;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.FacilityMgrMessage;
 import de.dlr.proseo.logging.messages.GeneralMessage;
@@ -492,11 +492,11 @@ public class ProductArchiveManager {
 			throw new IllegalArgumentException(logger.log(ProductArchiveMgrMessage.ARCHIVE_MISSING));
 		}
 
-		if (!StringUtils.equalStrings(modelArchive.getCode(), changedArchive.getCode())) {
+		if (!Objects.equals(modelArchive.getCode(), changedArchive.getCode())) {
 			modelArchive.setCode(changedArchive.getCode());
 		}
 
-		if (!StringUtils.equalStrings(modelArchive.getName(), changedArchive.getName())) {
+		if (!Objects.equals(modelArchive.getName(), changedArchive.getName())) {
 			modelArchive.setName(changedArchive.getName());
 		}
 
@@ -504,11 +504,11 @@ public class ProductArchiveManager {
 			modelArchive.setArchiveType(changedArchive.getArchiveType());
 		}
 
-		if (!StringUtils.equalStrings(modelArchive.getBaseUri(), changedArchive.getBaseUri())) {
+		if (!Objects.equals(modelArchive.getBaseUri(), changedArchive.getBaseUri())) {
 			modelArchive.setBaseUri(changedArchive.getBaseUri());
 		}
 
-		if (!StringUtils.equalStrings(modelArchive.getContext(), changedArchive.getContext())) {
+		if (!Objects.equals(modelArchive.getContext(), changedArchive.getContext())) {
 			modelArchive.setContext(changedArchive.getContext());
 		}
 
@@ -516,23 +516,23 @@ public class ProductArchiveManager {
 			modelArchive.setTokenRequired(changedArchive.getTokenRequired());
 		}
 
-		if (!StringUtils.equalStrings(modelArchive.getTokenUri(), changedArchive.getTokenUri())) {
+		if (!Objects.equals(modelArchive.getTokenUri(), changedArchive.getTokenUri())) {
 			modelArchive.setTokenUri(changedArchive.getTokenUri());
 		}
 
-		if (!StringUtils.equalStrings(modelArchive.getUsername(), changedArchive.getUsername())) {
+		if (!Objects.equals(modelArchive.getUsername(), changedArchive.getUsername())) {
 			modelArchive.setUsername(changedArchive.getUsername());
 		}
 
-		if (!StringUtils.equalStrings(modelArchive.getPassword(), changedArchive.getPassword())) {
+		if (!Objects.equals(modelArchive.getPassword(), changedArchive.getPassword())) {
 			modelArchive.setPassword(changedArchive.getPassword());
 		}
 
-		if (!StringUtils.equalStrings(modelArchive.getClientId(), changedArchive.getClientId())) {
+		if (!Objects.equals(modelArchive.getClientId(), changedArchive.getClientId())) {
 			modelArchive.setClientId(changedArchive.getClientId());
 		}
 
-		if (!StringUtils.equalStrings(modelArchive.getClientSecret(), changedArchive.getClientSecret())) {
+		if (!Objects.equals(modelArchive.getClientSecret(), changedArchive.getClientSecret())) {
 			modelArchive.setClientSecret(changedArchive.getClientSecret());
 		}
 
@@ -581,19 +581,19 @@ public class ProductArchiveManager {
 			archiveChanged = true;
 		}
 
-		if (!StringUtils.equalStrings(modelArchive.getTokenUri(), changedArchive.getTokenUri())) {
+		if (!Objects.equals(modelArchive.getTokenUri(), changedArchive.getTokenUri())) {
 			archiveChanged = true;
 		}
 
-		if (!StringUtils.equalStrings(modelArchive.getUsername(), changedArchive.getUsername())) {
+		if (!Objects.equals(modelArchive.getUsername(), changedArchive.getUsername())) {
 			archiveChanged = true;
 		}
 
-		if (!StringUtils.equalStrings(modelArchive.getClientId(), changedArchive.getClientId())) {
+		if (!Objects.equals(modelArchive.getClientId(), changedArchive.getClientId())) {
 			archiveChanged = true;
 		}
 
-		if (!StringUtils.equalStrings(modelArchive.getClientSecret(), changedArchive.getClientSecret())) {
+		if (!Objects.equals(modelArchive.getClientSecret(), changedArchive.getClientSecret())) {
 			archiveChanged = true;
 		}
 

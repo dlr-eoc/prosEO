@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import de.dlr.proseo.archivemgr.utils.StringUtils;
+import org.springframework.util.StringUtils;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.ProductArchiveMgrMessage;
@@ -123,11 +123,11 @@ public class ProductArchiveModelMapper {
 	 */
 	private void checkMandatoryFields() {
 
-		if (StringUtils.isNullOrBlank(modelArchive.getCode())) {
+		if (!StringUtils.hasText(modelArchive.getCode())) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Code", "product archive model checker"));
 		}
 
-		if (StringUtils.isNullOrBlank(modelArchive.getName())) {
+		if (!StringUtils.hasText(modelArchive.getName())) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "Name", "product archive model checker"));
 		}
 
@@ -136,7 +136,7 @@ public class ProductArchiveModelMapper {
 					logger.log(GeneralMessage.FIELD_NOT_SET, "ArchiveType", "product archive model checker"));
 		}
 
-		if (StringUtils.isNullOrBlank(modelArchive.getBaseUri())) {
+		if (!StringUtils.hasText(modelArchive.getBaseUri())) {
 			throw new IllegalArgumentException(
 					logger.log(GeneralMessage.FIELD_NOT_SET, "BaseUri", "product archive model checker"));
 		}
@@ -147,14 +147,14 @@ public class ProductArchiveModelMapper {
 		}
 
 		if (modelArchive.getTokenRequired()) {
-			if (StringUtils.isNullOrBlank(modelArchive.getTokenUri())) {
+			if (!StringUtils.hasText(modelArchive.getTokenUri())) {
 				throw new IllegalArgumentException(
 						logger.log(GeneralMessage.FIELD_NOT_SET, "TokenUri", "product archive model checker"));
 			}
 		}
 
 		if (modelArchive.getSendAuthInBody()) {
-			if (StringUtils.isNullOrBlank(modelArchive.getUsername())) {
+			if (!StringUtils.hasText(modelArchive.getUsername())) {
 				throw new IllegalArgumentException(
 						logger.log(GeneralMessage.FIELD_NOT_SET, "Username", "product archive model checker"));
 			}

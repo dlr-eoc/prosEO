@@ -47,7 +47,7 @@ import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.ProseoUtil;
-import de.dlr.proseo.model.util.StringUtils;
+import org.springframework.util.StringUtils;
 import de.dlr.proseo.ordergen.OrderGenConfiguration;
 import de.dlr.proseo.ordergen.service.ServiceConnection;
 import jakarta.persistence.EntityManager;
@@ -617,7 +617,7 @@ public class OrderCreator {
 			return restOrder;
 		});
 
-		if (StringUtils.isNullOrEmpty(order.getIdentifier())) {
+		if (StringUtils.hasText(order.getIdentifier())) {
 			return null;
 		}
 		// REST order is built, go on

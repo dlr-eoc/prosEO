@@ -24,7 +24,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.ArchiveType;
 import de.dlr.proseo.model.rest.model.RestProductArchive;
-import de.dlr.proseo.model.util.StringUtils;
+import org.springframework.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -143,11 +143,11 @@ public class ProductArchiveCommandRunner {
 	private void setRestArchiveAttributes(RestProductArchive restArchive, RestProductArchive updatedArchive, boolean isDeleteAttributes) {
 
 		// mandatory fields	
-		if (!StringUtils.isNullOrBlank(updatedArchive.getCode())) { 			
+		if (StringUtils.hasText(updatedArchive.getCode())) { 			
 			restArchive.setCode(updatedArchive.getCode());
 		}
 		
-		if (!StringUtils.isNullOrBlank(updatedArchive.getName())) { 			
+		if (StringUtils.hasText(updatedArchive.getName())) { 			
 			restArchive.setName(updatedArchive.getName());
 		}
 		
@@ -155,7 +155,7 @@ public class ProductArchiveCommandRunner {
 			restArchive.setArchiveType(updatedArchive.getArchiveType());
 		}
 		
-		if (!StringUtils.isNullOrBlank(updatedArchive.getBaseUri())) {
+		if (StringUtils.hasText(updatedArchive.getBaseUri())) {
 			restArchive.setBaseUri(updatedArchive.getBaseUri());
 		}
 		
@@ -171,19 +171,19 @@ public class ProductArchiveCommandRunner {
 		}
 		
 		// optional fields		
-		if (isDeleteAttributes || !StringUtils.isNullOrBlank(updatedArchive.getTokenUri())) {
+		if (isDeleteAttributes || StringUtils.hasText(updatedArchive.getTokenUri())) {
 			restArchive.setTokenUri(updatedArchive.getTokenUri());
 		}
-		if (isDeleteAttributes || !StringUtils.isNullOrBlank(updatedArchive.getUsername())) {
+		if (isDeleteAttributes || StringUtils.hasText(updatedArchive.getUsername())) {
 			restArchive.setUsername(updatedArchive.getUsername());
 		}
-		if (isDeleteAttributes || !StringUtils.isNullOrBlank(updatedArchive.getPassword())) {
+		if (isDeleteAttributes || StringUtils.hasText(updatedArchive.getPassword())) {
 			restArchive.setPassword(updatedArchive.getPassword());
 		}
-		if (isDeleteAttributes || !StringUtils.isNullOrBlank(updatedArchive.getClientId())) {
+		if (isDeleteAttributes || StringUtils.hasText(updatedArchive.getClientId())) {
 			restArchive.setClientId(updatedArchive.getClientId());
 		}
-		if (isDeleteAttributes || !StringUtils.isNullOrBlank(updatedArchive.getClientSecret())) {
+		if (isDeleteAttributes || StringUtils.hasText(updatedArchive.getClientSecret())) {
 			restArchive.setClientSecret(updatedArchive.getClientSecret());
 		}
 		if (isDeleteAttributes || null != updatedArchive.getSendAuthInBody()) {
@@ -290,7 +290,7 @@ public class ProductArchiveCommandRunner {
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
 		
-		if (StringUtils.isNullOrBlank(restArchive.getName())) {		
+		if (!StringUtils.hasText(restArchive.getName())) {		
 			System.out.print(PROMPT_ARCHIVE_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -300,7 +300,7 @@ public class ProductArchiveCommandRunner {
 			restArchive.setName(response);
 		}
 		
-		if (StringUtils.isNullOrBlank(restArchive.getCode())) {
+		if (!StringUtils.hasText(restArchive.getCode())) {
 			System.out.print(PROMPT_ARCHIVE_CODE);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -310,7 +310,7 @@ public class ProductArchiveCommandRunner {
 			restArchive.setCode(response);
 		}
 		
-		if (StringUtils.isNullOrBlank(restArchive.getBaseUri())) {
+		if (!StringUtils.hasText(restArchive.getBaseUri())) {
 			System.out.print(PROMPT_ARCHIVE_BASE_URI);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -329,7 +329,7 @@ public class ProductArchiveCommandRunner {
 			restArchive.setContext(response);
 		}
 							
-		if (StringUtils.isNullOrBlank(restArchive.getArchiveType())) {
+		if (!StringUtils.hasText(restArchive.getArchiveType())) {
 			System.out.print(PROMPT_ARCHIVE_TYPE);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -733,7 +733,7 @@ public class ProductArchiveCommandRunner {
 	}
 
 	private void initValues(RestProductArchive restArchive) {
-		if (StringUtils.isNullOrEmpty(restArchive.getArchiveType())) {
+		if (StringUtils.hasText(restArchive.getArchiveType())) {
 			restArchive.setArchiveType(ArchiveType.AIP.toString());
 		}
 		if (restArchive.getSendAuthInBody() == null) {

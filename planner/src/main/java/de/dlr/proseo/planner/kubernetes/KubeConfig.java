@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.StringUtils;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
@@ -440,7 +442,7 @@ public class KubeConfig {
 			kubeJobList = new HashMap<>();
 
 			// Try to connect using processingEngineToken if available
-			if (processingEngineToken != null && !processingEngineToken.isEmpty()) {
+			if (StringUtils.hasText(processingEngineToken) && StringUtils.hasText(url)) {
 				try {
 					client = null;
 					client = Config.fromToken(url, processingEngineToken, false);
@@ -469,7 +471,7 @@ public class KubeConfig {
 				}
 
 				// If connection using kube_config failed, try connecting directly using the URL
-				if (client == null) {
+				if (client == null && StringUtils.hasText(url)) {
 					client = Config.fromUrl(url, false);
 				}
 			}
@@ -477,6 +479,7 @@ public class KubeConfig {
 			// If all connection attempts failed, log the failure
 			if (client == null) {
 				logger.log(PlannerMessage.FACILITY_CONNECTION_FAILED, url);
+				return false;
 			}
 
 			// Enable debugging if trace level logging is enabled
@@ -566,9 +569,14 @@ public class KubeConfig {
 
 		// Step 2: Rebuild runtime data by retrieving all jobs from all namespaces
 		V1JobList k8sJobList = null;
-		getNodeInfo(); // TODO Should this info be processed?
 		try {
-			k8sJobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null, null);
+			getNodeInfo(); // TODO Should this info be processed?
+		} catch (Exception e) {
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+			return;
+		}
+		try {
+			k8sJobList = batchApiV1.listJobForAllNamespaces().execute();
 		} catch (ApiException e) {
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 			return;
@@ -707,7 +715,7 @@ public class KubeConfig {
 		V1PodList podList = null;
 
 		try {
-			podList = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null, null);
+			podList = apiV1.listPodForAllNamespaces().execute();
 		} catch (ApiException e) {
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 		}
@@ -724,7 +732,7 @@ public class KubeConfig {
 		V1JobList jobList = null;
 
 		try {
-			jobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null, null);
+			jobList = batchApiV1.listJobForAllNamespaces().execute();
 		} catch (ApiException e) {
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 		}
@@ -837,7 +845,7 @@ public class KubeConfig {
 
 		// Attempt deletion
 		try {
-			batchApiV1.deleteNamespacedJob(name, namespace, "false", null, 0, null, "Foreground", opt);
+			batchApiV1.deleteNamespacedJob(name, namespace).execute();
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 
@@ -875,7 +883,7 @@ public class KubeConfig {
 			retryNumber++;
 
 			try {
-				foundJob = batchApiV1.readNamespacedJob(name, namespace, null);
+				foundJob = batchApiV1.readNamespacedJob(name, namespace).execute();
 			} catch (ApiException e) {
 				if (e.getCode() == 404) {
 					logger.log(PlannerMessage.KUBECONFIG_JOB_NOT_FOUND, name);
@@ -924,7 +932,7 @@ public class KubeConfig {
 			retryNumber++;
 			
 			try {
-				retrievedPod = apiV1.readNamespacedPod(name, namespace, null);
+				retrievedPod = apiV1.readNamespacedPod(name, namespace).execute();
 			} catch (Exception e) {
 				if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException) {
 					// Nothing to do, as there is a bug in the Kubernetes API
@@ -1107,19 +1115,26 @@ public class KubeConfig {
 
 		try {
 			// Retrieve the list of nodes from the Kubernetes API
-			kubeNodes = apiV1.listNode(null, null, null, null, null, null, null, null, null, null, null);
+			kubeNodes = apiV1.listNode().execute();
 
 			if (kubeNodes != null) {
 				for (V1Node node : kubeNodes.getItems()) {
 					if (node.getSpec() != null) {
-						if (node.getSpec().getTaints() != null) {
-							// Check the taints of the node and exclude nodes with specific taint effects
-							for (V1Taint taint : node.getSpec().getTaints()) {
-								if (taint.getEffect() != null) {
-									if (!taint.getEffect().equalsIgnoreCase("NoSchedule")
-											&& !taint.getEffect().equalsIgnoreCase("NoExecute")) {
-										// Increment the worker count as the node is ready
-										workerCnt++;
+						if (node.getSpec().getUnschedulable() == null || !node.getSpec().getUnschedulable()) {
+							if (node.getSpec().getTaints() != null) {
+								// Check the taints of the node and exclude nodes with specific taint effects
+								if (CollectionUtils.isEmpty(node.getSpec().getTaints())) {
+									// Increment the worker count as the node is ready
+									workerCnt++;
+								} else {
+									for (V1Taint taint : node.getSpec().getTaints()) {
+										if (taint.getEffect() != null) {
+											if (!taint.getEffect().equalsIgnoreCase("NoSchedule")
+													&& !taint.getEffect().equalsIgnoreCase("NoExecute")) {
+												// Increment the worker count as the node is ready
+												workerCnt++;
+											}
+										}
 									}
 								}
 							}
@@ -1133,7 +1148,7 @@ public class KubeConfig {
 					}
 				}
 			}
-		} catch (ApiException e) {
+		} catch (Exception e) {
 			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 			return false;
 		}

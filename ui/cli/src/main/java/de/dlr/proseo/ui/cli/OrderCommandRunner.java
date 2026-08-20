@@ -40,7 +40,7 @@ import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
-import de.dlr.proseo.model.util.StringUtils;
+import org.springframework.util.StringUtils;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.backend.LoginManager;
@@ -1501,16 +1501,16 @@ public class OrderCommandRunner {
 		if (null == restOrder.getPriority()) {
 			restOrder.setPriority(50);
 		}
-		if (StringUtils.isNullOrEmpty(restOrder.getOrderState())) {
+		if (StringUtils.hasText(restOrder.getOrderState())) {
 			restOrder.setOrderState(OrderState.INITIAL.name());
 		}
-		if (StringUtils.isNullOrEmpty(restOrder.getSlicingType())) {
+		if (StringUtils.hasText(restOrder.getSlicingType())) {
 			restOrder.setSlicingType(OrderSlicingType.NONE.name());
 		}
-		if (StringUtils.isNullOrEmpty(restOrder.getProductionType())) {
+		if (StringUtils.hasText(restOrder.getProductionType())) {
 			restOrder.setProductionType(ProductionType.ON_DEMAND_DEFAULT.name());
 		}
-		if (StringUtils.isNullOrEmpty(restOrder.getAutoGenerateSteps())) {
+		if (StringUtils.hasText(restOrder.getAutoGenerateSteps())) {
 			restOrder.setAutoGenerateSteps(ThreeValueBool.DEFAULT.name());
 		}
 		if (restOrder.getAutoRelease() == null) {

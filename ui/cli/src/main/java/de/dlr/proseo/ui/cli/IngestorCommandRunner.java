@@ -33,7 +33,7 @@ import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.rest.model.RestProduct;
 import de.dlr.proseo.model.rest.model.RestProductFile;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
-import de.dlr.proseo.model.util.StringUtils;
+import org.springframework.util.StringUtils;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.backend.LoginManager;
@@ -959,7 +959,7 @@ public class IngestorCommandRunner {
 	}
 	
 	private void initValues(RestProduct restProduct) {
-		if (StringUtils.isNullOrEmpty(restProduct.getProductQuality())) {
+		if (StringUtils.hasText(restProduct.getProductQuality())) {
 			restProduct.setProductQuality(ProductQuality.NOMINAL.name());
 		}
 	}

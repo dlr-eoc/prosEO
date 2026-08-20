@@ -32,7 +32,7 @@ import de.dlr.proseo.model.rest.model.RestProcessor;
 import de.dlr.proseo.model.rest.model.RestProcessorClass;
 import de.dlr.proseo.model.rest.model.RestStringParameter;
 import de.dlr.proseo.model.rest.model.RestTask;
-import de.dlr.proseo.model.util.StringUtils;
+import org.springframework.util.StringUtils;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -561,7 +561,7 @@ public class ProcessorCommandRunner {
 		}
 		
 		/* Set missing attributes to default values where possible */
-		if (StringUtils.isNullOrEmpty(restProcessor.getMissionCode())) {
+		if (StringUtils.hasText(restProcessor.getMissionCode())) {
 			restProcessor.setMissionCode(loginManager.getMission());
 		}
 		initValues(restProcessor);
@@ -2058,7 +2058,7 @@ public class ProcessorCommandRunner {
 	}
 	
 	private void initValues(RestProcessor restProcessor) {
-		if (StringUtils.isNullOrEmpty(restProcessor.getJobOrderVersion())) {
+		if (StringUtils.hasText(restProcessor.getJobOrderVersion())) {
 			restProcessor.setJobOrderVersion(JobOrderVersion.MMFI_1_8.name());
 		}
 		if (restProcessor.getUseInputFileTimeIntervals() == null) {
@@ -2097,7 +2097,7 @@ public class ProcessorCommandRunner {
 	}
 
 	private void initValues(RestConfiguration restConfiguration) {
-		if (StringUtils.isNullOrEmpty(restConfiguration.getProductQuality())) {
+		if (StringUtils.hasText(restConfiguration.getProductQuality())) {
 			restConfiguration.setProductQuality("NOMINAL");
 		}
 	}
