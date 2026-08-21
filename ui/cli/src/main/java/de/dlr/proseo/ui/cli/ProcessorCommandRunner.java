@@ -561,7 +561,7 @@ public class ProcessorCommandRunner {
 		}
 		
 		/* Set missing attributes to default values where possible */
-		if (StringUtils.hasText(restProcessor.getMissionCode())) {
+		if (!StringUtils.hasText(restProcessor.getMissionCode())) {
 			restProcessor.setMissionCode(loginManager.getMission());
 		}
 		initValues(restProcessor);
@@ -2058,7 +2058,7 @@ public class ProcessorCommandRunner {
 	}
 	
 	private void initValues(RestProcessor restProcessor) {
-		if (StringUtils.hasText(restProcessor.getJobOrderVersion())) {
+		if (!StringUtils.hasText(restProcessor.getJobOrderVersion())) {
 			restProcessor.setJobOrderVersion(JobOrderVersion.MMFI_1_8.name());
 		}
 		if (restProcessor.getUseInputFileTimeIntervals() == null) {
@@ -2097,7 +2097,7 @@ public class ProcessorCommandRunner {
 	}
 
 	private void initValues(RestConfiguration restConfiguration) {
-		if (StringUtils.hasText(restConfiguration.getProductQuality())) {
+		if (!StringUtils.hasText(restConfiguration.getProductQuality())) {
 			restConfiguration.setProductQuality("NOMINAL");
 		}
 	}

@@ -178,17 +178,17 @@ public class TriggerUtil {
 				trigger.incrementVersion();
 			} 
 		}
-		if (!StringUtils.hasText(restTrigger.getMissionCode())) {
+		if (StringUtils.hasText(restTrigger.getMissionCode())) {
 			trigger.setMission(RepositoryService.getMissionRepository().findByCode(restTrigger.getMissionCode()));
 		}		
-		if (!StringUtils.hasText(restTrigger.getOrderTemplateName()) && !StringUtils.hasText(restTrigger.getMissionCode())) {
+		if (StringUtils.hasText(restTrigger.getOrderTemplateName()) && StringUtils.hasText(restTrigger.getMissionCode())) {
 			OrderTemplate orderTemplate = RepositoryService.getOrderTemplateRepository().findByMissionCodeAndName(
 					restTrigger.getMissionCode(), restTrigger.getOrderTemplateName());
 			if (orderTemplate != null) {
 				trigger.setOrderTemplate(orderTemplate);
 			}
 		}		
-		if (!StringUtils.hasText(restTrigger.getName())) {
+		if (StringUtils.hasText(restTrigger.getName())) {
 			trigger.setName(restTrigger.getName());
 		}
 		if (null != restTrigger.getPriority()) {
@@ -217,7 +217,7 @@ public class TriggerUtil {
 				((DataDrivenOrderTrigger)trigger).getParametersToCopy().addAll(restTrigger.getParametersToCopy());
 			}
 		} else if (restTrigger.getType().equals(TriggerType.Calendar.name())) {
-			if (!StringUtils.hasText(restTrigger.getCronExpression())) {
+			if (StringUtils.hasText(restTrigger.getCronExpression())) {
 				((CalendarOrderTrigger)trigger).setCronExpression(restTrigger.getCronExpression());
 			}
 		} else if (restTrigger.getType().equals(TriggerType.Datatake.name())) {
@@ -227,17 +227,17 @@ public class TriggerUtil {
 			if (null != restTrigger.getParametersToCopy()) {
 				((DatatakeOrderTrigger)trigger).getParametersToCopy().addAll(restTrigger.getParametersToCopy());
 			}
-			if (!StringUtils.hasText(restTrigger.getDatatakeType())) {
+			if (StringUtils.hasText(restTrigger.getDatatakeType())) {
 				((DatatakeOrderTrigger)trigger).setDatatakeType(restTrigger.getDatatakeType());
 			}
-			if (!StringUtils.hasText(restTrigger.getLastDatatakeStartTime())) {
+			if (StringUtils.hasText(restTrigger.getLastDatatakeStartTime())) {
 				((DatatakeOrderTrigger)trigger).setLastDatatakeStartTime(Instant.from(OrbitTimeFormatter.parse(restTrigger.getLastDatatakeStartTime())));
 			}
 		} else if (restTrigger.getType().equals(TriggerType.Orbit.name())) {
 			if (null != restTrigger.getDeltaTime()) {
 				((OrbitOrderTrigger)trigger).setDeltaTime(Duration.ofSeconds(restTrigger.getDeltaTime()));
 			}
-			if (!StringUtils.hasText(restTrigger.getSpacecraftCode())) {
+			if (StringUtils.hasText(restTrigger.getSpacecraftCode())) {
 				((OrbitOrderTrigger)trigger).setSpacecraft(RepositoryService.getSpacecraftRepository().findByMissionAndCode(restTrigger.getMissionCode(), restTrigger.getSpacecraftCode()));
 			}
 			if (restTrigger.getLastOrbitNumber() != null) {
@@ -248,7 +248,7 @@ public class TriggerUtil {
 			if (null != restTrigger.getTriggerInterval()) {
 				((TimeIntervalOrderTrigger)trigger).setTriggerInterval(Duration.ofSeconds(restTrigger.getTriggerInterval()));
 			}
-			if (!StringUtils.hasText(restTrigger.getNextTriggerTime())) {
+			if (StringUtils.hasText(restTrigger.getNextTriggerTime())) {
 				((TimeIntervalOrderTrigger)trigger).setNextTriggerTime(Instant.from(OrbitTimeFormatter.parse(restTrigger.getNextTriggerTime())));
 			}
 		}

@@ -732,7 +732,7 @@ public class WorkflowCommandRunner {
 		if (null == restWorkflow.getSliceOverlap()) {
 			restWorkflow.setSliceOverlap(0L);
 		}
-		if (StringUtils.hasText(restWorkflow.getSlicingType())) {
+		if (!StringUtils.hasText(restWorkflow.getSlicingType())) {
 			restWorkflow.setSlicingType(OrderSlicingType.NONE.name());
 		}
 	}
