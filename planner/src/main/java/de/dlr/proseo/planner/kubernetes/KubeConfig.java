@@ -845,7 +845,7 @@ public class KubeConfig {
 
 		// Attempt deletion
 		try {
-			batchApiV1.deleteNamespacedJob(name, namespace).execute();
+			batchApiV1.deleteNamespacedJob(name, namespace).propagationPolicy("Foreground").execute();
 		} catch (Exception e) {
 			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 

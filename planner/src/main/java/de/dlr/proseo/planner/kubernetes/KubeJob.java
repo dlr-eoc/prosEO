@@ -1363,7 +1363,7 @@ public class KubeJob {
 		if (containerName != null) {
 			try {
 				log = kubeConfig.getApiV1()
-					.readNamespacedPodLog(podNames.get(podNames.size() - 1), kubeConfig.getNamespace()).execute();
+					.readNamespacedPodLog(podNames.get(podNames.size() - 1), kubeConfig.getNamespace()).container(containerName).execute();
 			} catch (ApiException e1) {
 				if (logger.isTraceEnabled())
 					logger.trace("    updateInfo: ApiException ignore, normally the pod has no log");
