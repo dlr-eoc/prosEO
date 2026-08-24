@@ -718,13 +718,13 @@ public class OrderTemplateCommandRunner {
 		if (null == restOrderTemplate.getPriority()) {
 			restOrderTemplate.setPriority(50);
 		}
-		if (StringUtils.isEmpty(restOrderTemplate.getSlicingType())) {
+		if (!StringUtils.hasText(restOrderTemplate.getSlicingType())) {
 			restOrderTemplate.setSlicingType(OrderSlicingType.NONE.name());
 		}
-		if (StringUtils.isEmpty(restOrderTemplate.getProductionType())) {
+		if (!StringUtils.hasText(restOrderTemplate.getProductionType())) {
 			restOrderTemplate.setProductionType(ProductionType.ON_DEMAND_DEFAULT.name());
 		}
-		if (StringUtils.isEmpty(restOrderTemplate.getAutoGenerateSteps())) {
+		if (!StringUtils.hasText(restOrderTemplate.getAutoGenerateSteps())) {
 			restOrderTemplate.setAutoGenerateSteps(ThreeValueBool.DEFAULT.name());
 		}
 		if (restOrderTemplate.getAutoRelease() == null) {

@@ -38,13 +38,14 @@
 		<maven-project-info-reports-plugin.version>3.9.0</maven-project-info-reports-plugin.version>
 		<exec-maven-plugin.version>3.5.1</exec-maven-plugin.version>
 		<spring-boot-starter-test.version>4.1.0</spring-boot-starter-test.version> <!-- Not in parent POM! -->
-        <kubernetes.client.version>22.0.1-legacy</kubernetes.client.version>
+        <kubernetes.client.version>27.0.0</kubernetes.client.version>
 		
         <!-- Version freezing addressing security vulnerabilities - REMOVE when upgrading Spring Boot! -->
         <httpclient5.version>5.6.4</httpclient5.version><!-- Addresses CVE-2026-71290, CVE-2026-64607 -->
         <netty.version>4.2.16.Final</netty.version><!-- Addresses CVE-2026-56820 and many more -->
         <tomcat.version>11.0.25</tomcat.version><!-- Addresses CVE-2026-66299 and many more -->
         <postgresql.version>42.7.12</postgresql.version><!-- Addresses CVE-2026-54291 -->
+        
 	</properties>
 
 	<modules>

@@ -733,7 +733,7 @@ public class ProductArchiveCommandRunner {
 	}
 
 	private void initValues(RestProductArchive restArchive) {
-		if (StringUtils.isEmpty(restArchive.getArchiveType())) {
+		if (!StringUtils.hasText(restArchive.getArchiveType())) {
 			restArchive.setArchiveType(ArchiveType.AIP.toString());
 		}
 		if (restArchive.getSendAuthInBody() == null) {

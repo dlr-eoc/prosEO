@@ -1501,16 +1501,16 @@ public class OrderCommandRunner {
 		if (null == restOrder.getPriority()) {
 			restOrder.setPriority(50);
 		}
-		if (StringUtils.isEmpty(restOrder.getOrderState())) {
+		if (!StringUtils.hasText(restOrder.getOrderState())) {
 			restOrder.setOrderState(OrderState.INITIAL.name());
 		}
-		if (StringUtils.isEmpty(restOrder.getSlicingType())) {
+		if (!StringUtils.hasText(restOrder.getSlicingType())) {
 			restOrder.setSlicingType(OrderSlicingType.NONE.name());
 		}
-		if (StringUtils.isEmpty(restOrder.getProductionType())) {
+		if (!StringUtils.hasText(restOrder.getProductionType())) {
 			restOrder.setProductionType(ProductionType.ON_DEMAND_DEFAULT.name());
 		}
-		if (StringUtils.isEmpty(restOrder.getAutoGenerateSteps())) {
+		if (!StringUtils.hasText(restOrder.getAutoGenerateSteps())) {
 			restOrder.setAutoGenerateSteps(ThreeValueBool.DEFAULT.name());
 		}
 		if (restOrder.getAutoRelease() == null) {

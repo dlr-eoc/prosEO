@@ -607,7 +607,7 @@ public class KubeJob {
 		Integer cycle = ProductionPlanner.config.getProductionPlannerJobCreatedWaitTime();
 		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 			try {
-				job = kubeConfig.getBatchApiV1().createNamespacedJob(kubeConfig.getNamespace(), job, null, null, null, null);
+				job = kubeConfig.getBatchApiV1().createNamespacedJob(kubeConfig.getNamespace(), job).execute();
 				break;
 			} catch (ApiException e) {
 				// look whether job was created or the exception was "real"
@@ -619,7 +619,7 @@ public class KubeJob {
 					searchPod();
 					if (podNames.get(podNames.size() - 1).startsWith(jobName)) {
 						// job was created
-						job = kubeConfig.getBatchApiV1().readNamespacedJob(jobName, kubeConfig.getNamespace(), null);
+						job = kubeConfig.getBatchApiV1().readNamespacedJob(jobName, kubeConfig.getNamespace()).execute();
 						if (logger.isTraceEnabled())
 							logger.trace("    createNamespacedJob: retry {} of {} successful", i, jobName);
 						break;
@@ -742,8 +742,7 @@ public class KubeJob {
 
 				try {
 					// Retrieve the pod list for the namespace
-					podList = kubeConfig.getApiV1().listNamespacedPod(kubeConfig.getNamespace(),null, null, null, null, null, null, null,
-							null, null, 30, null);
+					podList = kubeConfig.getApiV1().listNamespacedPod(kubeConfig.getNamespace()).execute();
 					podNames.clear();
 
 					for (V1Pod pod : podList.getItems()) {
@@ -1080,7 +1079,23 @@ public class KubeJob {
 								}
 
 							}
+							if (JobStepState.RUNNING.equals(jobStep.get().getJobStepState()) && pod != null && pod.getStatus().getConditions() != null) {
 
+								// Retrieve events related to the pod using field selector and append them to the message string
+								String fieldSelector = "involvedObject.name==" + pod.getMetadata().getName();
+								CoreV1EventList events = null;
+								events = kubeConfig.getApiV1()
+										.listEventForAllNamespaces().fieldSelector(fieldSelector).execute();
+								
+								if (events != null) {
+									for (CoreV1Event event : events.getItems()) {
+										if (event.getType().equalsIgnoreCase("Warning")) {
+											jobStep.get().setJobStepState(JobStepState.FAILED);
+										}
+									}
+								}
+
+							}
 							// TODO Cancel pod and job, write reasons into job step log.
 							// TODO Check the pod for errors and warnings.
 							// kubeConfig.getApiV1().listNamespacedEvent("default",null,false,null,"involvedObject.name=proseojob733-bwzf4",null,null,null,null,false);
@@ -1088,6 +1103,12 @@ public class KubeJob {
 							if (logger.isTraceEnabled())
 								logger.trace("    updateInfo: status not found");
 						}
+					} catch (ApiException e) {
+						logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+
+						if (logger.isDebugEnabled()) logger.debug("... exception stack trace: ", e);
+						// Re-throw to roll back the transaction
+						throw new RuntimeException(e);
 					} catch (Exception e) {
 						logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 
@@ -1316,7 +1337,7 @@ public class KubeJob {
 			CoreV1EventList events = null;
 			try {
 				events = kubeConfig.getApiV1()
-					.listEventForAllNamespaces(false, null, fieldSelector, null, 30, null, null, null, null, null, null);
+					.listEventForAllNamespaces().fieldSelector(fieldSelector).execute();
 
 				if (events != null) {
 					podMessages.append("Job Step Events (Type - Reason - Count - Message):\n");
@@ -1342,8 +1363,7 @@ public class KubeJob {
 		if (containerName != null) {
 			try {
 				log = kubeConfig.getApiV1()
-					.readNamespacedPodLog(podNames.get(podNames.size() - 1), kubeConfig.getNamespace(), containerName, null, null,
-							null, null, null, null, null, null);
+					.readNamespacedPodLog(podNames.get(podNames.size() - 1), kubeConfig.getNamespace()).container(containerName).execute();
 			} catch (ApiException e1) {
 				if (logger.isTraceEnabled())
 					logger.trace("    updateInfo: ApiException ignore, normally the pod has no log");
