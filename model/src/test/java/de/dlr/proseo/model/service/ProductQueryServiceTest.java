@@ -1,28 +1,28 @@
 /**
  * ProductQueryServiceTest.java
- * 
+ *
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.model.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.TimeZone;
 import java.util.UUID;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,20 +31,20 @@ import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Parameter;
+import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.SimpleSelectionRule;
+import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.SelectionRule;
-import de.dlr.proseo.model.enums.ParameterType;
-import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.ProcessingOrder;
 
 /**
  * Test class for ProductQueryService
- * 
+ *
  * @author Dr. Thomas Bassler
  */
 @SpringBootTest(classes = RepositoryApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -75,13 +75,10 @@ public class ProductQueryServiceTest {
 
 	@Autowired
 	private ProductQueryService queryService;
-	
-	@Autowired
-	private JdbcTemplate jdbcTemplate;
-	
+
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductQueryServiceTest.class);
-	
+
 	/**
 	 * @throws java.lang.Exception if an error occurs
 	 */
@@ -113,14 +110,14 @@ public class ProductQueryServiceTest {
 
 	/**
 	 * Create a product from a data array
-	 * 
+	 *
 	 * @param testData an array of Strings representing the product to create
 	 * @param facility the processing facility to search the product file in
 	 * @return a Product with its attributes set to the input data
 	 */
 	private Product createProduct(String[] testData, ProcessingFacility facility) {
 		Product testProduct = new Product();
-		
+
 		testProduct.setProductClass(
 				RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(testData[2], testData[3]));
 
@@ -137,22 +134,22 @@ public class ProductQueryServiceTest {
 		testProductFile.setProcessingFacility(facility);
 		testProductFile.setProduct(testProduct);
 		testProductFile = RepositoryService.getProductFileRepository().save(testProductFile);
-		
+
 		logger.info("Created test product file {} with processing facility = {} and product = {}", testProductFile.getId(), testProductFile.getProcessingFacility().getName(), testProductFile.getProduct().getId());
 
 		testProduct.getProductFile().add(testProductFile);
 		testProduct = RepositoryService.getProductRepository().save(testProduct);
-		
+
 		logger.info("Created test product {} with start time = {} and stop time = {}", testProduct.getId(), testProduct.getSensingStartTime().toString(), testProduct.getSensingStopTime().toString());
 		return testProduct;
 	}
-	
+
 	/**
 	 * Test method for {@link de.dlr.proseo.model.service.ProductQueryService#executeQuery(de.dlr.proseo.model.ProductQuery, boolean)}.
 	 */
 	@Test
 	public final void testExecuteQuery() {
-		
+
 		// Create test data: mission, product class, product, selection rules (with and without MINCOVER), order, job, job step
 		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
 		if (null == mission) {
@@ -163,7 +160,7 @@ public class ProductQueryServiceTest {
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}
 		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
-		
+
 		ProductClass targetProdClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_TARGET_PRODUCT_TYPE);
 		if (null == targetProdClass) {
 			logger.trace("Creating target product class ...");
@@ -175,7 +172,7 @@ public class ProductQueryServiceTest {
 			//mission = RepositoryService.getMissionRepository().save(mission);
 		}
 		logger.info("Using target product class " + targetProdClass.getProductType() + " with id " + targetProdClass.getId());
-		
+
 		ProductClass sourceProdClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_SOURCE_PRODUCT_TYPE);
 		if (null == sourceProdClass) {
 			logger.trace("Creating source product class ...");
@@ -187,7 +184,7 @@ public class ProductQueryServiceTest {
 			//mission = RepositoryService.getMissionRepository().save(mission);
 		}
 		logger.info("Using source product class " + sourceProdClass.getProductType() + " with id " + sourceProdClass.getId());
-		
+
 		ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(TEST_FACILITY);
 		if (null == facility) {
 			logger.trace("Creating processing facility ...");
@@ -196,17 +193,17 @@ public class ProductQueryServiceTest {
 			facility = RepositoryService.getFacilityRepository().save(facility);
 		}
 		logger.info("Using processing facility " + facility.getName());
-		
+
 		createProduct(testProductData[0], facility);
 		createProduct(testProductData[1], facility);
-		
+
 		logger.trace("Number of products in database: " + RepositoryService.getProductRepository().count());
-		
+
 		ProcessingOrder order = new ProcessingOrder();
 		InputFilter inputFilter = new InputFilter();
 		inputFilter.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 1));
 		order.getInputFilters().put(sourceProdClass, inputFilter);
-		
+
 		Job jobEarly = new Job();
 		jobEarly.setProcessingOrder(order);
 		jobEarly.setProcessingFacility(facility);
@@ -215,7 +212,7 @@ public class ProductQueryServiceTest {
 		JobStep jobStepEarly = new JobStep();
 		jobStepEarly.setJob(jobEarly);
 		jobStepEarly.setProcessingMode(TEST_MODE);
-		
+
 		Job jobLate = new Job();
 		jobLate.setProcessingOrder(order);
 		jobLate.setProcessingFacility(facility);
@@ -224,7 +221,7 @@ public class ProductQueryServiceTest {
 		JobStep jobStepLate = new JobStep();
 		jobStepLate.setJob(jobLate);
 		jobStepLate.setProcessingMode(TEST_MODE);
-		
+
 		// Test first product query without MINCOVER --> satisfied
 		SelectionRule selectionRule = null;
 		try {
@@ -240,7 +237,7 @@ public class ProductQueryServiceTest {
 				simpleSelectionRule, jobStepLate, queryService.getProductColumnMapping());
 		logger.trace("Starting test for product query 1 based on " + simpleSelectionRule);
 		assertTrue(queryService.executeQuery(query, true), "Product query 1 fails unexpectedly");
-		
+
 		// Test first product query with additional filter condition "revision:2" --> fails
 		inputFilter.getFilterConditions().clear();
 		inputFilter.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 2));
@@ -249,7 +246,7 @@ public class ProductQueryServiceTest {
 		assertTrue(!queryService.executeQuery(query, true), "Product query 1 succeeds unexpectedly for filter 'revision:2'");
 		inputFilter.getFilterConditions().clear();
 		inputFilter.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 1));
-		
+
 		// Test second product query with MINCOVER --> satisfied for early interval, not satisfied for late interval
 		try {
 			selectionRule = SelectionRule.parseSelectionRule(targetProdClass, TEST_SELECTION_RULE_MINCOVER);
@@ -267,7 +264,7 @@ public class ProductQueryServiceTest {
 		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepLate, queryService.getProductColumnMapping());
 		logger.trace("Starting test for product query 2 and late interval based on " + simpleSelectionRule);
 		assertTrue(!queryService.executeQuery(query, true), "Product query 2 succeeds unexpectedly for late interval");
-		
+
 		logger.info("OK: Test for executeQuery completed");
 	}
 
