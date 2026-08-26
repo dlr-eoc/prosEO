@@ -224,6 +224,9 @@ public class ProductIngestor {
 			for (IngestorProduct ingestorProduct: ingestorProducts) {
 				RestProductFile newProductFile = new RestProductFile();
 
+				// Working around implementation error in generated method IngestorProduct.getProductFile() !!
+				ingestorProduct.setProductFile(ingestorProduct.getProductFile());
+
 				if (copyFiles) {
 					// Ingest product file and auxiliary files to Storage Manager
 					String targetFilePath = ingestToStorageManager(facility, ingestorProduct, copyFiles);
@@ -385,12 +388,12 @@ public class ProductIngestor {
 	 */
 	private List<RestProduct> ingestToDatabase(List<IngestorProduct> ingestorProducts, ProcessingFacility facility) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> ingestToDatabase(IngestorProduct[{}], {}", ingestorProducts.size(), facility.getName());
+			logger.trace(">>> ingestToDatabase(IngestorProduct[{}], {})", ingestorProducts.size(), facility.getName());
 
 		List<RestProduct> result = new ArrayList<>();
 
 		for (IngestorProduct ingestorProduct: ingestorProducts) {
-
+			
 			// Create product file object in database for the stored files
 			de.dlr.proseo.model.ProductFile newProductFile = new de.dlr.proseo.model.ProductFile();
 			newProductFile.setProcessingFacility(facility);
@@ -405,6 +408,8 @@ public class ProductIngestor {
 				}
 			}
 			try {
+				// TODO This probably needs to be more flexible, since with copyFiles == false we can store
+				// e. g. product files with POSIX-style file paths in "S3" processing facilities
 				newProductFile.setStorageType(StorageType.valueOf(facility.getDefaultStorageType().toString()));
 			} catch (Exception e) {
 				newProductFile.setStorageType(StorageType.OTHER);
