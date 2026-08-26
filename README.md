@@ -49,6 +49,8 @@ To build prosEO from source code, the following prerequisites must be met:
         </activation>
         <properties>
           <docker.registry>localhost:5000</docker.registry>
+          <!-- Uncomment the following entry to create native images on Mac -->
+          <!-- <project.build.platform>linux/arm64</project.build.platform> -->
         </properties>
       </profile>
     </profiles>
@@ -83,13 +85,13 @@ A project setup for Eclipse is beyond the scope of this documentation.
 
 ## Installation
 
-prosEO is a very complex system, therefore no single installer can be provided. A deployment guide on the Wiki will be added
-in due course.
+prosEO is a very complex system, therefore no single installer can be provided. Please refer to the
+[prosEO Deployment Guide](https://github.com/dlr-eoc/prosEO/wiki/Deployment-Guide) for further advice.
 
 
 ## Documentation
 
-All documentation can be found on the [prosEO Wiki](https://github.com/dlr-eoc/prosEO/wiki).
+User and developer documentation can be found on the [prosEO Wiki](https://github.com/dlr-eoc/prosEO/wiki).
 
 
 ## Contributions
