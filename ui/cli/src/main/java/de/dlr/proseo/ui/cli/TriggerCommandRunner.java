@@ -234,7 +234,7 @@ public class TriggerCommandRunner {
 		initLists(restTrigger);
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
-		if (StringUtils.isEmpty(restTrigger.getType())) {
+		if (!StringUtils.hasText(restTrigger.getType())) {
 			System.out.print(PROMPT_TRIGGER_TYPE);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -250,7 +250,7 @@ public class TriggerCommandRunner {
 			}
 			restTrigger.setType(response);
 		}
-		if (StringUtils.isEmpty(restTrigger.getName())) {
+		if (!StringUtils.hasText(restTrigger.getName())) {
 			System.out.print(PROMPT_TRIGGER_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -259,7 +259,7 @@ public class TriggerCommandRunner {
 			}
 			restTrigger.setName(response);
 		}
-		if (StringUtils.isEmpty(restTrigger.getOrderTemplateName())) {
+		if (!StringUtils.hasText(restTrigger.getOrderTemplateName())) {
 			System.out.print(PROMPT_ORDERTEMPLATE_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
@@ -270,7 +270,7 @@ public class TriggerCommandRunner {
 		}
 		switch (type) {
 		case Calendar:
-			if (StringUtils.isEmpty(restTrigger.getCronExpression())) {
+			if (!StringUtils.hasText(restTrigger.getCronExpression())) {
 				System.out.print(PROMPT_TRIGGER_CRON_EXP);
 				String response = System.console().readLine();
 				if (response.isBlank()) {
@@ -281,7 +281,7 @@ public class TriggerCommandRunner {
 			}
 			break;
 		case DataDriven:
-			if (StringUtils.isEmpty(restTrigger.getInputProductType())) {
+			if (!StringUtils.hasText(restTrigger.getInputProductType())) {
 				System.out.print(PROMPT_TRIGGER_INPUT_TYPE);
 				String response = System.console().readLine();
 				if (response.isBlank()) {
@@ -295,7 +295,7 @@ public class TriggerCommandRunner {
 
 			break;
 		case Orbit:
-			if (StringUtils.isEmpty(restTrigger.getSpacecraftCode())) {
+			if (!StringUtils.hasText(restTrigger.getSpacecraftCode())) {
 				System.out.print(PROMPT_TRIGGER_SPACECRAFT);
 				String response = System.console().readLine();
 				if (response.isBlank()) {

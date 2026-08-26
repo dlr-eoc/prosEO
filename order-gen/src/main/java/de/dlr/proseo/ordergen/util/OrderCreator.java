@@ -617,7 +617,7 @@ public class OrderCreator {
 			return restOrder;
 		});
 
-		if (StringUtils.isEmpty(order.getIdentifier())) {
+		if (!StringUtils.hasText(order.getIdentifier())) {
 			return null;
 		}
 		// REST order is built, go on

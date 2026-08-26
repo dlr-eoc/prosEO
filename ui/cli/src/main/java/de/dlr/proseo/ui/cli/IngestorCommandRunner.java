@@ -959,7 +959,7 @@ public class IngestorCommandRunner {
 	}
 	
 	private void initValues(RestProduct restProduct) {
-		if (StringUtils.isEmpty(restProduct.getProductQuality())) {
+		if (!StringUtils.hasText(restProduct.getProductQuality())) {
 			restProduct.setProductQuality(ProductQuality.NOMINAL.name());
 		}
 	}

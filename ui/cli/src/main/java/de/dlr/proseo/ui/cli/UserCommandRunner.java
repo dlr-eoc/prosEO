@@ -29,7 +29,6 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.UIMessage;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.rest.model.RestGroup;
-import de.dlr.proseo.model.rest.model.RestTrigger;
 import de.dlr.proseo.model.rest.model.RestUser;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
