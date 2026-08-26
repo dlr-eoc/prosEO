@@ -143,12 +143,12 @@ kubectl apply -f ../kubernetes/storage-mgr-local.yaml
 
 
 # -------------------------
-# Create Kubernetes Dashboard
+# Create Headlamp Dashboard
 # -------------------------
 
 # Create a dashboard at http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
-kubectl apply -f ../kubernetes/kubernetes-dashboard.yaml
-kubectl proxy --accept-hosts='.*' &
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/headlamp/main/kubernetes-headlamp.yaml
+bash -c 'nohup kubectl port-forward -n kube-system service/headlamp 8002:80 2>&1 &'
 
 
 # -------------------------
@@ -165,10 +165,9 @@ cat >$TEST_DATA_DIR/facility.json <<EOF
     "name": "localhost",
     "description": "Docker Desktop Minikube",
     "facilityState": "RUNNING",
-    "processingEngineUrl": "http://host.docker.internal:8001/",
+    "processingEngineUrl": "https://kubernetes.docker.internal:6443",
     "processingEngineToken": "TBD",
-    "storageManagerUrl": 
-    	"http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
+    "storageManagerUrl": "http://kubernetes.docker.internal:8080/proseo/storage-mgr/v1",
     "localStorageManagerUrl": "http://storage-mgr-service.default.svc.cluster.local:3000/proseo/storage-mgr/v0.1",
     "externalStorageManagerUrl": 
         "http://localhost:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",

@@ -808,7 +808,8 @@ print $cli_script "exit\n";
 $cli_script->close();
 
 say 'IMPORTANT:';
-say '(1) Please change user passwords after completing script-based configuration!';
-say '(2) Make sure the sysadm credentials are present in sysadm.cred!';
+say '(1) Please change user passwords after completing script-based configuration.';
+say '(2) Make sure the sysadm credentials are present in sysadm.cred.';
+say 'Now run "java -jar proseo-ui-cli.jar -isysadm.cred -mPTM <cli_script.txt" to create the mission in prosEO.';
 
 say '--- prosEO Test Mission setup complete ---';

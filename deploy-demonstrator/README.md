@@ -23,11 +23,29 @@ Install and run Docker Desktop and activate Kubernetes as described here:
   1) Install and run: <https://docs.docker.com/desktop/install/windows-install/>
   2) Activate Kubernetes: <https://docs.docker.com/desktop/settings/windows/#kubernetes>
 
-*Caution:* Configurations and version numbers below are based on Docker Desktop 4.15.0-4.44.3 and Kubernetes 1.25.2-1.32.2.
+*Caution:* Configurations and version numbers below are based on Docker Desktop for Mac 4.15.0-4.87.0 and Kubernetes 1.25.2-1.36.1.
 Newer (or older) versions may require modified approaches.
 
-Deploy and run a Kubernetes dashboard (valid up to Kubernetes Dashboard v2.7.0; for Kubernetes Dashboard 7.0.0 and later
-a Helm-based deployment is required, see <https://github.com/kubernetes/dashboard>):
+Deploy and run Headlamp (applying the Headlamp default configuration, for more options see 
+<https://headlamp.dev/docs/latest/>):
+1) Start the Headlamp service in Kubernetes:
+   `kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/headlamp/main/kubernetes-headlamp.yaml`
+2) Provide an access port for Headlamp, e. g. 8002 (but can be chosen freely taking into account the TCP ports defined later
+   for the prosEO services):
+   `bash -c 'nohup kubectl port-forward -n kube-system service/headlamp 8002:80 2>&1 &'`
+3)  Create a user with administrative privileges for the dashboard as per
+   <https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md> and (from Kubernetes 1.22)
+   an associated secret as per 
+   <https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#manually-create-a-long-lived-api-token-for-a-serviceaccount>,
+   e. g. using the configuration file provided here:
+   `kubectl apply -f kubernetes/kube-admin.yaml`
+4) Retrieve the secret token for this user:
+   `kubectl describe secret/admin-user-secret --namespace kube-system`
+5) Access the Headlamp dashboard at <http://localhost:8002/> using the token retrieved in step 4.
+
+
+*Deprecated:* Alternative approach using Kubernetes Dashboard (valid up to Kubernetes Dashboard v2.7.0; note that 
+Kubernetes Dashboard has been discontinued by the end of 2025, Headlamp is suggested as a replacement):
 1) Download the recommended dashboard configuration from 
    <https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml>
    to a new file `kubernetes/kubernetes-dashboard.yaml` (a copy may already be provided in the `kubernetes` directory).
@@ -36,15 +54,10 @@ a Helm-based deployment is required, see <https://github.com/kubernetes/dashboar
    kubectl apply -f kubernetes/kubernetes-dashboard.yaml
    nohup kubectl proxy --accept-hosts='.*' >~/kubectl-proxy.log 2>&1 &
    ```
-3) Create a user with administrative privileges for the dashboard as per
-   <https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md> and (from Kubernetes 1.22)
-   an associated secret as per 
-   <https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#manually-create-a-long-lived-api-token-for-a-serviceaccount>
-   (you may use the configuration provided in the file `kubernetes/kube-admin.yaml`).
-4) Retrieve the secret token for this user:
-   ```
-   kubectl describe secret/$(kubectl get secrets --namespace kube-system | grep admin-user | cut -d ' ' -f 1) --namespace kube-system
-   ```
+3) As above:
+   `kubectl apply -f kubernetes/kube-admin.yaml`
+4) As above:
+   `kubectl describe secret/admin-user-secret --namespace kube-system`
 5) Access the dashboard at <http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/>
    using the token retrieved in step 4.
 
@@ -66,7 +79,8 @@ Other parameters (esp. logging settings) may be changed as deemed suitable for t
 When all `application.yml` files have been created, for each component a configured image (containing the update `application.yml`
 file) must be created and pushed to the Docker registry to be used:
 ```
-export REGISTRY_URL=<your preferred prosEO repository, e. g. localhost:5000>
+REGISTRY_URL=<your preferred prosEO repository, e. g. localhost:5000>
+PROSEO_PLATFORM=<select according to your environment: linux/amd64 or linux/arm64>
 
 cd proseo-images/proseo-components
 
@@ -76,7 +90,7 @@ for component in proseo-* ; do
   COMPONENT_NAME=$(cat Dockerfile | grep FROM | awk '{gsub("localhost:5000/",""); split($0,a," "); print a[2]}')
   TAGGED_NAME=${REGISTRY_URL}/${COMPONENT_NAME}-proseo
 
-  docker build -t ${TAGGED_NAME}
+  docker build -t ${TAGGED_NAME} --platform ${PROSEO_PLATFORM}
   docker push ${TAGGED_NAME}
 
   cd -
@@ -94,7 +108,7 @@ would look something like the following:
 version: '3'
 services:
   proseo-db:
-    image: ${REGISTRY_URL}/postgres:11-proseo
+    image: ${REGISTRY_URL}/postgres:17-proseo
     environment:
       - POSTGRES_DB=proseo
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -225,15 +239,9 @@ docker-compose -p proseo up -d
 
 The `proseo-images` directory may be populated with convenience scripts for these steps (see `proseo-images/README.md`).
 
-After starting the prosEO control instance two SQL scripts need to be executed. First login to the proseo-db container,
-either via the Docker Desktop dashboard (and the command `su - postgres`) or from the command line:
+After starting the prosEO control instance an additional SQL script needs to be executed (from the command line):
 ```
-docker exec -it proseo-proseo-db-1 su - postgres
-```
-From within the container (which should now show a prompt like `postgres@...:~$ `) execute the SQL command files provided:
-```
-psql proseo </proseo/create_view_product_processing_facilities.sql
-psql proseo </proseo/populate_mon_service_state.sql
+docker exec -it proseo-proseo-db-1 su - postgres -c 'psql proseo </proseo/populate_mon_service_state.sql'
 ```
 
 
@@ -317,7 +325,7 @@ type: kubernetes.io/service-account-token
 Create the account, role and role binding, and retrieve the authentication token for the new account:
 ```bash
 kubectl apply -f ../deploy/hands/kubernetes/planner-account.yaml
-kubectl describe secret/$(kubectl get secrets | grep proseo-planner | cut -d ' ' -f 1)
+kubectl describe secret/proseo-planner-secret
 ```
 
 
@@ -378,9 +386,9 @@ Unless the configuration script was used create a JSON file `facility.json` desc
 {
   "name" : "localhost",
   "description" : "Docker Desktop Minikube",
-  "processingEngineUrl" : "http://host.docker.internal:8001/",
+  "processingEngineUrl" : "https://kubernetes.docker.internal:6443",
   "processingEngineToken" : "<authentication token from step 5>",
-  "storageManagerUrl" : "http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
+  "storageManagerUrl" : "http://kubernetes.docker.internal:8080/proseo/storage-mgr/v1",
   "localStorageManagerUrl" : "http://storage-mgr-service.default.svc.cluster.local:3000/proseo/storage-mgr/v0.1",
   "storageManagerUser" : "smuser",
   "storageManagerPassword" : "smpwd-but-that-would-be-way-too-short",
