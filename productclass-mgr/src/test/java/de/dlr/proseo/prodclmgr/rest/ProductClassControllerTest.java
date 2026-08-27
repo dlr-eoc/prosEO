@@ -28,9 +28,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionException;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.ProductClassMgrMessage;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProductClass;
@@ -38,6 +41,7 @@ import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.SimplePolicy.DeltaTime;
 import de.dlr.proseo.model.SimplePolicy.PolicyType;
 import de.dlr.proseo.model.SimpleSelectionRule;
+import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -69,8 +73,10 @@ public class ProductClassControllerTest {
 	private static final String TEST_PARAM_TYPE = "STRING";
 	private static final String TEST_PARAM_KEY = "revision";
 	private static final String TEST_NEW_PRODUCT_TYPE = "$L2__AAI___$";
+	private static final String TEST_NEW_PRODUCT_TYPE_2 = "$SUB_FRESCO_$";
 	private static final String TEST_SELECTION_RULE = "FOR " + TEST_PRODUCT_TYPE + "/" + TEST_PARAM_KEY + ":" + TEST_PARAM_VALUE
 			+ " SELECT LatestValIntersect(180 M, 180 M) OR LatestValidity OPTIONAL";
+	private static final String TEST_SELECTION_RULE_2 = "FOR " + TEST_NEW_PRODUCT_TYPE + " SELECT LatestValidity";
 	private static final ProductVisibility TEST_VISIBILITY = ProductVisibility.PUBLIC;
 
 	/** The ProductClassControllerImpl under test */
@@ -130,9 +136,11 @@ public class ProductClassControllerTest {
 
 		testSelectionRule.setTargetProductClass(testProductClass);
 
+		logger.trace("... adding another test product class");
 		ProductClass sourceProductClass = new ProductClass();
 		sourceProductClass.setProductType(TEST_PRODUCT_TYPE);
 		sourceProductClass.setMission(testMission);
+		sourceProductClass.setVisibility(TEST_VISIBILITY);
 		sourceProductClass = RepositoryService.getProductClassRepository().save(sourceProductClass);
 		testSelectionRule.setSourceProductClass(sourceProductClass);
 
@@ -169,8 +177,12 @@ public class ProductClassControllerTest {
 	}
 
 	/**
+	 * Delete a product class and re-create it
+	 * 
 	 * Test method for
-	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#createRestProductClass(de.dlr.proseo.prodclmgr.rest.model.RestProductClass)}.
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#createRestProductClass(de.dlr.proseo.prodclmgr.rest.model.RestProductClass)}
+	 * and
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#deleteProductclassById(java.lang.Long)}.
 	 */
 	@Test
 	public final void testCreateRestProductClass() {
@@ -180,21 +192,22 @@ public class ProductClassControllerTest {
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		transactionTemplate.execute(status -> {
-			// Wrap in transaction to ensure that either all product creates
-			// succeed or all fail
+			// Wrap in transaction to ensure that either all database modifications succeed or all fail
 
-			//
+			// Delete on of the product classes
 			RestProductClass testProductClass = ProductClassUtil.toRestProductClass(RepositoryService.getProductClassRepository()
 				.findByMissionCodeAndProductType(testMissionData[0], TEST_NEW_PRODUCT_TYPE));
 			RestSimpleSelectionRule testSelectionRule = testProductClass.getSelectionRule().get(0);
 			RestSimplePolicy restSimplePolicy = testSelectionRule.getSimplePolicies().get(0);
 			RepositoryService.getProductClassRepository().deleteById(testProductClass.getId());
 
-			//
+			// Recreate the product class
 			testProductClass.setId(null);
 			ResponseEntity<RestProductClass> postEntity = pci.createRestProductClass(testProductClass);
 
 			assertEquals(HttpStatus.CREATED, postEntity.getStatusCode(), "Unexpected HTTP status code: ");
+			
+			logger.trace("Test OK: Delete a single product class"); // ... because we could create a product class with the same name
 
 			// Check the result
 			RestProductClass responseProductClass = postEntity.getBody();
@@ -232,12 +245,76 @@ public class ProductClassControllerTest {
 	}
 
 	/**
+	 * Show that adding a component product class for a product class having a selection rule is invalid.
+	 * 
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#createRestProductClass(de.dlr.proseo.prodclmgr.rest.model.RestProductClass)}.
+	 */
+	@Test
+	public final void testCreateRestProductClassInvalid() {
+		logger.trace(">>> testCreateRestProductClassInvalid()");
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
+		try {
+			transactionTemplate.execute(status -> {
+				// Wrap in transaction to ensure that either all product creates succeed or all fail
+
+				Mission testMission = RepositoryService.getMissionRepository().findByCode(testMissionData[0]);
+				
+				ProductClass enclosingClass = RepositoryService.getProductClassRepository()
+						.findByMissionCodeAndProductType(testMissionData[0], TEST_PRODUCT_TYPE);
+				
+				ProductClass testProductClass = new ProductClass();
+				testProductClass.setProductType(TEST_NEW_PRODUCT_TYPE_2);
+				testProductClass.setMission(testMission);
+				testProductClass.setVisibility(TEST_VISIBILITY);
+				testProductClass.setEnclosingClass(enclosingClass);
+				
+				RestProductClass testRestProductClass = ProductClassUtil.toRestProductClass(testProductClass);
+				
+				ResponseEntity<RestProductClass> postEntity = pci.createRestProductClass(testRestProductClass);
+				assertEquals(HttpStatus.BAD_REQUEST, postEntity.getStatusCode(), "Unexpected HTTP status code: ");
+				
+				return true;
+			});
+		} catch (UnexpectedRollbackException e) {
+			// Success!
+		}
+
+		logger.trace("Test OK: Insert a single product class");
+	}
+
+	/**
 	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getRestProductClassById(java.lang.Long)}.
 	 */
 	@Test
 	public final void testGetRestProductClassById() {
-		// TODO
-		logger.trace("Test not implemented for getRestProductClassById");
+		logger.trace(">>> testGetRestProductClassById()");
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
+		transactionTemplate.execute(status -> {
+			// Wrap in transaction to ensure that either all product creates succeed or all fail
+
+			// Find some product class
+			RestProductClass testProductClass = ProductClassUtil.toRestProductClass(RepositoryService.getProductClassRepository()
+				.findByMissionCodeAndProductType(testMissionData[0], TEST_PRODUCT_TYPE));
+			
+			// Perform the update under test
+			ResponseEntity<RestProductClass> postEntity = pci.getRestProductClassById(testProductClass.getId());
+			
+			assertEquals(HttpStatus.OK, postEntity.getStatusCode(), "Unexpected HTTP status code: ");
+			
+			// Check the result
+			RestProductClass responseProductClass = postEntity.getBody();
+			assertNotNull(responseProductClass, "Product class missing");
+			assertEquals(testProductClass.getProductType(), responseProductClass.getProductType(), "Unexpected product type: ");
+			
+			return true;
+		});
 
 		logger.trace("Test OK: Read a single product class");
 	}
@@ -248,21 +325,71 @@ public class ProductClassControllerTest {
 	 */
 	@Test
 	public final void testModifyRestProductClass() {
-		// TODO
-		logger.trace("Test not implemented for modifyRestProductClass");
+		logger.trace(">>> testModifyRestProductClass()");
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
+		transactionTemplate.execute(status -> {
+			// Wrap in transaction to ensure that either all product creates succeed or all fail
+
+			// Modify some product class attributes
+			RestProductClass testProductClass = ProductClassUtil.toRestProductClass(RepositoryService.getProductClassRepository()
+				.findByMissionCodeAndProductType(testMissionData[0], TEST_PRODUCT_TYPE));
+			
+			testProductClass.setDefaultSlicingType(OrderSlicingType.CALENDAR_DAY.name());
+			testProductClass.setProcessingLevel("L3");
+			
+			// Perform the update under test
+			ResponseEntity<RestProductClass> postEntity = pci.modifyRestProductClass(testProductClass.getId(), testProductClass);
+			
+			assertEquals(HttpStatus.OK, postEntity.getStatusCode(), "Unexpected HTTP status code: ");
+			
+			// Check the result
+			RestProductClass responseProductClass = postEntity.getBody();
+			assertNotNull(responseProductClass, "Product class missing");
+			assertEquals(OrderSlicingType.CALENDAR_DAY.name(), responseProductClass.getDefaultSlicingType(), "Unexpected slicing type: ");
+			assertEquals("L3", responseProductClass.getProcessingLevel(), "Unexpected processing level: ");
+			
+			return true;
+		});
 
 		logger.trace("Test OK: Update a single product class");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#deleteProductclassById(java.lang.Long)}.
+	 * Show that it is invalid to add component classes to a product class supporting selection rules
+	 * 
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#modifyRestProductClass(java.lang.Long, de.dlr.proseo.prodclmgr.rest.model.RestProductClass)}.
 	 */
 	@Test
-	public final void testDeleteProductclassById() {
-		// TODO
-		logger.trace("Test not implemented for deleteProductclassById");
+	public final void testModifyRestProductClassInvalid() {
+		logger.trace(">>> testModifyRestProductClassInvalid()");
 
-		logger.trace("Test OK: Delete a single product class");
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
+		try {
+			transactionTemplate.execute(status -> {
+				// Wrap in transaction to ensure that either all product creates succeed or all fail
+
+				//
+				RestProductClass testProductClass = ProductClassUtil.toRestProductClass(RepositoryService.getProductClassRepository()
+					.findByMissionCodeAndProductType(testMissionData[0], TEST_PRODUCT_TYPE));
+				
+				testProductClass.getComponentClasses().add(TEST_NEW_PRODUCT_TYPE);
+				
+				ResponseEntity<RestProductClass> postEntity = pci.modifyRestProductClass(testProductClass.getId(), testProductClass);
+				assertEquals(HttpStatus.BAD_REQUEST, postEntity.getStatusCode(), "Unexpected HTTP status code: ");
+				
+				return true;
+			});
+		} catch (UnexpectedRollbackException e) {
+			// Success!
+		}
+
+		logger.trace("Test OK: Reject component classes for class supporting selection rules");
 	}
 
 	/**
@@ -366,6 +493,52 @@ public class ProductClassControllerTest {
 		});
 
 		logger.trace("Test OK: Create selection rule from string");
+	}
+
+	/**
+	 * Show that adding a supported selection rule (i. e. product class is source class in rule)
+	 * to a product class with component classes is invalid
+	 * 
+	 * Test method for
+	 * {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#createSelectionRuleString(java.lang.Long, java.util.List)}.
+	 */
+	@Test
+	public final void testCreateSelectionRuleStringInvalid() {
+		logger.trace(">>> testCreateSelectionRuleStringInvalid()");
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+
+		try {
+			transactionTemplate.execute(status -> {
+				// Retrieve a test product class from the repository and remove the selection rule
+				ProductClass testProductClass = RepositoryService.getProductClassRepository()
+					.findByMissionCodeAndProductType(testMissionData[0], TEST_NEW_PRODUCT_TYPE);
+				ProductClass componentProductClass = RepositoryService.getProductClassRepository()
+						.findByMissionCodeAndProductType(testMissionData[0], TEST_PRODUCT_TYPE);
+				
+				// Add a component product class (doubles as target product class for the selection rule)
+				testProductClass.getComponentClasses().add(componentProductClass);
+				testProductClass = RepositoryService.getProductClassRepository().save(testProductClass);
+				
+				RestProductClass restProductClass = ProductClassUtil.toRestProductClass(componentProductClass);
+
+				// Now create a selection rule having the enclosing product class as source class
+				SelectionRuleString ruleString = new SelectionRuleString();
+				ruleString.setSelectionRule(TEST_SELECTION_RULE_2);
+				List<SelectionRuleString> ruleStrings = new ArrayList<>();
+				ruleStrings.add(ruleString);
+
+				ResponseEntity<RestProductClass> postEntity = pci.createSelectionRuleString(restProductClass.getId(), ruleStrings);
+				assertEquals(HttpStatus.BAD_REQUEST, postEntity.getStatusCode(), "Unexpected HTTP status code: ");
+
+				return true;
+			});
+		} catch (UnexpectedRollbackException e) {
+			// Success!
+		}
+
+		logger.trace("Test OK: Reject invalid selection rule");
 	}
 
 	/**
