@@ -409,9 +409,15 @@ public class OrderUtil {
 		}
 		processingOrder.setStateMessage(restOrder.getStateMessage());
 		processingOrder.setProcessingMode(restOrder.getProcessingMode());
-		processingOrder.setAutoClose(restOrder.getAutoClose());
-		processingOrder.setAutoRelease(restOrder.getAutoRelease());
-		processingOrder.setOnInputDataTimeoutFail(restOrder.getOnInputDataTimeoutFail());
+		if (null != restOrder.getAutoClose()) {
+			processingOrder.setAutoClose(restOrder.getAutoClose());
+		}
+		if (null != restOrder.getAutoRelease()) {
+			processingOrder.setAutoRelease(restOrder.getAutoRelease());
+		}
+		if (null != restOrder.getOnInputDataTimeoutFail()) {
+			processingOrder.setOnInputDataTimeoutFail(restOrder.getOnInputDataTimeoutFail());
+		}
 		if (null != restOrder.getInputDataTimeoutPeriod()) {
 			processingOrder.setInputDataTimeoutPeriod(Duration.ofSeconds(restOrder.getInputDataTimeoutPeriod()));
 		}
@@ -531,7 +537,7 @@ public class OrderUtil {
 		}
 
 		if (null != restOrder.getDynamicProcessingParameters()
-				& !restOrder.getDynamicProcessingParameters().isEmpty()) {
+				&& !restOrder.getDynamicProcessingParameters().isEmpty()) {
 			for (RestParameter restParam : restOrder.getDynamicProcessingParameters()) {
 				Parameter modelParam = new Parameter();
 				modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
