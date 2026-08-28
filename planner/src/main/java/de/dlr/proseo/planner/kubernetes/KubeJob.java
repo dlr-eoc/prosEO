@@ -970,6 +970,7 @@ public class KubeJob {
 			try {
 				return transactionTemplate.execute((status) -> {
 
+					Boolean killJob = false;
 					Boolean success = Boolean.FALSE;
 					Long jobStepId = this.getJobId();
 					Optional<JobStep> jobStep = RepositoryService.getJobStepRepository().findById(jobStepId);
@@ -1091,6 +1092,7 @@ public class KubeJob {
 									for (CoreV1Event event : events.getItems()) {
 										if (event.getType().equalsIgnoreCase("Warning")) {
 											jobStep.get().setJobStepState(JobStepState.FAILED);
+											killJob = true;
 										}
 									}
 								}
@@ -1127,7 +1129,12 @@ public class KubeJob {
 
 					if (logger.isTraceEnabled())
 						logger.trace("<<< updateInfo({}, {})", jobName, success);
-
+					if (killJob) {
+						kubeConfig.deleteJob(jobName);
+						KubeJobFinish jobMonitor = new KubeJobFinish(this, kubeConfig.getProductionPlanner(), jobName);
+						kubeConfig.getProductionPlanner().getFinishThreads().put(jobName, jobMonitor);
+						jobMonitor.start();
+					}
 					return success;
 				});
 			} catch (CannotAcquireLockException e) {
@@ -1141,6 +1148,7 @@ public class KubeJob {
 				}
 			}
 		}
+		
 		return Boolean.FALSE;
 
 	}
