@@ -6,29 +6,29 @@
 package de.dlr.proseo.ingestor.rest;
 
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
-
-import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+
 import de.dlr.proseo.ingestor.IngestorApplication;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
@@ -79,9 +79,6 @@ public class ProductControllerTest {
 	/** The product controller under test */
 	@Autowired
 	private ProductControllerImpl pci;
-	
-	@Autowired
-	private JdbcTemplate jdbcTemplate;
 
 	/** Mocking the storage manager and planner */
 	private static WireMockServer wireMockServer;
@@ -113,7 +110,7 @@ public class ProductControllerTest {
 
 	/**
 	 * Before every test: Create required data environment (mission, product class etc.)
-	 * 
+	 *
 	 * @throws java.lang.Exception
 	 */
 	@BeforeEach
@@ -141,7 +138,7 @@ public class ProductControllerTest {
 
 		for (String[] testData : testProductData) {
 			testProduct = new Product();
-			
+
 			testProduct.setProductClass(prodClass);
 			testProduct.setUuid(UUID.randomUUID());
 			testProduct.setFileClass(TEST_FILE_CLASS);
@@ -178,8 +175,6 @@ public class ProductControllerTest {
 	@Test
 	public final void testDeleteProductById() {
 		logger.trace(">>> testDeleteProductById()");
-		
-		jdbcTemplate.execute("RUNSCRIPT FROM '" + "classpath:create_view_product_processing_facilities_simplified.sql" + "'");
 
 		// Get a test product from the database
 		Product testProduct = RepositoryService.getProductRepository().findById(Long.valueOf(testProductData[0][0]))

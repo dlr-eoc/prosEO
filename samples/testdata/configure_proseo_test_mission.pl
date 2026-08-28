@@ -325,7 +325,8 @@ $processing_levels{'PTM_L2_A'} = 'L2A';
 $slicing_types{'PTM_L2_A'} = 'ORBIT';
 $product_processor_class{'PTM_L2_A'} = 'PTML2';
 $selection_rules{'PTM_L2_A'} = '
-    FOR PTM_L1B SELECT LatestValCover(0, 0)';
+    FOR PTM_L1B_P1 SELECT LatestValCover(0, 0);
+    FOR PTM_L1B_P2 SELECT LatestValCover(0, 0)';
 $applicable_processors{'PTM_L2_A'} = [ 'PTML2_2.2.0-SNAPSHOT_OPER_2020-03-25' ];
 # Output PTM_L2_B
 push @product_types, 'PTM_L2_B';
@@ -807,7 +808,8 @@ print $cli_script "exit\n";
 $cli_script->close();
 
 say 'IMPORTANT:';
-say '(1) Please change user passwords after completing script-based configuration!';
-say '(2) Make sure the sysadm credentials are present in sysadm.cred!';
+say '(1) Please change user passwords after completing script-based configuration.';
+say '(2) Make sure the sysadm credentials are present in sysadm.cred.';
+say 'Now run "java -jar proseo-ui-cli.jar -isysadm.cred -mPTM <cli_script.txt" to create the mission in prosEO.';
 
 say '--- prosEO Test Mission setup complete ---';

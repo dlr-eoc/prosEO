@@ -47,6 +47,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.apache.olingo.client.api.ODataClient;
 import org.apache.olingo.client.api.communication.request.retrieve.ODataEntityRequest;
 import org.apache.olingo.client.api.communication.request.retrieve.ODataEntitySetRequest;
@@ -1247,13 +1248,27 @@ public class DownloadManager {
 
 					CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
 					HttpEntity httpEntity = httpResponse.getEntity();
+					int status = httpResponse.getStatusLine().getStatusCode();
 
-					if (httpEntity != null) {
-						FileUtils.copyInputStreamToFile(httpEntity.getContent(), productFile);
+					if (status < 200 || status >= 300) {
+						if (httpEntity != null) {
+							String content = EntityUtils.toString(httpEntity);
+							logger.trace("... error response preview: {}", content.substring(0, Math.min(content.length(), 500)));
+						}
+
+						throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(),
+								status + " " + httpResponse.getStatusLine().getReasonPhrase()));
 					}
 
+					if (httpEntity == null) {
+						throw new IOException(logger.log(AipClientMessage.PRODUCT_DOWNLOAD_FAILED, product.getUuid(),
+								"Response contains no entity"));
+					}
+
+					FileUtils.copyInputStreamToFile(httpEntity.getContent(), productFile);
+
 					httpResponse.close();
-					
+
 				} catch (FileNotFoundException e) {
 					throw new IOException(logger.log(AipClientMessage.FILE_NOT_WRITABLE, productFile));
 				} catch (HttpResponseException e) {

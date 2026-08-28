@@ -24,6 +24,7 @@ fi
 
 export REGISTRY_URL=$1
 export VERSION=$2
+export PROSEO_PLATFORM=${PROSEO_PLATFORM:-linux/amd64}
 
 docker-compose -p proseo pull
 docker-compose -p proseo up -d

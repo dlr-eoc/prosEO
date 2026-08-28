@@ -106,6 +106,9 @@ public class ProductQuery extends PersistentObject {
 	/**
 	 * Create a product query from a simple selection rule for a given job step
 	 * 
+	 * @deprecated since prosEO 2.2.0: Use fromSimpleSelectionRule(SimpleSelectionRule, JobStep, Map) instead
+	 *   (facility query parameters are obsolete)
+	 * 
 	 * @param selectionRule the selection rule to create the product query from
 	 * @param jobStep the job step to generate the product query for
 	 * @param productColumnMapping a mapping from attribute names of the Product class to the corresponding SQL column names
@@ -113,8 +116,22 @@ public class ProductQuery extends PersistentObject {
 	 * @param facilityQuerySqlSubselect an SQL selection string to add to sub-SELECTs in selection policy SQL query conditions
 	 * @return a product query object
 	 */
+	@Deprecated
 	public static ProductQuery fromSimpleSelectionRule(SimpleSelectionRule selectionRule, JobStep jobStep,
 			Map<String, String> productColumnMapping, String facilityQuerySql, String facilityQuerySqlSubselect) {
+				return fromSimpleSelectionRule(selectionRule, jobStep, productColumnMapping);
+			}
+
+	/**
+	 * Create a product query from a simple selection rule for a given job step
+	 * 
+	 * @param selectionRule the selection rule to create the product query from
+	 * @param jobStep the job step to generate the product query for
+	 * @param productColumnMapping a mapping from attribute names of the Product class to the corresponding SQL column names
+	 * @return a product query object
+	 */
+	public static ProductQuery fromSimpleSelectionRule(SimpleSelectionRule selectionRule, JobStep jobStep,
+			Map<String, String> productColumnMapping) {
 		
 		ProductQuery productQuery = new ProductQuery();
 		productQuery.generatingRule = selectionRule;
@@ -128,7 +145,7 @@ public class ProductQuery extends PersistentObject {
 				jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime(), productQuery.filterConditions);
 		productQuery.sqlQueryCondition = selectionRule.asSqlQuery(
 				jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime(), productQuery.filterConditions,
-				productColumnMapping, facilityQuerySql, facilityQuerySqlSubselect);
+				productColumnMapping);
 		productQuery.calcHash();
 		return productQuery;
 	}

@@ -72,6 +72,7 @@ Log in to the brain host via the control instance bastion host, then create the 
 cd /opt/prosEO
 export PGADMIN_EMAIL=some.custom@email.address
 export PGADMIN_PASSWORD=some-pw
+export PROSEO_PLATFORM=<select applicable platform: linux/amd64 or linux/arm64> # default if omitted is linux/amd64
 ./run_control_instance.sh <private Docker registry> <version>
 ```
 
@@ -82,8 +83,9 @@ docker exec -it proseo_proseo-db_1 /bin/bash -c 'su - postgres'
 ```
 Within this shell, run the provided SQL scripts:
 ```
-psql proseo -U postgres -h localhost </proseo/create_view_product_processing_facilities.sql
 psql proseo -U postgres -h localhost </proseo/populate_mon_service_state.sql
+psql proseo < /proseo/create_product_indices.sql
+sed -i -e 's/max_connections = 100/max_connections = 200/' /var/lib/postgresql/data/postgresql.conf
 ```
 You may be asked to provide the password for the `postgres` user. Enter the password configured in the `docker-compose.yml` file
 in `brain/prepare_proseo/files`.

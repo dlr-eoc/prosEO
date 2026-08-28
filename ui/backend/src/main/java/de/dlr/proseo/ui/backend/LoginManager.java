@@ -188,10 +188,10 @@ public class LoginManager {
 		authorities.remove();
 
 		String message = null;
-		if (message == oldUser)
-			logger.log(UIMessage.USER_NOT_LOGGED_IN);
+		if (null == oldUser)
+			message = logger.log(UIMessage.USER_NOT_LOGGED_IN);
 		else
-			logger.log(UIMessage.LOGGED_OUT, oldUser);
+			message = logger.log(UIMessage.LOGGED_OUT, oldUser);
 		System.out.println(message);
 		if (logger.isTraceEnabled())
 			logger.trace("<<< doLogout()");

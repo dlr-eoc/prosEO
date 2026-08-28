@@ -1363,55 +1363,6 @@ CREATE TABLE product_parameters (
 
 
 
---
--- Name: product_processing_facilities; Type: VIEW; Schema: public; Owner: postgres
---
-
--- CREATE VIEW product_processing_facilities AS
---  WITH RECURSIVE available_facilities(product_id, enclosing_product_id, processing_facility_id, depth, path, cycle) AS (
---          SELECT p.id,
---             p.enclosing_product_id,
---             pf.processing_facility_id,
---             1,
---             ARRAY[p.id] AS "array",
---             false AS bool
---            FROM (product p
---              LEFT JOIN product_file pf ON ((p.id = pf.product_id)))
---         UNION
---          SELECT p.id,
---             p.enclosing_product_id,
---                 CASE
---                     WHEN (af.processing_facility_id IS NULL) THEN pf.processing_facility_id
---                     ELSE af.processing_facility_id
---                 END AS processing_facility_id,
---             (af.depth + 1),
---             (af.path || p.id),
---             (p.id = ANY (af.path))
---            FROM ((product p
---              JOIN available_facilities af ON ((p.id = af.enclosing_product_id)))
---              LEFT JOIN product_file pf ON ((p.id = pf.product_id)))
---           WHERE (((af.processing_facility_id IS NULL) OR (pf.processing_facility_id IS NULL) OR (af.processing_facility_id = pf.processing_facility_id)) AND (NOT af.cycle))
---         )
---  SELECT available_facilities.product_id,
---     available_facilities.enclosing_product_id,
---     available_facilities.processing_facility_id,
---     available_facilities.depth,
---     available_facilities.path,
---     available_facilities.cycle
---    FROM available_facilities
---   WHERE (available_facilities.processing_facility_id IS NOT NULL);
-
-CREATE OR REPLACE VIEW product_processing_facilities AS
-SELECT p.id AS product_id,
-      p.enclosing_product_id AS enclosing_product_id,
-      pf.processing_facility_id AS processing_facility_id,
-      1 AS depth,
-      ARRAY[p.id] AS path,
-      false AS cycle
-FROM product p JOIN product_file pf ON p.id = pf.product_id;
-
-
---
 -- Name: product_query; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2370,7 +2321,7 @@ INSERT INTO simple_policy_delta_times VALUES (58, 0, 6, 1);
 
 INSERT INTO simple_selection_rule VALUES (47, 1, 'AUX_IERS_B', true, 0, 'OPER', 40, 41);
 INSERT INTO simple_selection_rule VALUES (49, 1, 'PTM_L0', true, 0, 'OPER', 39, 41);
-INSERT INTO simple_selection_rule VALUES (51, 1, 'PTM_L1B', true, 0, 'OPER', 41, 44);
+INSERT INTO simple_selection_rule VALUES (51, 1, 'PTM_L1B_P2', true, 0, 'OPER', 43, 44);
 INSERT INTO simple_selection_rule VALUES (53, 1, 'PTM_L1B_P1', true, 0, 'OPER', 42, 45);
 INSERT INTO simple_selection_rule VALUES (55, 1, 'PTM_L2_B', true, 90, 'OPER', 45, 46);
 INSERT INTO simple_selection_rule VALUES (57, 1, 'PTM_L2_A', true, 90, 'OPER', 44, 46);

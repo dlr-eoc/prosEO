@@ -28,8 +28,8 @@ import de.dlr.proseo.model.enums.ProductVisibility;
 /**
  * A class of products pertaining to a specific Mission, e. g. the L2_O3 products of Sentinel-5P. A ProductClass can describe
  * final (deliverable) products as well as intermediate products. For a ProductClass its dependency on base products can be
- * described using SelectionRules. Alternatively a ProductClass may be composed of other product classes (e. g. the S5P NPP
- * products consist of three separate single-band NPP sub-products).
+ * described using SelectionRules. A ProductClass may be composed of other product classes (e. g. the S5P NPP products consist 
+ * of three separate single-band NPP sub-products), unless it it used as a source product class in any selection rule.
  * 
  * @author Dr. Thomas Bassler
  *
@@ -84,11 +84,17 @@ public class ProductClass extends PersistentObject {
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "targetProductClass")
 	private Set<SimpleSelectionRule> requiredSelectionRules = new HashSet<>();
 	
-	/** The selection rules, for which this class provides the requested input files */
+	/** 
+	 * The selection rules, for which this class provides the requested input files. 
+	 * Only product classes without component classes ("leaf" classes) may be used as source product classes in selection rules. 
+	 */
 	@OneToMany(mappedBy = "sourceProductClass")
 	private Set<SimpleSelectionRule> supportedSelectionRules = new HashSet<>();
 	
-	/** Set of component product classes */
+	/** 
+	 * Set of component product classes; only product classes not used as source product class in any selection rule 
+	 * may have component classes.
+	 */
 	@OneToMany(mappedBy = "enclosingClass")
 	private Set<ProductClass> componentClasses = new HashSet<>();
 	

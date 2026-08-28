@@ -99,8 +99,8 @@ public class ProductClassManager {
 	 * @param productClass the product class to update (must not be transient)
 	 * @param missionCode  the mission code of the enclosing product class
 	 * @param productType  the product type of the enclosing product class
-	 * @throws IllegalArgumentException if a product class with the given mission code and product type does not exist, or if the
-	 *                                  addition of the enclosing class would create a class cycle
+	 * @throws IllegalArgumentException if a product class with the given mission code and product type does not exist,
+	 * 		adding component classes is not allowed, or the addition of the enclosing class would create a class cycle
 	 */
 	private void setEnclosingClass(ProductClass productClass, String missionCode, String productType)
 			throws IllegalArgumentException {
@@ -110,6 +110,13 @@ public class ProductClassManager {
 			throw new IllegalArgumentException(
 					logger.log(ProductClassMgrMessage.INVALID_ENCLOSING_CLASS, productType, missionCode));
 		}
+		
+		// Check whether enclosing class may have component classes (i. e. not used in a selection rule
+		if (!enclosingClass.getSupportedSelectionRules().isEmpty()) {
+			throw new IllegalArgumentException(
+					logger.log(ProductClassMgrMessage.NO_COMPONENT_CLASSES_ALLOWED, productType, missionCode));
+		}
+		
 		// Check for class cycles
 		if (hasEnclosingClassCycle(enclosingClass, productClass)) {
 			throw new IllegalArgumentException(logger.log(ProductClassMgrMessage.ENCLOSING_CLASS_CYCLE, productType,
@@ -476,6 +483,7 @@ public class ProductClassManager {
 			setEnclosingClass(modelProductClass, mission.getCode(), productClass.getEnclosingClass());
 		}
 
+		// Adding component classes is safe here, since a newly created product class cannot yet be part of a selection rule!
 		for (String componentClass : productClass.getComponentClasses()) {
 			ProductClass modelComponentClass = RepositoryService.getProductClassRepository()
 				.findByMissionCodeAndProductType(mission.getCode(), componentClass);
@@ -772,31 +780,34 @@ public class ProductClassManager {
 
 		// Check for new component product classes
 		Set<ProductClass> newComponentClasses = new HashSet<>();
-		if (null != productClass.getComponentClasses()) {
-			COMPONENT_CLASSES: for (String changedComponentClass : productClass.getComponentClasses()) {
-				for (ProductClass modelComponentClass : modelProductClass.getComponentClasses()) {
-					if (modelComponentClass.getProductType().equals(changedComponentClass)) {
-						// Already present
-						newComponentClasses.add(modelComponentClass);
-						continue COMPONENT_CLASSES;
-					}
+		
+		COMPONENT_CLASSES: for (String changedComponentClass : productClass.getComponentClasses()) {
+			for (ProductClass modelComponentClass : modelProductClass.getComponentClasses()) {
+				if (modelComponentClass.getProductType().equals(changedComponentClass)) {
+					// Already present
+					newComponentClasses.add(modelComponentClass);
+					continue COMPONENT_CLASSES;
 				}
-				// New component class
-				productClassChanged = true;
-				ProductClass newComponentClass = RepositoryService.getProductClassRepository()
-					.findByMissionCodeAndProductType(productClass.getMissionCode(), changedComponentClass);
-				if (null == newComponentClass) {
-					throw new IllegalArgumentException(logger.log(ProductClassMgrMessage.INVALID_COMPONENT_CLASS,
-							changedComponentClass, productClass.getMissionCode()));
-				}
-				if (hasComponentClassCycle(newComponentClass, modelProductClass)) {
-					throw new IllegalArgumentException(logger.log(ProductClassMgrMessage.COMPONENT_CLASS_CYCLE,
-							changedComponentClass, productClass.getProductType(), productClass.getMissionCode()));
-				}
-				newComponentClass.setEnclosingClass(modelProductClass);
-				newComponentClass = RepositoryService.getProductClassRepository().save(newComponentClass);
-				newComponentClasses.add(newComponentClass);
 			}
+			// New component class
+			productClassChanged = true;
+			ProductClass newComponentClass = RepositoryService.getProductClassRepository()
+				.findByMissionCodeAndProductType(productClass.getMissionCode(), changedComponentClass);
+			if (null == newComponentClass) {
+				throw new IllegalArgumentException(logger.log(ProductClassMgrMessage.INVALID_COMPONENT_CLASS,
+						changedComponentClass, productClass.getMissionCode()));
+			}
+			if (!modelProductClass.getSupportedSelectionRules().isEmpty()) {
+				throw new IllegalArgumentException(logger.log(ProductClassMgrMessage.NO_COMPONENT_CLASSES_ALLOWED,
+						productClass.getProductType(), productClass.getMissionCode()));
+			}
+			if (hasComponentClassCycle(newComponentClass, modelProductClass)) {
+				throw new IllegalArgumentException(logger.log(ProductClassMgrMessage.COMPONENT_CLASS_CYCLE,
+						changedComponentClass, productClass.getProductType(), productClass.getMissionCode()));
+			}
+			newComponentClass.setEnclosingClass(modelProductClass);
+			newComponentClass = RepositoryService.getProductClassRepository().save(newComponentClass);
+			newComponentClasses.add(newComponentClass);
 		}
 		// Check for removed component product classes
 		for (ProductClass modelComponentClass : modelProductClass.getComponentClasses()) {
@@ -1045,9 +1056,16 @@ public class ProductClassManager {
 						logger.log(ProductClassMgrMessage.INVALID_RULE_STRING, restRuleString.getSelectionRule(), e.getMessage()));
 			}
 
-			// Complete the simple selection rules and add them to the product class, if no
-			// rule with equivalent key values exists
+			// Complete the simple selection rules and add them to the product class, if allowed
+			// and there is no rule with equivalent key values
 			for (SimpleSelectionRule simpleSelectionRule : selectionRule.getSimpleRules()) {
+				
+				// Check precondition: source product class must not have component classes
+				if (!simpleSelectionRule.getSourceProductClass().getComponentClasses().isEmpty()) {
+					throw new IllegalArgumentException(logger.log(ProductClassMgrMessage.NO_COMPONENT_CLASSES_ALLOWED,
+							productClass.getProductType(), productClass.getMission().getCode()));
+				}
+				
 				// Set remaining attributes
 				simpleSelectionRule.setMode(processingMode);
 				simpleSelectionRule.getConfiguredProcessors().addAll(configuredProcessors);
@@ -1212,6 +1230,15 @@ public class ProductClassManager {
 				}
 				SimpleSelectionRule changedSimpleRule = changedSimpleRules.get(0);
 				if (!modelRule.toString().equals(changedRule.toString())) {
+					
+					// Prevent change of source product class to a product class with component classes
+					ProductClass sourceProductClass = changedSimpleRule.getSourceProductClass();
+					if (!sourceProductClass.getComponentClasses().isEmpty()) {
+						throw new IllegalArgumentException(logger.log(ProductClassMgrMessage.NO_COMPONENT_CLASSES_ALLOWED, 
+								sourceProductClass.getProductType(), sourceProductClass.getMission().getCode()));
+					}
+					
+					// Perform the change
 					ruleChanged = true;
 					modelRule.getFilterConditions().clear();
 					modelRule.getFilterConditions().putAll(changedSimpleRule.getFilterConditions());

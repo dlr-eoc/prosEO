@@ -6,13 +6,13 @@
       sourceStorageType:
         type: string
         description: The type of the storage to ingest the data from
-        pattern: ^(S3|ALLUXIO|POSIX|OTHER)$
+        pattern: ^(S3|POSIX|OTHER)$
       mountPoint:
         type: string
-        description: The S3/POSIX/ALLUXIO mount point of the storage system to ingest from
+        description: The S3/POSIX mount point of the storage system to ingest from
       filePath:
         type: string
-        description: The S3/POSIX/ALLUXIO path to the product files (relative to mountPoint)
+        description: The S3/POSIX path to the product files (relative to mountPoint)
       productFileName:
         type: string
         description: File name of the main product file
