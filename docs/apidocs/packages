@@ -73,7 +73,6 @@ de.dlr.proseo.api.aipclient
 de.dlr.proseo.api.aipclient.rest
 de.dlr.proseo.api.aipclient.rest.model
 de.dlr.proseo.archivemgr
-de.dlr.proseo.archivemgr.utils
 de.dlr.proseo.archivemgr.rest
 de.dlr.proseo.archivemgr.rest.model
 de.dlr.proseo.usermgr
