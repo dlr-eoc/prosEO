@@ -448,7 +448,7 @@ public class OrderCommandRunner {
 		/* Check whether order ID is given (overrides --from and --to options) or --from and/or --to parameters are set */
 		if (showCommand.getParameters().isEmpty()) {
 			String col = "identifier";
-			String dir = " asc";
+			String dir = "%20asc";
 			for (ParsedOption option: showCommand.getOptions()) {
 				try {
 					if ("from".equals(option.getName())) {
@@ -464,25 +464,34 @@ public class OrderCommandRunner {
 						requestURI += "&state=" + option.getValue();
 					} else if ("sortBy".equals(option.getName())) {
 						String[] order = option.getValue().split(":");
+
+						switch (order[0].toLowerCase()) {
+						case "name":
+						case "orderid":
+						case "identifier":
+							col = "identifier";
+							break;
+						case "orderstate":
+						case "state":
+							col = "orderState";
+							break;
+						case "id":
+							col = "id";
+						}
+						
 						if (order.length == 2) {
-							String col1 = order[0].toLowerCase();
-							String dir1 = order[1].toLowerCase();
-							if (col1.equals("name") || col1.equals("orderid") || col1.equals("identifier")) {
-								col = "identifier";
-							}
-							if (col1.equals("orderstate") || col1.equals("state")) {
-								col = "orderState";
-							}
-							if (col1.equals("id")) {
-								col = "id";
-							}
-							if (dir1.equals("up") || dir1.equals("asc")) {
-								dir = "%20asc";
-							}
-							if (dir1.equals("down") || dir1.equals("desc")) {
+							switch (order[1].toLowerCase()) {
+							case "up":
+							case "asc":
+								break; // same as default
+							case "down":
+							case "desc":
 								dir = "%20desc";
 							}
 						}
+						
+						// Quietly ignore errors in column name or sorting direction ...
+						
 					}
 				} catch (DateTimeException e) {
 					System.err.println(ProseoLogger.format(UIMessage.INVALID_TIME, option.getValue()));
