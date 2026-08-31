@@ -376,7 +376,10 @@ Locate the file `storage-mgr.yaml` and edit the image reference (around line 20)
 to your preferred prosEO repository, then create the Storage Manager:
 ```
 kubectl apply -f storage-mgr-local.yaml
+
+bash -c 'nohup kubectl port-forward service/storage-mgr-service 8080:3000 2>&1 &'
 ```
+Note that the `kubectl port-forward` command needs to be repeated, whenever a new Storage Manager pod is created in Kubernetes.
 
 
 # Step 8: Configure the prosEO Processing Facility

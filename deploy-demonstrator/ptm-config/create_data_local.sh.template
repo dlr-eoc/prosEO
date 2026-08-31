@@ -169,8 +169,7 @@ cat >$TEST_DATA_DIR/facility.json <<EOF
     "processingEngineToken": "TBD",
     "storageManagerUrl": "http://kubernetes.docker.internal:8080/proseo/storage-mgr/v1",
     "localStorageManagerUrl": "http://storage-mgr-service.default.svc.cluster.local:3000/proseo/storage-mgr/v0.1",
-    "externalStorageManagerUrl": 
-        "http://localhost:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
+    "externalStorageManagerUrl": "http://localhost:8080/proseo/storage-mgr/v1",
     "storageManagerUser": "smuser",
     "storageManagerPassword": "smpwd-but-that-would-be-way-too-short",
     "defaultStorageType": "POSIX"
