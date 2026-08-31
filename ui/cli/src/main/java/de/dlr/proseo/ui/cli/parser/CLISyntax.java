@@ -8,6 +8,7 @@ package de.dlr.proseo.ui.cli.parser;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -304,18 +305,25 @@ public class CLISyntax {
 					String.format("    %s --%-10s  %s", (null == option.getShortForm() ? "   " : "-" + option.getShortForm() + ","),
 							option.getName(), option.getDescription().replace('\n', ' ')));
 		}
+		
 		out.println("Commands:");
+		
+		List<String> currentAuthorities = CommandLineInterface.getCommandLineInterface().getLoginManager().getAuthorities();
+		if (null == currentAuthorities) { // not yet logged in!
+			currentAuthorities = new ArrayList<>();
+		}
+		
 		Boolean isEmpty = true; 
 		for (CLICommand command : commands) {
 			if (!command.getRight().isEmpty()) {
 				if (command.getRight().contains("ROLE_PRODUCT_READER")) {
-					if (CommandLineInterface.getCommandLineInterface().getLoginManager().getAuthorities().contains("ROLE_PRODUCT_READER") ||
-						CommandLineInterface.getCommandLineInterface().getLoginManager().getAuthorities().contains("ROLE_PRODUCT_READER_ALL") ||
-						CommandLineInterface.getCommandLineInterface().getLoginManager().getAuthorities().contains("ROLE_PRODUCT_READER_RESTRICTED")) {
+					if (currentAuthorities.contains("ROLE_PRODUCT_READER") ||
+							currentAuthorities.contains("ROLE_PRODUCT_READER_ALL") ||
+							currentAuthorities.contains("ROLE_PRODUCT_READER_RESTRICTED")) {
 						out.println(String.format("    %-16s  %s", command.getName(), command.getDescription().replace('\n', ' ')));
 						isEmpty = false;
 					}
-				} else if (CommandLineInterface.getCommandLineInterface().getLoginManager().getAuthorities().contains(command.getRight())) {
+				} else if (currentAuthorities.contains(command.getRight())) {
 					out.println(String.format("    %-16s  %s", command.getName(), command.getDescription().replace('\n', ' ')));
 					isEmpty = false;
 				}

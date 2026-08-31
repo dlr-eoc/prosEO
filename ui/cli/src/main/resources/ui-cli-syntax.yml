@@ -1686,6 +1686,7 @@ commands:
       description: |
           Interactively change the password of the logged in user, or of the named user,
           if executed by a user with user manager permissions
+      right: FACTOR_PASSWORD
       parameters:
         - name: userName
           type: string
