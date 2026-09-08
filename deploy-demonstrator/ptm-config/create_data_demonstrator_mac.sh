@@ -14,41 +14,13 @@
 # - a processing order for L3 products
 #
 
-# -------------------------
-# Check parameters
-# -------------------------
-STORAGE_MGR_TAG=$1
-SHARED_STORAGE_PATH=$2
+
+SHARED_STORAGE_PATH=$1
 
 if [ x$STORAGE_MGR_TAG = x -o x$SHARED_STORAGE_PATH = x ] ; then
-	echo "Usage: $0 <Storage Manager image tag> <path to shared storage>"
+	echo "Usage: $0 <path to shared storage>"
 	exit 1
 fi
-
-# -------------------------
-# Tag Storage Manager image
-# -------------------------
-docker tag localhost:5000/proseo-storage-mgr:$STORAGE_MGR_TAG localhost:5000/proseo-storage-mgr:latest
-docker push localhost:5000/proseo-storage-mgr:latest
-
-# -------------------------
-# Prepare local file server
-# -------------------------
-
-# File server is on "hostPath"
-# Update the path in the Persistent Volume configuration
-sed "s|%SHARED_STORAGE_PATH%|${SHARED_STORAGE_PATH}|" <../kubernetes/nfs-pv.yaml.template >../kubernetes/nfs-pv.yaml
-# Create the Persistent Volumes
-kubectl apply -f ../kubernetes/nfs-pv.yaml
-
-# Simulated "internal" POSIX storage area (must correspond to the specs in nfs-server-local.yaml)
-mkdir -p ${SHARED_STORAGE_PATH}/proseodata
-
-# Simulated "external" mount point for product ingestion (must correspond to the specs in nfs-server-local.yaml)
-mkdir -p ${SHARED_STORAGE_PATH}/transfer
-
-# Ingest mount point in storage manager (must correspond to the specs in storage-mgr-local.yaml)
-INGEST_MOUNT_POINT=/mnt
 
 # -------------------------
 # Create L0/AUX input data
@@ -61,6 +33,7 @@ rm -rf $TEST_DATA_DIR/*
 
 INGEST_DIR=$TEST_DATA_DIR/transfer
 FILE_PATH=import/products
+INGEST_MOUNT_POINT=/mnt
 
 # Products consist of the fields id, type, start time, stop time, generation time and revision,
 # separated by vertical bars
@@ -134,29 +107,13 @@ cp -p bulletinb-380.xml ${INGEST_DIR}/${FILE_PATH}
 cp -pR ${INGEST_DIR}/* ${SHARED_STORAGE_PATH}/transfer/
 
 
-# -------------------------
-# Create Storage Manager
-# -------------------------
-
-# Create the storage manager in the local Minikube
-kubectl apply -f ../kubernetes/storage-mgr-local.yaml
-
-
-# -------------------------
-# Create Headlamp Dashboard
-# -------------------------
-
-# Create a dashboard at http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/headlamp/main/kubernetes-headlamp.yaml
-bash -c 'nohup kubectl port-forward -n kube-system service/headlamp 8002:80 2>&1 &'
-
 
 # -------------------------
 # Create prosEO config files
 # -------------------------
 
 # Create a new CLI command script
-CLI_SCRIPT=cli_data_script.txt
+CLI_SCRIPT=cli_data_demonstrator_mac.txt
 echo "" >$CLI_SCRIPT
 
 # Create a processing facility
@@ -166,7 +123,7 @@ cat >$TEST_DATA_DIR/facility.json <<EOF
     "description": "Docker Desktop Minikube",
     "facilityState": "RUNNING",
     "processingEngineUrl": "https://kubernetes.docker.internal:6443",
-    "processingEngineToken": "TBD",
+    "processingEngineToken": "someverysecrettoken",
     "storageManagerUrl": "http://kubernetes.docker.internal:8080/proseo/storage-mgr/v1",
     "localStorageManagerUrl": "http://storage-mgr-service.default.svc.cluster.local:3000/proseo/storage-mgr/v0.1",
     "externalStorageManagerUrl": "http://localhost:8080/proseo/storage-mgr/v1",
@@ -706,5 +663,4 @@ cat >$TEST_DATA_DIR/order_l3.json <<EOF
 }
 EOF
 
-echo "Test data generation complete."
-echo "Execute 'java -jar <path to CLI> < $CLI_SCRIPT' to load the data into prosEO."
+echo "OK: Test data generation complete."
