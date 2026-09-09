@@ -35,6 +35,7 @@ function start_port_forward() {
     PORT_FORWARD_PIDS+=("$pid")
 
     echo "OK: Port-forward started (PID ${pid})"
+    echo ""
 }
 
 PORT_FORWARD_PIDS=()
@@ -79,6 +80,7 @@ Starting prosEO demonstrator. Refer to README for further instructions.
 
 EOF
 
+echo ""
 read -rp "Please enter prosEO version: " PROSEO_VERSION
     if [[ -z "$PROSEO_VERSION" ]]; then
         echo "ERROR: prosEO version must not be empty."
@@ -136,10 +138,9 @@ function check_prerequisites() {
     # Kubernetes cluster
     if ! kubectl cluster-info >/dev/null 2>&1; then
         echo "Kubernetes is not enabled or not running in Docker Desktop."
-        echo ""
         echo "Please enable Kubernetes in Docker Desktop:"
-        echo "Docker Desktop -> Settings -> Kubernetes -> Enable Kubernetes"
-        echo ""
+        echo "Docker Desktop -> Settings -> Kubernetes -> Enable Kubernetes -> Install"
+        echo "-> Create a single-node cluster of type kubeadm"
         read -rp "Press Enter after enabling Kubernetes..."
         echo "Waiting for Kubernetes..."
         for i in {1..90}; do
@@ -212,6 +213,7 @@ function check_prerequisites() {
 }
 check_prerequisites
 echo ""
+sleep 1
 
 echo "[2/8] Updating configuration according to prosEO version ${PROSEO_VERSION}"
 function update_configuration() {
@@ -230,47 +232,90 @@ function update_configuration() {
 }
 update_configuration
 echo ""
+sleep 1
 
 echo "[3/8] Configure Kubernetes"
-function configure_kubernetes() {	
-    # Registry
-    read -rp "Please enter your preferred local prosEO registry (e.g. localhost:5000): " REGISTRY_URL
-    if [[ -z "$REGISTRY_URL" ]]; then
-        echo "ERROR: Registry must not be empty."
-        exit 1
-    fi
-    if [[ "$REGISTRY_URL" =~ [[:space:]] ]]; then
-    	echo "ERROR: Registry must not contain whitespace." 
-    	exit 1 
-    fi
-    if [[ "$REGISTRY_URL" =~ ^https?:// ]]; then
-    	echo "ERROR: Enter the registry as host[:port], not as a URL."
-    	echo "Example: localhost:5000" 
-    	exit 1 
-    fi
-    if [[ "$REGISTRY_URL" == */ ]]; then
-    	echo "ERROR: Registry must not end with '/'." 
-    	echo "Example: localhost:5000" 
-    	exit 1 
-    fi
-    echo "OK: prosEO registry set to '${REGISTRY_URL}'"
+function configure_kubernetes() {
+	# Registry
+	if docker container inspect registry >/dev/null 2>&1; then
+	    echo "A local docker registry already exists."	
+	    if [[ "$(docker inspect -f '{{.State.Running}}' registry)" != "true" ]]; then
+	        echo "Starting existing Docker registry..."
+	        docker start registry >/dev/null
+	    fi
+	
+	    # Extract the host address and port to which the registry's container port 5000/tcp is published.
+	    REGISTRY_PORT_MAPPING="$(
+	        docker inspect -f '{{with (index .NetworkSettings.Ports "5000/tcp")}}{{(index . 0).HostIp}}:{{(index . 0).HostPort}}{{end}}' \
+	            registry
+	    )"	
+	    if [[ -z "$REGISTRY_PORT_MAPPING" ]]; then
+	        echo "ERROR: Existing registry container has no published port for 5000/tcp."
+	        exit 1
+	    fi	
+	    REGISTRY_HOST="${REGISTRY_PORT_MAPPING%:*}"
+	    REGISTRY_PORT="${REGISTRY_PORT_MAPPING##*:}"
+	
+	    # Docker may report 0.0.0.0 or :: for a port published on all interfaces. Use localhost for the local-registry URL.
+	    case "$REGISTRY_HOST" in
+	        0.0.0.0|::|\[::\])
+	            REGISTRY_HOST="localhost"
+	            ;;
+	    esac
+	    REGISTRY_URL="${REGISTRY_HOST}:${REGISTRY_PORT}"	
+	else
+		REGISTRY_URL="localhost:5000"
+	    read -rp "A local docker registry will be configured at localhost:5000. Please supply a storage directory: " REGISTRY_DIR
+	    if [[ -z "$REGISTRY_DIR" ]]; then
+	        echo "ERROR: Directory path must not be empty."
+	        exit 1
+	    fi
+	    REGISTRY_DIR="${REGISTRY_DIR%/}" # Remove trailing '/' characters.
+	    REGISTRY_DIR="${REGISTRY_DIR/#\~/$HOME}" # Expand '~' if necessary.
+	    if ! mkdir -p "$REGISTRY_DIR"; then
+	        echo "ERROR: Could not create registry storage directory: $REGISTRY_DIR"
+	        exit 1
+	    fi	
+	    echo "Using registry storage directory: $REGISTRY_DIR"
+
+	    if ! docker run -d \
+		    -p 5000:5000 \
+		    --restart always \
+	        -e REGISTRY_STORAGE_DELETE_ENABLED=true \
+	        -v "${REGISTRY_DIR}:/var/lib/registry" \
+	        --name registry \
+	        registry:2; then
+	        echo "ERROR: Could not start Docker registry."
+	        exit 1
+	    fi	
+	    echo "Waiting for Docker registry..."
+	
+	    for i in {1..30}; do
+	        if curl -fsS "http://${REGISTRY_URL}/v2/" >/dev/null 2>&1; then
+	            break
+	        fi
+	        sleep 1
+	    done
+	    if ! curl -fsS "http://${REGISTRY_URL}/v2/" >/dev/null 2>&1; then
+	        echo "ERROR: Docker registry could not be reached at ${REGISTRY_URL}."
+	        exit 1
+	    fi
+	fi	
+	echo "OK: prosEO registry available at ${REGISTRY_URL}"
+	echo ""
     
     # Storage
-    echo "Please configure the shared storage path."
     printf '%s\n' \
-	    "Note: " \
-    	"- On macOS, the directory must be located below any of the paths available for sharing by default" \
-    	"  (e. g. `/Users`), using other paths (e. g. `/opt`) does not work, even if they are declared as" \
-    	"  sharable in the Docker Desktop preferences." \
-	    "- On Windows it appears that the paths to use are somewhat weird, see for example this discussion:" \
-  		"  https://stackoverflow.com/questions/54073794/kubernetes-persistent-volume-on-docker-desktop-windows" \
-		" (However this has not been verified by the author of this script.)" 
+    	"Please configure the shared storage path. Note: On macOS, the directory must be located below" \
+    	"any of the paths available for sharing by default (e. g. '/Users'), using other paths (e. g. '/opt')" \
+    	"does not work, even if they are declared as sharable in the Docker Desktop preferences."
     read -rp "Please enter where to store the prosEO data, e.g. /Users/you/prosEO/data: " SHARED_STORAGE_PATH 
     if [[ -z "$SHARED_STORAGE_PATH" ]]; then 
     	echo "ERROR: Shared storage path must not be empty."
     	 exit 1 
     fi 
     echo "OK: Shared storage path set to '${SHARED_STORAGE_PATH}'"
+    echo ""
 	
 	# Headlamp dashboard
 	echo "Installing and starting Headlamp..."
@@ -282,7 +327,8 @@ function configure_kubernetes() {
 	kubectl apply -f "${SCRIPT_DIR}/kubernetes/kube-admin.yaml"
 	kubectl describe secret/admin-user-secret --namespace kube-system
 	echo "OK: Headlamp can be accessed at http://localhost:8002/ with the secret provided above"
-	read -rp "Press Enter to confirm that you have saved the secret above."
+	echo ""
+	read -rp "Press Enter to confirm that you have saved the Headlamp secret above. (It will also be available in the log of this run.)"
 	echo ""
 	
 	echo "Creating planner account..."
@@ -292,7 +338,7 @@ function configure_kubernetes() {
 	
 	echo "Planner authentication token:"
 	kubectl describe secret/proseo-planner-secret --namespace default
-	read -rp "Press Enter to confirm that you have saved the secret above."
+	read -rp "Press Enter to confirm that you have saved the planner secret above. (It will also be available in the log of this run.)"
 	echo ""
 	
 	cd "${SCRIPT_DIR}/kubernetes"
@@ -305,12 +351,35 @@ function configure_kubernetes() {
 }
 configure_kubernetes
 echo ""
+sleep 1
 
 echo "[4/8] Prepare docker images"
 function prepare_images(){
+	PARENT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 	printf '%s\n' \
-		"Note: the base images must be available in the specified registry and are not" \
-		"built here, as this is a demonstrator only."
+		"Note: the base images must be available in the specified registry and are not built here," \
+		"as this is a demonstrator only. Base images are either available at proseo-registry.eoc.dlr.de" \
+		"or can be built running 'clean install -Dmaven.test.skip=true' on the ${PARENT_DIR}" \
+		"directory pointing to the commit corresponding to prosEO version ${PROSEO_VERSION}." \
+		"In the latter case, your Maven settings file (usually at '$HOME/.m2/settings.xml') must point " \
+		"to your local registry at ${REGISTRY_URL}. See for example: "
+	echo "  
+	<settings>
+	    <profiles>
+	      <profile>
+	        <id>dev-local</id><!-- or any other id you prefer -->
+	        <activation>
+	          <activeByDefault>true</activeByDefault>
+	        </activation>
+	        <properties>
+	          <docker.registry>localhost:5000</docker.registry>
+	          <!-- Uncomment the following entry to create native images on Mac -->
+	          <!-- <project.build.platform>linux/arm64</project.build.platform> -->
+	        </properties>
+	      </profile>
+	    </profiles>
+	  </settings>
+	  "
 	cd "${SCRIPT_DIR}/proseo-images"
 	./build_images.sh "${REGISTRY_URL}"
 	./push_images.sh "${REGISTRY_URL}"
@@ -320,11 +389,14 @@ function prepare_images(){
 }
 prepare_images
 echo ""
+sleep 1
 
 echo "[5/8] Run prosEO"
 function run_proseo() {
 	kubectl apply -f "${SCRIPT_DIR}/kubernetes/storage-mgr-local.yaml"
-	start_port_forward "default" "storage-mgr-service" 8080 3000
+	echo "Waiting for the storage manager to become available ..."
+	kubectl wait --for=condition=ready pod -l name=storage-mgr -n default --timeout=120s
+	start_port_forward "default" "storage-mgr" 8080 3000
 
 	cd "${SCRIPT_DIR}/proseo-images"
 	export POSTGRES_PASSWORD="demo-only"
@@ -335,16 +407,18 @@ function run_proseo() {
 }
 run_proseo
 echo ""
+sleep 1
 
 echo "[6/8] Prepare database"
 function prepare_database() {
-	docker exec proseo-proseo-db-1 su - postgres -c 'psql proseo < /proseo/populate_mon_service_state.sql'
+	docker compose -p proseo exec -T proseo-db su - postgres -c 'psql proseo < /proseo/populate_mon_service_state.sql'
 	echo "OK: Database prepared"
 }
 prepare_database
 echo ""
+sleep 1
 
-echo "[7/8] Check the CLI"
+echo "[7/8] Check the CLI availability"
 function check_cli() {
 	DEFAULT_CLI="${SCRIPT_DIR}/../ui/cli/target/proseo-ui-cli.jar" 
 	CLI_PATH="$DEFAULT_CLI" 
@@ -355,7 +429,8 @@ function check_cli() {
 		echo "You can download it from:" 
 		echo "https://proseo-registry.eoc.dlr.de/artifactory/prosEO/" 
 		echo "" 
-		read -rp "Enter the path to the proseo-ui-cli.jar and press Enter: " CLI_PATH		
+		read -rp "Enter the path to the proseo-ui-cli.jar and press Enter: " CLI_PATH
+		CLI_PATH="$(cd "$(dirname "$CLI_PATH")" && pwd)/$(basename "$CLI_PATH")" # convert relative to absolute path	
 		if [[ ! -f "$CLI_PATH" ]]; then 
 			echo "ERROR: CLI not found at: $CLI_PATH" 
 			return 1 
@@ -365,16 +440,18 @@ function check_cli() {
 }
 check_cli
 echo ""
+sleep 1
 
 echo "[8/8] Configure the test mission"
 function configure_ptm() {
-	${SCRIPT_DIR}/proseo-images/ptm-config/create_data_local.sh "${SHARED_STORAGE_PATH}"
+	"${SCRIPT_DIR}/proseo-images/ptm-config/create_data_local.sh" "${SHARED_STORAGE_PATH}"
 	java -jar "${CLI_PATH}" < "${SCRIPT_DIR}/ptm-config/cli_data_demonstrator_mac.txt"
 	java -jar "$CLI_PATH" <<< "facility update localhost processingEngineToken=someverysecrettoken"
 	echo "OK: test mission configured"
 }
 configure_ptm
 echo ""
+sleep 1
 
 INSTALLATION_SUCCESSFUL=true
 
