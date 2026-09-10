@@ -47,7 +47,7 @@ spec:
           claimName: proseo-ingest
       containers:
         - name: proseo-storage-mgr
-          image: localhost:5000/proseo-storage-mgr:proseoVersionPlaceHolder
+          image: localhost:5000/proseo-storage-mgr:proseoVersionPlaceHolder-demo
           imagePullPolicy: Never
           resources:
             requests:

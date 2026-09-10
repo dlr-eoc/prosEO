@@ -81,6 +81,7 @@ Starting prosEO demonstrator. Refer to README for further instructions.
 EOF
 
 echo ""
+# TODO only use latest version (demo tag statt latest!)
 read -rp "Please enter prosEO version: " PROSEO_VERSION
     if [[ -z "$PROSEO_VERSION" ]]; then
         echo "ERROR: prosEO version must not be empty."
@@ -220,13 +221,9 @@ function update_configuration() {
 	escaped_proseo_version=$(escape_sed_replacement "$PROSEO_VERSION")	
     find "${SCRIPT_DIR}" -type f -name "*.template" | while IFS= read -r template; do
         target="${template%.template}"
-
         cp "$template" "$target"
-
-
         sed -i '' "s/proseoVersionPlaceHolder/${escaped_proseo_version}/g" "$target"
         rm -f "${target}.bak"
-
         echo "OK: Created $target"
     done
 }
@@ -305,6 +302,7 @@ function configure_kubernetes() {
 	echo ""
     
     # Storage
+    # TODO optionally allow for environment variable
     printf '%s\n' \
     	"Please configure the shared storage path. Note: On macOS, the directory must be located below" \
     	"any of the paths available for sharing by default (e. g. '/Users'), using other paths (e. g. '/opt')" \
@@ -331,6 +329,7 @@ function configure_kubernetes() {
 	read -rp "Press Enter to confirm that you have saved the Headlamp secret above. (It will also be available in the log of this run.)"
 	echo ""
 	
+	# Planner account
 	echo "Creating planner account..."
 	kubectl apply -f "${SCRIPT_DIR}/kubernetes/planner-account.yaml"
 	echo "OK: Planner account created"	
@@ -363,7 +362,7 @@ function prepare_images(){
 		"directory pointing to the commit corresponding to prosEO version ${PROSEO_VERSION}." \
 		"In the latter case, your Maven settings file (usually at '$HOME/.m2/settings.xml') must point " \
 		"to your local registry at ${REGISTRY_URL}. See for example: "
-	echo "  
+	echo "
 	<settings>
 	    <profiles>
 	      <profile>
@@ -380,12 +379,16 @@ function prepare_images(){
 	    </profiles>
 	  </settings>
 	  "
+	#TODO consider GitHub registry https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+	#ziehe latest, baue demo
+	
+	export PROSEO_PLATFORM="linux/arm64"
 	cd "${SCRIPT_DIR}/proseo-images"
 	./build_images.sh "${REGISTRY_URL}"
 	./push_images.sh "${REGISTRY_URL}"
 	
 	cd "${SCRIPT_DIR}"
-	echo "OK: Dedicated images built and pushed successfully"
+	echo "OK: Configuration-specific images built and pushed successfully"
 }
 prepare_images
 echo ""
@@ -393,13 +396,17 @@ sleep 1
 
 echo "[5/8] Run prosEO"
 function run_proseo() {
+	kubectl delete pod -n default -l name=storage-mgr --ignore-not-found
 	kubectl apply -f "${SCRIPT_DIR}/kubernetes/storage-mgr-local.yaml"
 	echo "Waiting for the storage manager to become available ..."
 	kubectl wait --for=condition=ready pod -l name=storage-mgr -n default --timeout=120s
-	start_port_forward "default" "storage-mgr" 8080 3000
+	start_port_forward "default" "storage-mgr-service" 8080 3000
 
 	cd "${SCRIPT_DIR}/proseo-images"
 	export POSTGRES_PASSWORD="demo-only"
+	export REGISTRY_URL
+	export PROSEO_VERSION
+	export PROSEO_PLATFORM="linux/arm64"
 	docker compose -p proseo up -d
 	
 	cd "${SCRIPT_DIR}"
@@ -427,7 +434,8 @@ function check_cli() {
 	if [[ ! -f "$DEFAULT_CLI" ]]; then 
 		echo "CLI not found at: $DEFAULT_CLI" 
 		echo "You can download it from:" 
-		echo "https://proseo-registry.eoc.dlr.de/artifactory/prosEO/" 
+		echo "https://proseo-registry.eoc.dlr.de/artifactory/prosEO/"
+		# TODO https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry
 		echo "" 
 		read -rp "Enter the path to the proseo-ui-cli.jar and press Enter: " CLI_PATH
 		CLI_PATH="$(cd "$(dirname "$CLI_PATH")" && pwd)/$(basename "$CLI_PATH")" # convert relative to absolute path	
