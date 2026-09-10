@@ -1090,7 +1090,7 @@ public class KubeJob {
 								
 								if (events != null) {
 									for (CoreV1Event event : events.getItems()) {
-										if (event.getType().equalsIgnoreCase("Warning")) {
+										if (event.getType().equalsIgnoreCase("Warning") && event.getReason().equalsIgnoreCase("ImagePullBackOff")) {
 											jobStep.get().setJobStepState(JobStepState.FAILED);
 											killJob = true;
 										}

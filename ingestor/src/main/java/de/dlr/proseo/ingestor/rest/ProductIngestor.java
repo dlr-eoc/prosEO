@@ -761,7 +761,7 @@ public class ProductIngestor {
 		// Do not delete product file, if the product is currently satisfying some
 		// product query for the same processing facility
 		for (ProductQuery productQuery : product.getSatisfiedProductQueries()) {
-			if (productQuery.getJobStep().getJob().getProcessingFacility().equals(facility)) {
+			if (productQuery.getJobStep() != null && productQuery.getJobStep().getJob().getProcessingFacility().equals(facility)) {
 				throw new IllegalArgumentException(
 						logger.log(IngestorMessage.PRODUCT_QUERY_EXISTS, product.getId(), facility.getName()));
 			}

@@ -195,7 +195,7 @@ public class JobStepUtil {
 					List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
 						.findUnsatisfiedByProductClass(pcId);
 					for (ProductQuery pq : productQueries) {
-						if (pq.getJobStep().getJob().getProcessingOrder().getExecutionTime() != null
+						if (pq.getJobStep() != null && pq.getJobStep().getJob().getProcessingOrder().getExecutionTime() != null
 								? pq.getJobStep().getJob().getProcessingOrder().getExecutionTime().isBefore(now) : true) {
 							if (pq.getJobStep().getJobStepState().equals(JobStepState.WAITING_INPUT)
 									&& pq.getJobStep().getJob().getJobState() != JobState.ON_HOLD) {
@@ -1836,7 +1836,7 @@ public class JobStepUtil {
 					// the product doesn't a file on facility
 					// search all satisfied queries which contain this product on facility
 					for (ProductQuery pq : p.getSatisfiedProductQueries()) {
-						if (pq.getJobStep().getJob().getProcessingFacility().equals(pf)) {
+						if (pq.getJobStep() != null && pq.getJobStep().getJob().getProcessingFacility().equals(pf)) {
 							// remove the product from the query and set satisified to false
 							pq.getSatisfyingProducts().remove(p);
 							pq.setIsSatisfied(false);
@@ -1967,7 +1967,12 @@ public class JobStepUtil {
 	private void startAipDownload(ProductQuery pq) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> ProductQuery({})", pq);
+		
 
+		if (pq.getJobStep() != null) {
+			logger.debug("Product query references no job step");
+			return;
+		}
 		// Calculate start and stop time considering any delta time from policies
 		Instant startTime = pq.getJobStep().getJob().getStartTime();
 		Instant stopTime = pq.getJobStep().getJob().getStopTime();
@@ -2034,7 +2039,10 @@ public class JobStepUtil {
 		if (retry) {
 			retryCount = 10;
 		}
-
+		if (pq.getJobStep() != null) {
+			logger.debug("Product query references no job step");
+			return;
+		}
 		// Retry downloading products with the adjusted time range if necessary
 		while (retryCount > 0) {
 			try {
