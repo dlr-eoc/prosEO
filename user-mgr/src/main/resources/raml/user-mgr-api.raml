@@ -166,6 +166,34 @@ resourceTypes:
         200:
           body:
             text/plain:
+  /groups:
+    get:
+      description: |
+        Get the groups the user belongs to in the specified mission.
+      displayName: getUserGroups
+      queryParameters:
+        mission: 
+          type: string
+          description: the mission code
+        userName: 
+          type: string
+          description: the user name
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestGroup[]
+              example: !include examples/group-list.json
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+        429:
+          description: |
+            The result list length exceeds a configured maximum.
+          headers:
+            Warning: !include types/error.raml
   /{username}:
     uriParameters:
       username: 

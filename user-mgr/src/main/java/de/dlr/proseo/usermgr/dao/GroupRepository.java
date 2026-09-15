@@ -46,4 +46,13 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 	@Query("select g from groups g join g.groupAuthorities ga where ga.authority = ?1")
 	public List<Group> findByAuthority(String authority);
 
+	/**
+	 * Get all groups having the given user member
+	 *
+	 * @param username
+	 * @return a list of user groups with the given username
+	 */
+	@Query("select g from groups g join g.groupMembers m where m.user.username = ?1 order by g.groupName")
+	public List<Group> findByUsername(String username);
+
 }

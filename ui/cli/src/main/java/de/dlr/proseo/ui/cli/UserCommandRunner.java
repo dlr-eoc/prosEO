@@ -51,6 +51,7 @@ public class UserCommandRunner {
 	public static final String CMD_USER = "user";
 	public static final String CMD_PASSWORD = "password";
 	public static final String CMD_GROUP = "group";
+	public static final String CMD_GROUPS = "groups";
 	private static final String CMD_ADD = "add";
 	private static final String CMD_REMOVE = "remove";
 	private static final String CMD_MEMBERS = "members";
@@ -529,6 +530,94 @@ public class UserCommandRunner {
 			for (Object resultObject: (new ObjectMapper()).convertValue(result, List.class)) {
 				if (resultObject instanceof Map) {
 					System.out.println(((Map) resultObject).get("username"));
+				}
+			}
+		}
+	}
+
+
+	/**
+	 * Show the user account specified in the command parameters or options
+	 * 
+	 * @param showCommand the parsed "user show" command
+	 */
+	@SuppressWarnings("rawtypes")
+	private void showUserGroups(ParsedCommand showCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> showUser({})", (null == showCommand ? "null" : showCommand));
+		
+		/* Check command options */
+		String userAccountOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		boolean isVerbose = false;
+		for (ParsedOption option: showCommand.getOptions()) {
+			switch(option.getName()) {
+			case OPTION_FORMAT:
+				userAccountOutputFormat = option.getValue().toUpperCase();
+				break;
+			case OPTION_VERBOSE:
+				isVerbose = true;
+				break;
+			}
+		}
+
+		/* Get processing facility from command parameters */
+		if (showCommand.getParameters().isEmpty()) {
+			System.err.println(ProseoLogger.format(UIMessage.USERNAME_MISSING));
+			return;
+		}
+
+		String username = showCommand.getParameters().get(0).getValue();
+		
+		/* Prepare request URI */
+		String requestURI = URI_PATH_USERS + URI_PATH_GROUPS;
+		Object result = null;
+		
+			if (null != loginManager.getMission()) {
+				requestURI += "?mission=" + loginManager.getMission();
+			}
+			requestURI += "&userName=" + username;
+			/* Get the user account information from the User Manager service */
+			try {
+				result = serviceConnection.getFromService(serviceConfig.getUserManagerUrl(),
+						requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
+			} catch (RestClientResponseException e) {
+				String message = null;
+				switch (e.getStatusCode().value()) {
+				case org.apache.http.HttpStatus.SC_NOT_FOUND:
+					message = ProseoLogger.format(UIMessage.NO_USERS_FOUND, loginManager.getMission());
+					break;
+				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				case org.apache.http.HttpStatus.SC_FORBIDDEN:
+					message = (null == e.getStatusText() ?
+							ProseoLogger.format(UIMessage.NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission()) :
+							e.getStatusText());
+					break;
+				default:
+					message = ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage());
+				}
+				System.err.println(message);
+				return;
+			} catch (RuntimeException e) {
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+				return;
+			}
+		
+		
+		/* Display the user account(s) found */
+		if (isVerbose) {
+			try {
+				CLIUtil.printObject(System.out, result, userAccountOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(ProseoLogger.format(UIMessage.EXCEPTION, e.getMessage()));
+				return;
+			}
+		} else {
+			// Must be a list of users
+			for (Object resultObject: (new ObjectMapper()).convertValue(result, List.class)) {
+				if (resultObject instanceof Map) {
+					System.out.println(((Map) resultObject).get("groupname"));
 				}
 			}
 		}
@@ -1734,6 +1823,7 @@ public class UserCommandRunner {
 			case CMD_DISABLE:	disableUser(subcommand); break COMMAND;
 			case CMD_GRANT:		grantAuthority(subcommand); break COMMAND;
 			case CMD_REVOKE:	revokeAuthority(subcommand); break COMMAND;
+			case CMD_GROUPS:	showUserGroups(subcommand); break COMMAND;
 			default:
 				System.err.println(ProseoLogger.format(UIMessage.COMMAND_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 				return;

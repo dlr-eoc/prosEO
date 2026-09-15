@@ -22,7 +22,7 @@
 	</organization>
 
 	<properties>
-		<jline.version>3.25.1</jline.version>
+		<jline.version>3.30.17</jline.version>
 	</properties>
 
 	<dependencies>

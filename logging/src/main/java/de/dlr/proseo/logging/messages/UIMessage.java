@@ -316,6 +316,7 @@ public enum UIMessage implements ProseoMessage {
 	NO_ORDERTEMPLATES_FOUND					(6300, Level.ERROR, false, "No order templates found for given search criteria", ""),
 	ORDERTEMPLATE_UPDATED					(6301, Level.INFO, true, "Order template with name {0} updated (new version {1})", ""),
 	ORDERTEMPLATE_DELETED					(6302, Level.INFO, true, "Order template with name {0} deleted", ""),
+	USERNAME_MISSING						(6303, Level.ERROR, false, "No user name to show the greoups is given", ""),
 
 	;
 
