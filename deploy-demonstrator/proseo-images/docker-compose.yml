@@ -1,12 +1,12 @@
 services:
   proseo-db:
-    image: ${REGISTRY_URL}/postgres:17-demo
+    image: ${REGISTRY_URL}/postgres:17
     platform: ${PROSEO_PLATFORM}
     environment:
       - POSTGRES_DB=proseo
       - POSTGRES_PASSWORD=demo-only
     volumes:
-      - /opt/prosEO/pgdata:/var/lib/postgresql/data
+      - ${PROSEO_PGDATA_DIR}:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     logging:
@@ -18,7 +18,7 @@ services:
     image: ${REGISTRY_URL}/proseo-ingestor:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - $PROSEO_LOG_DIR:/proseo/log
     ports:
       - "8081:8080"
     logging:
@@ -30,7 +30,7 @@ services:
     image: ${REGISTRY_URL}/proseo-order-mgr:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - $PROSEO_LOG_DIR:/proseo/log
     ports:
       - "8082:8080"
     logging:
@@ -42,7 +42,7 @@ services:
     image: ${REGISTRY_URL}/proseo-planner:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - $PROSEO_LOG_DIR:/proseo/log
     ports:
       - "8083:8080"
     logging:
@@ -54,7 +54,7 @@ services:
     image: ${REGISTRY_URL}/proseo-processor-mgr:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - $PROSEO_LOG_DIR:/proseo/log
     ports:
       - "8084:8080"
     logging:
@@ -66,7 +66,7 @@ services:
     image: ${REGISTRY_URL}/proseo-productclass-mgr:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - $PROSEO_LOG_DIR:/proseo/log
     ports:
       - "8085:8080"
     logging:
@@ -78,7 +78,7 @@ services:
     image: ${REGISTRY_URL}/proseo-user-mgr:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - $PROSEO_LOG_DIR:/proseo/log
     ports:
       - "8086:8080"
     logging:
@@ -90,7 +90,7 @@ services:
     image: ${REGISTRY_URL}/proseo-facility-mgr:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - $PROSEO_LOG_DIR:/proseo/log
     ports:
       - "8087:8080"
     logging:
@@ -102,7 +102,7 @@ services:
     image: ${REGISTRY_URL}/proseo-ui-gui:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - $PROSEO_LOG_DIR:/proseo/log
     ports:
       - "8088:8080"
     depends_on:
@@ -122,7 +122,7 @@ services:
     image: ${REGISTRY_URL}/proseo-api-prip:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - $PROSEO_LOG_DIR:/proseo/log
     ports:
       - "8089:8080"
     depends_on:
@@ -137,7 +137,7 @@ services:
     image: ${REGISTRY_URL}/proseo-api-odip:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - $PROSEO_LOG_DIR:/proseo/log
     ports:
       - "8090:8080"
     depends_on:
@@ -154,7 +154,7 @@ services:
     image: ${REGISTRY_URL}/proseo-notification:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - $PROSEO_LOG_DIR:/proseo/log
     ports:
       - "8091:8080"
     logging:
@@ -166,7 +166,7 @@ services:
     image: ${REGISTRY_URL}/proseo-aip-client:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - $PROSEO_LOG_DIR:/proseo/log
       - /opt/prosEO/data/transfer:/proseo/transfer
     ports:
       - "8092:8080"
@@ -182,7 +182,7 @@ services:
     image: ${REGISTRY_URL}/proseo-archive-mgr:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - $PROSEO_LOG_DIR:/proseo/log
     ports:
       - "8093:8080"
     logging:
@@ -194,7 +194,7 @@ services:
     image: ${REGISTRY_URL}/proseo-order-gen:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
-      - /opt/prosEO/log:/proseo/log
+      - $PROSEO_LOG_DIR:/proseo/log
     ports:
       - "8094:8080"
     logging:

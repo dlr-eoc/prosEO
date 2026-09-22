@@ -15,9 +15,9 @@
 #
 
 
-SHARED_STORAGE_PATH=$1
+SHARED_STORAGE_PATH="$1"
 
-if [ x$STORAGE_MGR_TAG = x -o x$SHARED_STORAGE_PATH = x ] ; then
+if [[ -z "$SHARED_STORAGE_PATH" ]]; then
 	echo "Usage: $0 <path to shared storage>"
 	exit 1
 fi

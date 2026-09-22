@@ -402,12 +402,24 @@ sleep 1
 
 echo "[4/7] Run prosEO"
 function run_proseo() {
+	# Run storage manager
 	kubectl delete pod -n default -l name=storage-mgr --ignore-not-found
 	kubectl apply -f "${SCRIPT_DIR}/kubernetes/storage-mgr-local.yaml"
 	echo "Waiting for the storage manager to become available ..."
 	kubectl wait --for=condition=ready pod -l name=storage-mgr -n default --timeout=120s
 	start_port_forward "default" "storage-mgr-service" 8080 3000
 
+	# Prepare log directory
+	PROSEO_LOG_DIR="${SHARED_STORAGE_PATH}/log"
+	mkdir -p "$PROSEO_LOG_DIR"
+	export PROSEO_LOG_DIR
+	
+	# Prepare pgdata directory
+	PROSEO_PGDATA_DIR="${SHARED_STORAGE_PATH}/pgdata"
+	mkdir -p "$PROSEO_PGDATA_DIR"
+	export PROSEO_PGDATA_DIR
+	
+	# Run other microservices
 	cd "${SCRIPT_DIR}/proseo-images"
 	export POSTGRES_PASSWORD="demo-only"
 	export REGISTRY_URL
@@ -422,6 +434,7 @@ sleep 1
 
 echo "[5/7] Prepare database"
 function prepare_database() {
+	sleep 3
 	docker compose -p proseo exec -T proseo-db su - postgres -c 'psql proseo < /proseo/populate_mon_service_state.sql'
 	echo "OK: Database prepared"
 }
@@ -461,7 +474,7 @@ sleep 1
 
 echo "[7/7] Configure the test mission"
 function configure_ptm() {
-	"${SCRIPT_DIR}/proseo-images/ptm-config/create_data_local.sh" "${SHARED_STORAGE_PATH}"
+	"${SCRIPT_DIR}/ptm-config/create_data_demonstrator_mac.sh" "${SHARED_STORAGE_PATH}"
 	java -jar "${CLI_PATH}" < "${SCRIPT_DIR}/ptm-config/cli_data_demonstrator_mac.txt"
 	java -jar "$CLI_PATH" <<< "facility update localhost processingEngineToken=someverysecrettoken"
 	echo "OK: test mission configured"
