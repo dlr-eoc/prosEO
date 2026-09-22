@@ -1,4 +1,4 @@
-FROM localhost:5000/proseo-api-prip:proseoVersionPlaceHolder
+FROM localhost:5000/proseo-api-prip:demo
 ADD application.yml /usr/share/api/prip/application.yml
 WORKDIR /usr/share/api/prip
 

@@ -62,6 +62,23 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 LOG_FILE="${SCRIPT_DIR}/install-${TIMESTAMP}.log"
 exec > >(tee "$LOG_FILE") 2>&1
 
+# A skip-secrets option is provided to skip the prompt for copying secrets
+SKIP_SECRETS=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -s|--skip-secrets)
+            SKIP_SECRETS=true
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
+
+
 cat <<'EOF'
 
                             /-------\ /-------\\
@@ -81,16 +98,8 @@ Starting prosEO demonstrator. Refer to README for further instructions.
 EOF
 
 echo ""
-# TODO only use latest version (demo tag statt latest!)
-read -rp "Please enter prosEO version: " PROSEO_VERSION
-    if [[ -z "$PROSEO_VERSION" ]]; then
-        echo "ERROR: prosEO version must not be empty."
-        exit 1
-    fi
-echo "OK: prosEO version set to ${PROSEO_VERSION}"
-echo ""
 
-echo "[1/8] Checking prerequisites"
+echo "[1/7] Checking prerequisites"
 function check_prerequisites() {
     # Homebrew
     if ! command -v brew >/dev/null 2>&1; then
@@ -216,22 +225,7 @@ check_prerequisites
 echo ""
 sleep 1
 
-echo "[2/8] Updating configuration according to prosEO version ${PROSEO_VERSION}"
-function update_configuration() {
-	escaped_proseo_version=$(escape_sed_replacement "$PROSEO_VERSION")	
-    find "${SCRIPT_DIR}" -type f -name "*.template" | while IFS= read -r template; do
-        target="${template%.template}"
-        cp "$template" "$target"
-        sed -i '' "s/proseoVersionPlaceHolder/${escaped_proseo_version}/g" "$target"
-        rm -f "${target}.bak"
-        echo "OK: Created $target"
-    done
-}
-update_configuration
-echo ""
-sleep 1
-
-echo "[3/8] Configure Kubernetes"
+echo "[2/7] Configure Kubernetes"
 function configure_kubernetes() {
 	# Registry
 	if docker container inspect registry >/dev/null 2>&1; then
@@ -262,7 +256,10 @@ function configure_kubernetes() {
 	    REGISTRY_URL="${REGISTRY_HOST}:${REGISTRY_PORT}"	
 	else
 		REGISTRY_URL="localhost:5000"
-	    read -rp "A local docker registry will be configured at localhost:5000. Please supply a storage directory: " REGISTRY_DIR
+	    if [[ -z "$REGISTRY_DIR" ]]; then
+	        read -rp "A local docker registry will be configured at localhost:5000. Please supply a storage directory: \
+	        	(Can also be exported as REGISTRY_DIR.)" REGISTRY_DIR
+	    fi
 	    if [[ -z "$REGISTRY_DIR" ]]; then
 	        echo "ERROR: Directory path must not be empty."
 	        exit 1
@@ -302,15 +299,17 @@ function configure_kubernetes() {
 	echo ""
     
     # Storage
-    # TODO optionally allow for environment variable
-    printf '%s\n' \
-    	"Please configure the shared storage path. Note: On macOS, the directory must be located below" \
-    	"any of the paths available for sharing by default (e. g. '/Users'), using other paths (e. g. '/opt')" \
-    	"does not work, even if they are declared as sharable in the Docker Desktop preferences."
-    read -rp "Please enter where to store the prosEO data, e.g. /Users/you/prosEO/data: " SHARED_STORAGE_PATH 
+    if [[ -z "${SHARED_STORAGE_PATH:-}" ]]; then
+    	echo "Please enter where to store the prosEO data, e.g. /Users/you/prosEO/data:"
+    	echo "(Can also be exported as SHARED_STORAGE_PATH.)" 
+    	echo "	Note: On macOS, the directory must be located below (e. g. '/Users'),"
+    	echo "	using other paths (e. g. '/opt') does not work, even if they are declared "
+    	echo "	as sharable in the Docker Desktop preferences."
+    	read -rp "> " SHARED_STORAGE_PATH
+    fi 
     if [[ -z "$SHARED_STORAGE_PATH" ]]; then 
     	echo "ERROR: Shared storage path must not be empty."
-    	 exit 1 
+    	exit 1 
     fi 
     echo "OK: Shared storage path set to '${SHARED_STORAGE_PATH}'"
     echo ""
@@ -326,7 +325,13 @@ function configure_kubernetes() {
 	kubectl describe secret/admin-user-secret --namespace kube-system
 	echo "OK: Headlamp can be accessed at http://localhost:8002/ with the secret provided above"
 	echo ""
-	read -rp "Press Enter to confirm that you have saved the Headlamp secret above. (It will also be available in the log of this run.)"
+	if [[ "$SKIP_SECRETS" != true ]]; then
+	    echo "Press Enter to confirm that you have saved the Headlamp secret above."
+	    echo "Note: Secrets will also be available in the log of this run. By setting"
+	    echo "the -s/--skip-secrets you will no longer be prompted to retreive them interactively."
+	    read -rp ""
+	    echo ""
+	fi
 	echo ""
 	
 	# Planner account
@@ -337,7 +342,9 @@ function configure_kubernetes() {
 	
 	echo "Planner authentication token:"
 	kubectl describe secret/proseo-planner-secret --namespace default
-	read -rp "Press Enter to confirm that you have saved the planner secret above. (It will also be available in the log of this run.)"
+	if [[ "$SKIP_SECRETS" != true ]]; then
+		read -rp "Press Enter to confirm that you have saved the planner secret above. (It will also be available in the log of this run.)"
+	fi
 	echo ""
 	
 	cd "${SCRIPT_DIR}/kubernetes"
@@ -352,14 +359,14 @@ configure_kubernetes
 echo ""
 sleep 1
 
-echo "[4/8] Prepare docker images"
+echo "[3/7] Prepare docker images"
 function prepare_images(){
 	PARENT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 	printf '%s\n' \
 		"Note: the base images must be available in the specified registry and are not built here," \
 		"as this is a demonstrator only. Base images are either available at proseo-registry.eoc.dlr.de" \
 		"or can be built running 'clean install -Dmaven.test.skip=true' on the ${PARENT_DIR}" \
-		"directory pointing to the commit corresponding to prosEO version ${PROSEO_VERSION}." \
+		"directory pointing to the commit corresponding to the latest released prosEO version." \
 		"In the latter case, your Maven settings file (usually at '$HOME/.m2/settings.xml') must point " \
 		"to your local registry at ${REGISTRY_URL}. See for example: "
 	echo "
@@ -379,8 +386,7 @@ function prepare_images(){
 	    </profiles>
 	  </settings>
 	  "
-	#TODO consider GitHub registry https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
-	#ziehe latest, baue demo
+	# TODO consider GitHub registry https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
 	
 	export PROSEO_PLATFORM="linux/arm64"
 	cd "${SCRIPT_DIR}/proseo-images"
@@ -394,7 +400,7 @@ prepare_images
 echo ""
 sleep 1
 
-echo "[5/8] Run prosEO"
+echo "[4/7] Run prosEO"
 function run_proseo() {
 	kubectl delete pod -n default -l name=storage-mgr --ignore-not-found
 	kubectl apply -f "${SCRIPT_DIR}/kubernetes/storage-mgr-local.yaml"
@@ -405,8 +411,6 @@ function run_proseo() {
 	cd "${SCRIPT_DIR}/proseo-images"
 	export POSTGRES_PASSWORD="demo-only"
 	export REGISTRY_URL
-	export PROSEO_VERSION
-	export PROSEO_PLATFORM="linux/arm64"
 	docker compose -p proseo up -d
 	
 	cd "${SCRIPT_DIR}"
@@ -416,7 +420,7 @@ run_proseo
 echo ""
 sleep 1
 
-echo "[6/8] Prepare database"
+echo "[5/7] Prepare database"
 function prepare_database() {
 	docker compose -p proseo exec -T proseo-db su - postgres -c 'psql proseo < /proseo/populate_mon_service_state.sql'
 	echo "OK: Database prepared"
@@ -425,20 +429,25 @@ prepare_database
 echo ""
 sleep 1
 
-echo "[7/8] Check the CLI availability"
+echo "[6/7] Check the CLI availability"
 function check_cli() {
 	DEFAULT_CLI="${SCRIPT_DIR}/../ui/cli/target/proseo-ui-cli.jar" 
 	CLI_PATH="$DEFAULT_CLI" 
 	
+	# TODO Put CLI into a GitHub Registry and auto-download
+	
 	# Check whether CLI is available at the default location 
 	if [[ ! -f "$DEFAULT_CLI" ]]; then 
 		echo "CLI not found at: $DEFAULT_CLI" 
-		echo "You can download it from:" 
-		echo "https://proseo-registry.eoc.dlr.de/artifactory/prosEO/"
+		echo "You can download it from: TBD"
 		# TODO https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry
 		echo "" 
-		read -rp "Enter the path to the proseo-ui-cli.jar and press Enter: " CLI_PATH
-		CLI_PATH="$(cd "$(dirname "$CLI_PATH")" && pwd)/$(basename "$CLI_PATH")" # convert relative to absolute path	
+		if [[ ! -f "$CLI_PATH" ]]; then 
+			echo "Enter the path to the proseo-ui-cli.jar and press Enter:"
+			echo "(Can also be exported as CLI_PATH.)" 
+			read -rp "> " CLI_PATH
+			CLI_PATH="$(cd "$(dirname "$CLI_PATH")" && pwd)/$(basename "$CLI_PATH")" # convert relative to absolute path	
+		fi 			
 		if [[ ! -f "$CLI_PATH" ]]; then 
 			echo "ERROR: CLI not found at: $CLI_PATH" 
 			return 1 
@@ -450,7 +459,7 @@ check_cli
 echo ""
 sleep 1
 
-echo "[8/8] Configure the test mission"
+echo "[7/7] Configure the test mission"
 function configure_ptm() {
 	"${SCRIPT_DIR}/proseo-images/ptm-config/create_data_local.sh" "${SHARED_STORAGE_PATH}"
 	java -jar "${CLI_PATH}" < "${SCRIPT_DIR}/ptm-config/cli_data_demonstrator_mac.txt"

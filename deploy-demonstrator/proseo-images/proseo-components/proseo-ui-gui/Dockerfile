@@ -1,3 +1,3 @@
-FROM localhost:5000/proseo-ui-gui:proseoVersionPlaceHolder
+FROM localhost:5000/proseo-ui-gui:demo
 ADD application.yml /usr/share/proseo-ui-gui/application.yml
 WORKDIR /usr/share/proseo-ui-gui/

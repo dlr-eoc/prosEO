@@ -15,7 +15,7 @@ services:
         max-size: 100m
     restart: unless-stopped
   proseo-ingestor:
-    image: ${REGISTRY_URL}/proseo-ingestor:${PROSEO_VERSION}-demo
+    image: ${REGISTRY_URL}/proseo-ingestor:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
       - /opt/prosEO/log:/proseo/log
@@ -27,7 +27,7 @@ services:
         max-size: 100m
     restart: unless-stopped
   proseo-order-mgr:
-    image: ${REGISTRY_URL}/proseo-order-mgr:${PROSEO_VERSION}-demo
+    image: ${REGISTRY_URL}/proseo-order-mgr:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
       - /opt/prosEO/log:/proseo/log
@@ -39,7 +39,7 @@ services:
         max-size: 100m
     restart: unless-stopped
   proseo-prodplanner:
-    image: ${REGISTRY_URL}/proseo-planner:${PROSEO_VERSION}-demo
+    image: ${REGISTRY_URL}/proseo-planner:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
       - /opt/prosEO/log:/proseo/log
@@ -51,7 +51,7 @@ services:
         max-size: 100m
     restart: unless-stopped
   proseo-processor-mgr:
-    image: ${REGISTRY_URL}/proseo-processor-mgr:${PROSEO_VERSION}-demo
+    image: ${REGISTRY_URL}/proseo-processor-mgr:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
       - /opt/prosEO/log:/proseo/log
@@ -63,7 +63,7 @@ services:
         max-size: 100m
     restart: unless-stopped
   proseo-productclass-mgr:
-    image: ${REGISTRY_URL}/proseo-productclass-mgr:${PROSEO_VERSION}-demo
+    image: ${REGISTRY_URL}/proseo-productclass-mgr:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
       - /opt/prosEO/log:/proseo/log
@@ -75,7 +75,7 @@ services:
         max-size: 100m
     restart: unless-stopped
   proseo-user-mgr:
-    image: ${REGISTRY_URL}/proseo-user-mgr:${PROSEO_VERSION}-demo
+    image: ${REGISTRY_URL}/proseo-user-mgr:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
       - /opt/prosEO/log:/proseo/log
@@ -87,7 +87,7 @@ services:
         max-size: 100m
     restart: unless-stopped
   proseo-facility-mgr:
-    image: ${REGISTRY_URL}/proseo-facility-mgr:${PROSEO_VERSION}-demo
+    image: ${REGISTRY_URL}/proseo-facility-mgr:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
       - /opt/prosEO/log:/proseo/log
@@ -99,7 +99,7 @@ services:
         max-size: 100m
     restart: unless-stopped
   proseo-gui:
-    image: ${REGISTRY_URL}/proseo-ui-gui:${PROSEO_VERSION}-demo
+    image: ${REGISTRY_URL}/proseo-ui-gui:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
       - /opt/prosEO/log:/proseo/log
@@ -119,7 +119,7 @@ services:
         max-size: 100m
     restart: unless-stopped
   proseo-api-prip:
-    image: ${REGISTRY_URL}/proseo-api-prip:${PROSEO_VERSION}-demo
+    image: ${REGISTRY_URL}/proseo-api-prip:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
       - /opt/prosEO/log:/proseo/log
@@ -134,7 +134,7 @@ services:
         max-size: 100m
     restart: unless-stopped
   proseo-api-odip:
-    image: ${REGISTRY_URL}/proseo-api-odip:${PROSEO_VERSION}-demo
+    image: ${REGISTRY_URL}/proseo-api-odip:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
       - /opt/prosEO/log:/proseo/log
@@ -151,7 +151,7 @@ services:
         max-size: 100m
     restart: unless-stopped
   proseo-notification:
-    image: ${REGISTRY_URL}/proseo-notification:${PROSEO_VERSION}-demo
+    image: ${REGISTRY_URL}/proseo-notification:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
       - /opt/prosEO/log:/proseo/log
@@ -163,7 +163,7 @@ services:
         max-size: 100m
     restart: unless-stopped
   proseo-aip-client:
-    image: ${REGISTRY_URL}/proseo-aip-client:${PROSEO_VERSION}-demo
+    image: ${REGISTRY_URL}/proseo-aip-client:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
       - /opt/prosEO/log:/proseo/log
@@ -179,7 +179,7 @@ services:
         max-size: 100m
     restart: unless-stopped
   proseo-archive-mgr:
-    image: ${REGISTRY_URL}/proseo-archive-mgr:${PROSEO_VERSION}-demo
+    image: ${REGISTRY_URL}/proseo-archive-mgr:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
       - /opt/prosEO/log:/proseo/log
@@ -191,7 +191,7 @@ services:
         max-size: 100m
     restart: unless-stopped
   proseo-order-gen:
-    image: ${REGISTRY_URL}/proseo-order-gen:${PROSEO_VERSION}-demo
+    image: ${REGISTRY_URL}/proseo-order-gen:demo
     platform: ${PROSEO_PLATFORM}
     volumes:
       - /opt/prosEO/log:/proseo/log

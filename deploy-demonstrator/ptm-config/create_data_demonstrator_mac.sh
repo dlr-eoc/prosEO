@@ -587,7 +587,7 @@ cat >$TEST_DATA_DIR/order_l2.json <<EOF
             "parameterValue": "77"
         }
     ],
-    "configuredProcessors": [ "PTML2_proseoVersionPlaceHolder_OPER_2020-03-25" ],
+    "configuredProcessors": [ "PTML2_demo_OPER_2020-03-25" ],
     "orbits": [
         { "spacecraftCode": "PTS", "orbitNumberFrom": 3000, "orbitNumberTo": 3002 }
     ],
@@ -654,7 +654,7 @@ cat >$TEST_DATA_DIR/order_l3.json <<EOF
             "parameterValue": "77"
         }
     ],
-    "configuredProcessors": [ "PTML3_proseoVersionPlaceHolder_OPER_2020-03-25" ],
+    "configuredProcessors": [ "PTML3_demo_OPER_2020-03-25" ],
     "orbits": [],
     "requestedProductClasses": [ "PTM_L3" ],
     "inputProductClasses": [ "PTM_L2_A", "PTM_L2_B" ],

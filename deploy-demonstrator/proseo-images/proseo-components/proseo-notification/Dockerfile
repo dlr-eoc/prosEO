@@ -1,4 +1,4 @@
-FROM localhost:5000/proseo-notification:proseoVersionPlaceHolder
+FROM localhost:5000/proseo-notification:demo
 ADD application.yml /usr/share/notification/application.yml
 WORKDIR /usr/share/notification
 
