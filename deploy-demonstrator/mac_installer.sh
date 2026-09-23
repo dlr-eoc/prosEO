@@ -62,13 +62,13 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 LOG_FILE="${SCRIPT_DIR}/install-${TIMESTAMP}.log"
 exec > >(tee "$LOG_FILE") 2>&1
 
-# A skip-secrets option is provided to skip the prompt for copying secrets
-SKIP_SECRETS=false
+# A force option is provided to skip prompts where reasonable
+FORCE=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -s|--skip-secrets)
-            SKIP_SECRETS=true
+        -f|--force)
+            FORCE=true
             shift
             ;;
         *)
@@ -99,7 +99,9 @@ EOF
 
 echo ""
 
+echo "============================================================"
 echo "[1/7] Checking prerequisites"
+echo "============================================================"
 function check_prerequisites() {
     # Homebrew
     if ! command -v brew >/dev/null 2>&1; then
@@ -225,7 +227,9 @@ check_prerequisites
 echo ""
 sleep 1
 
+echo "============================================================"
 echo "[2/7] Configure Kubernetes"
+echo "============================================================"
 function configure_kubernetes() {
 	# Registry
 	if docker container inspect registry >/dev/null 2>&1; then
@@ -311,6 +315,8 @@ function configure_kubernetes() {
     	echo "ERROR: Shared storage path must not be empty."
     	exit 1 
     fi 
+    export SHARED_STORAGE_PATH
+	export REGISTRY_URL
     echo "OK: Shared storage path set to '${SHARED_STORAGE_PATH}'"
     echo ""
 	
@@ -325,10 +331,10 @@ function configure_kubernetes() {
 	kubectl describe secret/admin-user-secret --namespace kube-system
 	echo "OK: Headlamp can be accessed at http://localhost:8002/ with the secret provided above"
 	echo ""
-	if [[ "$SKIP_SECRETS" != true ]]; then
+	if [[ "$FORCE" != true ]]; then
 	    echo "Press Enter to confirm that you have saved the Headlamp secret above."
 	    echo "Note: Secrets will also be available in the log of this run. By setting"
-	    echo "the -s/--skip-secrets you will no longer be prompted to retreive them interactively."
+	    echo "the -f/--force flag you will no longer be prompted to retreive them interactively."
 	    read -rp ""
 	    echo ""
 	fi
@@ -342,9 +348,15 @@ function configure_kubernetes() {
 	
 	echo "Planner authentication token:"
 	kubectl describe secret/proseo-planner-secret --namespace default
-	if [[ "$SKIP_SECRETS" != true ]]; then
-		read -rp "Press Enter to confirm that you have saved the planner secret above. (It will also be available in the log of this run.)"
+	echo ""
+	if [[ "$FORCE" != true ]]; then
+	    echo "Press Enter to confirm that you have saved the planner secret above."
+	    echo "Note: Secrets will also be available in the log of this run. By setting"
+	    echo "the -f/--force flag you will no longer be prompted to retreive them interactively."
+	    read -rp ""
+	    echo ""
 	fi
+
 	echo ""
 	
 	cd "${SCRIPT_DIR}/kubernetes"
@@ -359,35 +371,62 @@ configure_kubernetes
 echo ""
 sleep 1
 
+echo "============================================================"
 echo "[3/7] Prepare docker images"
-function prepare_images(){
-	PARENT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-	printf '%s\n' \
-		"Note: the base images must be available in the specified registry and are not built here," \
-		"as this is a demonstrator only. Base images are either available at proseo-registry.eoc.dlr.de" \
-		"or can be built running 'clean install -Dmaven.test.skip=true' on the ${PARENT_DIR}" \
-		"directory pointing to the commit corresponding to the latest released prosEO version." \
-		"In the latter case, your Maven settings file (usually at '$HOME/.m2/settings.xml') must point " \
-		"to your local registry at ${REGISTRY_URL}. See for example: "
-	echo "
-	<settings>
-	    <profiles>
-	      <profile>
-	        <id>dev-local</id><!-- or any other id you prefer -->
-	        <activation>
-	          <activeByDefault>true</activeByDefault>
-	        </activation>
-	        <properties>
-	          <docker.registry>localhost:5000</docker.registry>
-	          <!-- Uncomment the following entry to create native images on Mac -->
-	          <!-- <project.build.platform>linux/arm64</project.build.platform> -->
-	        </properties>
-	      </profile>
-	    </profiles>
-	  </settings>
-	  "
-	# TODO consider GitHub registry https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+echo "============================================================"
+function prepare_images(){	
+	# check whether required base images are available	
+	COMPONENT_DIR="$(cd "${SCRIPT_DIR}/proseo-images/proseo-components" && pwd)"
+	all_available=true
+	for component_dir in "$COMPONENT_DIR"/*; do
+	    [ -d "$component_dir" ] || continue	
+	    	dockerfile="$component_dir/Dockerfile"	
 	
+	    # extract the image name
+	    image=$(awk '
+	        /^[[:space:]]*FROM[[:space:]]/ {
+	            print $2
+	            exit
+	        }
+	    ' "$dockerfile")
+	
+	    echo -n "[CHECK] $(basename "$component_dir"): $image ... "
+	
+	    if docker pull "$image" >/dev/null 2>&1; then
+	        echo "OK"
+	    else
+	        echo "NOT FOUND"
+	        all_available=false
+	    fi
+	done
+
+	# build the base images if any are unavailable
+	if [[ "$all_available" == false ]]; then
+		cd "${SCRIPT_DIR}/.."		
+		
+		PROSEO_VERSION=$(sed -n 's:.*<version>\([^<]*\)</version>.*:\1:p' "${SCRIPT_DIR}/../pom.xml" | head -1)
+		
+		if [[ "$FORCE" != true ]]; then
+			echo ""
+			echo "Currently, you have checked out prosEO version $PROSEO_VERSION."
+			echo "Does your repository point to the commit corresponding to the desired stable prosEO version?"
+			read -rp "Please enter to confirm. Note: This prompt can be skipped by setting the -f/--force flag."
+			
+		    echo ""
+		fi
+
+		echo ""
+		echo "Installing base images ..."		
+		mvn clean install -Dmaven.test.skip=true > /dev/null
+		
+		docker images --format '{{.Repository}}:{{.Tag}}' | grep -E ":${PROSEO_VERSION//./\\.}$" |
+		while read -r image; do
+		    repository="${image%:*}"
+		    docker tag "$image" "${repository}:demo"
+		    docker push "${repository}:demo"
+		done
+	fi
+		
 	export PROSEO_PLATFORM="linux/arm64"
 	cd "${SCRIPT_DIR}/proseo-images"
 	./build_images.sh "${REGISTRY_URL}"
@@ -400,7 +439,9 @@ prepare_images
 echo ""
 sleep 1
 
+echo "============================================================"
 echo "[4/7] Run prosEO"
+echo "============================================================"
 function run_proseo() {
 	# Run storage manager
 	kubectl delete pod -n default -l name=storage-mgr --ignore-not-found
@@ -422,7 +463,6 @@ function run_proseo() {
 	# Run other microservices
 	cd "${SCRIPT_DIR}/proseo-images"
 	export POSTGRES_PASSWORD="demo-only"
-	export REGISTRY_URL
 	docker compose -p proseo up -d
 	
 	cd "${SCRIPT_DIR}"
@@ -432,7 +472,9 @@ run_proseo
 echo ""
 sleep 1
 
+echo "============================================================"
 echo "[5/7] Prepare database"
+echo "============================================================"
 function prepare_database() {
 	sleep 3
 	docker compose -p proseo exec -T proseo-db su - postgres -c 'psql proseo < /proseo/populate_mon_service_state.sql'
@@ -442,7 +484,9 @@ prepare_database
 echo ""
 sleep 1
 
+echo "============================================================"
 echo "[6/7] Check the CLI availability"
+echo "============================================================"
 function check_cli() {
 	DEFAULT_CLI="${SCRIPT_DIR}/../ui/cli/target/proseo-ui-cli.jar" 
 	CLI_PATH="$DEFAULT_CLI" 
@@ -465,14 +509,17 @@ function check_cli() {
 			echo "ERROR: CLI not found at: $CLI_PATH" 
 			return 1 
 		fi 
-	fi 
+	fi
+	export CLI_PATH
 	echo "OK: CLI available at $CLI_PATH"
 }
 check_cli
 echo ""
 sleep 1
 
+echo "============================================================"
 echo "[7/7] Configure the test mission"
+echo "============================================================"
 function configure_ptm() {
 	"${SCRIPT_DIR}/ptm-config/create_data_demonstrator_mac.sh" "${SHARED_STORAGE_PATH}"
 	java -jar "${CLI_PATH}" < "${SCRIPT_DIR}/ptm-config/cli_data_demonstrator_mac.txt"
@@ -489,4 +536,30 @@ echo "The demonstrator is up and running:"
 echo "- The CLI is available at ${CLI_PATH}"
 echo "- The GUI is available at localhost:8088"
 echo ""
-echo "Note: The demonstrator can be stopped by running stop_control_instance.sh from the proseo-images directory."
+echo "Note: An uninstaller is available. Restore the environment as below if you have" 
+echo "terminated the console in between. All commands are available in the log."
+
+function print_environment() {
+    echo ""
+    echo "============================================================"
+    echo " prosEO environment"
+    echo "============================================================"
+    echo ""
+    echo "The following commands can be used to restore the prosEO"
+    echo "environment in another terminal, e.g. for the uninstaller:"
+    echo ""
+
+    printf 'export SHARED_STORAGE_PATH=%q\n' "${SHARED_STORAGE_PATH:-}"
+    printf 'export REGISTRY_URL=%q\n' "${REGISTRY_URL:-}"
+    printf 'export PROSEO_LOG_DIR=%q\n' "${PROSEO_LOG_DIR:-}"
+    printf 'export PROSEO_PGDATA_DIR=%q\n' "${PROSEO_PGDATA_DIR:-}"
+    printf 'export POSTGRES_PASSWORD=%q\n' "${POSTGRES_PASSWORD:-}"
+    printf 'export PROSEO_PLATFORM=%q\n' "${PROSEO_PLATFORM:-}"
+    printf 'export JAVA_HOME=%q\n' "${JAVA_HOME:-}"
+    printf 'export CLI_PATH=%q\n' "${CLI_PATH:-}"
+
+    echo ""
+    echo "============================================================"
+    echo ""
+}
+print_environment

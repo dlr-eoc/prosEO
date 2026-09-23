@@ -1,4 +1,4 @@
 /nfs-pv.yaml
 /testproducts
 /**/nohup.out
-*.log
+*.log*
