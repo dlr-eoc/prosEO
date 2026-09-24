@@ -1,9 +1,7 @@
 #!/bin/bash
 #
-# create_data_local.sh
+# create_data_demonstrator_mac.sh
 # --------------------
-#
-# Usage: create_data_local.sh <Storage Manager image tag> <path to shared storage>
 #
 # Create Kubernetes services on a local Docker Desktop instance
 # and dynamic test data for the prosEO test mission:
@@ -12,10 +10,10 @@
 # - a processing facility on Docker Desktop
 # - a processing order for L2 products
 # - a processing order for L3 products
-#
-
 
 SHARED_STORAGE_PATH="$1"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR" || exit 1
 
 if [[ -z "$SHARED_STORAGE_PATH" ]]; then
 	echo "Usage: $0 <path to shared storage>"
@@ -27,19 +25,19 @@ fi
 # -------------------------
 
 # Create empty subdirectory for test data
-TEST_DATA_DIR=testproducts
-mkdir -p $TEST_DATA_DIR
+TEST_DATA_DIR="$SCRIPT_DIR/testproducts"
+mkdir -p "$TEST_DATA_DIR"
 rm -rf $TEST_DATA_DIR/*
 
-INGEST_DIR=$TEST_DATA_DIR/transfer
+INGEST_DIR="$TEST_DATA_DIR/transfer"
 FILE_PATH=import/products
 INGEST_MOUNT_POINT=/mnt
 
 # Products consist of the fields id, type, start time, stop time, generation time and revision,
 # separated by vertical bars
 # L0 products are in 45 min slices, starting with orbit 3000
-mkdir -p ${INGEST_DIR}/${FILE_PATH}
-cd ${INGEST_DIR}/${FILE_PATH}
+mkdir -p "${INGEST_DIR}/${FILE_PATH}"
+cd "${INGEST_DIR}/${FILE_PATH}"
 
 cat >PTM_L0_20191104090000_20191104094500_20191104120000.RAW <<EOF
 1234567|PTM_L0|2019-11-04T09:00:00Z|2019-11-04T09:45:00Z|2019-11-04T12:00:00Z|1
@@ -97,14 +95,14 @@ cat >PTM_L0_20191104184500_20191104193000_20191104210100.RAW <<EOF
 1234567|PTM_L0|2019-11-04T18:45:00Z|2019-11-04T19:30:00Z|2019-11-04T21:01:00Z|1
 EOF
 
-cd -
+cd "$SCRIPT_DIR" || exit 1
 
 # IERSB AUX products are real-world data:
 # Using bulletinb-380.xml
-cp -p bulletinb-380.xml ${INGEST_DIR}/${FILE_PATH}
+cp -p bulletinb-380.xml "${INGEST_DIR}/${FILE_PATH}"
 
 # Copy test data into file server
-cp -pR ${INGEST_DIR}/* ${SHARED_STORAGE_PATH}/transfer/
+cp -pR "${INGEST_DIR}/*" "${SHARED_STORAGE_PATH}/transfer/"
 
 
 
@@ -113,7 +111,7 @@ cp -pR ${INGEST_DIR}/* ${SHARED_STORAGE_PATH}/transfer/
 # -------------------------
 
 # Create a new CLI command script
-CLI_SCRIPT=cli_data_demonstrator_mac.txt
+CLI_SCRIPT="${SCRIPT_DIR}/cli_data_demonstrator_mac.txt"
 echo "" >$CLI_SCRIPT
 
 # Create a processing facility
@@ -137,7 +135,7 @@ echo "facility create --file=$TEST_DATA_DIR/facility.json" >>$CLI_SCRIPT
 
 # Ingest test data into prosEO
 echo "ingest --file=$TEST_DATA_DIR/ingest_products.json localhost" >>$CLI_SCRIPT
-cat >$TEST_DATA_DIR/ingest_products.json <<EOF
+cat >"$TEST_DATA_DIR/ingest_products.json" <<EOF
 [
     {
         "missionCode": "PTM",

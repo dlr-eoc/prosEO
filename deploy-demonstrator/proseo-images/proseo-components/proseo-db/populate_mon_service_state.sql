@@ -8,4 +8,5 @@ VALUES
     (2, 1, 'stopped'),
     (3, 1, 'starting'),
     (4, 1, 'stopping'),
-    (5, 1, 'degraded');
+    (5, 1, 'degraded')
+ON CONFLICT (id) DO NOTHING;

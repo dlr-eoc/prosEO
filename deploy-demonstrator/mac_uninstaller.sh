@@ -119,28 +119,12 @@ echo ""
 require_command kubectl
 require_command docker
 
-# The installer creates the compose project from this directory.
-COMPOSE_DIR="${SCRIPT_DIR}/proseo-images"
-
 echo "[1/5] Stopping prosEO containers"
-
-if [[ -d "$COMPOSE_DIR" ]]; then
+COMPOSE_DIR="${SCRIPT_DIR}/proseo-images"
     (
-        cd "$COMPOSE_DIR"
-
-        # Use the same project name as the installer. Do not use -v here:
-        # named volumes, if any, should not be removed implicitly.
-        if docker compose -p proseo ps -q 2>/dev/null | grep -q .; then
-            docker compose -p proseo down
-        else
-            echo "No running/stopped containers found for compose project 'proseo'."
-        fi
+        cd "$COMPOSE_DIR" || exit 1
+        docker compose -p proseo down
     )
-else
-    echo "Compose directory not found: $COMPOSE_DIR"
-    echo "Trying to remove the project by name anyway."
-    docker compose -p proseo down 2>/dev/null || true
-fi
 
 echo ""
 echo "[2/5] Removing Kubernetes resources"

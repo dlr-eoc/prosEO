@@ -55,6 +55,18 @@ function escape_sed_replacement() {
 	printf '%s' "$1" | sed 's/[&|\\]/\\&/g'
 }
 
+# search for prosEO error codes
+function check_for_errors() {
+    local output
+    output=$("$@" 2>&1)
+    printf '%s\n' "$output"
+    if grep -qE '\(E[0-9]+\)' <<< "$output"; then
+        echo "ERROR: CLI reported an error."
+        return 1
+    fi
+    return 0
+}
+
 # -------
 
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
@@ -73,7 +85,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         *)
             echo "Unknown option: $1"
-            exit 1
+            return 1
             ;;
     esac
 done
@@ -107,7 +119,7 @@ function check_prerequisites() {
     if ! command -v brew >/dev/null 2>&1; then
         echo "ERROR: Homebrew is required."
         echo "Please install Homebrew first: https://brew.sh/"
-        exit 1
+        return 1
     fi
     echo "OK: Homebrew is installed."
 
@@ -133,7 +145,7 @@ function check_prerequisites() {
         done
         if ! docker info >/dev/null 2>&1; then
             echo "ERROR: Docker Desktop did not start successfully."
-            exit 1
+            return 1
         fi
     fi
     echo "OK: Docker is running."
@@ -147,26 +159,48 @@ function check_prerequisites() {
         echo "OK: kubectl is installed."
     fi
 
-    # Kubernetes cluster
-    if ! kubectl cluster-info >/dev/null 2>&1; then
-        echo "Kubernetes is not enabled or not running in Docker Desktop."
-        echo "Please enable Kubernetes in Docker Desktop:"
-        echo "Docker Desktop -> Settings -> Kubernetes -> Enable Kubernetes -> Install"
-        echo "-> Create a single-node cluster of type kubeadm"
-        read -rp "Press Enter after enabling Kubernetes..."
-        echo "Waiting for Kubernetes..."
-        for i in {1..90}; do
-            if kubectl cluster-info >/dev/null 2>&1; then
-                break
-            fi
-            sleep 2
-        done
-        if ! kubectl cluster-info >/dev/null 2>&1; then
-            echo "ERROR: Kubernetes cluster is still not reachable."
-            exit 1
-        fi
-    fi
-    echo "OK: Kubernetes cluster is reachable."
+	# Kubernetes cluster
+	if ! kubectl cluster-info >/dev/null 2>&1; then
+	    echo "Kubernetes is not currently reachable."
+	    echo "Waiting for Kubernetes..."
+	    kubernetes_ready=false
+	
+	    for i in {1..30}; do
+	        if kubectl cluster-info >/dev/null 2>&1; then
+	            kubernetes_ready=true
+	            break
+	        fi	
+	        printf '.'
+	        sleep 2
+	    done
+	
+	    if $kubernetes_ready; then
+	        echo "OK: Kubernetes cluster is reachable."
+	    else
+	        echo "Kubernetes is not enabled or not running in Docker Desktop."
+	        echo
+	        echo "Please enable Kubernetes in Docker Desktop:"
+	        echo "Docker Desktop -> Settings -> Kubernetes -> Enable Kubernetes -> Install"
+	        echo "-> Create a single-node cluster of type kubeadm"	
+	        read -rp "Press Enter after enabling Kubernetes..."
+	
+	        echo "Waiting for Kubernetes..."	
+	        for i in {1..90}; do
+	            if kubectl cluster-info >/dev/null 2>&1; then
+	                kubernetes_ready=true
+	                break
+	            fi	
+	            printf '.'
+	            sleep 2
+	        done
+	
+	        if ! $kubernetes_ready; then
+	            echo "ERROR: Kubernetes cluster is still not reachable."
+	            return 1
+	        fi	
+	        echo "OK: Kubernetes cluster is reachable."
+	    fi
+	fi
 
     # Java 21+ installed?
     JAVA_MAJOR_VERSION=0
@@ -205,12 +239,12 @@ function check_prerequisites() {
     # Verify Java
     if ! command -v java >/dev/null 2>&1; then
         echo "ERROR: Java could not be found after installation."
-        exit 1
+        return 1
     fi
     JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
     if [[ -z "$JAVA_VERSION" ]]; then
         echo "ERROR: Could not determine Java version."
-        exit 1
+        return 1
     fi
     JAVA_MAJOR_VERSION=$(printf '%s\n' "$JAVA_VERSION" | awk -F. '{
         if ($1 == 1) print $2;
@@ -218,7 +252,7 @@ function check_prerequisites() {
     if (( JAVA_MAJOR_VERSION < 21 )); then
         echo "ERROR: Java 21 or later is required."
         echo "Detected Java version: $JAVA_VERSION"
-        exit 1
+        return 1
     fi
     echo "OK: Java $JAVA_VERSION is available."
     echo "JAVA_HOME: ${JAVA_HOME:-not set}"
@@ -246,7 +280,7 @@ function configure_kubernetes() {
 	    )"	
 	    if [[ -z "$REGISTRY_PORT_MAPPING" ]]; then
 	        echo "ERROR: Existing registry container has no published port for 5000/tcp."
-	        exit 1
+	        return 1
 	    fi	
 	    REGISTRY_HOST="${REGISTRY_PORT_MAPPING%:*}"
 	    REGISTRY_PORT="${REGISTRY_PORT_MAPPING##*:}"
@@ -266,13 +300,13 @@ function configure_kubernetes() {
 	    fi
 	    if [[ -z "$REGISTRY_DIR" ]]; then
 	        echo "ERROR: Directory path must not be empty."
-	        exit 1
+	        return 1
 	    fi
 	    REGISTRY_DIR="${REGISTRY_DIR%/}" # Remove trailing '/' characters.
 	    REGISTRY_DIR="${REGISTRY_DIR/#\~/$HOME}" # Expand '~' if necessary.
 	    if ! mkdir -p "$REGISTRY_DIR"; then
 	        echo "ERROR: Could not create registry storage directory: $REGISTRY_DIR"
-	        exit 1
+	        return 1
 	    fi	
 	    echo "Using registry storage directory: $REGISTRY_DIR"
 
@@ -284,7 +318,7 @@ function configure_kubernetes() {
 	        --name registry \
 	        registry:2; then
 	        echo "ERROR: Could not start Docker registry."
-	        exit 1
+	        return 1
 	    fi	
 	    echo "Waiting for Docker registry..."
 	
@@ -296,7 +330,7 @@ function configure_kubernetes() {
 	    done
 	    if ! curl -fsS "http://${REGISTRY_URL}/v2/" >/dev/null 2>&1; then
 	        echo "ERROR: Docker registry could not be reached at ${REGISTRY_URL}."
-	        exit 1
+	        return 1
 	    fi
 	fi	
 	echo "OK: prosEO registry available at ${REGISTRY_URL}"
@@ -313,7 +347,7 @@ function configure_kubernetes() {
     fi 
     if [[ -z "$SHARED_STORAGE_PATH" ]]; then 
     	echo "ERROR: Shared storage path must not be empty."
-    	exit 1 
+    	return 1 
     fi 
     export SHARED_STORAGE_PATH
 	export REGISTRY_URL
@@ -476,8 +510,24 @@ echo "============================================================"
 echo "[5/7] Prepare database"
 echo "============================================================"
 function prepare_database() {
-	sleep 3
-	docker compose -p proseo exec -T proseo-db su - postgres -c 'psql proseo < /proseo/populate_mon_service_state.sql'
+	echo "Waiting for PostgreSQL..."
+	for i in {1..60}; do
+	    if docker compose -p proseo exec -T proseo-db pg_isready -U postgres >/dev/null 2>&1; then
+	        break
+	    fi	
+	    printf '.'
+	    sleep 1
+	done	
+	if ! docker compose -p proseo exec -T proseo-db pg_isready -U postgres >/dev/null 2>&1; then
+	    echo "ERROR: PostgreSQL did not become ready after 60 seconds."
+	    return 1
+	fi
+	
+	if ! docker compose -p proseo exec -T proseo-db su - postgres -c 'psql proseo < /proseo/populate_mon_service_state.sql'
+	then
+	    echo "ERROR: Database preparation failed."
+	    return 1
+	fi
 	echo "OK: Database prepared"
 }
 prepare_database
@@ -488,23 +538,26 @@ echo "============================================================"
 echo "[6/7] Check the CLI availability"
 echo "============================================================"
 function check_cli() {
-	DEFAULT_CLI="${SCRIPT_DIR}/../ui/cli/target/proseo-ui-cli.jar" 
-	CLI_PATH="$DEFAULT_CLI" 
-	
-	# TODO Put CLI into a GitHub Registry and auto-download
-	
-	# Check whether CLI is available at the default location 
-	if [[ ! -f "$DEFAULT_CLI" ]]; then 
-		echo "CLI not found at: $DEFAULT_CLI" 
-		echo "You can download it from: TBD"
-		# TODO https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry
-		echo "" 
-		if [[ ! -f "$CLI_PATH" ]]; then 
-			echo "Enter the path to the proseo-ui-cli.jar and press Enter:"
-			echo "(Can also be exported as CLI_PATH.)" 
-			read -rp "> " CLI_PATH
-			CLI_PATH="$(cd "$(dirname "$CLI_PATH")" && pwd)/$(basename "$CLI_PATH")" # convert relative to absolute path	
-		fi 			
+	CLI_PATH="${SCRIPT_DIR}/../ui/cli/target/proseo-ui-cli.jar" 
+	if [[ ! -f "$CLI_PATH" ]]; then 
+		# build CLI if unavailable
+		cd "${SCRIPT_DIR}/../ui"		
+		
+		PROSEO_VERSION=$(sed -n 's:.*<version>\([^<]*\)</version>.*:\1:p' "${SCRIPT_DIR}/../pom.xml" | head -1)
+		
+		if [[ "$FORCE" != true ]]; then
+			echo ""
+			echo "CLI will be installed. Currently, you have checked out prosEO version $PROSEO_VERSION."
+			echo "Does your repository point to the commit corresponding to the desired stable prosEO version?"
+			read -rp "Please enter to confirm. Note: This prompt can be skipped by setting the -f/--force flag."
+			
+		    echo ""
+		fi
+
+		echo ""
+		echo "Installing CLI ..."		
+		mvn clean install -Dmaven.test.skip=true > /dev/null
+		
 		if [[ ! -f "$CLI_PATH" ]]; then 
 			echo "ERROR: CLI not found at: $CLI_PATH" 
 			return 1 
@@ -521,9 +574,23 @@ echo "============================================================"
 echo "[7/7] Configure the test mission"
 echo "============================================================"
 function configure_ptm() {
-	"${SCRIPT_DIR}/ptm-config/create_data_demonstrator_mac.sh" "${SHARED_STORAGE_PATH}"
-	java -jar "${CLI_PATH}" < "${SCRIPT_DIR}/ptm-config/cli_data_demonstrator_mac.txt"
-	java -jar "$CLI_PATH" <<< "facility update localhost processingEngineToken=someverysecrettoken"
+	cd ${SCRIPT_DIR}/ptm-config
+	if ! "./configure_proseo_test_mission.pl"; then
+		return 1
+	fi
+	if ! check_for_errors java -jar "${CLI_PATH}" <cli_script.txt; then
+		return 1
+	fi
+	if ! "${SCRIPT_DIR}/ptm-config/create_data_demonstrator_mac.sh" "${SHARED_STORAGE_PATH}"; then
+		return 1
+	fi
+	if ! check_for_errors java -jar "${CLI_PATH}" -i"${SCRIPT_DIR}/ptm-config/testfiles/proseo.cred" -mPTM < "${SCRIPT_DIR}/ptm-config/cli_data_demonstrator_mac.txt"; then
+		return 1
+	fi
+	if ! check_for_errors java -jar "$CLI_PATH" -i"${SCRIPT_DIR}/ptm-config/testfiles/proseo.cred" -mPTM <<< "facility update localhost processingEngineToken=someverysecrettoken"; then
+		return 1
+	fi
+	cd ${SCRIPT_DIR}
 	echo "OK: test mission configured"
 }
 configure_ptm
