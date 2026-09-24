@@ -8,7 +8,7 @@ spring:
             #id.db_structure_naming_strategy: standard
     datasource:
         url: jdbc:postgresql://proseo-db:5432/proseo
-        username: <db_user>
+        username: postgres
         password: demo-only
     packagesToScan: de.dlr.proseo.model
 management:
