@@ -578,6 +578,22 @@ function configure_ptm() {
 	if ! "./configure_proseo_test_mission.pl"; then
 		return 1
 	fi
+	
+	echo "Waiting for prosEO to become available ..."	
+	for i in {1..20}; do
+	    if [ -n "$(docker compose -p proseo ps --status running --format '{{.Name}}')" ]; then
+	        echo "prosEO is running."
+	        break
+	    fi
+	
+	    sleep 2
+	
+	    if [ "$i" -eq 20 ]; then
+	        echo "Timeout: prosEO did not become available within 40s."
+	        exit 1
+	    fi
+	done
+	
 	if ! check_for_errors java -jar "${CLI_PATH}" <cli_script.txt; then
 		return 1
 	fi
