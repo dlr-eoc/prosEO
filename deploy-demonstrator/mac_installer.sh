@@ -173,7 +173,7 @@ function check_prerequisites() {
 	        printf '.'
 	        sleep 2
 	    done
-	
+
 	    if $kubernetes_ready; then
 	        echo "OK: Kubernetes cluster is reachable."
 	    else
@@ -181,7 +181,7 @@ function check_prerequisites() {
 	        echo
 	        echo "Please enable Kubernetes in Docker Desktop:"
 	        echo "Docker Desktop -> Settings -> Kubernetes -> Enable Kubernetes -> Install"
-	        echo "-> Create a single-node cluster of type kubeadm"	
+	        echo "-> Create a single-node cluster of type kubeadm"
 	        read -rp "Press Enter after enabling Kubernetes..."
 	
 	        echo "Waiting for Kubernetes..."	
@@ -256,13 +256,16 @@ function check_prerequisites() {
     fi
     echo "OK: Java $JAVA_VERSION is available."
     echo "JAVA_HOME: ${JAVA_HOME:-not set}"
+    
+    
+    ## TODO Check Maven
 }
 check_prerequisites
 echo ""
 sleep 1
 
 echo "============================================================"
-echo "[2/7] Configure Kubernetes"
+echo "[2/7] Configure Docker and Kubernetes"
 echo "============================================================"
 function configure_kubernetes() {
 	# Registry
@@ -294,11 +297,11 @@ function configure_kubernetes() {
 	    REGISTRY_URL="${REGISTRY_HOST}:${REGISTRY_PORT}"	
 	else
 		REGISTRY_URL="localhost:5000"
-	    if [[ -z "$REGISTRY_DIR" ]]; then
-	        read -rp "A local docker registry will be configured at localhost:5000. Please supply a storage directory: \
-	        	(Can also be exported as REGISTRY_DIR.)" REGISTRY_DIR
+	    if [[ -z "${REGISTRY_DIR:-}" ]]; then
+	        echo "A local docker registry will be configured at localhost:5000. Please supply a storage directory (can also be exported as REGISTRY_DIR.):" 
+	        read -rp ">	" REGISTRY_DIR
 	    fi
-	    if [[ -z "$REGISTRY_DIR" ]]; then
+	    if [[ -z "${REGISTRY_DIR:-}" ]]; then
 	        echo "ERROR: Directory path must not be empty."
 	        return 1
 	    fi
@@ -433,7 +436,8 @@ function prepare_images(){
 	        all_available=false
 	    fi
 	done
-
+	
+	export PROSEO_PLATFORM="linux/arm64"
 	# build the base images if any are unavailable
 	if [[ "$all_available" == false ]]; then
 		cd "${SCRIPT_DIR}/.."		
@@ -460,8 +464,7 @@ function prepare_images(){
 		    docker push "${repository}:demo"
 		done
 	fi
-		
-	export PROSEO_PLATFORM="linux/arm64"
+
 	cd "${SCRIPT_DIR}/proseo-images"
 	./build_images.sh "${REGISTRY_URL}"
 	./push_images.sh "${REGISTRY_URL}"
@@ -593,6 +596,8 @@ function configure_ptm() {
 	        exit 1
 	    fi
 	done
+	
+	sleep 15
 	
 	if ! check_for_errors java -jar "${CLI_PATH}" <cli_script.txt; then
 		return 1

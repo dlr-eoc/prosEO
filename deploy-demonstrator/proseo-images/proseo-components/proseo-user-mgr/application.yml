@@ -21,6 +21,6 @@ logging:
         org.hibernate.engine.jdbc.env.internal: WARN
 proseo:
     defaultuser.name: sysadm
-    defaultuser.password: demo-only
+    defaultuser.password: sysadm
     # Password expiration period in days
     password.expirationtime: 90
