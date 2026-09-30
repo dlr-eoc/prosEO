@@ -1,3 +1,0 @@
-FROM localhost:5000/proseo-order-gen:demo
-ADD application.yml /usr/share/proseo-order-gen/application.yml
-WORKDIR /usr/share/proseo-order-gen/
