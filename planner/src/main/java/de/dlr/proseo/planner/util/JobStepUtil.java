@@ -1966,10 +1966,10 @@ public class JobStepUtil {
 	 */
 	private void startAipDownload(ProductQuery pq) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> ProductQuery({})", pq);
+			logger.trace(">>> startAipDownload({})", pq);
 		
 
-		if (pq.getJobStep() != null) {
+		if (pq.getJobStep() == null) {
 			logger.debug("Product query references no job step");
 			return;
 		}
@@ -2039,7 +2039,7 @@ public class JobStepUtil {
 		if (retry) {
 			retryCount = 10;
 		}
-		if (pq.getJobStep() != null) {
+		if (pq.getJobStep() == null) {
 			logger.debug("Product query references no job step");
 			return;
 		}
