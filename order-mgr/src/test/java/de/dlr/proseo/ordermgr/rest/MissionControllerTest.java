@@ -11,8 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import javax.transaction.Transactional;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +30,7 @@ import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
+import jakarta.transaction.Transactional;
 
 /**
  * Testing MissionControllerImpl.class.

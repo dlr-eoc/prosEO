@@ -23,10 +23,10 @@
 		<raml-path>src/main/resources/raml/storage-mgr-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.storagemgr.rest</raml-base-package>
 
-        <nimbus.jwt.version>9.10</nimbus.jwt.version>
-        <awssdk1.version>1.12.557</awssdk1.version>
-        <awssdk2.version>2.29.52</awssdk2.version><!-- In newer versions some functions fail on some server implementations, esp. minio -->
-        <aws-crt.version>0.36.3</aws-crt.version>
+        <nimbus.jwt.version>10.10</nimbus.jwt.version>
+        <awssdk1.version>1.12.797</awssdk1.version>
+        <awssdk2.version>2.55.11</awssdk2.version><!-- In versions newer than 2.29.52 some functions may fail on some server implementations, esp. minio -->
+        <aws-crt.version>0.48.5</aws-crt.version>
 	</properties>
 
 	<dependencyManagement>

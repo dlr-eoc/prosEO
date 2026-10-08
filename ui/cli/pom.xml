@@ -22,7 +22,7 @@
 	</organization>
 
 	<properties>
-		<jline.version>3.30.15</jline.version>
+		<jline.version>3.30.17</jline.version><!-- JLine 4 requires Java 22+ -->
 	</properties>
 
 	<dependencies>

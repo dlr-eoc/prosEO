@@ -26,7 +26,8 @@
         <raml-path-query>src/main/resources/raml/odip-query.raml</raml-path-query>
         <raml-path-oauth2>src/main/resources/raml/odip-oauth2.raml</raml-path-oauth2>
         <raml-base-package>de.dlr.proseo.api.odip.rest</raml-base-package>
-        <nimbus.jwt.version>9.37.3</nimbus.jwt.version>
+        <nimbus.jwt.version>10.10</nimbus.jwt.version>
+        <projectreactor.version>1.0.1.RELEASE</projectreactor.version>
     </properties>
 
     <dependencies>
@@ -63,11 +64,13 @@
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
         </dependency>
+<!--
         <dependency>
             <groupId>org.projectreactor</groupId>
             <artifactId>reactor-spring</artifactId>
-            <version>1.0.1.RELEASE</version>
+            <version>${projectreactor.version}</version>
         </dependency>
+-->
         <dependency>
             <groupId>org.apache.olingo</groupId>
             <artifactId>odata-server-api</artifactId>

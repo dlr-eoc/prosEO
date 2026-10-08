@@ -19,7 +19,7 @@
 		<!-- Your own application should inherit from spring-boot-starter-parent -->
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.1.0</version>
+		<version>4.1.1</version>
 	</parent>
 
 	<scm>
@@ -31,21 +31,20 @@
 		<project.build.platform>linux/amd64</project.build.platform>
 		<maven.compiler.source>21</maven.compiler.source>
 		<maven.compiler.target>21</maven.compiler.target>
+		<maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
 		<raml-plugin-version>2.0.5</raml-plugin-version>
 		<raml-output-path>target/generated-raml-mvc</raml-output-path>
-		<maven-site-plugin.version>3.12.1</maven-site-plugin.version>
-		<maven-javadoc-plugin.version>3.11.3</maven-javadoc-plugin.version>
+		<maven-site-plugin.version>3.22.0</maven-site-plugin.version>
+		<maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
 		<maven-project-info-reports-plugin.version>3.9.0</maven-project-info-reports-plugin.version>
-		<exec-maven-plugin.version>3.5.1</exec-maven-plugin.version>
-		<spring-boot-starter-test.version>4.1.0</spring-boot-starter-test.version> <!-- Not in parent POM! -->
+		<exec-maven-plugin.version>3.6.4</exec-maven-plugin.version>
+		<spring-boot-starter-test.version>4.1.1</spring-boot-starter-test.version> <!-- Not in parent POM! -->
         <kubernetes.client.version>27.0.0</kubernetes.client.version>
+        <owasp-dependency-check.version>13.0.0</owasp-dependency-check.version>
 		
         <!-- Version freezing addressing security vulnerabilities - REMOVE when upgrading Spring Boot! -->
-        <httpclient5.version>5.6.4</httpclient5.version><!-- Addresses CVE-2026-71290, CVE-2026-64607 -->
-        <netty.version>4.2.16.Final</netty.version><!-- Addresses CVE-2026-56820 and many more -->
-        <tomcat.version>11.0.25</tomcat.version><!-- Addresses CVE-2026-66299 and many more -->
-        <postgresql.version>42.7.12</postgresql.version><!-- Addresses CVE-2026-54291 -->
-        
+        <tomcat.version>11.0.25</tomcat.version><!-- Addresses CVE-2026-65637 and many more -->
+        <kotlin.version>2.4.20</kotlin.version><!-- Addresses CVE-2026-53914 -->        
 	</properties>
 
 	<modules>
@@ -223,9 +222,12 @@
 			<plugin>
 				<groupId>org.owasp</groupId>
 				<artifactId>dependency-check-maven</artifactId>
-				<version>13.0.0</version>
+				<version>${owasp-dependency-check.version}</version>
 				<configuration>
 					<skipProvidedScope>true</skipProvidedScope>
+					<suppressionFiles>
+					   <suppressionFile>src/dependency-check-suppressions.xml</suppressionFile>
+					</suppressionFiles>
 				</configuration>
 				<executions>
 					<execution>

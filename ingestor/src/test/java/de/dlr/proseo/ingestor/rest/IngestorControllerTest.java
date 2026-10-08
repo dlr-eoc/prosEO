@@ -314,7 +314,6 @@ public class IngestorControllerTest {
 		assertNotNull(responseOrbit, "Orbit missing");
 		assertEquals(ingestorProduct.getOrbit().getOrbitNumber().intValue(), responseOrbit.getOrbitNumber().intValue(), "Unexpected orbit number: ");
 
-		@Valid
 		List<RestProductFile> responseProductFiles = responseProduct.getProductFile();
 		assertNotNull(responseProductFiles, "Product files missing");
 		assertEquals(1, responseProductFiles.size(), "Unexpected number of product files: ");

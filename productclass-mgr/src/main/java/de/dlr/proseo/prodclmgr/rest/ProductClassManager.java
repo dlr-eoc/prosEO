@@ -21,7 +21,6 @@ import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import javax.validation.Valid;
-import javax.ws.rs.ServerErrorException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,6 +28,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.server.ServerErrorException;
 
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
@@ -86,6 +86,9 @@ public class ProductClassManager {
 	 * @param productClass the product class to remove the enclosing class from (must not be transient)
 	 */
 	private void removeEnclosingClass(ProductClass productClass) {
+		if (logger.isTraceEnabled()) logger.trace(">>> removeEnclosingClass({})", 
+				(null == productClass ? null : productClass.getProductType()));
+		
 		ProductClass enclosingClass = productClass.getEnclosingClass();
 		enclosingClass.getComponentClasses().remove(productClass);
 		RepositoryService.getProductClassRepository().save(enclosingClass);
@@ -104,6 +107,9 @@ public class ProductClassManager {
 	 */
 	private void setEnclosingClass(ProductClass productClass, String missionCode, String productType)
 			throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> setEnclosingClass({}, {}, {})", 
+				(null == productClass ? null : productClass.getProductType()), missionCode, productType);
+		
 		ProductClass enclosingClass = RepositoryService.getProductClassRepository()
 			.findByMissionCodeAndProductType(missionCode, productType);
 		if (null == enclosingClass) {
@@ -578,8 +584,7 @@ public class ProductClassManager {
 			modelProductClass = RepositoryService.getProductClassRepository().save(modelProductClass);
 		} catch (Exception e) {
 			throw new ServerErrorException(logger.log(ProductClassMgrMessage.PRODUCT_CLASS_SAVE_FAILED,
-					productClass.getProductType(), productClass.getMissionCode(), e.getMessage()),
-					HttpStatus.INTERNAL_SERVER_ERROR.value());
+					productClass.getProductType(), productClass.getMissionCode(), e.getMessage()), e);
 		}
 
 		logger.log(ProductClassMgrMessage.PRODUCT_CLASS_CREATED, modelProductClass.getProductType(), mission.getCode());

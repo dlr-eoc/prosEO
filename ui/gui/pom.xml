@@ -22,8 +22,8 @@
 	</organization>
 
 	<properties>
-		<bootstrap.version>3.4.1</bootstrap.version>
-		<jquery.version>3.7.1</jquery.version>
+		<!-- <bootstrap.version>3.4.1</bootstrap.version> --><!-- unchanged since 2019; TODO migrate to current version 5.3.8 or later -->
+		<!-- <jquery.version>3.7.1</jquery.version> --><!-- latest version of 3.x.x; newest version is 4.0.0 -->
 	</properties>
 
 	<dependencies>
@@ -99,6 +99,7 @@
 			<artifactId>proseo-ui-backend</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+<!--
 		<dependency>
 			<groupId>org.webjars</groupId>
 			<artifactId>bootstrap</artifactId>
@@ -109,6 +110,7 @@
 			<artifactId>jquery</artifactId>
 			<version>${jquery.version}</version>
 		</dependency>
+-->
 	</dependencies>
 
 	<build>

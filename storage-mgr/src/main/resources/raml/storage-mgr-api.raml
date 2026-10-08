@@ -60,7 +60,7 @@ resourceTypes:
       storageType?:
         type: string
         description: The type of the storage
-        pattern: ^(S3|ALLUXIO|POSIX|OTHER)$
+        pattern: ^(S3|POSIX|OTHER)$
       prefix?:
         type: string
     responses:
@@ -69,8 +69,8 @@ resourceTypes:
           application/json:
             type: string[]
             description: |
-              The file system type (S3/ALLUXIO/POSIX), followed by a vertical bar ('|'),
-              followed by the resulting S3/ALLUXIO/POSIX file path
+              The file system type (S3/POSIX), followed by a vertical bar ('|'),
+              followed by the resulting S3/POSIX file path
   post:
     description: Register products/files/dirs from unstructered storage in prosEO-storage
     body:
@@ -88,7 +88,7 @@ resourceTypes:
     queryParameters:
       pathInfo: 
         type: string
-        description: The file path as S3/ALLUXIO/POSIX string for download
+        description: The file path as S3/POSIX string for download
     responses:
       200:
         body:
@@ -101,7 +101,7 @@ resourceTypes:
       queryParameters:
         pathInfo: 
           type: string
-          description: The file path as S3/ALLUXIO/POSIX string for download
+          description: The file path as S3/POSIX string for download
         token:
           type: string
           description: A JSON Web Token authenticating the download (obtained from Ingestor)
@@ -123,7 +123,7 @@ resourceTypes:
     queryParameters:
       pathInfo: 
         type: string
-        description: The file path as S3/ALLUXIO/POSIX string for download
+        description: The file path as S3/POSIX string for download
     responses:
       200:
         body:

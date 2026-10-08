@@ -1212,5 +1212,5 @@
 	},
 	"timezone": "utc",
 	"title": "Products per Hour",
-	"uid": "uid_products_per_hour",
+	"uid": "uid_products_per_hour"
 }

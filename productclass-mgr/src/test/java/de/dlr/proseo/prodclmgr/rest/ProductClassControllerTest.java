@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import javax.transaction.Transactional;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +48,7 @@ import de.dlr.proseo.prodclmgr.rest.model.RestProductClass;
 import de.dlr.proseo.prodclmgr.rest.model.RestSimplePolicy;
 import de.dlr.proseo.prodclmgr.rest.model.RestSimpleSelectionRule;
 import de.dlr.proseo.prodclmgr.rest.model.SelectionRuleString;
+import jakarta.transaction.Transactional;
 
 /**
  * Test class for the REST API of ProductClassControllerImpl
@@ -153,9 +152,12 @@ public class ProductClassControllerTest {
 		testSimplePolicy.setDeltaTimeT1(deltaTimeT1);
 
 		testSelectionRule.getSimplePolicies().add(testSimplePolicy);
+		
 		testProductClass.getRequiredSelectionRules().add(testSelectionRule);
+		sourceProductClass.getSupportedSelectionRules().add(testSelectionRule);
 
 		testProductClass = RepositoryService.getProductClassRepository().save(testProductClass);
+		sourceProductClass = RepositoryService.getProductClassRepository().save(sourceProductClass);
 
 		testMission.getProductClasses().add(sourceProductClass);
 		testMission.getProductClasses().add(testProductClass);

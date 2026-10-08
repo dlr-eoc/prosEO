@@ -19,7 +19,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
-import javax.ws.rs.ProcessingException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.restclient.RestTemplateBuilder;
@@ -106,6 +105,16 @@ public class ProductIngestor {
 	private class IngestResult {
 		public RestProduct restProduct = null;
 		public RestProductFile restProductFile = null;
+	}
+	
+	public class ProcessingException extends RuntimeException {
+
+		private static final long serialVersionUID = 1L;
+		
+		public ProcessingException(String message) {
+			super(message);
+		}
+		
 	}
 
 	/**

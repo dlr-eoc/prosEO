@@ -8,8 +8,7 @@ package de.dlr.proseo.model;
 import java.time.Instant;
 import java.util.*;
 
-import javax.persistence.Column;
-
+import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;

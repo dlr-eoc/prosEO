@@ -169,7 +169,7 @@ public class ProductControllerImpl implements ProductController {
 	 *         "BAD_REQUEST", if any of the input data was invalid
 	 */
 	@Override
-	public ResponseEntity<RestProduct> createProduct(de.dlr.proseo.ingestor.rest.model.@Valid RestProduct product,
+	public ResponseEntity<RestProduct> createProduct(@Valid de.dlr.proseo.ingestor.rest.model.RestProduct product,
 			HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createProduct({})", (null == product ? "MISSING" : product.getProductClass()));

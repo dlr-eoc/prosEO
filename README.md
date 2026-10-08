@@ -20,7 +20,7 @@ prosEO is licensed under the GNU Public License (GPL) version 3.
 ## Build from source code
 
 To build prosEO from source code, the following prerequisites must be met:
-- OpenJDK 11 installed locally
+- OpenJDK 21 installed locally
 - Maven installed locally
 - Docker installed locally (for Windows or Mac: Docker Desktop)
 - Run a local registry on port 5000:
