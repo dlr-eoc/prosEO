@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.model.rest.OrderController;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import jakarta.persistence.EntityManager;
@@ -217,7 +218,11 @@ public class OrderControllerImpl implements OrderController {
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (RuntimeException e) {
-			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " / " + e.getMessage());
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (Exception e) {
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " / " + e.getMessage());
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
