@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd
+    https://dependency-check.github.io/DependencyCheck/dependency-suppression.1.4.xsd">
+    <suppress>
+        <notes><![CDATA[
+        file name: affine-0.9.2.jar
+        Wrong association - the dependency is on the "affine" component of the Eclipse ImageN project, not on the product "AFFiNE"
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.eclipse\.imagen/affine@.*$</packageUrl>
+        <cpe>cpe:/a:affine:affine</cpe>
+    </suppress>
+</suppressions>

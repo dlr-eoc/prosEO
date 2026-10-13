@@ -11,7 +11,6 @@ import java.util.List;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.NoResultException;
 import javax.validation.Valid;
-import javax.ws.rs.ServerErrorException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.server.ServerErrorException;
 
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
@@ -146,7 +146,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 		try {
 			return new ResponseEntity<>(productClassManager.createRestProductClass(productClass), HttpStatus.CREATED);
 		} catch (ServerErrorException e) {
-			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.resolve(e.getResponse().getStatus()));
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.resolve(e.getStatusCode().value()));
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (SecurityException e) {

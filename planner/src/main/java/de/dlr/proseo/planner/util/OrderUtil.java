@@ -18,12 +18,12 @@ import java.util.Set;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
-import javax.ws.rs.core.MediaType;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionDefinition;
@@ -1708,7 +1708,8 @@ public class OrderUtil {
 					restMessage.setPassword(order.getNotificationEndpoint().getPassword());
 					restMessage.setMessage(message);
 					restMessage.setRaw(true);
-					restMessage.setContentType(MediaType.APPLICATION_JSON);
+					restMessage.setSubject("Product file generated: " + fileName);
+					restMessage.setContentType(MediaType.APPLICATION_JSON_VALUE);
 					restMessage.setSender(order.getOrderSource().toString());
 					String url = config.getNotificationUrl() + "/notify";
 					RestTemplate restTemplate = new RestTemplate();

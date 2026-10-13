@@ -5,6 +5,12 @@
  */
 package de.dlr.proseo.notification.rest;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.time.Duration;
+import java.time.Instant;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
@@ -46,6 +52,13 @@ public class SendManager {
 	/** The service responsible for handling mails */
 	@Autowired
 	private ServiceMail serviceMail;
+	
+	private class LastMessage {
+		public RestMessage message;
+		public Long times;
+		public Date timeSent;
+	}
+	private Map<String, LastMessage> lastMessages = new HashMap<String, LastMessage>();
 
 	/**
 	 * Evaluate the REST message attributes, parses and validates the message content, formats it where necessary, and delegates the
@@ -141,6 +154,23 @@ public class SendManager {
 		// Check if a custom subject is provided, otherwise use the default from the configuration
 		if (restMessage.getSubject() != null && !restMessage.getSubject().isBlank()) {
 			subject = restMessage.getSubject();
+			// check mass mail
+			if (lastMessages.containsKey(subject)) {
+				LastMessage lm = lastMessages.get(subject);
+				lm.times++;
+				if (lm.timeSent.after(Date.from(Instant.now().minus(Duration.ofMinutes(5))))) {
+					subject = subject + " | sent " + lm.times + " times";
+				} else {
+					return null;
+				}
+			} else {
+				LastMessage lm = new LastMessage();
+				lm.message = restMessage;
+				lm.times = 1L;
+				
+				lm.timeSent = Date.from(Instant.now());
+				lastMessages.put(subject, lm);
+			}
 		}
 
 		// Check if a custom sender is provided, otherwise use the default from the configuration
@@ -150,7 +180,6 @@ public class SendManager {
 
 		// Send the message based on the detected send type
 		Object result = null;
-
 		switch (type) {
 		case UNKNOWN:
 			logger.log(NotificationMessage.UNKNOWN_MEDIATYPE, type);

@@ -22,8 +22,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.ws.rs.ProcessingException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
@@ -547,8 +545,6 @@ public class ProcessingOrderMgr {
 			}
 			// ignore known exceptions cause already logged
 			catch (EntityNotFoundException e) {
-				break;
-			} catch (ProcessingException e) {
 				break;
 			} catch (IllegalArgumentException e) {
 				break;

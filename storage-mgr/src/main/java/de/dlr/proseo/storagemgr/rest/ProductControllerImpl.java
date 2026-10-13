@@ -190,7 +190,7 @@ public class ProductControllerImpl implements ProductController {
 	/**
 	 * Retrieve the byte stream for download of a file object in repository.
 	 *
-	 * @param pathInfo the file path as S3/ALLUXIO/POSIX string for download
+	 * @param pathInfo the file path as S3/POSIX string for download
 	 * @param token    a JSON Web Token authenticating the download (obtained from
 	 *                 Ingestor)
 	 * @param fromByte The first byte of the data stream to download (default is

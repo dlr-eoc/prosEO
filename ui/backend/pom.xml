@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo-ui</artifactId>
-		<version>2.2.0</version>
+		<version>3.0.0</version>
 	</parent>
 
 	<artifactId>proseo-ui-backend</artifactId>
@@ -18,7 +18,8 @@
 	</organization>
 
 	<properties>
-		<commons-io.version>2.15.1</commons-io.version>
+		<commons-io.version>2.22.0</commons-io.version>
+		<httpclient.version>4.5.14</httpclient.version><!-- Last version of HTTP client; TODO migrate to HTTP client 5 -->
 	</properties>
 
 	<dependencies>
@@ -48,7 +49,7 @@
 		<dependency>
 		    <groupId>org.apache.httpcomponents</groupId>
 		    <artifactId>httpclient</artifactId>
-		    <version>4.5.14</version>
+		    <version>${httpclient.version}</version>
 		</dependency>
         <dependency>
             <groupId>de.dlr.proseo</groupId>

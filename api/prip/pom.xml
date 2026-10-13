@@ -6,7 +6,7 @@
     <parent>
         <groupId>de.dlr.proseo</groupId>
         <artifactId>proseo-api</artifactId>
-        <version>2.2.0</version>
+        <version>3.0.0</version>
     </parent>
 
     <artifactId>proseo-api-prip</artifactId>
@@ -22,7 +22,7 @@
 
     <properties>
         <olingo.version>5.0.0</olingo.version>
-        <nimbus.jwt.version>9.37.3</nimbus.jwt.version>
+        <nimbus.jwt.version>10.10</nimbus.jwt.version>
         <main.basedir>${basedir}/../..</main.basedir>
         <raml-path-query>src/main/resources/raml/prip-query.raml</raml-path-query>
         <raml-path-download>src/main/resources/raml/prip-download.raml</raml-path-download>

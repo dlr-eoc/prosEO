@@ -13,7 +13,6 @@ import java.util.List;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.NoResultException;
 import javax.validation.Valid;
-import javax.ws.rs.ProcessingException;
 
 import org.hibernate.exception.LockAcquisitionException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.ingestor.IngestorSecurityConfig;
+import de.dlr.proseo.ingestor.rest.ProductIngestor.ProcessingException;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProductFile;
