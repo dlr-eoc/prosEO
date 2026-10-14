@@ -8,6 +8,7 @@ package de.dlr.proseo.model;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -32,7 +33,7 @@ public class Downlink extends PersistentObject {
 	private String downlinkId;
 	
 	/** The spacecraft performing the downlink */
-	@ManyToOne
+	@ManyToOne(optional = false)
 	private Spacecraft spacecraft;
 	
 	/** The ground station to which the downlink is effected */
@@ -296,6 +297,36 @@ public class Downlink extends PersistentObject {
 	 */
 	public void setReceptionTime(Instant receptionTime) {
 		this.receptionTime = receptionTime;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Objects.hash(downlinkId, spacecraft);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (!(obj instanceof Downlink))
+			return false;
+		Downlink other = (Downlink) obj;
+		return Objects.equals(downlinkId, other.downlinkId) && Objects.equals(spacecraft, other.spacecraft);
+	}
+
+	@Override
+	public String toString() {
+		return "Downlink [id=" + this.getId() + ", downlinkId=" + downlinkId + ", spacecraft=" + spacecraft.getCode() 
+				+ ", groundStation=" + (null == groundStation ? "null" : groundStation.getStationId()) 
+				+ ", dataSegments=" + dataSegments + ", channels=" + channels 
+				+ ", acquisitionStartTime=" + acquisitionStartTime + ", dataStartTime=" + dataStartTime 
+				+ ", dataStopTime=" + dataStopTime + ", pickupAvailabilityTime=" + pickupAvailabilityTime 
+				+ ", isReceived=" + isReceived + ", receivedSize=" + receivedSize + ", receptionTime=" + receptionTime + "]";
 	}
 	
 }

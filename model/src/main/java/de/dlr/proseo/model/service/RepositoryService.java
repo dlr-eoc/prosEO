@@ -11,8 +11,12 @@ import org.springframework.stereotype.Service;
 import de.dlr.proseo.model.dao.ConfigurationRepository;
 import de.dlr.proseo.model.dao.ConfiguredProcessorRepository;
 import de.dlr.proseo.model.dao.DataDrivenOrderTriggerRepository;
+import de.dlr.proseo.model.dao.DatatakeGroupRepository;
 import de.dlr.proseo.model.dao.DatatakeOrderTriggerRepository;
+import de.dlr.proseo.model.dao.DatatakeRepository;
+import de.dlr.proseo.model.dao.DownlinkRepository;
 import de.dlr.proseo.model.dao.FacilityRepository;
+import de.dlr.proseo.model.dao.GroundStationRepository;
 import de.dlr.proseo.model.dao.InputFilterRepository;
 import de.dlr.proseo.model.dao.JobRepository;
 import de.dlr.proseo.model.dao.JobStepRepository;
@@ -229,7 +233,24 @@ public class RepositoryService {
 	/** The repository for the OrbitOrderTrigger class */
 	@Autowired
 	OrbitOrderTriggerRepository orbitOrderTriggerRepository;
-		
+
+	/** The repository for the Datatake class */
+	@Autowired
+	DatatakeRepository datatakeRepository;
+	
+	/** The repository for the DatatakeGroup class */
+	@Autowired
+	DatatakeGroupRepository datatakeGroupRepository;
+	
+	/** The repository for the Downlink class */
+	@Autowired
+	DownlinkRepository downlinkRepository;
+	
+	/** The repository for the GroundStation class */
+	@Autowired
+	GroundStationRepository groundStationRepository;
+	
+	
 	/**
 	 * Singleton constructor
 	 */
@@ -582,6 +603,34 @@ public class RepositoryService {
 	 */
 	public static ApiMetricsRepository getApiMetricsRepository() {
 		return theRepositoryService.apiMetricsRepository;
+	}
+
+	/**
+	 * @return the datatakeRepository
+	 */
+	public static DatatakeRepository getDatatakeRepository() {
+		return theRepositoryService.datatakeRepository;
+	}
+
+	/**
+	 * @return the datatakeGroupRepository
+	 */
+	public static DatatakeGroupRepository getDatatakeGroupRepository() {
+		return theRepositoryService.datatakeGroupRepository;
+	}
+
+	/**
+	 * @return the downlinkRepository
+	 */
+	public static DownlinkRepository getDownlinkRepository() {
+		return theRepositoryService.downlinkRepository;
+	}
+
+	/**
+	 * @return the groundStationRepository
+	 */
+	public static GroundStationRepository getGroundStationRepository() {
+		return theRepositoryService.groundStationRepository;
 	}
 
 }

@@ -7,15 +7,24 @@ package de.dlr.proseo.model;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * A contiguous time-bound slice of instrument data, usually separated from adjacent slices (datatakes)
@@ -34,8 +43,13 @@ public class Datatake extends PersistentObject {
 	@Column(nullable = false)
 	private String datatakeId;
 	
+	/** The satellite the datatake belongs to (somewhat redundant, but there is no navigation path from payload to spacecraft */
+	@ManyToOne(optional = false)
+	private Spacecraft spacecraft;
+	
 	/** The satellite payload the datatake belongs to */
-	@ManyToOne
+	@Embedded
+	@NotNull
 	private Payload payload;
 	
 	/** The orbit the datatake belongs to (if known) */
@@ -48,7 +62,9 @@ public class Datatake extends PersistentObject {
 	
 	/** The list of data segments contained making up this datatake, ordered by sequence number */
 	@OneToMany(mappedBy = "datatake")
-	private List<DataSegment> dataSegments = new ArrayList<>();
+	@OrderBy("sequence_number")
+	private Set<DataSegment> dataSegments = 
+		new TreeSet<>((ds1, ds2) -> { return ds1.getSegmentNumber().compareTo(ds2.getSegmentNumber()); });;
 	
 	/** Instrument sensor mode (abbreviated; one of the values defined in the associated Payload object) */
 	private String instrumentMode;
@@ -72,6 +88,14 @@ public class Datatake extends PersistentObject {
 	/** Processing time for L0 product from this datatake (only first processing is recorded) */
 	@Column(columnDefinition = "TIMESTAMP(6)")
 	private Instant processingTime;
+	
+	/** Additional mission-specific parameters for the datatake */
+	@ElementCollection
+	private Map<String, Parameter> parameters = new HashMap<>();
+	
+	/** L0 products derived from this datatake (not yet implemented from Product side) */
+	@ManyToMany
+	private Set<Product> l0Products = new HashSet<>();
 
 	/**
 	 * Gets the (external) datatake ID
@@ -89,6 +113,24 @@ public class Datatake extends PersistentObject {
 	 */
 	public void setDatatakeId(String datatakeId) {
 		this.datatakeId = datatakeId;
+	}
+
+	/**
+	 * Gets the spacecraft owning this datatake
+	 * 
+	 * @return the owning spacecraft
+	 */
+	public Spacecraft getSpacecraft() {
+		return spacecraft;
+	}
+
+	/**
+	 * Sets the spacecraft owning this datatake
+	 * 
+	 * @param spacecraft the owning spacecraft to set
+	 */
+	public void setSpacecraft(Spacecraft spacecraft) {
+		this.spacecraft = spacecraft;
 	}
 
 	/**
@@ -148,18 +190,18 @@ public class Datatake extends PersistentObject {
 	/**
 	 * Gets the list of data segments contained making up this datatake, ordered by sequence number
 	 * 
-	 * @return the data segment list
+	 * @return a set of data segments ordered by segment number
 	 */
-	public List<DataSegment> getDataSegments() {
+	public Set<DataSegment> getDataSegments() {
 		return dataSegments;
 	}
 
 	/**
 	 * Sets the list of data segments contained making up this datatake
 	 * 
-	 * @param dataSegments the data segment list to set, ordered by sequence number
+	 * @param dataSegments the data segment set to set, ordered by sequence number
 	 */
-	public void setDataSegments(List<DataSegment> dataSegments) {
+	public void setDataSegments(TreeSet<DataSegment> dataSegments) {
 		this.dataSegments = dataSegments;
 	}
 
@@ -270,6 +312,74 @@ public class Datatake extends PersistentObject {
 	public void setProcessingTime(Instant processingTime) {
 		this.processingTime = processingTime;
 	}
-	
-	
+
+	/**
+	 * Gets the mission-specific datatake parameters
+	 * 
+	 * @return a list of datatake parameters
+	 */
+	public Map<String, Parameter> getParameters() {
+		return parameters;
+	}
+
+	/**
+	 * Sets the mission-specific datatake parameters
+	 * 
+	 * @param parameters the list of datatake parameters to set
+	 */
+	public void setParameters(Map<String, Parameter> parameters) {
+		this.parameters = parameters;
+	}
+
+	/**
+	 * Gets the L0 products derived from this datatake
+	 * 
+	 * @return the associated L0 products
+	 */
+	public Set<Product> getL0Products() {
+		return l0Products;
+	}
+
+	/**
+	 * Sets the L0 products derived from this datatake
+	 * 
+	 * @param l0Products the associated L0 products to set
+	 */
+	public void setL0Products(Set<Product> l0Products) {
+		this.l0Products = l0Products;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Objects.hash(spacecraft, payload, datatakeId);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (!(obj instanceof Datatake))
+			return false;
+		Datatake other = (Datatake) obj;
+		return Objects.equals(spacecraft, other.spacecraft) && Objects.equals(payload, other.payload) 
+				&& Objects.equals(datatakeId, other.datatakeId);
+	}
+
+	@Override
+	public String toString() {
+		return "Datatake [id = " + this.getId() + ", datatakeId=" + datatakeId + ", spacecraft=" + spacecraft.getCode() 
+				+ ", payload=" + payload.getName() 
+				+ ", orbit=" + (null == orbit ? "null" : orbit.getOrbitNumber())
+				+ ", datatakeGroup=" + datatakeGroup 
+				+ ", dataSegments=" + dataSegments + ", instrumentMode=" + instrumentMode 
+				+ ", sensingStartTime=" + sensingStartTime + ", datatakeDuration=" + datatakeDuration 
+				+ ", isComplete=" + isComplete + ", deliveryStopTime=" + deliveryStopTime 
+				+ ", processingTime=" + processingTime + ", parameters=" + parameters + "]";
+	}
+
 }

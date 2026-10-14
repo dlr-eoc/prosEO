@@ -57,4 +57,10 @@ public class RadarDatatake extends Datatake {
 		this.polarization = polarization;
 	}
 
+	@Override
+	public String toString() {
+		return "RadarDatatake [" + super.toString() + ", instrumentSwath=" + instrumentSwath + ", polarization=" + polarization 
+				+ "]";
+	}
+
 }

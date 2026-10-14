@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.Objects;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
@@ -62,6 +64,31 @@ public class GroundStation extends PersistentObject {
 	 */
 	public void setStationName(String stationName) {
 		this.stationName = stationName;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Objects.hash(stationId);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (!(obj instanceof GroundStation))
+			return false;
+		GroundStation other = (GroundStation) obj;
+		return Objects.equals(stationId, other.stationId);
+	}
+
+	@Override
+	public String toString() {
+		return "GroundStation [id=" + this.getId() + ", stationId=" + stationId + ", stationName=" + stationName + "]";
 	}
 	
 }

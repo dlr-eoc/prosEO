@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -33,7 +34,7 @@ public class DataSegment extends PersistentObject {
 	private Integer segmentNumber;
 	
 	/** The datatake this segment belongs to */
-	@ManyToOne
+	@ManyToOne(optional = false)
 	private Datatake datatake;
 	
 	/** The downlink providing this data segment */
@@ -223,6 +224,36 @@ public class DataSegment extends PersistentObject {
 	 */
 	public void setChannel(String channel) {
 		this.channel = channel;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Objects.hash(datatake, segmentNumber);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (!(obj instanceof DataSegment))
+			return false;
+		DataSegment other = (DataSegment) obj;
+		return Objects.equals(datatake, other.datatake) && Objects.equals(segmentNumber, other.segmentNumber);
+	}
+
+	@Override
+	public String toString() {
+		return "DataSegment [id=" + this.getId() + ", spacecraft=" + datatake.getSpacecraft().getCode() 
+				+ ", payload=" + datatake.getPayload().getName()
+				+ ", datatake=" + datatake.getDatatakeId() + ", segmentNumber=" + segmentNumber + ", downlink=" + downlink
+				+ ", groundStations=" + groundStations + ", sensingStartTime=" + sensingStartTime 
+				+ ", segmentDuration=" + segmentDuration + ", downlinkStart=" + downlinkStart + ", downlinkStop=" + downlinkStop 
+				+ ", channel=" + channel + "]";
 	}
 
 }
