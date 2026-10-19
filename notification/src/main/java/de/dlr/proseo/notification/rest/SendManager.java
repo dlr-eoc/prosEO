@@ -5,6 +5,14 @@
  */
 package de.dlr.proseo.notification.rest;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
@@ -46,6 +54,17 @@ public class SendManager {
 	/** The service responsible for handling mails */
 	@Autowired
 	private ServiceMail serviceMail;
+	
+	// element of messages cache
+	private class LastMessage {
+		// The complete Rest message 
+		public RestMessage message;
+		// Amount of notifications with same subject 
+		public Long times;
+		// Last time the message was sent 
+		public Instant timeSent;
+	}
+	private Map<String, LastMessage> lastMessages = new HashMap<String, LastMessage>();
 
 	/**
 	 * Evaluate the REST message attributes, parses and validates the message content, formats it where necessary, and delegates the
@@ -139,8 +158,45 @@ public class SendManager {
 		}
 
 		// Check if a custom subject is provided, otherwise use the default from the configuration
+		Boolean ignoreSend = false;
 		if (restMessage.getSubject() != null && !restMessage.getSubject().isBlank()) {
 			subject = restMessage.getSubject();
+			// check mass mail
+			if (lastMessages.containsKey(subject)) {
+				LastMessage lm = lastMessages.get(subject);
+				lm.times++;
+				if (lm.times <= config.getNumberOfIdenticalNotifications() 
+						|| lm.timeSent.isBefore(Instant.now().minus(Duration.ofMinutes(config.getForgetIdenticalNotificationsAfter())))) {
+					// send the first NumberOfIdenticalNotifications Messages
+					// or repeat the message after delay of ForgetIdenticalNotificationsAfter
+					subject = subject + " | identical notification sent " + lm.times + " times ...";
+					lm.timeSent = Instant.now();
+				} else {
+					ignoreSend = true;
+				}
+			} else {
+				// create message in last messages cache, use subject as key
+				LastMessage lm = new LastMessage();
+				lm.message = restMessage;
+				lm.times = 1L;				
+				lm.timeSent = Instant.now();
+				lastMessages.put(subject, lm);
+			}
+		}
+		Set<String> keys = lastMessages.keySet();
+		for (String key : keys) {
+			LastMessage lm = lastMessages.get(key);
+			if (lm.timeSent.isBefore(Instant.now().minus(Duration.ofMinutes(config.getForgetIdenticalNotificationsAfter())))) {
+				// delete message after not repeated during delay time
+				if (lm.times > config.getNumberOfIdenticalNotifications()) {
+					// log message subject and the complete number of identical notifications
+					logger.log(NotificationMessage.MESSAGE_FORGOT, lm.message.getSubject(), lm.times);
+				}
+				lastMessages.remove(key);
+			}
+		}
+		if (ignoreSend) {
+			return null;
 		}
 
 		// Check if a custom sender is provided, otherwise use the default from the configuration
@@ -150,7 +206,6 @@ public class SendManager {
 
 		// Send the message based on the detected send type
 		Object result = null;
-
 		switch (type) {
 		case UNKNOWN:
 			logger.log(NotificationMessage.UNKNOWN_MEDIATYPE, type);

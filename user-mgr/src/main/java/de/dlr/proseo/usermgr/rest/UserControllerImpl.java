@@ -22,6 +22,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import de.dlr.proseo.logging.http.HttpPrefix;
 import de.dlr.proseo.logging.http.ProseoHttp;
 import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.usermgr.rest.model.RestGroup;
 import de.dlr.proseo.usermgr.rest.model.RestUser;
 
 /**
@@ -66,6 +67,7 @@ public class UserControllerImpl implements UserController {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
 		}
 	}
+	
 
 	/**
 	 * Create a new user
@@ -115,6 +117,33 @@ public class UserControllerImpl implements UserController {
 		}
 	}
 
+	/**
+	 * Get the groups of the user
+	 *
+	 * @param username the user name
+	 * @return HTTP status "OK" and a Json object corresponding to the user found or
+	 *         HTTP status "BAD_REQUEST" and an error message, if no user name was
+	 *         given, or HTTP status "UNAUTHORIZED" and an error message, if a user
+	 *         (not user mgr) attempted to access the data of another user, or HTTP
+	 *         status "NOT_FOUND" and an error message, if no user with the given
+	 *         name exists
+	 */
+	@Override
+	public ResponseEntity<List<RestGroup>> getUserGroups(String mission, String userName) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getUserByName({})", userName);
+
+		try {
+			return new ResponseEntity<>(userManager.getUserGroups(mission + '-' + userName), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.UNAUTHORIZED);
+		}
+	}
+	
 	/**
 	 * Delete a user by user name
 	 *

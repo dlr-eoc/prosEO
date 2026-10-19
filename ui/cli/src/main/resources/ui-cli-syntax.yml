@@ -1686,6 +1686,23 @@ commands:
               optional: false
               repeatable: true
               description: An authority to revoke (multiple authorities allowed)
+        - name: groups
+          description: Show the groups the user belongs to
+          right: ROLE_USERMGR
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give user details, otherwise show usernames only (setting username parameter
+                           implies verbose)
+              shortForm: v
+          parameters:
+            - name: userName
+              type: string
+              optional: false
+              description: The name of the user account to show (without mission prefix)
     - name: password
       description: |
           Interactively change the password of the logged in user, or of the named user,

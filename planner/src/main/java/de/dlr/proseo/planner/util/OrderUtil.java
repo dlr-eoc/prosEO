@@ -1708,6 +1708,7 @@ public class OrderUtil {
 					restMessage.setPassword(order.getNotificationEndpoint().getPassword());
 					restMessage.setMessage(message);
 					restMessage.setRaw(true);
+					restMessage.setSubject("Product file generated: " + fileName);
 					restMessage.setContentType(MediaType.APPLICATION_JSON_VALUE);
 					restMessage.setSender(order.getOrderSource().toString());
 					String url = config.getNotificationUrl() + "/notify";

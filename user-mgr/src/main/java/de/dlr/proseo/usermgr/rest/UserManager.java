@@ -39,10 +39,13 @@ import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.UserMgrMessage;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.usermgr.UsermgrConfiguration;
+import de.dlr.proseo.usermgr.dao.GroupRepository;
 import de.dlr.proseo.usermgr.dao.UserRepository;
 import de.dlr.proseo.usermgr.model.Authority;
+import de.dlr.proseo.usermgr.model.Group;
 import de.dlr.proseo.usermgr.model.Quota;
 import de.dlr.proseo.usermgr.model.User;
+import de.dlr.proseo.usermgr.rest.model.RestGroup;
 import de.dlr.proseo.usermgr.rest.model.RestQuota;
 import de.dlr.proseo.usermgr.rest.model.RestUser;
 
@@ -58,6 +61,10 @@ public class UserManager {
 	/* Other string constants */
 	private static final String ROLE_ROOT = UserRole.ROOT.asRoleString();
 	private static final String ROLE_USERMGR = UserRole.USERMGR.asRoleString();
+
+	/** Repository for User group objects */
+	@Autowired
+	GroupRepository groupRepository;
 
 	/** Repository for User objects */
 	@Autowired
@@ -338,6 +345,51 @@ public class UserManager {
 		return toRestUser(modelUser);
 	}
 
+
+    public List<RestGroup> getUserGroups(String userName) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getUserGroups({})", userName);
+
+		if (null == userName || userName.isBlank()) {
+			throw new IllegalArgumentException(logger.log(UserMgrMessage.USERNAME_MISSING));
+		}
+
+		// Check permission to read the user data (only ROOT and USERMGR may read all
+		// user data, regular users may only read their own data)
+
+		// Since successful authentication is required for accessing "login", we trust
+		// that the authentication object is filled
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		String loginUsername = auth.getName();
+		Collection<? extends GrantedAuthority> authorities = auth.getAuthorities(); // Includes group authorities
+
+		// Collect authorities and handle root user: No check against missions required
+		boolean isUserManager = false;
+		for (GrantedAuthority authority : authorities) {
+			if (ROLE_ROOT.equals(authority.getAuthority()) || ROLE_USERMGR.equals(authority.getAuthority())) {
+				isUserManager = true;
+			}
+		}
+
+		if (!isUserManager && !userName.equals(loginUsername)) {
+			throw new SecurityException(logger.log(UserMgrMessage.ILLEGAL_DATA_ACCESS, loginUsername, userName));
+		}
+
+		List<RestGroup> result = new ArrayList<>();
+		List<Group> groups = groupRepository.findByUsername(userName);
+
+		for (Group group : groups) {
+			result.add(GroupManager.toRestGroup((Group) group));
+		}
+		if (result.isEmpty()) {
+			throw new NoResultException(logger.log(UserMgrMessage.GROUP_NOT_FOUND, userName));
+		}
+
+		logger.log(UserMgrMessage.GROUP_LIST_RETRIEVED, userName);
+
+		return result;
+    }
+    
 	/**
 	 * Delete a user by user name
 	 *
