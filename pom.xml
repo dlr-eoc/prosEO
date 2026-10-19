@@ -223,6 +223,7 @@
 				<groupId>org.owasp</groupId>
 				<artifactId>dependency-check-maven</artifactId>
 				<version>${owasp-dependency-check.version}</version>
+				<inherited>false</inherited>
 				<configuration>
 					<skipProvidedScope>true</skipProvidedScope>
 					<suppressionFiles>
