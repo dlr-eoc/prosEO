@@ -22,6 +22,7 @@ public enum NotificationMessage implements ProseoMessage {
 	MESSAGING_EXCEPTION			(1705, Level.ERROR, false, "Error sending MIME message: {0}", ""),
 	UNKNOWN_MEDIATYPE			(1706, Level.ERROR, false, "The MediaType {0} is unknown, use simple message", ""),
 	MESSAGE_SENT				(1707, Level.INFO, true, "Notification message to {0} successfully sent", ""),
+	MESSAGE_FORGOT				(1708, Level.INFO, true, "Identical notification message ''{0}'' forgot after {1} times", ""),
 	;
 
 	private final int code;

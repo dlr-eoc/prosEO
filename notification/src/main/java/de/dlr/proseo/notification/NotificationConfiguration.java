@@ -55,10 +55,46 @@ public class NotificationConfiguration {
 	/** Mail timeout */
 	@Value("${proseo.notification.mail.timeout}")
 	private Long mailTimeout;
+	
+	/** Duration to ignore notifications with same subject (to avoid mass mails) in minutes*/
+	@Value("${proseo.notification.forgetIdenticalNotificationsAfter}")
+	private Long forgetIdenticalNotificationsAfter;
+	
+	/** Number of notifications to send with same subject (to avoid mass mails) */
+	@Value("${proseo.notification.numberOfIdenticalNotifications}")
+	private Long numberOfIdenticalNotifications;
 
 	/** Timeout for HTTP connections */
 	@Value("${proseo.http.timeout}")
 	private Long httpTimeout;
+
+	/**
+	 * @return the forgetIdenticalNotificationsAfter
+	 */
+	public Long getForgetIdenticalNotificationsAfter() {
+		return forgetIdenticalNotificationsAfter;
+	}
+
+	/**
+	 * @return the numberOfIdenticalNotifications
+	 */
+	public Long getNumberOfIdenticalNotifications() {
+		return numberOfIdenticalNotifications;
+	}
+
+	/**
+	 * @param forgetIdenticalNotificationsAfter the forgetIdenticalNotificationsAfter to set
+	 */
+	public void setForgetIdenticalNotificationsAfter(Long forgetIdenticalNotificationsAfter) {
+		this.forgetIdenticalNotificationsAfter = forgetIdenticalNotificationsAfter;
+	}
+
+	/**
+	 * @param numberOfIdenticalNotifications the numberOfIdenticalNotifications to set
+	 */
+	public void setNumberOfIdenticalNotifications(Long numberOfIdenticalNotifications) {
+		this.numberOfIdenticalNotifications = numberOfIdenticalNotifications;
+	}
 
 	/**
 	 * @return the subject

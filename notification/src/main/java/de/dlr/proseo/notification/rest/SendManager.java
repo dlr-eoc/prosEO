@@ -8,6 +8,8 @@ package de.dlr.proseo.notification.rest;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -53,10 +55,14 @@ public class SendManager {
 	@Autowired
 	private ServiceMail serviceMail;
 	
+	// element of messages cache
 	private class LastMessage {
+		// The complete Rest message 
 		public RestMessage message;
+		// Amount of notifications with same subject 
 		public Long times;
-		public Date timeSent;
+		// Last time the message was sent 
+		public Instant timeSent;
 	}
 	private Map<String, LastMessage> lastMessages = new HashMap<String, LastMessage>();
 
@@ -152,25 +158,45 @@ public class SendManager {
 		}
 
 		// Check if a custom subject is provided, otherwise use the default from the configuration
+		Boolean ignoreSend = false;
 		if (restMessage.getSubject() != null && !restMessage.getSubject().isBlank()) {
 			subject = restMessage.getSubject();
 			// check mass mail
 			if (lastMessages.containsKey(subject)) {
 				LastMessage lm = lastMessages.get(subject);
 				lm.times++;
-				if (lm.timeSent.after(Date.from(Instant.now().minus(Duration.ofMinutes(5))))) {
-					subject = subject + " | sent " + lm.times + " times";
+				if (lm.times <= config.getNumberOfIdenticalNotifications() 
+						|| lm.timeSent.isBefore(Instant.now().minus(Duration.ofMinutes(config.getForgetIdenticalNotificationsAfter())))) {
+					// send the first NumberOfIdenticalNotifications Messages
+					// or repeat the message after delay of ForgetIdenticalNotificationsAfter
+					subject = subject + " | identical notification sent " + lm.times + " times ...";
+					lm.timeSent = Instant.now();
 				} else {
-					return null;
+					ignoreSend = true;
 				}
 			} else {
+				// create message in last messages cache, use subject as key
 				LastMessage lm = new LastMessage();
 				lm.message = restMessage;
-				lm.times = 1L;
-				
-				lm.timeSent = Date.from(Instant.now());
+				lm.times = 1L;				
+				lm.timeSent = Instant.now();
 				lastMessages.put(subject, lm);
 			}
+		}
+		Set<String> keys = lastMessages.keySet();
+		for (String key : keys) {
+			LastMessage lm = lastMessages.get(key);
+			if (lm.timeSent.isBefore(Instant.now().minus(Duration.ofMinutes(config.getForgetIdenticalNotificationsAfter())))) {
+				// delete message after not repeated during delay time
+				if (lm.times > config.getNumberOfIdenticalNotifications()) {
+					// log message subject and the complete number of identical notifications
+					logger.log(NotificationMessage.MESSAGE_FORGOT, lm.message.getSubject(), lm.times);
+				}
+				lastMessages.remove(key);
+			}
+		}
+		if (ignoreSend) {
+			return null;
 		}
 
 		// Check if a custom sender is provided, otherwise use the default from the configuration

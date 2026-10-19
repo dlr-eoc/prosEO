@@ -16,8 +16,13 @@ management:
 proseo:
     http.timeout: 10000
     notification:
+        url: http://hostname/proseo/notification/v0.1
         subject: "Message from prosEO"
         contentType: "text/plain"
+        # Duration to ignore notifications with same subject (to avoid mass mails) in minutes
+        forgetIdenticalNotificationsAfter: 60
+        # Number of notifications to send with same subject (to avoid mass mails)
+        numberOfIdenticalNotifications: 5
         mail:
             host: "mail.host"
             port: 587
