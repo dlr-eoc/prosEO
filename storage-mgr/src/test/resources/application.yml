@@ -35,7 +35,6 @@ proseo:
       cachePath: target/testdata/cache
 
     joborder:
-      bucket: internal
       prefix: joborders
       
     storageManager:

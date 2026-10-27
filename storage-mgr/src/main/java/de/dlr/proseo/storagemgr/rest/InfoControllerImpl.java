@@ -53,7 +53,6 @@ public class InfoControllerImpl implements InfoController {
 		posix.setCachePath(cfg.getPosixCachePath());
 		response.setPosix(posix);
 		Joborder joborder = new Joborder();
-		joborder.setBucket(cfg.getJoborderBucket());
 		joborder.setPrefix(cfg.getJoborderPrefix());
 
 		response.setJoborder(joborder);

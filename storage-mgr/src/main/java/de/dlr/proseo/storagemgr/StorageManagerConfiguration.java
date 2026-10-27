@@ -69,9 +69,6 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.posix.cachePath}")
 	private String posixCachePath;
 	
-	@Value("${proseo.joborder.bucket}")
-	private String joborderBucket;
-
 	@Value("${proseo.joborder.prefix}")
 	private String joborderPrefix;
 	
@@ -232,13 +229,6 @@ public class StorageManagerConfiguration {
 	 */
 	public String getJoborderPrefix() {
 		return joborderPrefix;
-	}
-
-	/**
-	 * @return the joborderBucket
-	 */
-	public String getJoborderBucket() {
-		return joborderBucket;
 	}
 
 	/**
