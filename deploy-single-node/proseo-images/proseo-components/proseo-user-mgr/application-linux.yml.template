@@ -1,23 +1,26 @@
 spring:
     maxResults: 10000
-    jpa:
-        database-platform: org.hibernate.dialect.PostgreSQLDialect
-        hibernate.ddl-auto: update
-        open-in-view: false
-        properties.hibernate.jdbc.time_zone: UTC
-    datasource:
-        url: jdbc:postgresql://proseo-db:5432/proseo
         username: ${POSTGRES_USER}
         password: ${POSTGRES_PWD}
+    jpa:
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate:
+            jdbc.time_zone: UTC
+            #id.db_structure_naming_strategy: standard
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+management:
+    endpoints.web.exposure.include: "health"
 logging:
     file: 
         name: /proseo/log/proseo-user-mgr.log
+    defaultuser.name: ${PROSEO_USER_MANAGER_NAME}
+    defaultuser.password: ${PROSEO_USER_MANAGER_PWD}
     level:
         root: INFO
         de.dlr.proseo: TRACE
         org.hibernate.engine.jdbc.env.internal: WARN
 proseo:
-    defaultuser.name: ${PROSEO_USER_MANAGER_NAME}
-    defaultuser.password: ${PROSEO_USER_MANAGER_PWD}
     # Password expiration period in days
     password.expirationtime: 90
