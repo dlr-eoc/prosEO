@@ -1,7 +1,6 @@
 spring:
     maxResults: 10000
     jpa:
-        database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
         open-in-view: false
         properties.hibernate:
