@@ -1,7 +1,7 @@
 Example: Setting up a Single-Node Processing Facility
 =====================================================
 
-Assuming there is a MacOS or Windows machine available with sufficient RAM and disk capacity, a single-node setup
+Assuming there is a MacOS, Windows or Linux machine available with sufficient RAM and disk capacity, a single-node setup
 can be achieved for both the prosEO Control Instance and the prosEO Processing Facility. The following
 example shows a setup based on MacOS.
 
@@ -9,7 +9,7 @@ Note that for the following to work the target machine must have unrestricted ac
 to resources on the Internet.
 
 
-## Step 1: Install Docker and Kubernetes
+## Step 1a: Docker Desktop
 
 Download Docker Desktop from <https://www.docker.com/products/docker-desktop>.
 
@@ -60,6 +60,153 @@ Kubernetes Dashboard has been discontinued by the end of 2025, Headlamp is sugge
    using the token retrieved in step 4.
 
 
+## Step 1b: Docker and Minikube
+
+This section describes how to set up Docker and Minikube on a Linux machine to run prosEO as a single-node installation. Unlike the Docker Desktop approach described in Step 1a, this setup uses Docker Engine and Minikube with the Docker driver.
+The following instructions are based on Ubuntu Linux. The target machine should have sufficient RAM, CPU capacity and disk space, as well as unrestricted access to Internet resources.
+The script `/prosEO/deploy-single-node/linux/deploy-single-node-proseo-linux` has been provided as a reference.
+
+### 1. Install Docker Engine
+
+Install Docker Engine and Docker Compose following the official instructions:
+[https://docs.docker.com/engine/install/ubuntu/](https://docs.docker.com/engine/install/ubuntu/)
+
+Ensure that Docker is running and available to the current user:
+
+```
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo usermod -aG docker $USER
+```
+Note that the user must log out and log in again for the new group membership to take effect.
+
+### 2. Install Minikube and kubectl
+
+Install Minikube following the official Linux installation instructions:
+[https://minikube.sigs.k8s.io/docs/start/](https://minikube.sigs.k8s.io/docs/start)
+
+Install kubectl using the official instructions:
+[https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux)
+
+Verify both installations:
+
+```
+minikube version
+kubectl version --client
+```
+
+### 3. Prepare the storage directories
+
+Choose a directory with sufficient free disk space on the host machine for Docker storage, prosEO data and shared storage:
+
+```
+PROSEO_STORAGE_PATH=<some/storage/path>
+mkdir -p ${PROSEO_STORAGE_PATH}/{docker-storage,proseo-shared-storage,registry-bind-mount}
+chmod 757 -R ${PROSEO_STORAGE_PATH}/proseo-shared-storage/
+```
+
+The directories serve the following purposes:
+- `docker-storage`: Docker Engine data directory.
+- `proseo-shared-storage`: Shared storage accessible to the Kubernetes cluster and the prosEO services.
+- `registry-bind-mount`: Persistent storage for the local Docker registry.
+
+### 4. Create a local Docker registry
+
+A local Docker registry is used to store the prosEO component images.
+
+Start the registry as a Docker container:
+
+```
+docker run -d \
+    -p 5000:5000 \
+    --restart always \
+    -e STORAGE_DELETE_ENABLED=true \
+    -v ${PROSEO_STORAGE_PATH}/registry-bind-mount:/var/lib/registry \
+    --name registry \
+    registry:3
+```
+
+To use the registry accessible locally at `localhost:5000`, configure Docker Engine through `/etc/docker/daemon.json`:
+
+```
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json <<EOF
+{
+    "insecure-registries": [
+        "localhost:5000"
+    ],
+    "data-root": "${PROSEO_STORAGE_PATH}/docker-storage"
+}
+EOF
+```
+
+Restart Docker Engine to apply the configuration:
+
+```
+sudo systemctl restart docker.socket
+sudo systemctl restart docker.service
+```
+
+### 5. Start Minikube
+
+Start Minikube using the Docker driver. The following example allocates 6 CPUs and 32 GB of memory and mounts the shared storage directory into the Kubernetes node.
+Adjust the API server IP addresses and hostnames according to the target environment:
+
+```
+minikube start \
+    --cpus 6 \
+    --memory 32GB \
+    --apiserver-ips=<MINIKUBE_API_SERVER_IP> \
+    --apiserver-names=<API_SERVER_HOSTNAME> \
+    --driver docker \
+    --mount=true \
+    --mount-string="${PROSEO_STORAGE_PATH}/proseo-shared-storage:/minikube-host" \
+    --insecure-registry="host.minikube.internal:5000"
+
+```
+
+Wait until Minikube has started successfully:
+
+```
+minikube status
+kubectl get nodes
+```
+
+### 6. Configure host name resolution
+
+To allow Docker containers and Kubernetes services to communicate with the local registry, configure the host name `host.minikube.internal`.
+First, remove any previous entries:
+
+```
+sudo sed -i '/host.minikube.internal/d' /etc/hosts
+```
+
+Then add the current Minikube IP address:
+
+```
+MINI_IP=$(minikube ip)
+echo "${MINI_IP}    host.minikube.internal" | sudo tee -a /etc/hosts
+```
+
+Verify the entry:
+
+```
+grep host.minikube.internal /etc/hosts
+```
+
+### 7. Verify the installation
+
+Check that Docker, the local registry and Minikube are operational:
+
+```
+docker ps
+minikube status
+kubectl get nodes
+kubectl get pods -A
+```
+
+At this point, the Linux environment is prepared for the prosEO installation.
+
 
 ## Step 2: Build the prosEO Control Instance
 
@@ -76,9 +223,11 @@ named `application.yml` by copying from `application.yml.template` and adapt the
 Other parameters (esp. logging settings) may be changed as deemed suitable for the installation at hand.
 
 When all `application.yml` files have been created, for each component a configured image (containing the update `application.yml`
-file) must be created and pushed to the Docker registry to be used:
+file) must be created and pushed to the Docker registry to be used, e. g. localhost:5000 when using Docker Desktop or
+host.minikube.internal:5000 when using Docker Engine and Minikube:
+
 ```
-REGISTRY_URL=<your preferred prosEO repository, e. g. localhost:5000>
+REGISTRY_URL=<your preferred prosEO repository>
 PROSEO_PLATFORM=<select according to your environment: linux/amd64 or linux/arm64>
 
 cd proseo-images/proseo-components
@@ -89,7 +238,7 @@ for component in proseo-* ; do
   COMPONENT_NAME=$(cat Dockerfile | grep FROM | awk '{gsub("localhost:5000/",""); split($0,a," "); print a[2]}')
   TAGGED_NAME=${REGISTRY_URL}/${COMPONENT_NAME}-proseo
 
-  docker build -t ${TAGGED_NAME} --platform ${PROSEO_PLATFORM}
+  docker build -t ${TAGGED_NAME} --platform ${PROSEO_PLATFORM} .
   docker push ${TAGGED_NAME}
 
   cd -
@@ -102,7 +251,8 @@ The `proseo-images` directory may be populated with convenience scripts for thes
 
 Create the prosEO Control Instance from a `docker-compose.yml` file. A working `docker-compose.yml.template`
 file is provided in the `proseo-images` directory, a simplified file restricted to the core microservices
-would look something like the following:
+would look something like the following (adapt the platform accordingly):
+
 ```yaml
 version: '3'
 services:
@@ -227,13 +377,22 @@ networks:
 
 To run the Control Instance issue the following commands from the directory, where the
 `docker-compose.yml` file resides:
+
 ```
 export REGISTRY_URL=<your preferred prosEO repository>
 export VERSION=<the prosEO version to install>
 export POSTGRES_PASSWORD=<password for postgres user as configured in prosEO images, see step 2 above>
 export PGADMIN_EMAIL=<email address for pgAdmin authentication>
 export PGADMIN_PASSWORD=<some password for pgAdmin authentication>
-docker-compose -p proseo up -d
+docker compose -p proseo up -d
+
+# Linux only: Connect the Ingestor and Production Planner 
+# containers to the Minikube network so they can communicate with
+# the Kubernetes cluster.
+docker network connect minikube \
+    "$(docker compose -p proseo ps -q proseo-ingestor)"
+docker network connect minikube \
+    "$(docker compose -p proseo ps -q proseo-prodplanner)"
 ```
 
 The `proseo-images` directory may be populated with convenience scripts for these steps (see `proseo-images/README.md`).
@@ -254,6 +413,7 @@ Start the CLI with `java -jar proseo-ui-cli.jar`. On a newly created prosEO Cont
 a default user `sysadm` (password `sysadm`) is provided.
 
 To initialize the prosEO instance, run the following CLI commands:
+
 ```
 login
 # at the prompt enter the username and password as given above
@@ -267,7 +427,8 @@ exit
 
 For the Production Planner, an account with access to the Kubernetes API is required. The account must be able to read general
 information about the Kubernetes cluster (health state, node list) and to fully manage jobs and pods (create, update, list, delete).
-Create a file `planner-account.yaml` like this (or use the file in `<project root>/deploy/hands/kubernetes`):
+Create a file `planner-account.yaml` like this (or use the file in `<project root>/deploy-single-node/kubernetes`):
+
 ```
 apiVersion: v1
 kind: ServiceAccount
@@ -322,8 +483,9 @@ type: kubernetes.io/service-account-token
 ```
 
 Create the account, role and role binding, and retrieve the authentication token for the new account:
+
 ```bash
-kubectl apply -f ../deploy/hands/kubernetes/planner-account.yaml
+kubectl apply -f deploy-single-node/kubernetes/planner-account-single-node-linux.yaml
 kubectl describe secret/proseo-planner-secret
 ```
 
@@ -338,7 +500,7 @@ processing (one job will remain in `RELEASED` state due to missing input, requir
 of an additional order to process from L0 to L2A/B data - this is left as an exercise to the reader ;-) ).
 
 
-# Step 7: Setup the Kubernetes Cluster with Storage Manager and File System Cache
+# Step 7a: Setup the Kubernetes Cluster with Docker Desktop
 
 For the single-node installation we will use POSIX as the default file system, thereby
 avoiding the overhead of running an S3 object storage provider. This does not place any functional constraints on prosEO,
@@ -357,6 +519,7 @@ to both the Storage Manager and the Processing Engine. Note that Docker Desktop 
 
 Assuming a configuration as in the files given in the current (example) directory, the following commands must be issued
 (also available as part of the script `ptm-config/create_data_local.sh`):
+
 ```sh
 # Define actual path to storage area
 SHARED_STORAGE_PATH=<path on Docker Desktop host>
@@ -371,23 +534,53 @@ kubectl apply -f nfs-pv.yaml
 mkdir -p ${SHARED_STORAGE_PATH}/proseodata ${SHARED_STORAGE_PATH}/transfer
 ```
 
-Locate the file `storage-mgr.yaml` and edit the image reference (around line 20) to point
+Locate the file `storage-mgr-local.yml` and edit the image reference (around line 20) to point
 to your preferred prosEO repository, then create the Storage Manager:
+
 ```
 kubectl apply -f storage-mgr-local.yaml
-
 bash -c 'nohup kubectl port-forward service/storage-mgr-service 8080:3000 2>&1 &'
 ```
 Note that the `kubectl port-forward` command needs to be repeated, whenever a new Storage Manager pod is created in Kubernetes.
 
 
+# Step 7b: Setup the Kubernetes Cluster with Minikube
+
+For Linux installations using Docker Engine and Minikube, the shared storage directory was mounted into the Minikube node in Step 1b at `/minikube-host`. This mount provides access to the host directory from Kubernetes without the Docker Desktop-specific path handling described above.
+
+Use the same host storage directory configured in Step 1b:
+
+```sh
+# Define the shared storage directory on the host
+SHARED_STORAGE_PATH="${PROSEO_STORAGE_PATH}/proseo-shared-storage"
+
+# Update the path in the Persistent Volume configuration
+sed "s|%SHARED_STORAGE_PATH%|${SHARED_STORAGE_PATH}|" <nfs-pv.yaml.template >nfs-pv.yaml
+
+# Create the Persistent Volumes
+kubectl apply -f nfs-pv.yaml
+
+# Create the directories used for prosEO data and file transfers
+mkdir -p "${SHARED_STORAGE_PATH}/proseodata" "${SHARED_STORAGE_PATH}/transfer"
+```
+
+Locate the file `storage-mgr-local.yml` and edit the image reference (around line 20) to point
+to your preferred prosEO repository (e.g. `host.minikube.internal:5000/proseo-storage-mgr:latest`), then create the Storage Manager:
+
+```
+kubectl apply -f storage-mgr-local.yaml
+```
+
+
 # Step 8: Configure the prosEO Processing Facility
 
 Unless the configuration script was used create a JSON file `facility.json` describing the local processing facility:
+Docker Desktop:
+
 ```
 {
   "name" : "localhost",
-  "description" : "Docker Desktop Minikube",
+  "description" : "Docker Desktop",
   "processingEngineUrl" : "https://kubernetes.docker.internal:6443",
   "processingEngineToken" : "<authentication token from step 5>",
   "storageManagerUrl" : "http://kubernetes.docker.internal:8080/proseo/storage-mgr/v1",
@@ -398,7 +591,24 @@ Unless the configuration script was used create a JSON file `facility.json` desc
 }
 ```
 
+Docker Engine + Minikube:
+
+```
+{
+  "name" : "localhost",
+  "description" : "Minikube",
+  "processingEngineUrl" : "https://minikube:8443/",
+  "processingEngineToken" : "<authentication token from step 5>",
+  "storageManagerUrl" : "http://minikube:30001/proseo/storage-mgr/v1",
+  "localStorageManagerUrl" : "http://storage-mgr-service.default.svc.cluster.local:3000/proseo/storage-mgr/v0.1",
+  "storageManagerUser" : "smuser",
+  "storageManagerPassword" : "smpwd-but-that-would-be-way-too-short",
+  "defaultStorageType" : "POSIX"
+}
+```
+
 On the prosEO CLI issue the following commands:
+
 ```
 login PTM
 # at the prompt enter your username and password
@@ -406,6 +616,4 @@ facility create --file=facility.json
 ```
 
 If the facility was already created using the configuration script, the authentication token must be updated:
-```
-facility update localhost processingEngineToken=<authentication token from step 5>
-```
+`facility update localhost processingEngineToken=<authentication token from step 5>`
