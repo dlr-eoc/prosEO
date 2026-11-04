@@ -1,0 +1,58 @@
+#%RAML 1.0 DataType
+#  RestDatatake:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        default: 0
+        description: The persistent id of this object
+      version?:
+        type: integer
+        default: 1
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      missionCode:
+        type: string
+        description: The mission code (e. g. TDM)
+      spacecraftCode:
+        type: string
+        description: The short code for the spacecraft (e. g. TDX1)
+      payloadName:
+        type: string
+        description: The name of the satellite payload the datatake belongs to 
+      orbitNumber?:
+        type: integer
+        description: The orbit number of the orbit the datatake belongs to (if known)
+      dtGroupIdentifier?:
+        type: string
+        description: (External) identifier for the datatake group the datatake belongs to (if any)
+      datatakeId:
+        type: string
+        description: The (external) datatake ID (usually from Mission Planning)
+      instrumentMode?:
+        type: string
+        description: Instrument sensor mode (abbreviated)
+      sensingStartTime:
+        type: string
+        description: Sensing start time (start of the instrument observation) in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      datatakeDuration:
+        type: integer
+        description: Observation duration in milliseconds
+      isComplete:
+        type: boolean
+        description: Completeness of downlink segments for datatake (true, if all data segments for the datatake have been received)
+      deliveryStopTime?:
+        type: string
+        description: Availability time for last instrument data of this datatake in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      processingTime?:
+        type: string
+        description: Processing time for L0 product from this datatake (only first processing is recorded) in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      parameters:
+        type: RestParameter[]
+        description: Additional mission-specific parameters for the datatake
+      dataSegments:
+        type: RestDataSegment[]
+        description: The list of data segments contained making up this datatake; on output ordered by sequence number

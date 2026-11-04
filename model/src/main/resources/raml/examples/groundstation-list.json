@@ -1,0 +1,14 @@
+[
+    {
+    	"id": 27,
+    	"version": 2,
+    	"stationId": "WHM",
+    	"stationName": "DLR Weilheim"
+    },
+    {
+        "id": 36,
+        "version": 3,
+        "stationId": "OHG",
+        "stationName": "DLR O'Higgins"
+    }
+]

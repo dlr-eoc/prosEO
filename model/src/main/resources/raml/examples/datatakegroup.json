@@ -1,0 +1,100 @@
+{
+    "id": 31,
+    "version": 1,
+    "missionCode": "TDM",
+    "dtGroupIdentifier": "20260101",
+    "datatakes": [
+        {
+            "id": 327,
+            "version": 3,
+        	"missionCode": "TDM",
+        	"spacecraftCode": "TDX-1",
+        	"payloadName": "SAR",
+        	"dtGroupIdentifier": "20260101",
+        	"datatakeId": "432567",
+        	"instrumentMode": "SM",
+        	"sensingStartTime": "2026-11-04T09:44:23.984000",
+        	"datatakeDuration": 20000,
+        	"isComplete": false,
+        	"parameters": [ 
+        	    {
+            	    "key": "ordername",
+            	    "parameterType": "STRING",
+            	    "parameterValue": "TDM_AU_AUS_203040"
+        	    }
+        	],
+        	"dataSegments": [
+        	    {
+        	        "id": 633,
+        	        "version": 1,
+        	        "missionCode": "TDM",
+        	        "spacecraftCode": "TDX-1",
+        	        "payloadName": "SAR",
+        	        "datatakeId": "432567",
+        	        "segmentNumber": 1,
+        	        "groundStations": [],
+        	        "sensingStartTime": "2026-11-04T09:44:23.984000",
+        	        "segmentDuration": 10000
+        	    },
+                {
+                    "id": 634,
+                    "version": 1,
+                    "missionCode": "TDM",
+                    "spacecraftCode": "TDX-1",
+                    "payloadName": "SAR",
+                    "datatakeId": "432567",
+                    "segmentNumber": 2,
+                    "groundStations": [],
+                    "sensingStartTime": "2026-11-04T09:44:33.984000",
+                    "segmentDuration": 10000
+                }
+        	]
+        },
+        {
+            "id": 334,
+            "version": 3,
+            "missionCode": "TDM",
+            "spacecraftCode": "TSX-1",
+            "payloadName": "SAR",
+            "dtGroupIdentifier": "20260101",
+            "datatakeId": "356875",
+            "instrumentMode": "SM",
+            "sensingStartTime": "2026-11-04T09:44:23.984000",
+            "datatakeDuration": 20000,
+            "isComplete": false,
+            "parameters": [ 
+                {
+                    "key": "ordername",
+                    "parameterType": "STRING",
+                    "parameterValue": "TDM_AU_AUS_203040"
+                }
+            ],
+            "dataSegments": [
+                {
+                    "id": 656,
+                    "version": 1,
+                    "missionCode": "TDM",
+                    "spacecraftCode": "TSX-1",
+                    "payloadName": "SAR",
+                    "datatakeId": "432567",
+                    "segmentNumber": 1,
+                    "groundStations": [],
+                    "sensingStartTime": "2026-11-04T09:44:23.984000",
+                    "segmentDuration": 8000
+                },
+                {
+                    "id": 657,
+                    "version": 1,
+                    "missionCode": "TDM",
+                    "spacecraftCode": "TSX-1",
+                    "payloadName": "SAR",
+                    "datatakeId": "432567",
+                    "segmentNumber": 2,
+                    "groundStations": [],
+                    "sensingStartTime": "2026-11-04T09:44:31.984000",
+                    "segmentDuration": 12000
+                }
+            ]
+        }
+    ]
+}

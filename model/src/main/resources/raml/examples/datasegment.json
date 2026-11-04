@@ -1,0 +1,20 @@
+{
+    "id": 633,
+    "version": 1,
+    "missionCode": "TDM",
+    "spacecraftCode": "TDX-1",
+    "payloadName": "SAR",
+    "datatakeId": "432567",
+    "segmentNumber": 1,
+    "groundStations": [
+        {
+            "stationId": "INU",
+            "stationName": "Inuvik DLR"
+        }
+    ],
+    "sensingStartTime": "2026-11-04T09:44:23.984000",
+    "segmentDuration": 10000,
+    "downlinkStart": "2026-11-04T10:17:48.561000",
+    "downlinkStop": "2026-11-04T10:19:23.508000",
+    "channel": "CH-1"
+}
