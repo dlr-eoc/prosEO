@@ -45,7 +45,6 @@
         <!-- Version freezing addressing security vulnerabilities - REMOVE when upgrading Spring Boot! -->
         <tomcat.version>11.0.25</tomcat.version><!-- Addresses CVE-2026-65637 and many more -->
         <kotlin.version>2.4.20</kotlin.version><!-- Addresses CVE-2026-53914 -->        
-    <nvdApiKey>03d94b79-bd89-429f-9d86-330ebf17b89b</nvdApiKey><!-- for OWASP vulnerability checking -->
 	</properties>
 
 	<modules>
@@ -69,6 +68,7 @@
         <module>logging</module>
         <module>notification</module>
         <module>order-gen</module>
+        <module>datatake-mgr</module>
 	</modules>
 
 	<dependencyManagement>

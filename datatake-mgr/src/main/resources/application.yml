@@ -1,0 +1,26 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: postgres
+        password: apassword
+logging:
+    file: /proseo/log/proseo-datatake-mgr.log
+    level:
+        root: INFO
+        de.dlr: TRACE
+        org.hibernate.engine.jdbc.env.internal: WARN
+proseo:
+    dtmgr:
+        # A list of spacecraft codes to process datatakes for
+        spacecrafts: [ S1A, S1C ]
+        
+        # Interval between datatake checks in milliseconds (default every hour; 0 disables processing of incomplete datatakes)
+        #check.interval: 3600000
+        
+        # Timeout for incomplete datatakes in seconds (default 200 min, roughly corresponding to two orbits in LEO)
+        #timeout: 12000

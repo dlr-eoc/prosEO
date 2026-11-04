@@ -114,7 +114,7 @@ public enum PlannerMessage implements ProseoMessage {
 	JOBSTEP_ALREADY_CLOSED				(4097, Level.WARN, false, "Job step ''{0}'' already closed", ""), 
 	JOBSTEP_ALREADY_FAILED				(4098, Level.WARN, false, "Job step ''{0}'' already failed", ""), 
 	JOBSTEP_COULD_NOT_RETRY				(4099, Level.ERROR, false, "Job step ''{0}'' has to be in state FAILED to retry", ""), 
-	JOBSTEP_COULD_NOT_CLOSE				(3100, Level.ERROR, false, "Job step ''{0}'' has to be in state COMPLETED or FAILED to close", ""), 
+	JOBSTEP_COULD_NOT_CLOSE				(4100, Level.ERROR, false, "Job step ''{0}'' has to be in state COMPLETED or FAILED to close", ""), 
 	JOBSTEP_NOT_EXIST					(4101, Level.ERROR, false, "Job step ''{0}'' does not exist", ""),
 	JOF_DELETED							(4102, Level.INFO, true, "Job Order File ''{0}'' deleted", ""), 
 	JOF_DELETING_ERROR					(4103, Level.ERROR, false, "Error deleting Job Order File ''{0}'' from processing facility ''{1}'' (cause: {1})", ""),

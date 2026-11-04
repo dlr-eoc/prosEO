@@ -9,7 +9,4 @@ bin/
 .vscode
 **/*~
 **/.DS_Store
-/integration-tests
-/dev/
 **/META-INF
-s4-wrappers
