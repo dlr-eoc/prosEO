@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -307,8 +308,12 @@ public class AuxipMonitor extends BaseMonitor {
 				// logger.trace("... Auth: '{}'");
 			}
 		}
-		if (logger.isTraceEnabled())
-			logger.trace("... using query variables '{}'", queryVariables);
+		if (logger.isTraceEnabled()) {
+		    MultiValueMap<String, String> sanitizedVariables = new LinkedMultiValueMap<>(queryVariables);
+		    sanitizedVariables.replace("password", Collections.singletonList("***"));
+		    sanitizedVariables.replace("client_secret", Collections.singletonList("***"));
+		    logger.trace("... using query variables '{}'", sanitizedVariables);
+		}
 
 		// Perform token request
 		String tokenResponse = request.body(BodyInserters.fromFormData(queryVariables)).retrieve().bodyToMono(String.class).block();
