@@ -1,0 +1,28 @@
+#%RAML 1.0 DataType
+#  RestOrbitalPass:
+    type: object
+    properties:
+      groundStation:
+        type: RestGroundStation
+        description: The ground station to which the pass applies
+      acquisitionStartTime?:
+        type: string
+        description: Start time of data acquisition (AOS, acquisition of signal) in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      acquisitionStopTime?:
+        type: string
+        description: End time of data acquisition (LOS, loss of signal) in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      dataStartTime?:
+        type: string
+        description: Start time of data reception in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      dataStopTime?:
+        type: string
+        description: End time of data reception in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      pickupAvailabilityTime?:
+        type: string
+        description: Timestamp for data availability on ground station pickup point in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+    

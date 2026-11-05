@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.Downlink;
 import de.dlr.proseo.model.GroundStation;
 import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.OrbitalPass;
 import de.dlr.proseo.model.Payload;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryApplication;
@@ -116,7 +117,10 @@ public class GroundStationRepositoryTest {
 		Downlink downlink = new Downlink();
 		downlink.setDownlinkId(TEST_DL_ID);
 		downlink.setSpacecraft(spacecraft);
-		downlink.setGroundStation(groundStation);
+		
+		OrbitalPass pass = new OrbitalPass();
+		pass.setGroundStation(groundStation);
+		downlink.getPasses().add(pass);
 		downlink = RepositoryService.getDownlinkRepository().save(downlink);
 		
 		Optional<Downlink> newDownlinkOpt = RepositoryService.getDownlinkRepository()
@@ -124,7 +128,7 @@ public class GroundStationRepositoryTest {
 		assertFalse(newDownlinkOpt.isEmpty(), "Downlink not found by downlink ID");
 		
 		Downlink newDownlink = newDownlinkOpt.get();
-		assertEquals(groundStation, newDownlink.getGroundStation(), "Ground stations in downlink do not match");
+		assertEquals(groundStation, newDownlink.getPasses().get(0).getGroundStation(), "Ground stations in downlink do not match");
 		
 		logger.info("OK: Test for linking from downlink completed");
 		

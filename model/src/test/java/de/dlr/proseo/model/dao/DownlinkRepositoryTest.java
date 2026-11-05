@@ -26,7 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.DataSegment;
 import de.dlr.proseo.model.Datatake;
 import de.dlr.proseo.model.Downlink;
+import de.dlr.proseo.model.GroundStation;
 import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.OrbitalPass;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Payload;
 import de.dlr.proseo.model.Spacecraft;
@@ -55,6 +57,8 @@ public class DownlinkRepositoryTest {
 	private static final Duration TEST_DURATION = Duration.ofSeconds(10);
 	private static final String TEST_PARAM_KEY = "key1";
 	private static final String TEST_PARAM_VALUE = "value1";
+	private static final String TEST_ID = "GS1";
+	private static final String TEST_NAME = "Ground Station 1";
 	
 	@Autowired
 	private EntityManager em;
@@ -92,6 +96,11 @@ public class DownlinkRepositoryTest {
 		payload.setName(TEST_PAYLOAD);
 		spacecraft.getPayloads().add(payload);
 		spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+		
+		GroundStation groundStation = new GroundStation();
+		groundStation.setStationId(TEST_ID);
+		groundStation.setStationName(TEST_NAME);
+		groundStation = RepositoryService.getGroundStationRepository().save(groundStation);
 	}
 
 	/**
@@ -123,6 +132,7 @@ public class DownlinkRepositoryTest {
 		assertEquals(downlink, newDownlink, "Downlink does not match");
 		
 		logger.info("OK: Test for findByMissionAndSpacecraftAndId completed");
+		
 		
 		// Add data segments to the downlink
 		
@@ -166,7 +176,7 @@ public class DownlinkRepositoryTest {
 		
 		newDownlinkOpt = RepositoryService.getDownlinkRepository()
 				.findByMissionAndSpacecraftAndId(TEST_MISSIONCODE, TEST_SC_CODE, TEST_DL_ID);
-		assertFalse(newDownlinkOpt.isEmpty(), "Downlink not found by downlink ID");
+		assertFalse(newDownlinkOpt.isEmpty(), "Downlink not found by downlink ID after adding segments");
 		
 		newDownlink = newDownlinkOpt.get();
 		assertEquals(downlink, newDownlink, "Downlink does not match after adding segments");
@@ -177,6 +187,31 @@ public class DownlinkRepositoryTest {
 		
 		logger.info("OK: Test for downlink with data segments completed");
 		
+		
+		// Add an orbital pass to the downlink
+		Optional<GroundStation> groundStation = RepositoryService.getGroundStationRepository().findByStationId(TEST_ID);
+		assertFalse(groundStation.isEmpty(), "Ground station " + TEST_ID + " not found");
+		
+		OrbitalPass pass = new OrbitalPass();
+		pass.setGroundStation(groundStation.get());
+		pass.setAcquisitionStartTime(TEST_START_TIME);
+		downlink.getPasses().add(pass);
+		
+		downlink = RepositoryService.getDownlinkRepository().save(downlink);
+		
+		em.flush();
+		
+		newDownlinkOpt = RepositoryService.getDownlinkRepository()
+				.findByMissionAndSpacecraftAndId(TEST_MISSIONCODE, TEST_SC_CODE, TEST_DL_ID);
+		assertFalse(newDownlinkOpt.isEmpty(), "Downlink not found by downlink ID after adding orbital pass");
+		
+		newDownlink = newDownlinkOpt.get();
+		assertEquals(downlink, newDownlink, "Downlink does not match after adding orbital pass");
+		
+		OrbitalPass newPass = newDownlink.getPasses().get(0);
+		assertEquals(pass, newPass, "Orbital passes do not match");
+		
+		logger.info("OK: Test for downlink with orbital pass completed");
 	}
 
 }

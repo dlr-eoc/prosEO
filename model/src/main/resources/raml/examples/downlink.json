@@ -4,12 +4,19 @@
 	"missionCode": "TDM",
 	"spacecraftCode": "TDX-1",
 	"downlinkId": "DL-35432",
-	"groundStations": [
-	    {
-    	    "stationId": "INU",
-    	    "stationName": "Inuvik DLR"
-	    }
-	],
+    "passes": [
+        {
+            "groundStation": {
+                "stationId": "INU",
+                "stationName": "Inuvik DLR"
+            },
+            "acquisitionStartTime": "2026-11-04T10:17:33.173000",
+            "acquisitionStopTime": "2026-11-04T10:26:04.000000",
+            "dataStartTime": "2026-11-04T10:17:48.561000",
+            "dataStopTime": "2026-11-04T10:25:51.385000",
+            "pickupAvailabilityTime": "2026-11-04T10:26:48.347000"
+        }
+    ],
 	"dataSegments": [
         {
             "id": 633,
@@ -53,10 +60,6 @@
         }
 	],
 	"channels": [ "CH-1" ],
-	"acquisitionStartTime": "2026-11-04T10:17:33.173000",
-	"dataStartTime": "2026-11-04T10:17:48.561000",
-	"dataStopTime": "2026-11-04T10:25:51.385000",
-	"pickupAvailabilityTime": "2026-11-04T10:26:48.347000",
 	"isReceived": true,
 	"receivedSize": 486659107,
 	"receptionTime": "2026-11-04T10:29:17.665499"

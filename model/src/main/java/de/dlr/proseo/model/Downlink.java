@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Objects;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
@@ -18,7 +20,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 /**
- * A continuous transmission of satellite data (both housekeeping and payload data) from the satellite to a specific ground station.
+ * A continuous transmission of satellite data (both housekeeping and payload data) from the satellite to one or more 
+ * specific ground stations. Each transmission to a single ground station is reflected in an OrbitalPass.
  * 
  * @author Dr. Thomas Bassler
  */
@@ -36,10 +39,6 @@ public class Downlink extends PersistentObject {
 	@ManyToOne(optional = false)
 	private Spacecraft spacecraft;
 	
-	/** The ground station to which the downlink is effected */
-	@ManyToOne
-	private GroundStation groundStation;
-	
 	/** The list of data segments contained in this downlink, ordered by reception time */
 	@OneToMany(mappedBy = "downlink")
 	private List<DataSegment> dataSegments = new ArrayList<>();
@@ -47,21 +46,9 @@ public class Downlink extends PersistentObject {
 	/** Downlink channels expected (should be at least one) */
 	private List<String> channels = new ArrayList<>();
 	
-	/** Start time of data acquisition (AOS, acquisition of signal), if known */
-	@Column(columnDefinition = "TIMESTAMP(6)")
-	private Instant acquisitionStartTime;
-	
-	/** Start time of data reception */
-	@Column(columnDefinition = "TIMESTAMP(6)")
-	private Instant dataStartTime;
-	
-	/** End time of data reception */
-	@Column(columnDefinition = "TIMESTAMP(6)")
-	private Instant dataStopTime;
-	
-	/** Timestamp for data availability on ground station pickup point */
-	@Column(columnDefinition = "TIMESTAMP(6)")
-	private Instant pickupAvailabilityTime;
+	/** Orbital passes used to perform the downlink */
+	@ElementCollection
+	private List<OrbitalPass> passes = new ArrayList<>();
 	
 	/** Indicates reception of downlink data by prosEO */
 	@Column(nullable = false)
@@ -70,7 +57,7 @@ public class Downlink extends PersistentObject {
 	/** Size of the received data */
 	private Long receivedSize;
 	
-	/** Time of download completion from ground station pickup point */
+	/** Time of (first) download completion from a ground station pickup point */
 	@Column(columnDefinition = "TIMESTAMP(6)")
 	private Instant receptionTime;
 
@@ -111,24 +98,6 @@ public class Downlink extends PersistentObject {
 	}
 
 	/**
-	 * Gets the associated ground station
-	 * 
-	 * @return the associated ground station
-	 */
-	public GroundStation getGroundStation() {
-		return groundStation;
-	}
-
-	/**
-	 * Sets the associated ground station
-	 * 
-	 * @param groundStation the associated ground station to set
-	 */
-	public void setGroundStation(GroundStation groundStation) {
-		this.groundStation = groundStation;
-	}
-
-	/**
 	 * Gets the list of data segments contained in this downlink, ordered by reception time
 	 * 
 	 * @return the data segments in the downlink
@@ -165,75 +134,21 @@ public class Downlink extends PersistentObject {
 	}
 
 	/**
-	 * Gets the start time of data acquisition (AOS)
+	 * Gets the list of orbital passes used to perform the downlink
 	 * 
-	 * @return the acquisition start time
+	 * @return the orbital passes for this downlink
 	 */
-	public Instant getAcquisitionStartTime() {
-		return acquisitionStartTime;
+	public List<OrbitalPass> getPasses() {
+		return passes;
 	}
 
 	/**
-	 * Sets the start time of data acquisition (AOS)
+	 * Sets the list of orbital passes used to perform the downlink
 	 * 
-	 * @param acquisitionStartTime the acquisition start time to set
+	 * @param passes the list of orbital passes to set
 	 */
-	public void setAcquisitionStartTime(Instant acquisitionStartTime) {
-		this.acquisitionStartTime = acquisitionStartTime;
-	}
-
-	/**
-	 * Gets the start time of data reception
-	 * 
-	 * @return the data reception start time
-	 */
-	public Instant getDataStartTime() {
-		return dataStartTime;
-	}
-
-	/**
-	 * Sets the start time of data reception
-	 * 
-	 * @param dataStartTime the data reception start time to set
-	 */
-	public void setDataStartTime(Instant dataStartTime) {
-		this.dataStartTime = dataStartTime;
-	}
-
-	/**
-	 * Gets the end time of data reception
-	 * 
-	 * @return the data reception stop time
-	 */
-	public Instant getDataStopTime() {
-		return dataStopTime;
-	}
-
-	/**
-	 * Sets the end time of data reception
-	 * 
-	 * @param dataStopTime the data reception stop time to set
-	 */
-	public void setDataStopTime(Instant dataStopTime) {
-		this.dataStopTime = dataStopTime;
-	}
-
-	/**
-	 * Gets the timestamp for data availability on ground station pickup point
-	 * 
-	 * @return the ground station pickup availability time
-	 */
-	public Instant getPickupAvailabilityTime() {
-		return pickupAvailabilityTime;
-	}
-
-	/**
-	 * Sets the timestamp for data availability on ground station pickup point
-	 * 
-	 * @param pickupAvailabilityTime the ground station pickup availability time to set
-	 */
-	public void setPickupAvailabilityTime(Instant pickupAvailabilityTime) {
-		this.pickupAvailabilityTime = pickupAvailabilityTime;
+	public void setPasses(List<OrbitalPass> passes) {
+		this.passes = passes;
 	}
 
 	/**
@@ -322,10 +237,8 @@ public class Downlink extends PersistentObject {
 	@Override
 	public String toString() {
 		return "Downlink [id=" + this.getId() + ", downlinkId=" + downlinkId + ", spacecraft=" + spacecraft.getCode() 
-				+ ", groundStation=" + (null == groundStation ? "null" : groundStation.getStationId()) 
 				+ ", dataSegments=" + dataSegments + ", channels=" + channels 
-				+ ", acquisitionStartTime=" + acquisitionStartTime + ", dataStartTime=" + dataStartTime 
-				+ ", dataStopTime=" + dataStopTime + ", pickupAvailabilityTime=" + pickupAvailabilityTime 
+				+ ", passes=" + passes 
 				+ ", isReceived=" + isReceived + ", receivedSize=" + receivedSize + ", receptionTime=" + receptionTime + "]";
 	}
 	
