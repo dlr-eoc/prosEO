@@ -269,6 +269,15 @@ public class Datatake extends PersistentObject {
 	}
 
 	/**
+	 * Tests whether the datatake reception is complete
+	 * 
+	 * @return true, if all segments of the datatake have been received, false otherwise
+	 */
+	public Boolean isComplete() {
+		return isComplete;
+	}
+
+	/**
 	 * Sets a flag indicatin whether the datatake reception is complete
 	 * 
 	 * @param isComplete true, if all segments of the datatake have been received, false otherwise

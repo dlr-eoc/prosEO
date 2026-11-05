@@ -1,0 +1,63 @@
+{
+	"id": 187,
+	"version": 5,
+	"missionCode": "TDM",
+	"spacecraftCode": "TDX-1",
+	"downlinkId": "DL-35432",
+	"groundStations": [
+	    {
+    	    "stationId": "INU",
+    	    "stationName": "Inuvik DLR"
+	    }
+	],
+	"dataSegments": [
+        {
+            "id": 633,
+            "version": 1,
+            "missionCode": "TDM",
+            "spacecraftCode": "TDX-1",
+            "payloadName": "SAR",
+            "datatakeId": "432567",
+            "segmentNumber": 1,
+            "groundStations": [
+                {
+                    "stationId": "INU",
+                    "stationName": "Inuvik DLR"
+                }
+            ],
+            "sensingStartTime": "2026-11-04T09:44:23.984000",
+            "segmentDuration": 10000,
+            "downlinkStart": "2026-11-04T10:17:48.561000",
+            "downlinkStop": "2026-11-04T10:19:23.508000",
+            "channel": "CH-1"
+        },
+        {
+            "id": 635,
+            "version": 1,
+            "missionCode": "TDM",
+            "spacecraftCode": "TDX-1",
+            "payloadName": "SAR",
+            "datatakeId": "434665",
+            "segmentNumber": 1,
+            "groundStations": [
+                {
+                    "stationId": "INU",
+                    "stationName": "Inuvik DLR"
+                }
+            ],
+            "sensingStartTime": "2026-11-04T09:53:36.445000",
+            "segmentDuration": 10000,
+            "downlinkStart": "2026-11-04T10:19:23.512000",
+            "downlinkStop": "2026-11-04T10:21:50.268000",
+            "channel": "CH-1"
+        }
+	],
+	"channels": [ "CH-1" ],
+	"acquisitionStartTime": "2026-11-04T10:17:33.173000",
+	"dataStartTime": "2026-11-04T10:17:48.561000",
+	"dataStopTime": "2026-11-04T10:25:51.385000",
+	"pickupAvailabilityTime": "2026-11-04T10:26:48.347000",
+	"isReceived": true,
+	"receivedSize": 486659107,
+	"receptionTime": "2026-11-04T10:29:17.665499"
+}

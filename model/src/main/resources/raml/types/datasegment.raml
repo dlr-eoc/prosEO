@@ -1,0 +1,53 @@
+#%RAML 1.0 DataType
+#  RestDataSegment:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        default: 0
+        description: The persistent id of this object
+      version?:
+        type: integer
+        default: 1
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      missionCode:
+        type: string
+        description: The mission code (e. g. S5P)
+      spacecraftCode:
+        type: string
+        description: The short code for the spacecraft (e. g. TDX1)
+      payloadName:
+        type: string
+        description: The name of the satellite payload the datatake belongs to 
+      datatakeId:
+        type: string
+        description: The (external) datatake ID (usually from Mission Planning)
+      segmentNumber:
+        type: integer
+        description: The sequence number of this segment within the datatake
+      downlinkId?:
+        type: string
+        description: Downlink ID of the downlink providing this data segment
+      groundStations:
+        type: RestGroundStation[]
+        description: The ground station(s) which actually received this data segment
+      sensingStartTime:
+        type: string
+        description: Sensing start time for this segment in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      segmentDuration:
+        type: integer
+        description: Observation duration in milliseconds for this segment
+      downlinkStart?:
+        type: string
+        description: Actual start of data downlink in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      downlinkStop?:
+        type: string
+        description: Actual end of data downlink in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      channel?:
+        type: string
+        description: Actual downlink channel
+      

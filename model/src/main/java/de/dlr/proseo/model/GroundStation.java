@@ -23,7 +23,7 @@ import jakarta.persistence.Table;
 })
 public class GroundStation extends PersistentObject {
 
-	/** The globally unique ID of the ground station */
+	/** Unique, mission-independent ID of the ground station */
 	@Column(nullable = false)
 	private String stationId;
 	

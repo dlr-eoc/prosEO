@@ -1,0 +1,59 @@
+#%RAML 1.0 DataType
+#  RestDownlink:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        default: 0
+        description: The persistent id of this object
+      version?:
+        type: integer
+        default: 1
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      missionCode:
+        type: string
+        description: The mission code (e. g. S5P)
+      spacecraftCode:
+        type: string
+        description: The short code for the spacecraft (e. g. TDX1)
+      downlinkId:
+        type: string
+        description: Downlink ID (unique within spacecraft)
+      groundStations:
+        type: RestGroundStation[]
+        description: The ground station to which the downlink is effected
+      dataSegments:
+        type: RestDataSegment[]
+        description: The list of data segments contained in this downlink; on output ordered by reception time
+      channels:
+        type: string[]
+        description: Downlink channels expected (should be at least one)
+      acquisitionStartTime?:
+        type: string
+        description: Start time of data acquisition (AOS, acquisition of signal) in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      dataStartTime?:
+        type: string
+        description: Start time of data reception in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      dataStopTime?:
+        type: string
+        description: End time of data reception in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      pickupAvailabilityTime?:
+        type: string
+        description: Timestamp for data availability on ground station pickup point in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      isReceived:
+        type: boolean
+        description: Indicates reception of downlink data by prosEO
+      receivedSize?:
+        type: integer
+        format: long
+        description: Size of the received data
+      receptionTime?:
+        type: string
+        description: Time of download completion from ground station pickup point in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+        

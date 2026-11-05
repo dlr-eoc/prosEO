@@ -1,0 +1,719 @@
+#%RAML 1.0
+title: Datatake Manager REST Services
+version: v1
+protocols: [ HTTP, HTTPS ]
+baseUri: /proseo/datatake-mgr/{version}
+mediaType: application/json
+
+securitySchemes:
+  basicAuth:
+    description: Each request must contain the headers necessary for basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: Used to send the Base64-encoded "username:password" credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to access
+            the content provided by the requested URL.
+
+
+types:
+  RestDataSegment: !include ../../../../../model/src/main/resources/raml/types/datasegment.raml
+  RestDatatake: !include ../../../../../model/src/main/resources/raml/types/datatake.raml
+  RestDatatakeGroup: !include ../../../../../model/src/main/resources/raml/types/datatakegroup.raml
+  RestDownlink: !include ../../../../../model/src/main/resources/raml/types/downlink.raml
+  RestGroundStation: !include ../../../../../model/src/main/resources/raml/types/groundstation.raml
+  RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+
+resourceTypes:
+  standard:
+    get?:
+      responses:
+        403:
+          description: A cross-mission data access was attempted.
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: The requested resource was not found.
+          headers:
+            Warning: !include types/error.raml
+    put?:
+      responses:
+        400:
+          description: The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        403:
+          description: A cross-mission data access was attempted.          
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: The requested resource was not found.
+          headers:
+            Warning: !include types/error.raml
+    post?:
+      responses:
+        400:
+          description: The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        403:
+          description: A cross-mission data access was attempted.          
+          headers:
+            Warning: !include types/error.raml  
+    patch?:
+      responses:
+        400:
+          description: The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        403:
+          description: A cross-mission data access was attempted.
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+        409:
+          description: A concurrent modification was attempted.
+          headers:
+            Warning: !include types/error.raml
+    delete?:
+      responses:
+        304:
+          description: The resource could not be deleted.
+          headers:
+            Warning: !include types/error.raml
+        403:
+          description: A cross-mission data access was attempted.          
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: The requested resource to delete was not found.
+          headers:
+            Warning: !include types/error.raml
+              
+/datatakes:
+    type: standard
+    get:
+        description: |
+            List datatakes filtered by spacecraft, payload, datatake ID, start time range;
+            only datatakes belonging to the mission the user is logged in to will be returned
+        displayName: getDatatakes
+        queryParameters:
+            spacecraftCode?:
+                description: the spacecraft code
+                type: string
+            payload?:
+                description: the spacecraft payload name
+                type: string
+            datatakeId?:
+                description: the (external) datatake ID
+                type: string
+            startTimeFrom?:
+                description: earliest sensing start time
+                type: string
+            startTimeTo?:
+                description: latest sensing start time
+                type: string
+            recordFrom?: 
+                description: first record of filtered and ordered result to return
+                type: integer
+            recordTo?: 
+                description: last record of filtered and ordered result to return
+                type: integer
+            orderBy?: 
+                description: an array of strings containing a column name and an optional sort direction (ASC/DESC)
+                type: string[]
+        responses:
+            200:
+                body:
+                    application/json:
+                        type: RestDatatake[]
+                        example: !include ../../../../../model/src/main/resources/raml/examples/datatake-list.json
+                        
+    post:
+        description: Create a datatake from the given JSON object
+        displayName: createDatatake
+        body:
+            application/json:
+                description: The datatake data as received from Mission Planning, potentially including data segments
+                type: RestDatatake
+                example: !include ../../../../../model/src/main/resources/raml/examples/datatake-noid.json
+        responses:
+            201:
+                body:
+                    application/json:
+                        type: RestDatatake
+                        example: !include ../../../../../model/src/main/resources/raml/examples/datatake.json
+                
+    /count:
+        type: standard
+        get:
+            description: |
+                Count datatakes filtered by spacecraft, payload, datatake ID, start time range;
+                only datatakes belonging to the mission the user is logged in to will be counted
+            displayName: countDatatakes
+            queryParameters:
+                spacecraftCode?:
+                    description: the spacecraft code
+                    type: string
+                payload?:
+                    description: the spacecraft payload name
+                    type: string
+                datatakeId?:
+                    description: the (external) datatake ID
+                    type: string
+                startTimeFrom?:
+                    description: earliest sensing start time
+                    type: string
+                startTimeTo?:
+                    description: latest sensing start time
+                    type: string
+            responses:
+                200:
+                    body:
+                        text/plain:
+                            type: integer
+                            description: the number of datatakes fulfilling the selection criteria
+                        
+    /{id}:
+        type: standard
+        uriParameters:
+            id:
+                type: integer
+                format: long
+                description: the database ID of a datatake
+        get:
+            description: Find the datatake with the given database ID
+            displayName: getDatatakeById
+            responses:
+                200:
+                    body:
+                        application/json:
+                            type: RestDatatake
+                            example: !include ../../../../../model/src/main/resources/raml/examples/datatake.json
+                            
+        patch:
+            description: Update the datatake with the given database ID from the given JSON object
+            displayName: modifyDatatake
+            body:
+                application/json:
+                    type: RestDatatake
+                    example: !include ../../../../../model/src/main/resources/raml/examples/datatake.json
+            responses:
+                200:
+                    description: Datatake updated successfully
+                    body:
+                        application/json:
+                            type: RestDatatake
+                            example: !include ../../../../../model/src/main/resources/raml/examples/datatake.json
+                304:
+                    description: The resource was not modified (no data change)
+                    headers:
+                        Warning: !include types/error.raml
+                        
+        delete:
+            description: Delete a datatake by database ID
+            displayName: deleteDatatakeById
+            responses:
+                204:
+                    description: Datatake deletion successful (no body provided)
+                
+        /markprocessed:
+            type: standard
+            put:
+                description: Mark datatake processing as complete (set processing time)
+                displayName: markProcessed
+                responses:
+                    200:
+                        description: Datatake processing registered successfully
+                        body:
+                            application/json:
+                                type: RestDatatake
+                                example: !include ../../../../../model/src/main/resources/raml/examples/datatake.json
+                                description: The state of the datatake after marking as processed
+    
+/datasegments:
+    type: standard
+    post:
+        description: Add a data segment to an existing datatake
+        displayName: addDataSegment
+        body:
+            application/json:
+                type: RestDataSegment
+                example: !include ../../../../../model/src/main/resources/raml/examples/datasegment-noid.json
+        responses:
+            201:
+                description: Data segment added successfully
+                body:
+                    application/json:
+                        type: RestDatatake
+                        example: !include ../../../../../model/src/main/resources/raml/examples/datatake.json
+                        description: The state of the datatake after adding the segment
+                        
+    /{id}:
+        type: standard
+        uriParameters:
+            id:
+                type: integer
+                format: long
+                description: the database ID of a data segment
+        patch:
+            description: Update the data segment with the given database ID from the given JSON object
+            displayName: modifyDataSegment
+            body:
+                application/json:
+                    type: RestDataSegment
+                    example: !include ../../../../../model/src/main/resources/raml/examples/datasegment.json
+            responses:
+                200:
+                    description: Data segment updated successfully
+                    body:
+                        application/json:
+                            type: RestDatatake
+                            example: !include ../../../../../model/src/main/resources/raml/examples/datatake.json
+                            description: The state of the datatake after updating the segment
+                304:
+                    description: The resource was not modified (no data change)
+                    headers:
+                        Warning: !include types/error.raml
+                        
+        delete:
+            description: Delete a data segment by database ID
+            displayName: deleteDataSegmentById
+            responses:
+                204:
+                    description: Data segment deletion successful (no body provided)
+        
+/dtgroups:
+    type: standard
+    get:
+        description: |
+            List datatake groups filtered by datatake group identifier, datatake start time range;
+            only datatake groups belonging to the mission the user is logged in to will be returned
+        displayName: getDatatakeGroups
+        queryParameters:
+            dtGroupIdentifier?:
+                description: the (external) datatake group identifier
+                type: string
+            startTimeFrom?:
+                description: earliest sensing start time
+                type: string
+            startTimeTo?:
+                description: latest sensing start time
+                type: string
+            recordFrom?: 
+                description: first record of filtered and ordered result to return
+                type: integer
+            recordTo?: 
+                description: last record of filtered and ordered result to return
+                type: integer
+            orderBy?: 
+                description: an array of strings containing a column name and an optional sort direction (ASC/DESC)
+                type: string[]
+        responses:
+            200:
+                body:
+                    application/json:
+                        type: RestDatatakeGroup[]
+                        example: !include ../../../../../model/src/main/resources/raml/examples/datatakegroup-list.json
+                        
+    post:
+        description: Create a datatake group from the given JSON object
+        displayName: createDatatakeGroup
+        body:
+            application/json:
+                description: The datatake group data as received from Mission Planning
+                type: RestDatatakeGroup
+                example: !include ../../../../../model/src/main/resources/raml/examples/datatakegroup-noid.json
+        responses:
+            201:
+                body:
+                    application/json:
+                        type: RestDatatakeGroup
+                        description: The datatake group as created including database ID and version
+                
+    /count:
+        type: standard
+        get:
+            description: |
+                Count datatake groups filtered by datatake group identifier, datatake start time range;
+                only datatake groups belonging to the mission the user is logged in to will be counted
+            displayName: countDatatakeGroups
+            queryParameters:
+                dtGroupIdentifier?:
+                    description: the (external) datatake group identifier
+                    type: string
+                startTimeFrom?:
+                    description: earliest sensing start time
+                    type: string
+                startTimeTo?:
+                    description: latest sensing start time
+                    type: string
+            responses:
+                200:
+                    body:
+                        text/plain:
+                            type: integer
+                            description: the number of datatake groups fulfilling the selection criteria
+                        
+    /{id}:
+        type: standard
+        uriParameters:
+            id:
+                type: integer
+                format: long
+                description: the database ID of a datatake group
+        get:
+            description: Find the datatake group with the given database ID
+            displayName: getDatatakeGroupById
+            responses:
+                200:
+                    body:
+                        application/json:
+                            type: RestDatatakeGroup
+                            example: !include ../../../../../model/src/main/resources/raml/examples/datatakegroup.json
+                            
+        put:
+            description: Add a datatake to the datatake group with the given database ID
+            displayName: addDatatake
+            queryParameters:
+                spacecraftCode:
+                    description: the spacecraft code
+                    type: string
+                payload:
+                    description: the spacecraft payload name
+                    type: string
+                datatakeId:
+                    description: the (external) datatake ID
+                    type: string
+            responses:
+                200:
+                    description: Datatake group updated successfully
+                    body:
+                        application/json:
+                            description: The datatake group after addition of the datatake
+                            type: RestDatatakeGroup
+                            example: !include ../../../../../model/src/main/resources/raml/examples/datatakegroup.json
+                304:
+                    description: The datatake group was not modified (datatake already present)
+                    headers:
+                        Warning: !include types/error.raml
+                        
+        delete:
+            description: Delete a datatake group by database ID (this will not delete the associated datatakes)
+            displayName: deleteDatatakeGroupById
+            responses:
+                204:
+                    description: Datatake group deletion successful (no body provided)
+
+        /{dtid}:
+            type: standard
+            uriParameters:
+                dtid:
+                    type: integer
+                    format: long
+                    description: the database ID of a datatake
+            delete:
+                description: Remove the given datatake from the datatake group
+                displayName: removeDatatake
+                responses:
+                    200:
+                        description: Datake successfully removed
+                        body:
+                            application/json:
+                                description: The datatake group after removal of the datatake
+                                type: RestDatatakeGroup
+                                example: !include ../../../../../model/src/main/resources/raml/examples/datatakegroup.json
+
+/downlinks:
+    type: standard
+    get:
+        description: |
+            List downlinks filtered by spacecraft, ground station, downlink ID, acquisition start time range;
+            only downlinks belonging to the mission the user is logged in to will be returned
+        displayName: getDownlinks
+        queryParameters:
+            spacecraftCode?:
+                description: the spacecraft code
+                type: string
+            stationId?:
+                description: the ground station ID
+                type: string
+            downlinkId?:
+                description: the (external) downlink ID
+                type: string
+            startTimeFrom?:
+                description: earliest acquisition start time
+                type: string
+            startTimeTo?:
+                description: latest acquisition start time
+                type: string
+            recordFrom?: 
+                description: first record of filtered and ordered result to return
+                type: integer
+            recordTo?: 
+                description: last record of filtered and ordered result to return
+                type: integer
+            orderBy?: 
+                description: an array of strings containing a column name and an optional sort direction (ASC/DESC)
+                type: string[]
+        responses:
+            200:
+                body:
+                    application/json:
+                        type: RestDownlink[]
+                        example: !include ../../../../../model/src/main/resources/raml/examples/downlink-list.json
+                        
+    post:
+        description: Create a downlink from the given JSON object (can link existing data segments, if database ID is given)
+        displayName: createDownlink
+        body:
+            application/json:
+                description: The downlink data as received from Mission Planning
+                type: RestDownlink
+                example: !include ../../../../../model/src/main/resources/raml/examples/downlink-noid.json
+        responses:
+            201:
+                body:
+                    application/json:
+                        type: RestDownlink
+                        description: The downlink as created including database ID and version
+                
+    /count:
+        type: standard
+        get:
+            description: |
+                Count downlinks filtered by spacecraft, ground station, downlink ID, acquisition start time range;
+                only datatake groups belonging to the mission the user is logged in to will be counted
+            displayName: countDownlinks
+            queryParameters:
+                spacecraftCode?:
+                    description: the spacecraft code
+                    type: string
+                stationId?:
+                    description: the ground station ID
+                    type: string
+                downlinkId?:
+                    description: the (external) downlink ID
+                    type: string
+                startTimeFrom?:
+                    description: earliest acquisition start time
+                    type: string
+                startTimeTo?:
+                    description: latest acquisition start time
+                    type: string
+            responses:
+                200:
+                    body:
+                        text/plain:
+                            type: integer
+                            description: the number of downlinks fulfilling the selection criteria
+                        
+    /{id}:
+        type: standard
+        uriParameters:
+            id:
+                type: integer
+                format: long
+                description: the database ID of a downlink
+        get:
+            description: Find the downlink with the given database ID
+            displayName: getDownlinkById
+            responses:
+                200:
+                    body:
+                        application/json:
+                            type: RestDatatakeGroup
+                            example: !include ../../../../../model/src/main/resources/raml/examples/datatakegroup.json
+                            
+        patch:
+            description: |
+                Update the downlink with the given database ID from the given JSON object
+                (can link existing data segments, if database ID is given)
+            displayName: modifyDownlink
+            body:
+                application/json:
+                    type: RestDownlink
+                    example: !include ../../../../../model/src/main/resources/raml/examples/downlink.json
+            responses:
+                200:
+                    description: Downlink updated successfully
+                    body:
+                        application/json:
+                            type: RestDownlink
+                            example: !include ../../../../../model/src/main/resources/raml/examples/downlink.json
+                304:
+                    description: The resource was not modified (no data change)
+                    headers:
+                        Warning: !include types/error.raml
+                        
+        put:
+            description: Add a data segment to the downlink with the given database ID
+            displayName: addDataSegment
+            queryParameters:
+                spacecraftCode:
+                    description: the spacecraft code
+                    type: string
+                payload:
+                    description: the spacecraft payload name
+                    type: string
+                datatakeId:
+                    description: the (external) datatake ID
+                    type: string
+                segmentNumber:
+                    description: The sequence number of the segment within its datatake
+                    type: integer
+            responses:
+                200:
+                    description: Downlink updated successfully
+                    body:
+                        application/json:
+                            description: The downlink after addition of the data segment
+                            type: RestDownlink
+                            example: !include ../../../../../model/src/main/resources/raml/examples/downlink.json
+                304:
+                    description: The downlink was not modified (data segment already present)
+                    headers:
+                        Warning: !include types/error.raml
+                        
+        delete:
+            description: Delete a downlink by database ID (this will not delete the associated data segments)
+            displayName: deleteDownlinkById
+            responses:
+                204:
+                    description: Downlink deletion successful (no body provided)
+
+        /{dsid}:
+            type: standard
+            uriParameters:
+                dtid:
+                    type: integer
+                    format: long
+                    description: the database ID of a data segment
+            delete:
+                description: Remove the given data segment from the downlink
+                displayName: removeDataSegment
+                responses:
+                    200:
+                        description: Data segment successfully removed
+                        body:
+                            application/json:
+                                description: The downlink after removal of the datasegment
+                                type: RestDownlink
+                                example: !include ../../../../../model/src/main/resources/raml/examples/downlink.json
+
+/groundstations:
+    type: standard
+    get:
+        description: |
+            List ground stations filtered by station ID or station name (note that ground stations are mission-independent)
+        displayName: getGroundStations
+        queryParameters:
+            stationId?:
+                description: unique, mission-independent ID of the ground station
+                type: string
+            stationName?:
+                description: the name of the ground station (may contain '*' as a wildcard)
+                type: string
+            recordFrom?: 
+                description: first record of filtered and ordered result to return
+                type: integer
+            recordTo?: 
+                description: last record of filtered and ordered result to return
+                type: integer
+            orderBy?: 
+                description: an array of strings containing a column name and an optional sort direction (ASC/DESC)
+                type: string[]
+        responses:
+            200:
+                body:
+                    application/json:
+                        type: RestGroundStation[]
+                        example: !include ../../../../../model/src/main/resources/raml/examples/groundstation-list.json
+                        
+    post:
+        description: Create a ground station from the given JSON object
+        displayName: createGroundStation
+        body:
+            application/json:
+                type: RestGroundStation
+                example: !include ../../../../../model/src/main/resources/raml/examples/groundstation-noid.json
+        responses:
+            201:
+                body:
+                    application/json:
+                        type: RestGroundStation
+                        example: !include ../../../../../model/src/main/resources/raml/examples/groundstation.json
+                
+    /count:
+        type: standard
+        get:
+            description: |
+                Count ground stations filtered by station ID or station name
+            displayName: countGroundStations
+            queryParameters:
+                stationId?:
+                    description: unique, mission-independent ID of the ground station
+                    type: string
+                stationName?:
+                    description: the name of the ground station (may contain '*' as a wildcard)
+                    type: string
+            responses:
+                200:
+                    body:
+                        text/plain:
+                            type: integer
+                            description: the number of ground stations fulfilling the selection criteria
+                        
+    /{id}:
+        type: standard
+        uriParameters:
+            id:
+                type: integer
+                format: long
+                description: the database ID of a ground station
+        get:
+            description: Find the ground station with the given database ID
+            displayName: getGroundStationById
+            responses:
+                200:
+                    body:
+                        application/json:
+                            type: RestGroundStation
+                            example: !include ../../../../../model/src/main/resources/raml/examples/groundstation.json
+                            
+        patch:
+            description: Update the ground station with the given database ID from the given JSON object
+            displayName: modifyGroundStation
+            body:
+                application/json:
+                    type: RestGroundStation
+                    example: !include ../../../../../model/src/main/resources/raml/examples/groundstation.json
+            responses:
+                200:
+                    description: Ground station updated successfully
+                    body:
+                        application/json:
+                            type: RestGroundStation
+                            example: !include ../../../../../model/src/main/resources/raml/examples/groundstation.json
+                304:
+                    description: The resource was not modified (no data change)
+                    headers:
+                        Warning: !include types/error.raml
+                        
+        delete:
+            description: Delete a ground station by database ID
+            displayName: deleteGroundStationById
+            responses:
+                204:
+                    description: Ground station deletion successful (no body provided)
+                
+    
