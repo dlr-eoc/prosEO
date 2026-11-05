@@ -5,11 +5,9 @@
  */
 package de.dlr.proseo.notification.rest;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
