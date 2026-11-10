@@ -140,35 +140,13 @@ public class ProductUtil {
 			de.dlr.proseo.model.Parameter modelParameter = new de.dlr.proseo.model.Parameter();
 			if (restParameter.getParameterType() != null && !restParameter.getParameterType().equals("null")) {
 				try {
-					modelParameter.setParameterType(ParameterType.valueOf(restParameter.getParameterType()));
+					modelParameter.init(ParameterType.valueOf(restParameter.getParameterType()), restParameter.getParameterValue());
 				} catch (Exception e) {
 					throw new IllegalArgumentException(
 							logger.log(IngestorMessage.INVALID_PARAMETER_TYPE, restParameter.getParameterType()));
 				}
 			} else {
 				modelParameter.setParameterType(ParameterType.STRING);
-			}
-			try {
-				switch (modelParameter.getParameterType()) {
-				case INTEGER:
-					modelParameter.setIntegerValue(Integer.parseInt(restParameter.getParameterValue()));
-					break;
-				case STRING:
-					modelParameter.setStringValue(restParameter.getParameterValue());
-					break;
-				case BOOLEAN:
-					modelParameter.setBooleanValue(Boolean.parseBoolean(restParameter.getParameterValue()));
-					break;
-				case DOUBLE:
-					modelParameter.setDoubleValue(Double.parseDouble(restParameter.getParameterValue()));
-					break;
-				case INSTANT:
-					modelParameter.setInstantValue(OrbitTimeFormatter.parseDateTime(restParameter.getParameterValue()));
-					break;
-				}
-			} catch (Exception e) {
-				throw new IllegalArgumentException(logger.log(IngestorMessage.INVALID_PARAMETER_VALUE,
-						restParameter.getParameterValue(), restParameter.getParameterType()));
 			}
 			modelProduct.getParameters().put(restParameter.getKey(), modelParameter);
 		}
@@ -294,37 +272,15 @@ public class ProductUtil {
 		if (restParameterMapList != null) {
 			for (Map<String, String> restParameterMap : restParameterMapList) {
 				de.dlr.proseo.model.Parameter modelParameter = new de.dlr.proseo.model.Parameter();
-				if (restParameterMap.get("parameterType") != null && !((String)(restParameterMap.get("parameterType"))).equals("null")) {
-					try {
-						modelParameter.setParameterType(ParameterType.valueOf(((String)(restParameterMap.get("parameterType")))));
-					} catch (Exception e) {
-						throw new IllegalArgumentException(
-								logger.log(IngestorMessage.INVALID_PARAMETER_TYPE, ((String)(restParameterMap.get("parameterType")))));
-					}
-				} else {
-					modelParameter.setParameterType(ParameterType.STRING);
-				}
 				try {
-					switch (modelParameter.getParameterType()) {
-					case INTEGER:
-						modelParameter.setIntegerValue(Integer.parseInt((String)(restParameterMap.get("parameterValue"))));
-						break;
-					case STRING:
-						modelParameter.setStringValue((String)(restParameterMap.get("parameterValue")));
-						break;
-					case BOOLEAN:
-						modelParameter.setBooleanValue(Boolean.parseBoolean((String)(restParameterMap.get("parameterValue"))));
-						break;
-					case DOUBLE:
-						modelParameter.setDoubleValue(Double.parseDouble((String)(restParameterMap.get("parameterValue"))));
-						break;
-					case INSTANT:
-						modelParameter.setInstantValue(OrbitTimeFormatter.parseDateTime((String)(restParameterMap.get("parameterValue"))));
-						break;
+					if (restParameterMap.get("parameterType") != null && !((String)(restParameterMap.get("parameterType"))).equals("null")) {
+						modelParameter.init(ParameterType.valueOf((String)(restParameterMap.get("parameterType"))), restParameterMap.get("parameterValue"));
+					} else {
+						modelParameter.init(ParameterType.STRING, restParameterMap.get("parameterValue"));
 					}
 				} catch (Exception e) {
-					throw new IllegalArgumentException(logger.log(IngestorMessage.INVALID_PARAMETER_VALUE,
-							(String)(restParameterMap.get("parameterValue")), (String)(restParameterMap.get("parameterType"))));
+					throw new IllegalArgumentException(
+							logger.log(IngestorMessage.INVALID_PARAMETER_TYPE, ((String)(restParameterMap.get("parameterType")))));
 				}
 				modelProduct.getParameters().put((String)(restParameterMap.get("key")), modelParameter);
 			}

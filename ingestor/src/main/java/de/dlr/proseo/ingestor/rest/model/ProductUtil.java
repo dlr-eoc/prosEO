@@ -229,35 +229,14 @@ public class ProductUtil {
 						logger.log(IngestorMessage.INVALID_PRODUCTION_TYPE, restProduct.getProductionType()));
 			}
 		}
+		
 		for (RestParameter restParameter : restProduct.getParameters()) {
 			de.dlr.proseo.model.Parameter modelParameter = new de.dlr.proseo.model.Parameter();
 			try {
-				modelParameter.setParameterType(ParameterType.valueOf(restParameter.getParameterType()));
+				modelParameter.init(ParameterType.valueOf(restParameter.getParameterType()), restParameter.getParameterValue());
 			} catch (Exception e) {
 				throw new IllegalArgumentException(
 						logger.log(IngestorMessage.INVALID_PARAMETER_TYPE, restParameter.getParameterType()));
-			}
-			try {
-				switch (modelParameter.getParameterType()) {
-				case INTEGER:
-					modelParameter.setIntegerValue(Integer.parseInt(restParameter.getParameterValue()));
-					break;
-				case STRING:
-					modelParameter.setStringValue(restParameter.getParameterValue());
-					break;
-				case BOOLEAN:
-					modelParameter.setBooleanValue(Boolean.parseBoolean(restParameter.getParameterValue()));
-					break;
-				case DOUBLE:
-					modelParameter.setDoubleValue(Double.parseDouble(restParameter.getParameterValue()));
-					break;
-				case INSTANT:
-					modelParameter.setInstantValue(OrbitTimeFormatter.parseDateTime(restParameter.getParameterValue()));
-					break;
-				}
-			} catch (Exception e) {
-				throw new IllegalArgumentException(logger.log(IngestorMessage.INVALID_PARAMETER_VALUE,
-						restParameter.getParameterValue(), restParameter.getParameterType()));
 			}
 			modelProduct.getParameters().put(restParameter.getKey(), modelParameter);
 		}
