@@ -50,7 +50,7 @@ public class DatatakeRepositoryTest {
 	private static final String TEST_MISSIONCODE = "xyz567";
 	private static final String TEST_SC_CODE = "XYZ";
 	private static final String TEST_PAYLOAD = "XYZ_PL1";
-	private static final String TEST_ID = "$Datatake 4711$";
+	private static final String TEST_DATATAKE_ID = "$Datatake 4711$";
 	private static final String TEST_ID_RADAR = "$RadarDatatake 4711$";
 	private static final Instant TEST_START_TIME = Instant.from(OrbitTimeFormatter.parse("2018-06-13T09:23:45.637000"));
 	private static final Instant TEST_START_TIME_RADAR = Instant.from(OrbitTimeFormatter.parse("2020-02-29T09:23:45.637000"));
@@ -113,7 +113,7 @@ public class DatatakeRepositoryTest {
 		
 		// Basic test: Create a datatake and find it by datatake ID
 		Datatake datatake = new Datatake();
-		datatake.setDatatakeId(TEST_ID);
+		datatake.setDatatakeId(TEST_DATATAKE_ID);
 		datatake.setSpacecraft(spacecraft);
 		datatake.setPayload(spacecraft.getPayloads().get(0));
 		datatake.setSensingStartTime(TEST_START_TIME);
@@ -122,7 +122,7 @@ public class DatatakeRepositoryTest {
 		datatake.getParameters().put(TEST_PARAM_KEY, dtParam);
 		datatake = RepositoryService.getDatatakeRepository().save(datatake);
 		
-		Optional<Datatake> newDatatakeOpt = RepositoryService.getDatatakeRepository().findByMissionAndPayloadAndId(TEST_MISSIONCODE, TEST_SC_CODE, TEST_PAYLOAD, TEST_ID);
+		Optional<Datatake> newDatatakeOpt = RepositoryService.getDatatakeRepository().findByMissionAndPayloadAndId(TEST_MISSIONCODE, TEST_SC_CODE, TEST_PAYLOAD, TEST_DATATAKE_ID);
 		assertFalse(newDatatakeOpt.isEmpty(), "Find by datatake ID failed");
 		
 		Datatake newDatatake = newDatatakeOpt.get();

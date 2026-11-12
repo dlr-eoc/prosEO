@@ -46,7 +46,6 @@ public class DatatakeManagerSecurityConfig {
 	 */
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		String base ="/proseo/processor-mgr/v0.1";
 		http.httpBasic(it -> {})
 			.authorizeHttpRequests(requests -> requests
 			.requestMatchers("/actuator/health")

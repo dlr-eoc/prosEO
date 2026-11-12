@@ -57,8 +57,8 @@ public class DownlinkRepositoryTest {
 	private static final Duration TEST_DURATION = Duration.ofSeconds(10);
 	private static final String TEST_PARAM_KEY = "key1";
 	private static final String TEST_PARAM_VALUE = "value1";
-	private static final String TEST_ID = "GS1";
-	private static final String TEST_NAME = "Ground Station 1";
+	private static final String TEST_GS_ID = "GS1";
+	private static final String TEST_GS_NAME = "Ground Station 1";
 	
 	@Autowired
 	private EntityManager em;
@@ -98,8 +98,8 @@ public class DownlinkRepositoryTest {
 		spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
 		
 		GroundStation groundStation = new GroundStation();
-		groundStation.setStationId(TEST_ID);
-		groundStation.setStationName(TEST_NAME);
+		groundStation.setStationId(TEST_GS_ID);
+		groundStation.setStationName(TEST_GS_NAME);
 		groundStation = RepositoryService.getGroundStationRepository().save(groundStation);
 	}
 
@@ -189,8 +189,8 @@ public class DownlinkRepositoryTest {
 		
 		
 		// Add an orbital pass to the downlink
-		Optional<GroundStation> groundStation = RepositoryService.getGroundStationRepository().findByStationId(TEST_ID);
-		assertFalse(groundStation.isEmpty(), "Ground station " + TEST_ID + " not found");
+		Optional<GroundStation> groundStation = RepositoryService.getGroundStationRepository().findByStationId(TEST_GS_ID);
+		assertFalse(groundStation.isEmpty(), "Ground station " + TEST_GS_ID + " not found");
 		
 		OrbitalPass pass = new OrbitalPass();
 		pass.setGroundStation(groundStation.get());

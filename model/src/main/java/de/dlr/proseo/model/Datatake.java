@@ -64,7 +64,7 @@ public class Datatake extends PersistentObject {
 	@OneToMany(mappedBy = "datatake")
 	@OrderBy("sequence_number")
 	private Set<DataSegment> dataSegments = 
-		new TreeSet<>((ds1, ds2) -> { return ds1.getSegmentNumber().compareTo(ds2.getSegmentNumber()); });;
+		new TreeSet<>((ds1, ds2) -> { return ds1.getSegmentNumber().compareTo(ds2.getSegmentNumber()); });
 	
 	/** Instrument sensor mode (abbreviated; one of the values defined in the associated Payload object) */
 	private String instrumentMode;

@@ -1,51 +1,37 @@
 /**
- * S1DatatakeControllerImpl
+ * DatatakeControllerImpl
  * 
- * (C) 2021 Dr. Bassler & Co. Managementberatung GmbH
+ * (C) 2026 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.dtmgr.rest;
 
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.dtmgr.rest.model.RestDatatake;
+import de.dlr.proseo.logging.http.HttpPrefix;
+import de.dlr.proseo.logging.http.ProseoHttp;
+import de.dlr.proseo.logging.logger.ProseoLogger;
 import jakarta.persistence.EntityNotFoundException;
 
 /**
- * Spring MVC controller for the prosEO Mission Planning Monitor; implements the services required to handle datatakes and segments
+ * Spring MVC controller for the prosEO Datatake Manager; implements the services required to handle datatakes and segments
  * 
  * @author Dr. Thomas Bassler
  */
 @Component
 public class DatatakeControllerImpl implements DatatakeController {
 
-	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String HTTP_MSG_PREFIX = "199 proseo-datatake-mgr ";
-
 	/** The datatake manager */
 	@Autowired
 	DatatakeManager datatakeManager;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(DatatakeControllerImpl.class);
-	
-	/**
-	 * Create an HTTP "Warning" header with the given text message
-	 * 
-	 * @param message the message text
-	 * @return an HttpHeaders object with a warning message
-	 */
-	private HttpHeaders errorHeaders(String message) {
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + (null == message ? "null" : message.replaceAll("\n", " ")));
-		return responseHeaders;
-	}
+	private static ProseoLogger logger = new ProseoLogger(DatatakeControllerImpl.class);
+	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.DATATAKE_MGR);
 	
 	/**
 	 * Get the datatakes in the database (optionally using a lower and/or upper bound of the datatake ID)
@@ -75,9 +61,9 @@ public class DatatakeControllerImpl implements DatatakeController {
 							recordFrom, recordTo, orderBy), 
 					HttpStatus.OK);
 		} catch (IllegalArgumentException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (EntityNotFoundException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		}
 	}
 
@@ -96,7 +82,7 @@ public class DatatakeControllerImpl implements DatatakeController {
 			return new ResponseEntity<>(
 					datatakeManager.markProcessed(id), HttpStatus.OK);
 		} catch (EntityNotFoundException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		}
 	}
 

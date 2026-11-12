@@ -38,7 +38,7 @@ public class Downlink extends PersistentObject {
 	@ManyToOne(optional = false)
 	private Spacecraft spacecraft;
 	
-	/** The list of data segments contained in this downlink, ordered by reception time */
+	/** The list of data segments contained in this downlink */
 	@OneToMany(mappedBy = "downlink")
 	private List<DataSegment> dataSegments = new ArrayList<>();
 	

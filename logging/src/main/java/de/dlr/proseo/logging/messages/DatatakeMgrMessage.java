@@ -14,7 +14,14 @@ import org.slf4j.event.Level;
  */
 public enum DatatakeMgrMessage implements ProseoMessage {
 
-	INVALID_SPACECRAFT_CODE				(3201, Level.ERROR, false, "Invalid spacecraft code {0} for mission {1}", "")
+	INVALID_SPACECRAFT_CODE				(3201, Level.ERROR, false, "Invalid spacecraft code {0} for mission {1}", ""),
+	BOUNDS_MISMATCH						(3202, Level.ERROR, false, "Upper record number {0} is below lower record number {1}", ""),
+	SPACECRAFT_NOT_FOUND				(3203, Level.ERROR, false, "Spacecraft {0}s not found in mission {1}", ""),
+	DATATAKE_NOT_FOUND					(3204, Level.ERROR, false, "Datatake with database ID {0} not found for spacecraft {1} and mission {2}", ""),
+	DATATAKE_ALREADY_PROCESSED			(3205, Level.WARN, false, "Datatake {0} for spacecraft {1} has already been processed", ""),
+	DATATAKES_RETRIEVED					(3205, Level.INFO, false, "{0} datatakes retrieved for spacecraft {1}", ""),
+	DATATAKE_PROCESSED					(3206, Level.INFO, false, "Datatake {0} for spacecraft {1} marked as processed", ""),
+	INVALID_START_TIMES					(3207, Level.ERROR, false, "Sensing start time {0} or stop time {1} invalid for datatake {2}", "")
 
 	;
 

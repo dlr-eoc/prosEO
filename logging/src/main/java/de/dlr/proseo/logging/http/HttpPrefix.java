@@ -17,6 +17,7 @@ public enum HttpPrefix {
 	ARCHIVE_MGR     ("199 proseo-archive-mgr "),
 	AUXIP_MONITOR 	("199 proseo-auxip-monitor "),
 	CADIP_MONITOR 	("199 proseo-cadip-monitor "),
+	DATATAKE_MGR 	("199 proseo-datatake-mgr "),
 	EDIP_MONITOR 	("199 proseo-edip-monitor "),
 	FACILTY_MGR 	("199 proseo-facmgr "),
 	GEOTOOLS		("199 proseo-geotools "),
