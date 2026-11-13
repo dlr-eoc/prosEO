@@ -9,4 +9,4 @@
  * @author Dr. Thomas Bassler
  *
  */
-package de.dlr.proseo.planner.kubernetes;
+package de.dlr.proseo.planner.engine.kubernetes;

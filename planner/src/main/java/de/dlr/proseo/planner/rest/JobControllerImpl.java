@@ -42,7 +42,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.kubernetes.KubeConfig;
+import de.dlr.proseo.planner.engine.EngineConfig;
 import de.dlr.proseo.planner.rest.model.RestUtil;
 import de.dlr.proseo.planner.util.JobUtil;
 import de.dlr.proseo.planner.util.UtilService;
@@ -274,10 +274,10 @@ public class JobControllerImpl implements JobController {
 				// Get the processing facility associated with the job and update its Kubernetes configuration
 				Job locJob = this.findJobById(jobId);
 				ProcessingFacility processingFacility = locJob.getProcessingFacility();
-				KubeConfig kubeConfig = productionPlanner.updateKubeConfig(processingFacility.getName());
+				EngineConfig engineConfig = productionPlanner.updateKubeConfig(processingFacility.getName());
 
 				// Check if the Kubernetes configuration is null, indicating the non-existence of the facility
-				if (null == kubeConfig) {
+				if (null == engineConfig) {
 					String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, processingFacility.getName());
 
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
@@ -347,19 +347,19 @@ public class JobControllerImpl implements JobController {
 				}
 
 				// Check the success status of the planner message
-				final KubeConfig kubeConfig = transactionTemplate.execute((status) -> {
+				final EngineConfig engineConfig = transactionTemplate.execute((status) -> {
 					Job locJob = this.findJobById(jobId);
 					if (locJob.getProcessingFacility() != null) {
 						// Get the Kubernetes configuration for the processing facility
-						return productionPlanner.getKubeConfig(locJob.getProcessingFacility().getName());
+						return productionPlanner.getEngineConfig(locJob.getProcessingFacility().getName());
 					} else {
 						return null;
 					}
 				});
-				if (kubeConfig != null) {
+				if (engineConfig != null) {
 					try {
 						// Check for unsatisfied job step queries
-						UtilService.getJobStepUtil().checkJobToRun(kubeConfig, job.getId());
+						UtilService.getJobStepUtil().checkJobToRun(engineConfig, job.getId());
 					} catch (Exception e) {
 						String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 
@@ -483,10 +483,10 @@ public class JobControllerImpl implements JobController {
 				// Check the status of the processing facility associated with the job
 				Job locJob = this.findJobById(jobId);
 				ProcessingFacility processingFacility = locJob.getProcessingFacility();
-				KubeConfig kubeConfig = productionPlanner.updateKubeConfig(processingFacility.getName());
+				EngineConfig engineConfig = productionPlanner.updateKubeConfig(processingFacility.getName());
 
 				// If the processing facility does not exist, return HTTP 404
-				if (null == kubeConfig) {
+				if (null == engineConfig) {
 					String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, processingFacility.getName());
 
 					return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);

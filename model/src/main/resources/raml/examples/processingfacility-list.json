@@ -11,7 +11,8 @@
         "localStorageManagerUrl": "https://%NODE_IP%:30001/proseo/storage-mgr/v0.1",
         "storageManagerUser": "smuser1",
         "storageManagerPassword": "smpwd1-but-that-would-be-way-too-short",
-        "defaultStorageType": "S3"
+        "defaultStorageType": "S3",
+        "processingEngineType": "Kubernetes"
     },
     {
         "name": "PF2",
@@ -24,6 +25,7 @@
         "localStorageManagerUrl": "https://%NODE_IP%:30001/proseo/storage-mgr/v1.1",
         "storageManagerUser": "smuser2",
         "storageManagerPassword": "smpwd2-but-that-would-be-way-too-short",
-        "defaultStorageType": "S3"
+        "defaultStorageType": "S3",
+        "processingEngineType": "Kubernetes"
     }
 ]

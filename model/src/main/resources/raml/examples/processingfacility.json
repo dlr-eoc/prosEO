@@ -9,5 +9,6 @@
     "localStorageManagerUrl": "https://%NODE_IP%:30001/proseo/storage-mgr/v0.1",
     "storageManagerUser": "smuser",
     "storageManagerPassword": "smpwd-but-that-would-be-way-too-short",
-    "defaultStorageType": "S3"
+    "defaultStorageType": "S3",
+    "processingEngineType": "Kubernetes"
 }

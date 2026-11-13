@@ -1,9 +1,4 @@
-/**
- * KubeJobFinish.java
- *
- * © 2019 Prophos Informatik GmbH
- */
-package de.dlr.proseo.planner.kubernetes;
+package de.dlr.proseo.planner.engine;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,33 +15,33 @@ import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
+import de.dlr.proseo.planner.dispatcher.EngineDispatcher;
 import de.dlr.proseo.planner.util.UtilService;
 
 /**
- * Monitors the completion of a Kubernetes job.
+ * Monitors the completion of an Engine job.
  *
- * This class runs as a separate thread and waits for a Kubernetes job to finish. It periodically checks for the job's completion
+ * This class runs as a separate thread and waits for an EngineJob to finish. It periodically checks for the job's completion
  * status and retrieves the finish info. Once the job is finished, it performs additional actions based on the job's outcome. The
  * thread stops after a maximum number of cycles or when the job is found to be finished.
  *
- * Note: This class requires initialization with the planner, kube job, and job name.
+ * Note: This class requires initialization with the planner, engine job, and job name.
  *
  * @author Ernst Melchinger
  */
-public class KubeJobFinish extends Thread {
+public abstract class EngineJobFinish extends Thread {
 
 	/** Logger of this class. */
-	private static ProseoLogger logger = new ProseoLogger(KubeJobFinish.class);
+	private static ProseoLogger logger = new ProseoLogger(EngineJobFinish.class);
 
 	/** The production planner */
-	private ProductionPlanner planner;
+	protected ProductionPlanner planner;
 
 	/** The name of the kube job being monitored. */
-	private String jobName;
+	protected String jobName;
 
 	/** The kube job being monitored. */
-	private KubeJob kubeJob;
+	protected EngineJob engineJob;
 
 	/**
 	 * Creates a new thread instance to monitor a Kubernetes job until its completion.
@@ -55,10 +50,10 @@ public class KubeJobFinish extends Thread {
 	 * @param planner The production planner instance.
 	 * @param jobName The Kubernetes job name.
 	 */
-	public KubeJobFinish(KubeJob kubeJob, ProductionPlanner planner, String jobName) {
+	public EngineJobFinish(EngineJob engineJob, ProductionPlanner planner, String jobName) {
 		super(jobName);
 
-		this.kubeJob = kubeJob;
+		this.engineJob = engineJob;
 		this.jobName = jobName;
 		this.planner = planner;
 	}
@@ -75,7 +70,7 @@ public class KubeJobFinish extends Thread {
 			logger.trace(">>> run()");
 		}
 
-		if (kubeJob == null || jobName == null || jobName.isEmpty())
+		if (engineJob == null || jobName == null || jobName.isEmpty())
 			return;
 
 		boolean found = false;
@@ -90,10 +85,10 @@ public class KubeJobFinish extends Thread {
 
 				try {
 					// Update the finish info of the Kubernetes job and check if it is finished
-					found = kubeJob.updateFinishInfoAndDelete(jobName);
+					found = engineJob.updateFinishInfoAndDelete(jobName);
 
 					if (found) {
-						final Long jobStepId = kubeJob.getJobId();
+						final Long jobStepId = engineJob.getJobId();
 
 						// Start a transaction to fetch the job step details and retrieve associated product classes
 						TransactionTemplate transactionTemplate = new TransactionTemplate(planner.getTxManager());
@@ -121,14 +116,14 @@ public class KubeJobFinish extends Thread {
 						if (ProductionPlanner.config.getCheckForFurtherJobStepsToRun()) {
 							// Check for any job steps that can be run based on the finished job and associated product classes
 							for (Long pcId : productClassIds) {
-								UtilService.getJobStepUtil().checkForJobStepsToRun(kubeJob.getKubeConfig(), pcId, false, false);
+								UtilService.getJobStepUtil().checkForJobStepsToRun(engineJob.getEngineConfig(), pcId, false, false);
 							}
 						}
 
 						if (ProductionPlanner.config.getCheckForFurtherJobStepsToRun()) {
-							// Start the KubeDispatcher to handle any further job steps that can be run
-							KubeDispatcher kubeDispatcher = new KubeDispatcher(null, kubeJob.getKubeConfig(), true);
-							kubeDispatcher.start();
+							// Start the EngineDispatcher to handle any further job steps that can be run
+							EngineDispatcher engineDispatcher = new EngineDispatcher(null, engineJob.getEngineConfig(), true);
+							engineDispatcher.start();
 						}
 					}
 				} catch (Exception e) {
@@ -154,7 +149,7 @@ public class KubeJobFinish extends Thread {
 	 * @return The collected component classes.
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ)
-	private List<ProductClass> getAllComponentClasses(ProductClass productClass) {
+	protected List<ProductClass> getAllComponentClasses(ProductClass productClass) {
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> getAllComponentClasses({})", (null == productClass ? "null" : productClass.getProductType()));
 		}
@@ -180,5 +175,7 @@ public class KubeJobFinish extends Thread {
 
 		return componentProducts;
 	}
+
+
 
 }

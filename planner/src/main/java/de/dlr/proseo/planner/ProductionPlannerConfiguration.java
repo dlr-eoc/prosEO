@@ -113,7 +113,50 @@ public class ProductionPlannerConfiguration {
 	@Value("${proseo.aip.password}")
 	private String aipPassword;
 
+	/** Mount point for wrapper */
+	@Value("${proseo.slurm.volumeMount}")
+	private String slurmVolumeMount;
 	
+	/** Mount point for wrapper */
+	@Value("${proseo.slurm.workingDirectoryNode}")
+	private String workingDirectoryNode;
+
+	/** Mount point for wrapper */
+	@Value("${proseo.slurm.workingDirectoryLocal}")
+	private String workingDirectoryLocal;
+
+	/** Mount point for wrapper */
+	@Value("${proseo.slurm.tokenCommand}")
+	private String tokenCommand;
+	
+	/**
+	 * @return the tokenCommand
+	 */
+	public String getTokenCommand() {
+		return tokenCommand;
+	}
+
+	/**
+	 * @return the workingDirectoryNode
+	 */
+	public String getWorkingDirectoryNode() {
+		return workingDirectoryNode;
+	}
+
+	/**
+	 * @return the workingDirectoryLocal
+	 */
+	public String getWorkingDirectoryLocal() {
+		return workingDirectoryLocal;
+	}
+
+	/**
+	 * @return the posixSlurmVolumeMount
+	 */
+	public String getSlurmVolumeMount() {
+		return slurmVolumeMount;
+	}
+
 	/**
 	 * @return the detectOverlappingJobSteps
 	 */

@@ -41,7 +41,7 @@ import de.dlr.proseo.model.joborder.Proc;
 import de.dlr.proseo.model.joborder.ProcessingParameter;
 import de.dlr.proseo.model.joborder.SensingTime;
 import de.dlr.proseo.model.joborder.TimeInterval;
-import de.dlr.proseo.planner.kubernetes.KubeConfig;
+import de.dlr.proseo.planner.engine.EngineConfig;
 
 /**
  * This class is responsible for creating and dispatching job orders for job steps, including information about the processor,
@@ -413,18 +413,18 @@ public class JobDispatcher {
 	/**
 	 * Send the job order as a Base64 string to the storage manager.
 	 *
-	 * @param kubeConfig      The processing facility configuration.
+	 * @param engineConfig      The processing facility configuration.
 	 * @param jobOrder        The job order to send.
 	 * @param jobOrderVersion The specification version of the job order file to apply.
 	 * @return The job order with updated file name, or null if unsuccessful.
 	 */
-	public JobOrder sendJobOrderToStorageManager(KubeConfig kubeConfig, JobOrder jobOrder, JobOrderVersion jobOrderVersion) {
+	public JobOrder sendJobOrderToStorageManager(EngineConfig engineConfig, JobOrder jobOrder, JobOrderVersion jobOrderVersion) {
 		if (logger.isTraceEnabled()) {
-			logger.trace(">>> sendJobOrderToStorageManager({}, {})", kubeConfig, jobOrder);
+			logger.trace(">>> sendJobOrderToStorageManager({}, {})", engineConfig, jobOrder);
 		}
 
-		// Get the storage manager URL from the provided kubeConfig
-		String storageManagerUrl = kubeConfig.getStorageManagerUrl();
+		// Get the storage manager URL from the provided EngineConfig
+		String storageManagerUrl = engineConfig.getStorageManagerUrl();
 		if (storageManagerUrl == null || jobOrder == null) {
 			logger.log(PlannerMessage.INSUFFICIENT_ORDER_DATA);
 			return null;
@@ -434,7 +434,7 @@ public class JobDispatcher {
 			// Create a RestTemplate for making HTTP requests
 			RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
 			RestTemplate restTemplate = restTemplateBuilder.connectTimeout(Duration.ofMillis(5000))
-				.basicAuthentication(kubeConfig.getStorageManagerUser(), kubeConfig.getStorageManagerPassword())
+				.basicAuthentication(engineConfig.getStorageManagerUser(), engineConfig.getStorageManagerPassword())
 				.build();
 
 			// Set the REST API endpoint for submitting job orders
@@ -443,8 +443,8 @@ public class JobDispatcher {
 			// Create a RestJoborder object to hold the Base64 string
 			RestJoborder restJoborder = new RestJoborder();
 
-			// Set the file system type based on the storage type from kubeConfig
-			switch (kubeConfig.getStorageType()) {
+			// Set the file system type based on the storage type from EngineConfig
+			switch (engineConfig.getStorageType()) {
 			case S3:
 				restJoborder.setFsType(StorageType.S3.toString());
 				break;

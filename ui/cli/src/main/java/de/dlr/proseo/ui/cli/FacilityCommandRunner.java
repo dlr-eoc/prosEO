@@ -59,7 +59,7 @@ public class FacilityCommandRunner {
 	private static final String PROMPT_STORAGEMGR_PASSWD = "Storage manager password (empty field cancels): ";
 	private static final String PROMPT_LOCAL_STORAGEMGR_URL = "Kubernetes-local storage manager URL (empty field cancels): ";
 	private static final String PROMPT_STORAGE_TYPE = "Default storage type (empty field cancels): ";
-
+	private static final String PROMPT_PROCESSING_ENGINE_TYPE = "Processinig engine type (empty field cancels): ";
 	private static final String URI_PATH_FACILITIES = "/facilities";
 
 	private static final String FACILITIES = "facilities";
@@ -262,6 +262,15 @@ public class FacilityCommandRunner {
 				return;
 			}
 			restFacility.setDefaultStorageType(response);
+		}
+		if (null == restFacility.getProcessingEngineType() || restFacility.getProcessingEngineType().isBlank()) {
+			System.out.print(PROMPT_PROCESSING_ENGINE_TYPE);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(ProseoLogger.format(UIMessage.OPERATION_CANCELLED));
+				return;
+			}
+			restFacility.setProcessingEngineType(response);
 		}
 
 		/* Create processing facility */
@@ -520,6 +529,9 @@ public class FacilityCommandRunner {
 		}
 		if (null != updatedFacility.getDefaultStorageType() && !updatedFacility.getDefaultStorageType().isBlank()) {
 			restFacility.setDefaultStorageType(updatedFacility.getDefaultStorageType());
+		}
+		if (null != updatedFacility.getProcessingEngineType() && !updatedFacility.getProcessingEngineType().isBlank()) {
+			restFacility.setProcessingEngineType(updatedFacility.getProcessingEngineType());
 		}
 
 		/* Update processing facility using Facility Manager service */

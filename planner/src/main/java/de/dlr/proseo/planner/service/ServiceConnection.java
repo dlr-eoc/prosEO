@@ -6,6 +6,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
@@ -22,15 +24,21 @@ import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.http.protocol.HTTP;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClient.ResponseSpec;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
@@ -44,6 +52,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.planner.ProductionPlannerConfiguration;
+import de.dlr.proseo.planner.engine.slurm.SlurmConfig;
 
 /**
  * Service class to connect to the prosEO backend services from planner
@@ -59,6 +68,16 @@ public class ServiceConnection {
 	/** Utility class for handling HTTP headers */
 	private static ProseoHttp http = new ProseoHttp(logger, HttpPrefix.PLANNER);
 
+	public class SlurmException extends RuntimeException {
+
+		private static final long serialVersionUID = 1L;
+		
+		public SlurmException(String message) {
+			super(message);
+		}
+		
+	}
+	
 	/** REST template builder */
 	@Autowired
 	private RestTemplateBuilder rtb;
@@ -132,6 +151,7 @@ public class ServiceConnection {
 			logger.trace("<<< getFromService()");
 		return entity.getBody();
 	}
+	
 
 	/**
 	 * Calls a prosEO service at the given location with HTTP PUT
@@ -468,6 +488,273 @@ public class ServiceConnection {
 
 		if (logger.isTraceEnabled())
 			logger.trace("<<< deleteFromService()");
+	}
+
+
+    private ClientHttpRequestFactory getClientHttpRequestFactory() {
+        HttpComponentsClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory();
+        clientHttpRequestFactory.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()));
+        return clientHttpRequestFactory;
+    }
+    
+	/**
+	 * Calls a prosEO service at the given location with HTTP GET
+	 * 
+	 * @param <T>         the class of the REST object to return
+	 * @param serviceUrl  the base URL of the service (protocol, hostname, port, base URI)
+	 * @param requestPath the specific request path including request parameters
+	 * @param clazz       the class of the return object
+	 * @param username    the username for basic HTTP authentication (optional)
+	 * @param password    the password for basic HTTP authentication (optional)
+	 * @return the body of the HTTP response converted into an object of the expected class
+	 * @throws RestClientException if an error (HTTP status code 4xx or 5xx) occurred in the communication to the service
+	 * @throws RuntimeException    if the service returned an HTTP status different from OK (200)
+	 */
+	public <T> T getFromSlurm(String serviceUrl, String requestPath, Class<T> clazz, String token)
+			throws RestClientException, RuntimeException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFromSlurm({}, {}, {}, password)", serviceUrl, requestPath, clazz);
+
+		// Attempt connection to service
+		ResponseEntity<T> entity = null;
+		try {
+			RestClient restClient = RestClient
+	                .builder()
+	                .requestFactory(getClientHttpRequestFactory())
+	                .build();
+			entity = restClient.get()
+			  .uri(serviceUrl + requestPath)
+			  .header("X-SLURM-USER-TOKEN", token)
+			  .retrieve()
+			  .toEntity(clazz);
+		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
+			String message = http.createMessageFromHeaders(HttpStatus.valueOf(e.getStatusCode().value()), e.getResponseHeaders());
+			logger.log(PlannerMessage.EXTRACTED_MESSAGE, message);
+			throw new HttpClientErrorException(e.getStatusCode(), message);
+		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
+			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
+			if (HttpStatus.UNAUTHORIZED.equals(e.getStatusCode())) {
+				logger.log(PlannerMessage.NOT_AUTHORIZED_FOR_SERVICE, "Slurm");
+			} else {
+				logger.log(PlannerMessage.EXTRACTED_MESSAGE, warningMessage);
+			}
+			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
+		} catch (RestClientResponseException e) {
+			ObjectMapper mapper = null;
+			mapper = new ObjectMapper();
+			Map<?,?> m = mapper.readValue(e.getResponseBodyAsString(), Map.class);
+			if (m.get("errors") != null && m.get("errors") instanceof List) {
+				List<?> a = (List<?>) m.get("errors");
+				for (Object o : a) {
+					if (o instanceof Map) {
+						if (((Map<?,?>)o).get("error_number").equals(1007)) {
+							// Protocol authentication error
+							// get new token
+							throw new SlurmException(o.toString());
+						}
+					}
+				}
+			}
+			logger.log(PlannerMessage.HTTP_REQUEST_FAILED, e.getMessage());
+			logger.log(PlannerMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
+			throw e;
+		} catch (Exception e) {
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
+
+			if (logger.isDebugEnabled())
+				logger.debug("... exception stack trace: ", e);
+
+			throw new RuntimeException(e);
+		}
+
+		// All GET requests should return HTTP status OK
+		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
+			String message = http.createMessageFromHeaders(HttpStatus.valueOf(entity.getStatusCode().value()), entity.getHeaders());
+			logger.log(PlannerMessage.EXTRACTED_MESSAGE, message);
+			throw new RuntimeException(message);
+		}
+
+		// Check connection result
+		if (logger.isTraceEnabled())
+			logger.trace("<<< getFromSlurm()");
+		return entity.getBody();
+	}
+
+	/**
+	 * Calls a prosEO service at the given location with HTTP Post
+	 * 
+	 * @param <T>         the class of the REST object to use as POST data
+	 * @param serviceUrl  the base URL of the service (protocol, hostname, port, base URI)
+	 * @param requestPath the specific request path including request parameters
+	 * @param restObject  the object to post to the service
+	 * @param clazz       the class of the expected result object
+	 * @param username    the username for basic HTTP authentication (optional)
+	 * @param password    the password for basic HTTP authentication (optional)
+	 * @return the body of the HTTP response converted into an object of the expected class
+	 * @throws RestClientException if an error (HTTP status code 4xx or 5xx) occurred in the communication to the service
+	 * @throws RuntimeException    if the service returned an HTTP status different from OK (200)
+	 */
+	public <T> T postToSlurm(String serviceUrl, String requestPath, Object restObject, Class<T> clazz, String token) throws RestClientException, RuntimeException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> postToSlurm({}, {}, object, password)", serviceUrl, requestPath);
+
+		// Attempt connection to service
+		ResponseEntity <T> entity = null;
+		ResponseSpec response;
+		try {
+			if (logger.isTraceEnabled())
+				logger.trace("... calling slurm URL {} with POST", serviceUrl + requestPath);
+			RestClient restClient = RestClient
+	                .builder()
+	                .requestFactory(getClientHttpRequestFactory())
+	                .build();
+			entity = restClient.post()
+			  .uri(serviceUrl + requestPath)
+			  .contentType(MediaType.APPLICATION_JSON)
+			  .header("X-SLURM-USER-TOKEN", token)
+			  .body(restObject)
+			  .retrieve()
+			  .toEntity(clazz);
+		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
+			String message = http.createMessageFromHeaders(HttpStatus.valueOf(e.getStatusCode().value()), e.getResponseHeaders());
+			logger.log(PlannerMessage.EXTRACTED_MESSAGE, message);
+			throw new HttpClientErrorException(e.getStatusCode(), message);
+		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
+			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
+			if (warningMessage == null)
+				logger.log(PlannerMessage.EXTRACTED_MESSAGE, warningMessage);
+			else
+				logger.log(PlannerMessage.NOT_AUTHORIZED_FOR_SERVICE, "Slurm");
+			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
+		} catch (RestClientResponseException e) {
+
+			ObjectMapper mapper = null;
+			mapper = new ObjectMapper();
+			Map<?,?> m = mapper.readValue(e.getResponseBodyAsString(), Map.class);
+			if (m.get("errors") != null && m.get("errors") instanceof List) {
+				List<?> a = (List<?>) m.get("errors");
+				for (Object o : a) {
+					if (o instanceof Map) {
+						if (((Map<?,?>)o).get("error_number").equals(1007)) {
+							// Protocol authentication error
+							// get new token
+							throw new SlurmException(o.toString());
+						}
+					}
+				}
+			}
+			logger.log(PlannerMessage.HTTP_REQUEST_FAILED, e.getMessage());
+			logger.log(PlannerMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
+			throw e;
+		} catch (Exception e) {
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
+
+			if (logger.isDebugEnabled())
+				logger.debug("... exception stack trace: ", e);
+
+			throw new RuntimeException(e);
+		}
+
+		// Check for NOT_MODIFIED (POST used for creating sub-objects)
+		if (HttpStatus.NOT_MODIFIED.equals(entity.getStatusCode())) {
+			throw new RestClientResponseException(entity.getHeaders().getFirst(HttpHeaders.WARNING),
+					HttpStatus.NOT_MODIFIED.value(), HttpStatus.NOT_MODIFIED.toString(), entity.getHeaders(), "".getBytes(),
+					Charset.defaultCharset());
+		}
+
+		// All successful POST requests should return HTTP status CREATED
+		if (!(HttpStatus.CREATED.equals(entity.getStatusCode()) || HttpStatus.OK.equals(entity.getStatusCode()))) {
+			String message = http.createMessageFromHeaders(HttpStatus.valueOf(entity.getStatusCode().value()), entity.getHeaders());
+			logger.log(PlannerMessage.EXTRACTED_MESSAGE, message);
+			throw new RuntimeException(message);
+		}
+
+		// Check connection result
+		if (logger.isTraceEnabled())
+			logger.trace("<<< postToSlurm()");
+		return entity.getBody();
+	}
+	/**
+	 * Calls a prosEO service at the given location with HTTP GET
+	 * 
+	 * @param <T>         the class of the REST object to return
+	 * @param serviceUrl  the base URL of the service (protocol, hostname, port, base URI)
+	 * @param requestPath the specific request path including request parameters
+	 * @param clazz       the class of the return object
+	 * @param username    the username for basic HTTP authentication (optional)
+	 * @param password    the password for basic HTTP authentication (optional)
+	 * @return the body of the HTTP response converted into an object of the expected class
+	 * @throws RestClientException if an error (HTTP status code 4xx or 5xx) occurred in the communication to the service
+	 * @throws RuntimeException    if the service returned an HTTP status different from OK (200)
+	 */
+	public <T> T deleteFromSlurm(String serviceUrl, String requestPath, Class<T> clazz, String token)
+			throws RestClientException, RuntimeException {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteFromSlurm({}, {}, {}, password)", serviceUrl, requestPath, clazz);
+
+		// Attempt connection to service
+		ResponseEntity<T> entity = null;
+		try {
+			RestClient restClient = RestClient
+	                .builder()
+	                .requestFactory(getClientHttpRequestFactory())
+	                .build();
+			entity = restClient.delete()
+			  .uri(serviceUrl + requestPath)
+			  .header("X-SLURM-USER-TOKEN", token)
+			  .retrieve()
+			  .toEntity(clazz);
+		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
+			String message = http.createMessageFromHeaders(HttpStatus.valueOf(e.getStatusCode().value()), e.getResponseHeaders());
+			logger.log(PlannerMessage.EXTRACTED_MESSAGE, message);
+			throw new HttpClientErrorException(e.getStatusCode(), message);
+		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
+			String warningMessage = http.extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
+			if (HttpStatus.UNAUTHORIZED.equals(e.getStatusCode())) {
+				logger.log(PlannerMessage.NOT_AUTHORIZED_FOR_SERVICE, "Slurm");
+			} else {
+				logger.log(PlannerMessage.EXTRACTED_MESSAGE, warningMessage);
+			}
+			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
+		} catch (RestClientResponseException e) {
+			ObjectMapper mapper = null;
+			mapper = new ObjectMapper();
+			Map<?,?> m = mapper.readValue(e.getResponseBodyAsString(), Map.class);
+			if (m.get("errors") != null && m.get("errors") instanceof List) {
+				List<?> a = (List<?>) m.get("errors");
+				for (Object o : a) {
+					if (o instanceof Map) {
+						if (((Map<?,?>)o).get("error_number").equals(1007)) {
+							// Protocol authentication error
+							// get new token
+							throw new SlurmException(o.toString());
+						}
+					}
+				}
+			}
+			logger.log(PlannerMessage.HTTP_REQUEST_FAILED, e.getMessage());
+			logger.log(PlannerMessage.HTTP_REQUEST_FAILED, e.getResponseBodyAsString());
+			throw e;
+		} catch (Exception e) {
+			logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e);
+
+			if (logger.isDebugEnabled())
+				logger.debug("... exception stack trace: ", e);
+
+			throw new RuntimeException(e);
+		}
+
+		// All GET requests should return HTTP status OK
+		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
+			String message = http.createMessageFromHeaders(HttpStatus.valueOf(entity.getStatusCode().value()), entity.getHeaders());
+			logger.log(PlannerMessage.EXTRACTED_MESSAGE, message);
+			throw new RuntimeException(message);
+		}
+
+		// Check connection result
+		if (logger.isTraceEnabled())
+			logger.trace("<<< deleteFromSlurm()");
+		return entity.getBody();
 	}
 
 }

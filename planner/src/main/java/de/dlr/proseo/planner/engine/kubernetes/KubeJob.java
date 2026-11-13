@@ -3,7 +3,7 @@
  *
  * © 2019 Prophos Informatik GmbH
  */
-package de.dlr.proseo.planner.kubernetes;
+package de.dlr.proseo.planner.engine.kubernetes;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -25,17 +25,14 @@ import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.JobStep.StdLogLevel;
-import de.dlr.proseo.model.Processor;
-import de.dlr.proseo.model.Product;
-import de.dlr.proseo.model.ProductQuery;
-import de.dlr.proseo.model.Task;
 import de.dlr.proseo.model.enums.JobOrderVersion;
 import de.dlr.proseo.model.joborder.JobOrder;
-import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.JobDispatcher;
+import de.dlr.proseo.planner.engine.EngineConfig;
+import de.dlr.proseo.planner.engine.EngineJob;
 import de.dlr.proseo.planner.util.UtilService;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
@@ -62,37 +59,16 @@ import io.kubernetes.client.openapi.models.V1ResourceRequirements;
  *
  */
 @Component
-public class KubeJob {
+public class KubeJob extends EngineJob {
 
 	/** Logger of this class */
 	private static ProseoLogger logger = new ProseoLogger(KubeJob.class);
 
-	/** The job's database id */
-	private long jobId;
-
-	/** The generated job name (job prefix + job ID) */
-	private String jobName;
-
 	/** The list of pod names associated with the job */
 	private ArrayList<String> podNames;
 
-	/** The generated container name (container prefix + job ID) */
-	private String containerName;
-
-	/** The processor image name */
-	private String imageName;
-
-	/** The job order file (JOF) */
-	private String jobOrderFileName;
-
-	/** Additional commands for the kube job (command arguments) */
-	private ArrayList<String> args = new ArrayList<>();
-
-	/** The processing order to which the job step is associated */
-	private JobOrder jobOrder;
-
 	/** The processing facility running the job step */
-	private KubeConfig kubeConfig;
+	protected KubeConfig kubeConfig;
 
 	/**
 	 * Internal class to store data for Job Order creation
@@ -108,24 +84,6 @@ public class KubeJob {
 	}
 
 	/**
-	 * Returns the job ID.
-	 *
-	 * @return the jobId
-	 */
-	public long getJobId() {
-		return jobId;
-	}
-
-	/**
-	 * Returns the job name.
-	 *
-	 * @return the jobName
-	 */
-	public String getJobName() {
-		return jobName;
-	}
-
-	/**
 	 * Returns the list of pod names associated with the job. If the pod names are not already populated, a search for pods is
 	 * performed.
 	 *
@@ -138,64 +96,9 @@ public class KubeJob {
 		return podNames;
 	}
 
-	/**
-	 * Returns the name of the container associated with the job.
-	 *
-	 * @return the containerName
-	 */
-	public String getContainerName() {
-		return containerName;
-	}
-
-	/**
-	 * Returns the name of the job order file (JOF).
-	 *
-	 * @return the jobOrderFileName
-	 */
-	public String getJobOrderFileName() {
-		return jobOrderFileName;
-	}
-
-	/**
-	 * Sets the name of the job order file (JOF).
-	 *
-	 * @param jobOrderFileName the jobOrderFileName to set
-	 */
-	public void setJobOrderFileName(String jobOrderFileName) {
-		this.jobOrderFileName = jobOrderFileName;
-	}
-
-	/**
-	 * Returns the processing order to which the job is associated.
-	 *
-	 * @return the jobOrder
-	 */
-	public JobOrder getJobOrder() {
-		return jobOrder;
-	}
-
-	/**
-	 * Sets the job order for the job.
-	 *
-	 * @param jobOrder the jobOrder to set
-	 */
-	public void setJobOrder(JobOrder jobOrder) {
-		this.jobOrder = jobOrder;
-	}
-
-	/**
-	 * Add an argument to the list of command arguments.
-	 *
-	 * @param arg The command argument to add
-	 */
-	public void addArg(String arg) {
-		if (arg != null) {
-			args.add(arg);
-		}
-	}
-
 	/** Instantiate a kube job with a list of pod names */
 	public KubeJob() {
+		super();
 		podNames = new ArrayList<>();
 	}
 
@@ -206,31 +109,29 @@ public class KubeJob {
 	 * @param jobOrderFileName the Job Order file name
 	 */
 	public KubeJob(Long jobId, String jobOrderFileName) {
-
-		this.jobOrderFileName = jobOrderFileName;
+		super(jobId, jobOrderFileName);
 		this.podNames = new ArrayList<>();
-
-		this.jobId = jobId;
-		this.jobName = ProductionPlanner.jobNamePrefix + jobId;
-		this.containerName = ProductionPlanner.jobContainerPrefix + jobId;
-
 	}
 
 	/**
 	 * Rebuilds the kube job entries of a processing facility after a restart of the planner.
 	 *
-	 * @param kubeConfig The processing facility's kube configuration
+	 * @param engineConfig The processing facility's kube configuration
 	 * @param job        The Kubernetes job to rebuild
 	 * @return The created kube job or null if it is not a prosEO job
 	 */
-	public KubeJob rebuild(KubeConfig kubeConfig, V1Job job) {
+	public KubeJob rebuild(EngineConfig engineConfigVar, V1Job job) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> rebuild({}, {})", (null == kubeConfig ? "null" : kubeConfig.getId()),
+			logger.trace(">>> rebuild({}, {})", (null == engineConfigVar ? "null" : engineConfigVar.getId()),
 					(null == job ? "null" : job.getKind()));
+		if (engineConfig instanceof KubeConfig) {
+			this.engineConfig = (KubeConfig)engineConfigVar;
+			this.kubeConfig = (KubeConfig)engineConfigVar;
+		} else {
+			return null;
+		}
 
-		this.kubeConfig = kubeConfig;
-
-		if (kubeConfig.isConnected() && job != null) {
+		if (engineConfig.isConnected() && job != null) {
 			jobName = job.getMetadata().getName();
 
 			// Check if it is a prosEO job by verifying the job name prefix
@@ -264,25 +165,31 @@ public class KubeJob {
 	 *
 	 * TODO Add retry of database update after job has been sent to Kubernetes
 	 *
-	 * @param kubeConfig     The processing facility's kube configuration
+	 * @param engineConfig     The processing facility's kube configuration
 	 * @param stdoutLogLevel The log level for stdout
 	 * @param stderrLogLevel The log level for stderr
 	 * @return The kube job
 	 * @throws Exception if an error occurs during job creation
 	 */
 	//@Transactional(readOnly = false, propagation = Propagation.REQUIRES_NEW)
-	public KubeJob createJob(KubeConfig kubeConfig, String stdoutLogLevel, String stderrLogLevel) throws Exception {
+	@Override
+	public KubeJob createJob(EngineConfig engineConfigVar, String stdoutLogLevel, String stderrLogLevel) throws Exception {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> createJob({}, {}, {})", kubeConfig, stdoutLogLevel, stderrLogLevel);
+			logger.trace(">>> createJob({}, {}, {})", engineConfigVar, stdoutLogLevel, stderrLogLevel);
 
 		// Ensure that the kube configuration is given
-		this.kubeConfig = kubeConfig;
-		if (!kubeConfig.isConnected()) {
-			logger.log(PlannerMessage.KUBERNETES_NOT_CONNECTED, kubeConfig.getProcessingFacility().toString());
+		this.engineConfig = engineConfigVar;
+		if (engineConfigVar instanceof KubeConfig) {
+			this.kubeConfig = (KubeConfig)engineConfigVar;
+		} else {
+			return null;
+		}
+		if (!engineConfig.isConnected()) {
+			logger.log(PlannerMessage.KUBERNETES_NOT_CONNECTED, engineConfig.getProcessingFacility().toString());
 			return null;
 		}
 
-		TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
+		TransactionTemplate transactionTemplate = new TransactionTemplate(this.engineConfig.getProductionPlanner().getTxManager());
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 
 		transactionTemplate.setReadOnly(false);
@@ -471,7 +378,7 @@ public class KubeJob {
 					.putRequestsItem("memory", new Quantity(mem))
 					.putRequestsItem("ephemeral-storage", new Quantity(minDiskSpace));
 					V1EnvVarSource es = new V1EnvVarSourceBuilder().withNewFieldRef().withFieldPath("status.hostIP").endFieldRef().build();
-					String localStorageManagerUrl = this.kubeConfig.getLocalStorageManagerUrl();
+					String localStorageManagerUrl = this.engineConfig.getLocalStorageManagerUrl();
 
 					// Create a host alias, if given in the config file, for use in the Planner and Ingestor URLs
 					List<V1HostAlias> hostAliases = new ArrayList<>();
@@ -525,12 +432,12 @@ public class KubeJob {
 							.endEnv()
 							.addNewEnv()
 							.withName("STATE_CALLBACK_ENDPOINT")
-							.withValue(ProductionPlanner.config.getProductionPlannerUrl() + "/processingfacilities/" + this.kubeConfig.getId()
+							.withValue(ProductionPlanner.config.getProductionPlannerUrl() + "/processingfacilities/" + this.engineConfig.getId()
 							+ "/finish/" + jobName)
 							.endEnv()
 							.addNewEnv()
 							.withName("PROCESSING_FACILITY_NAME")
-							.withValue(this.kubeConfig.getId())
+							.withValue(this.engineConfig.getId())
 							.endEnv()
 							.addNewEnv()
 							.withName("INGESTOR_ENDPOINT")
@@ -647,7 +554,7 @@ public class KubeJob {
 					// Start the job step
 					jobStep.setProcessingStartTime(Instant.now());
 					UtilService.getJobStepUtil().startJobStep(jobStep);
-					logger.log(PlannerMessage.KUBEJOB_CREATED, this.kubeConfig.getId(), jobName);
+					logger.log(PlannerMessage.KUBEJOB_CREATED, this.engineConfig.getId(), jobName);
 
 					return null;
 
@@ -725,7 +632,7 @@ public class KubeJob {
 	 *
 	 * @return the kubeConfig
 	 */
-	public KubeConfig getKubeConfig() {
+	public EngineConfig getKubeConfig() {
 		return kubeConfig;
 	}
 
@@ -734,7 +641,7 @@ public class KubeJob {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> searchPod()");
 
-		if (kubeConfig != null && kubeConfig.isConnected()) {
+		if (engineConfig != null && engineConfig.isConnected()) {
 			V1PodList podList;
 
 			for (int retryNumber = 0; retryNumber < ProseoUtil.K8S_MAX_RETRY; ) {
@@ -777,17 +684,21 @@ public class KubeJob {
 	 * If the kube configuration is available, search for pods associated with the job, retrieve the job information, and update the
 	 * job step accordingly. Then, start a KubeJobFinish thread to monitor the completion of the kube job.
 	 *
-	 * @param kubeConfig The kube configuration associated with the processing facility
+	 * @param engineConfig The kube configuration associated with the processing facility
 	 * @param jobName    The name of the kube job
 	 */
-	public void finish(KubeConfig kubeConfig, String jobName) {
+	public void finish(EngineConfig engineConfigVar, String jobName) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> finish({}, {})", (null == kubeConfig ? "null" : kubeConfig.getId()), jobName);
+			logger.trace(">>> finish({}, {})", (null == engineConfigVar ? "null" : engineConfigVar.getId()), jobName);
 
-		// Set kubeConfig if not already provided
-		if (kubeConfig != null || this.kubeConfig != null) {
-			if (this.kubeConfig == null) {
-				this.kubeConfig = kubeConfig;
+		// Set engineConfig if not already provided
+		if ((engineConfigVar != null && engineConfigVar instanceof KubeConfig) 
+				|| this.engineConfig != null && this.engineConfig instanceof KubeConfig) {
+			if (this.engineConfig == null) {
+				this.kubeConfig = (KubeConfig)engineConfigVar;
+				this.engineConfig = (KubeConfig)engineConfigVar;
+			} else {
+				this.kubeConfig = (KubeConfig)engineConfig;
 			}
 		} else {
 			// TODO Maybe log?
@@ -799,7 +710,7 @@ public class KubeJob {
 		// Search for pods associated with the job
 		searchPod();
 
-		TransactionTemplate transactionTemplate = new TransactionTemplate(kubeConfig.getProductionPlanner().getTxManager());
+		TransactionTemplate transactionTemplate = new TransactionTemplate(engineConfig.getProductionPlanner().getTxManager());
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 			try {
@@ -881,8 +792,8 @@ public class KubeJob {
 		}
 
 		// Configure and start a KubeJobFinish object to monitor the completion of the kube job
-		KubeJobFinish jobMonitor = new KubeJobFinish(this, kubeConfig.getProductionPlanner(), jobName);
-		kubeConfig.getProductionPlanner().getFinishThreads().put(jobName, jobMonitor);
+		KubeJobFinish jobMonitor = new KubeJobFinish(this, engineConfig.getProductionPlanner(), jobName);
+		engineConfig.getProductionPlanner().getFinishThreads().put(jobName, jobMonitor);
 		jobMonitor.start();
 
 	}
@@ -926,7 +837,7 @@ public class KubeJob {
 			logger.trace(">>> updateInfo({})", jobName);
 
 		// Ensure that the kube configuration is present and connected, and that a job name was provided
-		if (kubeConfig == null || !kubeConfig.isConnected() || jobName == null) {
+		if (engineConfig == null || !engineConfig.isConnected() || jobName == null) {
 			if (logger.isTraceEnabled())
 				logger.trace("<<< updateInfo({})", jobName);
 
@@ -964,7 +875,7 @@ public class KubeJob {
 			return Boolean.FALSE;
 		}
 
-		TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
+		TransactionTemplate transactionTemplate = new TransactionTemplate(this.engineConfig.getProductionPlanner().getTxManager());
 		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 			try {
@@ -1132,9 +1043,9 @@ public class KubeJob {
 					if (logger.isTraceEnabled())
 						logger.trace("<<< updateInfo({}, {})", jobName, success);
 					if (killJob) {
-						kubeConfig.deleteJob(jobName);
-						KubeJobFinish jobMonitor = new KubeJobFinish(this, kubeConfig.getProductionPlanner(), jobName);
-						kubeConfig.getProductionPlanner().getFinishThreads().put(jobName, jobMonitor);
+						engineConfig.deleteJob(jobName);
+						KubeJobFinish jobMonitor = new KubeJobFinish(this, engineConfig.getProductionPlanner(), jobName);
+						engineConfig.getProductionPlanner().getFinishThreads().put(jobName, jobMonitor);
 						jobMonitor.start();
 					}
 					return success;
@@ -1171,7 +1082,7 @@ public class KubeJob {
 		// If the updateInfo was successful, perform additional operations
 		if (success) {
 			TransactionTemplate transactionTemplate = new TransactionTemplate(
-					this.kubeConfig.getProductionPlanner().getTxManager());
+					this.engineConfig.getProductionPlanner().getTxManager());
 			transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
@@ -1201,42 +1112,11 @@ public class KubeJob {
 			}
 
 			// Delete the Kubernetes job
-			kubeConfig.deleteJob(jobName);
-			logger.log(PlannerMessage.KUBEJOB_FINISHED, kubeConfig.getId(), jobName);
+			engineConfig.deleteJob(jobName);
+			logger.log(PlannerMessage.KUBEJOB_FINISHED, engineConfig.getId(), jobName);
 		}
 
 		return success;
-	}
-
-	/**
-	 * Sets the generation time of the given product to the provided time, and recursively sets the generation time for all its
-	 * component products. If a retention period is specified, it also sets the eviction time of the product. The updated product is
-	 * then saved in the repository.
-	 *
-	 * @param product         The product to set the generation time for
-	 * @param genTime         The generation time to set
-	 * @param retentionPeriod The retention period for the product
-	 */
-	private void setGenerationTime(Product product, Instant genTime, Duration retentionPeriod) {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> setGenerationTime({}, {}, {})", (null == product ? "null" : product.getId()), genTime,
-					retentionPeriod);
-
-		if (product != null && genTime != null) {
-			product.setGenerationTime(genTime);
-
-			if (retentionPeriod != null) {
-				product.setEvictionTime(genTime.plus(retentionPeriod));
-			}
-
-			// Recursively set the generation time for component products
-			for (Product p : product.getComponentProducts()) {
-				setGenerationTime(p, genTime, retentionPeriod);
-			}
-
-			// Save the updated product in the repository
-			RepositoryService.getProductRepository().save(product);
-		}
 	}
 
 	/**
@@ -1271,56 +1151,27 @@ public class KubeJob {
 //	}
 
 	/**
-	 * Retrieves the maximum value of CPUs required by the processor tasks.
-	 *
-	 * @param processor The Processor object
-	 * @param cpus      The default value of CPUs
-	 * @return The maximum value of CPUs required
-	 */
-	private Integer getCPUs(Processor processor, Integer cpus) {
-		if (processor != null) {
-			// Iterate over the tasks of the processor
-			for (Task t : processor.getTasks()) {
-				// Update 'cpus' if the task requires more CPUs than the current maximum
-				if (t.getNumberOfCpus() != null && t.getNumberOfCpus() > cpus) {
-					cpus = t.getNumberOfCpus();
-				}
-			}
-		}
-
-		return cpus;
-	}
-
-	/**
-	 * Gets the minimum memory requirement among the tasks of a processor.
-	 *
-	 * @param processor        The Processor
-	 * @param defaultMemoryMin The default minimum memory value
-	 * @return The minimum memory requirement among the tasks
-	 */
-	private Integer getMinMemory(Processor processor, Integer defaultMemoryMin) {
-		if (processor != null) {
-			for (Task task : processor.getTasks()) {
-				if (task.getMinMemory() != null && task.getMinMemory() > defaultMemoryMin) {
-					defaultMemoryMin = task.getMinMemory();
-				}
-			}
-		}
-
-		return defaultMemoryMin;
-	}
-
-	/**
 	 * Updates the job step log based on the latest pod's log.
 	 *
 	 * @param jobStep The JobStep to update the log for
 	 */
-	private void updateJobLog(JobStep jobStep) {
+	protected void updateJobLog(JobStep jobStep) {
 		if (jobStep != null && !podNames.isEmpty()) {
 			V1Pod pod = kubeConfig.getV1Pod(podNames.get(podNames.size() - 1));
 			String log = getJobStepLogPrim(pod);
 
 			jobStep.setProcessingStdOut(log);
+		}
+	}
+	
+	public String getJobStepLog(EngineConfig engineConfig) {
+		if (engineConfig instanceof KubeConfig) {
+			KubeConfig aConfig = (KubeConfig)engineConfig;
+			V1Pod aPod = aConfig
+					.getV1Pod(this.getPodNames().get(this.getPodNames().size() - 1));
+			return this.getJobStepLogPrim(aPod);
+		} else {
+			return "";
 		}
 	}
 
@@ -1330,7 +1181,7 @@ public class KubeJob {
 	 * @param pod The V1Pod object representing the associated pod
 	 * @return The log information for the job step
 	 */
-	public String getJobStepLogPrim(V1Pod pod) {
+	private String getJobStepLogPrim(V1Pod pod) {
 		StringBuilder podMessages = new StringBuilder("");
 
 		// Retrieve pod conditions and construct a message string for each condition
@@ -1395,32 +1246,4 @@ public class KubeJob {
 		}
 	}
 
-	private void reexecuteProductQueries() {
-
-		TransactionTemplate transactionTemplate = new TransactionTemplate(this.kubeConfig.getProductionPlanner().getTxManager());
-		transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-
-		transactionTemplate.setReadOnly(false);
-		transactionTemplate.execute(status -> {
-
-			// Find the job step in the database
-			Optional<JobStep> jobStepOptional = RepositoryService.getJobStepRepository().findById(this.getJobId());
-			if (jobStepOptional.isEmpty()) {
-				logger.log(PlannerMessage.JOB_STEP_NOT_FOUND, this.getJobId());
-				return null;
-			}
-			JobStep js = jobStepOptional.get();
-
-			// Iterate over the input product queries of the job step
-			for (ProductQuery productQuery : js.getInputProductQueries()) {
-				// Execute the product query always
-				ProductQueryService productQueryService = UtilService.getJobStepUtil().getProductQueryService();
-				if (productQueryService.executeQuery(productQuery, false)) {
-					// If the query is successfully executed, update its state and save
-					RepositoryService.getProductQueryRepository().save(productQuery);
-				}
-			}
-			return null;
-		});
-	}
 }

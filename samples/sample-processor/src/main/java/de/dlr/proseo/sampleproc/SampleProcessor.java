@@ -576,6 +576,40 @@ public class SampleProcessor {
 		try {
 			int i = ((int) (9.0 * Math.random())) + 1;
 			int factor = 1;
+
+			if (logger.isTraceEnabled()) {
+				logger.info("... Looking for SleepFactor");
+			}
+			NodeList params =jobOrderDoc.getElementsByTagName("Processing_Parameter");
+			for (int ii = 0; ii < params.getLength(); ++ii) {
+				Node node = params.item(ii);
+				if (! (node instanceof Element)) {
+					// Not the type of metadataObject we are interested in
+					if (logger.isTraceEnabled()) logger.trace("... param {} is not an element", i);
+					continue;
+				}
+				Element param = (Element) node;
+				NodeList names = param.getElementsByTagName("Name");
+				if (names.getLength() == 1) {
+					if (((Element)(names.item(0))).getTextContent().equalsIgnoreCase("sleepfactor")) {
+						NodeList values = param.getElementsByTagName("Value");
+						if (values.getLength() == 1) {
+							try {
+								factor = Integer.parseInt(((Element)(values.item(0))).getTextContent());
+								if (logger.isTraceEnabled()) {
+									logger.info("... SleepFactor value is {}", ((Element)(values.item(1))).getTextContent());
+								}
+							} catch (NumberFormatException e) {
+								if (logger.isTraceEnabled()) {
+									logger.trace("... value {} is not an integer", ((Element)(values.item(1))).getTextContent());
+									continue;
+								}
+							}
+						}
+					}
+				}
+				
+			}
 			while (i > 0) {
 				logger.info("... wait " + ((i) * 1 * factor) + " seconds ...");
 				Thread.sleep(1000 * factor);

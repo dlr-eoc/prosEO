@@ -37,10 +37,15 @@ import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.enums.ProcessingEngineType;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
-import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.planner.kubernetes.KubeJobFinish;
+import de.dlr.proseo.planner.dispatcher.EngineDispatcher;
+import de.dlr.proseo.planner.engine.EngineConfig;
+import de.dlr.proseo.planner.engine.EngineJobFinish;
+import de.dlr.proseo.planner.engine.kubernetes.KubeConfig;
+import de.dlr.proseo.planner.engine.kubernetes.KubeJobFinish;
+import de.dlr.proseo.planner.engine.slurm.SlurmConfig;
+import de.dlr.proseo.planner.service.ServiceConnection;
 import de.dlr.proseo.planner.util.OrderPlanThread;
 import de.dlr.proseo.planner.util.OrderReleaseThread;
 import de.dlr.proseo.planner.util.UtilService;
@@ -82,10 +87,10 @@ public class ProductionPlanner implements CommandLineRunner {
 	ProductionPlannerConfiguration plannerConfig;
 
 	/** Currently running Kubernetes configurations */
-	private Map<String, KubeConfig> kubeConfigs = new HashMap<>();
+	private Map<String, EngineConfig> engineConfigs = new HashMap<>();
 
 	/** Kubernetes dispatcher looking for runnable job steps */
-	private KubeDispatcher kubeDispatcher = null;
+	private EngineDispatcher engineDispatcher = null;
 
 	/** Password cache for orders (used to set username/password in wrapper call) */
 	private Map<Long, Map<String, String>> orderPwCache = new HashMap<>();
@@ -94,7 +99,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	private Map<String, OrderPlanThread> planThreads = new HashMap<>();
 
 	/** Currently running order finishing threads */
-	private Map<String, KubeJobFinish> finishThreads = new HashMap<>();
+	private Map<String, EngineJobFinish> finishThreads = new HashMap<>();
 
 	/** Currently running order release threads */
 	private Map<String, OrderReleaseThread> releaseThreads = new HashMap<>();
@@ -102,6 +107,10 @@ public class ProductionPlanner implements CommandLineRunner {
 	/** Transaction manager for transaction control */
 	@Autowired
 	private PlatformTransactionManager txManager;
+
+	/** The service connection */
+	@Autowired
+	private ServiceConnection serviceConnection;
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -117,11 +126,18 @@ public class ProductionPlanner implements CommandLineRunner {
 	private List<Long> planningOrders = new ArrayList<>();
 
 	/**
+	 * @return the serviceConnection
+	 */
+	public ServiceConnection getServiceConnection() {
+		return serviceConnection;
+	}
+
+	/**
 	 * Gets the finishThreads map.
 	 *
 	 * @return The map of finishing threads.
 	 */
-	public Map<String, KubeJobFinish> getFinishThreads() {
+	public Map<String, EngineJobFinish> getFinishThreads() {
 		return finishThreads;
 	}
 
@@ -227,29 +243,29 @@ public class ProductionPlanner implements CommandLineRunner {
 	}
 
 	/**
-	 * Gets the KubeConfig instance by name.
+	 * Gets the EngineConfig instance by name.
 	 *
-	 * @param name The name of the KubeConfig instance (may be null).
-	 * @return The KubeConfig instance.
+	 * @param name The name of the EngineConfig instance (may be null).
+	 * @return The EngineConfig instance.
 	 */
-	public KubeConfig getKubeConfig(String name) {
+	public EngineConfig getEngineConfig(String name) {
 		if (name == null) {
-			if (0 < kubeConfigs.size()) {
-				return (KubeConfig) kubeConfigs.values().toArray()[0];
+			if (0 < engineConfigs.size()) {
+				return (EngineConfig) engineConfigs.values().toArray()[0];
 			} else {
 				return null;
 			}
 		}
-		return kubeConfigs.get(name.toLowerCase());
+		return engineConfigs.get(name.toLowerCase());
 	}
 
 	/**
-	 * Gets all connected KubeConfig instances.
+	 * Gets all connected EngineConfig instances.
 	 *
-	 * @return Collection of KubeConfig instances.
+	 * @return Collection of EngineConfig instances.
 	 */
-	public Collection<KubeConfig> getKubeConfigs() {
-		return kubeConfigs.values();
+	public Collection<EngineConfig> getEngineConfigs() {
+		return engineConfigs.values();
 	}
 
 	/**
@@ -272,37 +288,43 @@ public class ProductionPlanner implements CommandLineRunner {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> updateKubeConfigs()");
 
-		KubeConfig kubeConfig = null;
+		EngineConfig engineConfig = null;
 
 		for (ProcessingFacility processingFacility : RepositoryService.getFacilityRepository().findAll()) {
-			kubeConfig = getKubeConfig(processingFacility.getName());
-			if (kubeConfig != null) {
-				if (!kubeConfig.connect()) {
+			engineConfig = getEngineConfig(processingFacility.getName());
+			if (engineConfig != null) {
+				if (!engineConfig.connect()) {
 					// error
-					kubeConfigs.remove(processingFacility.getName().toLowerCase());
+					engineConfigs.remove(processingFacility.getName().toLowerCase());
 
 					logger.log(PlannerMessage.PLANNER_FACILITY_DISCONNECTED, processingFacility.getName());
 				}
 			}
-			if (kubeConfig == null) {
-				kubeConfig = new KubeConfig(processingFacility, this);
-				if (kubeConfig.getFacilityState(processingFacility) == FacilityState.RUNNING
-						|| kubeConfig.getFacilityState(processingFacility) == FacilityState.STARTING
-						|| kubeConfig.getFacilityState(processingFacility) == FacilityState.STOPPING) {
-					if (kubeConfig != null && kubeConfig.connect()) {
-						kubeConfigs.put(processingFacility.getName().toLowerCase(), kubeConfig);
+			if (engineConfig == null) {
+				if (processingFacility.getProcessingEngineType().equals(ProcessingEngineType.SLURM)) {
+					engineConfig = new SlurmConfig(processingFacility, this);
+				} else {
+					engineConfig = new KubeConfig(processingFacility, this);
+				}
+			}
+			if (engineConfig != null) {
+				if (engineConfig.getFacilityState(processingFacility) == FacilityState.RUNNING
+						|| engineConfig.getFacilityState(processingFacility) == FacilityState.STARTING
+						|| engineConfig.getFacilityState(processingFacility) == FacilityState.STOPPING) {
+					if (engineConfig != null && engineConfig.connect()) {
+						engineConfigs.put(processingFacility.getName().toLowerCase(), engineConfig);
 						logger.log(PlannerMessage.PLANNER_FACILITY_CONNECTED, processingFacility.getName(),
 								processingFacility.getProcessingEngineUrl());
-						logger.log(PlannerMessage.PLANNER_FACILITY_WORKER_CNT, String.valueOf(kubeConfig.getWorkerCnt()));
+						logger.log(PlannerMessage.PLANNER_FACILITY_WORKER_CNT, String.valueOf(engineConfig.getWorkerCnt()));
 					} else {
 						logger.log(PlannerMessage.PLANNER_FACILITY_NOT_CONNECTED, processingFacility.getName(),
 								processingFacility.getProcessingEngineUrl());
 					}
 				}
 			}
-			for (KubeConfig kf : getKubeConfigs()) {
+			for (EngineConfig kf : getEngineConfigs()) {
 				if (RepositoryService.getFacilityRepository().findByName(kf.getId().toLowerCase()) == null) {
-					kubeConfigs.remove(kf.getId().toLowerCase());
+					engineConfigs.remove(kf.getId().toLowerCase());
 					logger.log(PlannerMessage.PLANNER_FACILITY_DISCONNECTED, kf.getId(), kf.getProcessingEngineUrl());
 				}
 			}
@@ -314,10 +336,10 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * removes Kubernetes configuration for a facility to which a connection is not possible.
 	 *
 	 * @param facilityName the name of the processing facility to connect
-	 * @return the KubeConfig object for this processing facility, or null, if the facility is not connected
+	 * @return the EngineConfig object for this processing facility, or null, if the facility is not connected
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
-	public KubeConfig updateKubeConfig(String facilityName) {
+	public EngineConfig updateKubeConfig(String facilityName) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> updateKubeConfig({})", facilityName);
 
@@ -344,38 +366,44 @@ public class ProductionPlanner implements CommandLineRunner {
 			}
 		}
 
-		KubeConfig kubeConfig = getKubeConfig(processingFacility.getName());
+		EngineConfig engineConfig = getEngineConfig(processingFacility.getName());
 
-		if (kubeConfig == null) {
-			// Planner does not know facility yet, so create a new KubeConfig object and make sure it can be connected
-			kubeConfig = new KubeConfig(processingFacility, this);
-			if (kubeConfig.getFacilityState(processingFacility) == FacilityState.RUNNING
-					|| kubeConfig.getFacilityState(processingFacility) == FacilityState.STARTING
-					|| kubeConfig.getFacilityState(processingFacility) == FacilityState.STOPPING) {
-				if (kubeConfig.connect()) {
-					kubeConfigs.put(processingFacility.getName().toLowerCase(), kubeConfig);
-					logger.log(PlannerMessage.PLANNER_FACILITY_CONNECTED, processingFacility.getName(),
-							processingFacility.getProcessingEngineUrl());
-					logger.log(PlannerMessage.PLANNER_FACILITY_WORKER_CNT, String.valueOf(kubeConfig.getWorkerCnt()));
-				} else {
-					logger.log(PlannerMessage.PLANNER_FACILITY_NOT_CONNECTED, processingFacility.getName(),
-							processingFacility.getProcessingEngineUrl());
+		if (engineConfig == null) {
+			// Planner does not know facility yet, so create a new EngineConfig object and make sure it can be connected
+			if (processingFacility.getProcessingEngineType().equals(ProcessingEngineType.SLURM)) {
+				engineConfig = new SlurmConfig(processingFacility, this);
+			} else {
+				engineConfig = new KubeConfig(processingFacility, this);
+			}
+			if (engineConfig != null) {
+				if (engineConfig.getFacilityState(processingFacility) == FacilityState.RUNNING
+						|| engineConfig.getFacilityState(processingFacility) == FacilityState.STARTING
+						|| engineConfig.getFacilityState(processingFacility) == FacilityState.STOPPING) {
+					if (engineConfig.connect()) {
+						engineConfigs.put(processingFacility.getName().toLowerCase(), engineConfig);
+						logger.log(PlannerMessage.PLANNER_FACILITY_CONNECTED, processingFacility.getName(),
+								processingFacility.getProcessingEngineUrl());
+						logger.log(PlannerMessage.PLANNER_FACILITY_WORKER_CNT, String.valueOf(engineConfig.getWorkerCnt()));
+					} else {
+						logger.log(PlannerMessage.PLANNER_FACILITY_NOT_CONNECTED, processingFacility.getName(),
+								processingFacility.getProcessingEngineUrl());
+					}
 				}
 			}
 		} else {
-			// Update information in KubeConfig object and make sure it can be connected
-			kubeConfig.setFacility(processingFacility);
-			if (kubeConfig.getFacilityState(processingFacility) == FacilityState.RUNNING
-					|| kubeConfig.getFacilityState(processingFacility) == FacilityState.STARTING
-					|| kubeConfig.getFacilityState(processingFacility) == FacilityState.STOPPING) {
-				if (!kubeConfig.connect()) {
+			// Update information in EngineConfig object and make sure it can be connected
+			engineConfig.setFacility(processingFacility);
+			if (engineConfig.getFacilityState(processingFacility) == FacilityState.RUNNING
+					|| engineConfig.getFacilityState(processingFacility) == FacilityState.STARTING
+					|| engineConfig.getFacilityState(processingFacility) == FacilityState.STOPPING) {
+				if (!engineConfig.connect()) {
 					// error
-					kubeConfigs.remove(processingFacility.getName().toLowerCase());
+					engineConfigs.remove(processingFacility.getName().toLowerCase());
 					logger.log(PlannerMessage.PLANNER_FACILITY_DISCONNECTED, processingFacility.getName());
 				}
 			}
 		}
-		return kubeConfig;
+		return engineConfig;
 	}
 
 	/**
@@ -477,12 +505,12 @@ public class ProductionPlanner implements CommandLineRunner {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> startDispatcher()");
 
-		if (kubeDispatcher == null || !kubeDispatcher.isAlive()) {
-			kubeDispatcher = new KubeDispatcher(this, null, false);
-			kubeDispatcher.start();
+		if (engineDispatcher == null || !engineDispatcher.isAlive()) {
+			engineDispatcher = new EngineDispatcher(this, null, false);
+			engineDispatcher.start();
 		} else {
-			if (kubeDispatcher.isInterrupted()) {
-				// kubeDispatcher
+			if (engineDispatcher.isInterrupted()) {
+				// engineDispatcher
 			}
 		}
 	}
@@ -494,10 +522,10 @@ public class ProductionPlanner implements CommandLineRunner {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> stopDispatcher()");
 
-		if (kubeDispatcher != null && kubeDispatcher.isAlive()) {
-			kubeDispatcher.interrupt();
+		if (engineDispatcher != null && engineDispatcher.isAlive()) {
+			engineDispatcher.interrupt();
 			int i = 0;
-			while (kubeDispatcher.isAlive() && i < 100) {
+			while (engineDispatcher.isAlive() && i < 100) {
 				try {
 					Thread.sleep(100);
 				} catch (InterruptedException e) {
@@ -505,6 +533,6 @@ public class ProductionPlanner implements CommandLineRunner {
 				}
 			}
 		}
-		kubeDispatcher = null;
+		engineDispatcher = null;
 	}
 }

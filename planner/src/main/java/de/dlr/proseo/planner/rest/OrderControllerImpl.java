@@ -39,7 +39,7 @@ import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.ProductionPlannerSecurityConfig;
-import de.dlr.proseo.planner.kubernetes.KubeConfig;
+import de.dlr.proseo.planner.engine.EngineConfig;
 import de.dlr.proseo.planner.rest.model.RestUtil;
 import de.dlr.proseo.planner.util.OrderUtil;
 
@@ -371,14 +371,14 @@ public class OrderControllerImpl implements OrderController {
 			}
 
 			// Check the status of the requested processing facility
-			KubeConfig kubeConfig = productionPlanner.updateKubeConfig(facility);
-			if (null == kubeConfig) {
+			EngineConfig engineConfig = productionPlanner.updateKubeConfig(facility);
+			if (null == engineConfig) {
 				String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, facility);
 
 				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
 
-			ProcessingFacility processingFacility = kubeConfig.getProcessingFacility();
+			ProcessingFacility processingFacility = engineConfig.getProcessingFacility();
 			if (processingFacility.getFacilityState() == FacilityState.DISABLED) {
 				String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, facility,
 						processingFacility.getFacilityState().toString());
@@ -453,8 +453,8 @@ public class OrderControllerImpl implements OrderController {
 						.findById(processingFacilityX.getId());
 					if (processingFacilityOpt.isPresent()) {
 						ProcessingFacility processingFacility = processingFacilityOpt.get();
-						KubeConfig kubeConfig = productionPlanner.updateKubeConfig(processingFacility.getName());
-						if (null == kubeConfig) {
+						EngineConfig engineConfig = productionPlanner.updateKubeConfig(processingFacility.getName());
+						if (null == engineConfig) {
 							String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, processingFacility.getName());
 
 							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
@@ -717,8 +717,8 @@ public class OrderControllerImpl implements OrderController {
 						.findById(processingFacilityX.getId());
 					if (processingFacilityOpt.isPresent()) {
 						ProcessingFacility processingFacility = processingFacilityOpt.get();
-						KubeConfig kubeConfig = productionPlanner.updateKubeConfig(processingFacility.getName());
-						if (null == kubeConfig) {
+						EngineConfig engineConfig = productionPlanner.updateKubeConfig(processingFacility.getName());
+						if (null == engineConfig) {
 							String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, processingFacility.getName());
 
 							return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
@@ -799,7 +799,7 @@ public class OrderControllerImpl implements OrderController {
 //				return null;
 //			});
 			// Check the status of the requested processing facility
-//			KubeConfig kc = productionPlanner.updateKubeConfig(pf.getName());
+//			EngineConfig kc = productionPlanner.updateKubeConfig(pf.getName());
 //			if (null == kc) {
 //				String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, pf.getName());
 //

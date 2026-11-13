@@ -3,7 +3,7 @@
  *
  * © 2019 Prophos Informatik GmbH
  */
-package de.dlr.proseo.planner.kubernetes;
+package de.dlr.proseo.planner.engine.kubernetes;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,10 +30,11 @@ import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.enums.FacilityState;
-import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.engine.EngineConfig;
+import de.dlr.proseo.planner.engine.EngineJob;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import de.dlr.proseo.planner.util.UtilService;
 import io.kubernetes.client.openapi.ApiClient;
@@ -52,12 +53,11 @@ import io.kubernetes.client.openapi.models.V1Taint;
 import io.kubernetes.client.util.Config;
 
 /**
- * Represents the connection to a Kubernetes API
+ * Represents the connection to the Kubernetes API
  *
  * @author Ernst Melchinger
  */
-@Component
-public class KubeConfig {
+public class KubeConfig extends EngineConfig{
 
 	/** Dummy Job Order file name (only used in development environment) **/
 	private static final String DUMMY_JOF_FILENAME = "/testdata/test1.pl";
@@ -65,20 +65,8 @@ public class KubeConfig {
 	/** Logger of this class */
 	private static ProseoLogger logger = new ProseoLogger(KubeConfig.class);
 
-	/** The production planner instance */
-	private ProductionPlanner productionPlanner;
-
-	/** Map containing the created Kubernetes jobs */
-	private HashMap<String, KubeJob> kubeJobList = null;
-	
-	/** Map containing the creating Kubernetes jobs */
-	private HashMap<Long, Long> jobCreatingList = null;
-
 	/** List of Kubernetes nodes */
 	private V1NodeList kubeNodes = null;
-
-	/** Number of ready Kubernetes worker nodes */
-	private int workerCnt = 0;
 
 	/** The Kubernetes API client */
 	private ApiClient client;
@@ -89,301 +77,9 @@ public class KubeConfig {
 	/** The Kubernetes batch API V1 */
 	private BatchV1Api batchApiV1;
 
-	/**
-	 * TODO If that is correct, maybe change parameter name to "name"
-	 *
-	 * The name of the facility
-	 */
-	private String id;
-
-	/** The id of the facility */
-	private long longId;
-
-	/** The version of the facility */
-	private long version;
-
-	/** The facility description */
-	private String description;
-
-	/** The run state the facility currently is in */
-	private FacilityState facilityState;
-
-	/** The maximum of jobs per node */
-	private Integer maxJobsPerNode;
-
-	/** The URL of the facility */
-	private String url;
-
-	/** The storage manager URL */
-	private String storageManagerUrl;
-
-	/** The URL to access this facility's storage manager from an external client (via PRIP API) */
-	private String externalStorageManagerUrl;
-
-	/** The default storage type */
-	private StorageType storageType;
-
-	/** Authentication token for connecting to this facility's processing engine (Kubernetes instance) */
-	private String processingEngineToken;
-
-	/**
-	 * URL of the locally accessible Storage Manager instance on a specific processing node (to be used by the Processing Engine).
-	 * This URL shall contain the string "%NODE_IP%", which will be replaced by the actual node IP of the Kubernetes worker node.
-	 */
-	private String localStorageManagerUrl;
-
-	/** User name for connecting to the Storage Manager (locally and from external services) */
-	private String storageManagerUser;
-
-	/** Password for connecting to the Storage Manager (locally and from external services) */
-	private String storageManagerPassword;
-
-	/** The processing facility */
-	private ProcessingFacility processingFacility;
-
-	/** TODO Please define. */
-	private int nodesDelta = 0;
-
 	// No need to create own namespace, as there is only one "user" (prosEO)
 	/** The namespace */
 	private String namespace = "default";
-
-	/**
-	 * @return the jobCreatingList
-	 */
-	public HashMap<Long, Long> getJobCreatingList() {
-		return jobCreatingList;
-	}
-
-	/**
-	 * @param jobCreatingList the jobCreatingList to set
-	 */
-	public void setJobCreatingList(HashMap<Long, Long> jobCreatingList) {
-		this.jobCreatingList = jobCreatingList;
-	}
-
-	/**
-	 * Returns the production planner.
-	 *
-	 * @return the production planner
-	 */
-	public ProductionPlanner getProductionPlanner() {
-		return productionPlanner;
-	}
-
-	/**
-	 * Returns the maximum number of jobs per node.
-	 *
-	 * @return the maximum number of jobs per node
-	 */
-	public Integer getMaxJobsPerNode() {
-		return maxJobsPerNode;
-	}
-
-	/**
-	 * Sets the maximum number of jobs per node.
-	 *
-	 * @param maxJobsPerNode the maximum number of jobs per node to set
-	 */
-	public void setMaxJobsPerNode(Integer maxJobsPerNode) {
-		this.maxJobsPerNode = maxJobsPerNode;
-	}
-
-	/**
-	 * Returns the storage manager password.
-	 *
-	 * @return the storage manager password
-	 */
-	public String getStorageManagerPassword() {
-		return storageManagerPassword;
-	}
-
-	/**
-	 * Sets the storage manager password.
-	 *
-	 * @param storageManagerPassword the storage manager password to set
-	 */
-	public void setStorageManagerPassword(String storageManagerPassword) {
-		this.storageManagerPassword = storageManagerPassword;
-	}
-
-	/**
-	 * Returns the processing engine token.
-	 *
-	 * @return the processing engine token
-	 */
-	public String getProcessingEngineToken() {
-		return processingEngineToken;
-	}
-
-	/**
-	 * Returns the local storage manager URL.
-	 *
-	 * @return the local storage manager URL
-	 */
-	public String getLocalStorageManagerUrl() {
-		return localStorageManagerUrl;
-	}
-
-	/**
-	 * Returns the storage manager user.
-	 *
-	 * @return the storage manager user
-	 */
-	public String getStorageManagerUser() {
-		return storageManagerUser;
-	}
-
-	/**
-	 * Sets the storage manager URL.
-	 *
-	 * @param storageManagerUrl the storage manager URL to set
-	 */
-	public void setStorageManagerUrl(String storageManagerUrl) {
-		this.storageManagerUrl = storageManagerUrl;
-	}
-
-	/**
-	 * Returns the external storage manager URL.
-	 *
-	 * @return the external storage manager URL
-	 */
-	public String getExternalStorageManagerUrl() {
-		return externalStorageManagerUrl;
-	}
-
-	/**
-	 * Sets the external storage manager URL.
-	 *
-	 * @param externalStorageManagerUrl the external storage manager URL to set
-	 */
-	public void setExternalStorageManagerUrl(String externalStorageManagerUrl) {
-		this.externalStorageManagerUrl = externalStorageManagerUrl;
-	}
-
-	/**
-	 * Sets the processing engine token.
-	 *
-	 * @param processingEngineToken the processing engine token to set
-	 */
-	public void setProcessingEngineToken(String processingEngineToken) {
-		this.processingEngineToken = processingEngineToken;
-	}
-
-	/**
-	 * Sets the local storage manager URL.
-	 *
-	 * @param localStorageManagerUrl the local storage manager URL to set
-	 */
-	public void setLocalStorageManagerUrl(String localStorageManagerUrl) {
-		this.localStorageManagerUrl = localStorageManagerUrl;
-	}
-
-	/**
-	 * Sets the storage manager user.
-	 *
-	 * @param storageManagerUser the storage manager user to set
-	 */
-	public void setStorageManagerUser(String storageManagerUser) {
-		this.storageManagerUser = storageManagerUser;
-	}
-
-	/**
-	 * Returns the storage type.
-	 *
-	 * @return the storage type
-	 */
-	public StorageType getStorageType() {
-		return storageType;
-	}
-
-	/**
-	 * Sets the storage type.
-	 *
-	 * @param storageType the storage type to set
-	 */
-	public void setStorageType(StorageType storageType) {
-		this.storageType = storageType;
-	}
-
-	/**
-	 * Returns the processing facility.
-	 *
-	 * @return the processing facility
-	 */
-	public ProcessingFacility getProcessingFacility() {
-		return processingFacility;
-	}
-
-	/**
-	 * Sets the processing facility.
-	 *
-	 * @param processingFacility the processing facility to set
-	 */
-	public void setProcessingFacility(ProcessingFacility processingFacility) {
-		this.processingFacility = processingFacility;
-	}
-
-	/**
-	 * Looks for the Kubernetes job with the specified name.
-	 *
-	 * @param name the name of the Kubernetes job
-	 * @return the found Kubernetes job or null if not found
-	 */
-	public KubeJob getKubeJob(String name) {
-		return kubeJobList.get(name);
-	}
-
-	/**
-	 * Instantiates a new KubeConfig object without arguments.
-	 */
-	public KubeConfig() {
-	}
-
-	/**
-	 * Instantiates a new KubeConfig object with a processing facility.
-	 *
-	 * @param processingFacility the processing facility to set
-	 * @param planner            the production planner
-	 */
-	public KubeConfig(ProcessingFacility processingFacility, ProductionPlanner planner) {
-		setFacility(processingFacility);
-		productionPlanner = planner;
-		jobCreatingList = new HashMap<>();
-	}
-
-	/**
-	 * Sets all locally stored variables based on the provided processing facility.
-	 *
-	 * @param processingFacility the processing facility
-	 */
-	public void setFacility(ProcessingFacility processingFacility) {
-		id = processingFacility.getName();
-		longId = processingFacility.getId();
-		version = processingFacility.getVersion();
-		description = processingFacility.getDescription();
-		facilityState = processingFacility.getFacilityState();
-		url = processingFacility.getProcessingEngineUrl();
-		storageManagerUrl = processingFacility.getStorageManagerUrl();
-		storageType = processingFacility.getDefaultStorageType();
-		localStorageManagerUrl = processingFacility.getLocalStorageManagerUrl();
-		externalStorageManagerUrl = processingFacility.getExternalStorageManagerUrl();
-		processingEngineToken = processingFacility.getProcessingEngineToken();
-		storageManagerUser = processingFacility.getStorageManagerUser();
-		storageManagerPassword = processingFacility.getStorageManagerPassword();
-		maxJobsPerNode = processingFacility.getMaxJobsPerNode();
-		this.processingFacility = processingFacility;
-		jobCreatingList = new HashMap<>();
-	}
-
-	/**
-	 * Returns the storage manager URL.
-	 *
-	 * @return the storage manager URL
-	 */
-	public String getStorageManagerUrl() {
-		return storageManagerUrl;
-	}
 
 	/**
 	 * Returns the API client.
@@ -412,15 +108,10 @@ public class KubeConfig {
 		return batchApiV1;
 	}
 
-	/**
-	 * Returns the worker count.
-	 *
-	 * @return the worker count
-	 */
-	public int getWorkerCnt() {
-		return workerCnt;
+	public KubeConfig(ProcessingFacility processingFacility, ProductionPlanner planner) {
+		super(processingFacility, planner);
 	}
-
+	
 	/**
 	 * Connects to the Kubernetes cluster.
 	 *
@@ -439,7 +130,7 @@ public class KubeConfig {
 			return true;
 		} else {
 			// Initialize the kubeJobList
-			kubeJobList = new HashMap<>();
+			engineJobList = new HashMap<>();
 
 			// Try to connect using processingEngineToken if available
 			if (StringUtils.hasText(processingEngineToken) && StringUtils.hasText(url)) {
@@ -525,36 +216,6 @@ public class KubeConfig {
 		}
 	}
 
-	/**
-	 * Checks whether a new Kubernetes job could run.
-	 *
-	 * @return true if a new job could run, otherwise false
-	 */
-	public boolean couldJobRun(Long jsId) {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> couldJobRun()");
-
-		if (jsId != null) {
-			if (jobCreatingList.containsKey(jsId)) {
-				return false;
-			}
-		}
-		// Check the facility state
-		if (getFacilityState(null) == FacilityState.DISABLED || getFacilityState(null) == FacilityState.STOPPED
-				|| getFacilityState(null) == FacilityState.STOPPING || getFacilityState(null) == FacilityState.STARTING) {
-			// not available for jobs
-			return false;
-		}
-
-		// Check the maximum number of jobs per node
-		Integer maxJobsPerNode = 1;
-		if (getMaxJobsPerNode() != null) {
-			maxJobsPerNode = getMaxJobsPerNode();
-		}
-
-		return (kubeJobList.size() < ((getWorkerCnt() * maxJobsPerNode) + nodesDelta));
-	}
-
 	/** Synchronizes the Kubernetes jobs and the internal KubeJob list with the Planner. */
 	public void sync() {
 		if (logger.isTraceEnabled())
@@ -589,32 +250,32 @@ public class KubeConfig {
 			kubeJobs.put(kubeJobName, kubeJob);
 
 			// Ensure that the kube job is contained in the configuration's map of kube jobs
-			if (getKubeJob(kubeJobName) == null) {
-				if (!kubeJobList.containsKey(kubeJob.getMetadata().getName())) {
+			if (getEngineJob(kubeJobName) == null) {
+				if (!getEngineJobList().containsKey(kubeJob.getMetadata().getName())) {
 					KubeJob newKubeJob = new KubeJob();
 					newKubeJob = newKubeJob.rebuild(this, kubeJob);
 					if (newKubeJob != null) {
-						kubeJobList.put(newKubeJob.getJobName(), newKubeJob);
+						getEngineJobList().put(newKubeJob.getJobName(), newKubeJob);
 					}
 				}
 			}
 		}
 
 		// Step 4: Remove elements from KubeJob list without existing Kubernetes jobs
-		List<KubeJob> kjList = new ArrayList<>();
-		kjList.addAll(kubeJobList.values());
-		for (KubeJob kj : kjList) {
+		List<EngineJob> kjList = new ArrayList<>();
+		kjList.addAll(engineJobList.values());
+		for (EngineJob kj : kjList) {
 			if (!kubeJobs.containsKey(kj.getJobName())) {
 				// TODO Did we not just add missing jobs to kubeJobList in step 3? If this is about non-prosEO jobs, we could have
 				// removed them before.
-				kubeJobList.remove(kj.getJobName());
+				engineJobList.remove(kj.getJobName());
 			}
 		}
 
 		// Step 5: Check if any Kubernetes job has finished without triggering a message event to the Planner
 		for (V1Job aJob : k8sJobList.getItems()) {
 			String kubeJobName = aJob.getMetadata().getName();
-			KubeJob kubeJob = kubeJobList.get(kubeJobName);
+			EngineJob kubeJob = engineJobList.get(kubeJobName);
 			if (kubeJob != null && !getProductionPlanner().getFinishThreads().containsKey(kubeJobName)) {
 				kubeJob.updateFinishInfoAndDelete(kubeJobName);
 			}
@@ -749,6 +410,7 @@ public class KubeConfig {
 	 * @return the created job or null
 	 */
 	// @Transactional(isolation = Isolation.REPEATABLE_READ)
+	@Override
 	public KubeJob createJob(String name, String stdoutLogLevel, String stderrLogLevel) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createJob({}, {}, {})", name, stdoutLogLevel, stderrLogLevel);
@@ -772,7 +434,7 @@ public class KubeConfig {
 		}
 
 		if (newJob != null) {
-			kubeJobList.put(newJob.getJobName(), newJob);
+			engineJobList.put(newJob.getJobName(), newJob);
 		}
 
 		return newJob;
@@ -786,7 +448,8 @@ public class KubeConfig {
 	 * @param stderrLogLevel the log level for stderr
 	 * @return the created job or null
 	 */
-	@Transactional(isolation = Isolation.REPEATABLE_READ)
+	// @Transactional(isolation = Isolation.REPEATABLE_READ)
+	@Override
 	public KubeJob createJob(long id, String stdoutLogLevel, String stderrLogLevel) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> createJob({}, {}, {})", id, stdoutLogLevel, stderrLogLevel);
@@ -804,27 +467,10 @@ public class KubeConfig {
 		}
 
 		if (newJob != null) {
-			kubeJobList.put(newJob.getJobName(), newJob);
+			engineJobList.put(newJob.getJobName(), newJob);
 		}
 
 		return newJob;
-	}
-
-	/**
-	 * Deletes a job from the cluster.
-	 *
-	 * @param jobToDelete the job to delete
-	 * @return true if the job was successfully deleted, otherwise false
-	 */
-	public boolean deleteJob(KubeJob jobToDelete) {
-		if (logger.isTraceEnabled())
-			logger.trace(">>> deleteJob({})", (null == jobToDelete ? "null" : jobToDelete.getJobId()));
-
-		if (jobToDelete != null) {
-			return (deleteJob(jobToDelete.getJobName()));
-		} else {
-			return false;
-		}
 	}
 
 	/**
@@ -859,7 +505,7 @@ public class KubeConfig {
 
 			return false;
 		} finally {
-			kubeJobList.remove(name);
+			engineJobList.remove(name);
 		}
 
 		return true;
@@ -961,60 +607,6 @@ public class KubeConfig {
 	 */
 	public String getNamespace() {
 		return namespace;
-	}
-
-	/**
-	 * Retrieves the ID.
-	 *
-	 * @return the ID
-	 */
-	public String getId() {
-		return id;
-	}
-
-	/**
-	 * Retrieves the long ID.
-	 *
-	 * @return the long ID
-	 */
-	public long getLongId() {
-		return longId;
-	}
-
-	/**
-	 * Retrieves the version.
-	 *
-	 * @return the version
-	 */
-	public long getVersion() {
-		return version;
-	}
-
-	/**
-	 * Retrieves the URL.
-	 *
-	 * @return the URL
-	 */
-	public String getUrl() {
-		return url;
-	}
-
-	/**
-	 * Retrieves the processing engine URL.
-	 *
-	 * @return the processing engine URL
-	 */
-	public String getProcessingEngineUrl() {
-		return url;
-	}
-
-	/**
-	 * Retrieves the description.
-	 *
-	 * @return the description
-	 */
-	public String getDescription() {
-		return description;
 	}
 
 	/**

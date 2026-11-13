@@ -16,6 +16,8 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 import de.dlr.proseo.model.enums.FacilityState;
+import de.dlr.proseo.model.enums.ProcessingEngineType;
+import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.enums.StorageType;
 
 /**
@@ -41,6 +43,10 @@ public class ProcessingFacility extends PersistentObject {
 	/** The run state the facility currently is in */
 	@Enumerated(EnumType.STRING)
 	private FacilityState facilityState;
+
+	/** Production type context, in which the order is running */
+	@Enumerated(EnumType.STRING)
+	private ProcessingEngineType processingEngineType;
 	
 	/** The URL to access this facility's processing engine (Kubernetes instance) */
 	private String processingEngineUrl;
@@ -77,6 +83,20 @@ public class ProcessingFacility extends PersistentObject {
 	@Enumerated(EnumType.STRING)
 	private StorageType defaultStorageType;
 	
+	/**
+	 * @return the processingEngineType
+	 */
+	public ProcessingEngineType getProcessingEngineType() {
+		return processingEngineType;
+	}
+
+	/**
+	 * @param processingEngineType the processingEngineType to set
+	 */
+	public void setProcessingEngineType(ProcessingEngineType processingEngineType) {
+		this.processingEngineType = processingEngineType;
+	}
+
 	/**
 	 * Gets the name of the processing facility
 	 * @return the name

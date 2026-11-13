@@ -98,6 +98,9 @@ public class FacmgrManager {
 		if (null == modelFacility.getDefaultStorageType() || modelFacility.getStorageManagerPassword().isBlank()) {
 			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "DefaultStorageType"));
 		}
+		if (null == modelFacility.getProcessingEngineType()) {
+			throw new IllegalArgumentException(logger.log(GeneralMessage.FIELD_NOT_SET, "ProcessingEngineType"));
+		}
 
 		// Save and return the new facility
 		modelFacility = RepositoryService.getFacilityRepository().save(modelFacility);
@@ -247,6 +250,10 @@ public class FacmgrManager {
 			throw new IllegalArgumentException(
 					logger.log(GeneralMessage.FIELD_NOT_SET, "DefaultStorageType", "facility modification"));
 		}
+		if (null == restFacility.getProcessingEngineType()) {
+			throw new IllegalArgumentException(
+					logger.log(GeneralMessage.FIELD_NOT_SET, "ProcessingEngineType", "facility modification"));
+		}
 
 		// Update modified attributes and keep track of change status
 		boolean facilityChanged = false;
@@ -306,6 +313,10 @@ public class FacmgrManager {
 		if (!modelFacility.getDefaultStorageType().equals(changedFacility.getDefaultStorageType())) {
 			facilityChanged = true;
 			modelFacility.setDefaultStorageType(changedFacility.getDefaultStorageType());
+		}
+		if (!modelFacility.getProcessingEngineType().equals(changedFacility.getProcessingEngineType())) {
+			facilityChanged = true;
+			modelFacility.setProcessingEngineType(changedFacility.getProcessingEngineType());
 		}
 
 		// Check for concurrent modification

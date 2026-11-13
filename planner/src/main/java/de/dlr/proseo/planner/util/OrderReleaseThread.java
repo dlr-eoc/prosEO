@@ -31,7 +31,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.kubernetes.KubeConfig;
+import de.dlr.proseo.planner.engine.EngineConfig;
 
 /**
  * Manages the release of a processing order.
@@ -398,7 +398,7 @@ public class OrderReleaseThread extends Thread {
 							}
 
 							try {
-								KubeConfig kc = productionPlanner.getKubeConfig(pfName);
+								EngineConfig kc = productionPlanner.getEngineConfig(pfName);
 
 								if (kc == null || !kc.couldJobRun(null)) {
 									break;

@@ -28,9 +28,9 @@ import de.dlr.proseo.model.rest.ProcessingfacilityController;
 import de.dlr.proseo.model.rest.model.PlannerPod;
 import de.dlr.proseo.model.rest.model.RestProcessingFacility;
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.engine.EngineConfig;
+import de.dlr.proseo.planner.engine.EngineJob;
 import de.dlr.proseo.planner.util.UtilService;
-import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.planner.kubernetes.KubeJob;
 
 /**
  * Spring MVC controller for the prosEO planner; implements the services required to handle processing facilities.
@@ -65,9 +65,9 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		try {
 			// Update and retrieve the Kubernetes configuration
 			productionPlanner.updateKubeConfigs();
-			Collection<KubeConfig> kubeConfigs = productionPlanner.getKubeConfigs();
+			Collection<EngineConfig> engineConfigs = productionPlanner.getEngineConfigs();
 
-			if (null == kubeConfigs) {
+			if (null == engineConfigs) {
 				String message = logger.log(PlannerMessage.FACILITY_NOT_DEFINED);
 
 				return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
@@ -75,12 +75,13 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 
 			// Iterate through Kubernetes configurations to create RestProcessingFacility objects
 			List<RestProcessingFacility> processingFacilities = new ArrayList<RestProcessingFacility>();
-			for (de.dlr.proseo.planner.kubernetes.KubeConfig kubeConfig : kubeConfigs) {
-				processingFacilities.add(new RestProcessingFacility(kubeConfig.getLongId(), kubeConfig.getVersion(), kubeConfig.getId(), kubeConfig.getFacilityState(null).toString(),
-						kubeConfig.getDescription(), kubeConfig.getProcessingEngineUrl(), kubeConfig.getProcessingEngineToken(),
-						kubeConfig.getMaxJobsPerNode().longValue(), kubeConfig.getStorageManagerUrl(), kubeConfig.getExternalStorageManagerUrl(),
-						kubeConfig.getLocalStorageManagerUrl(), kubeConfig.getStorageManagerUser(), kubeConfig.getStorageManagerPassword(),
-						kubeConfig.getStorageType().toString()));
+			for (EngineConfig engineConfig : engineConfigs) {
+				processingFacilities.add(new RestProcessingFacility(engineConfig.getLongId(), engineConfig.getVersion(), engineConfig.getId(), engineConfig.getFacilityState(null).toString(),
+						engineConfig.getDescription(), engineConfig.getProcessingEngineUrl(), engineConfig.getProcessingEngineToken(),
+						engineConfig.getMaxJobsPerNode().longValue(), engineConfig.getStorageManagerUrl(), engineConfig.getExternalStorageManagerUrl(),
+						engineConfig.getLocalStorageManagerUrl(), engineConfig.getStorageManagerUser(), engineConfig.getStorageManagerPassword(),
+						engineConfig.getStorageType().toString(),
+						engineConfig.getProcessingEngineType().toString()));
 			}
 
 			return new ResponseEntity<>(processingFacilities, HttpStatus.OK);
@@ -107,9 +108,9 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			logger.trace(">>> getRestProcessingFacilityByName({})", name);
 
 		// Retrieve Kubernetes configuration by name
-		de.dlr.proseo.planner.kubernetes.KubeConfig kubeConfig = productionPlanner.getKubeConfig(name);
+		EngineConfig engineConfig = productionPlanner.getEngineConfig(name);
 
-		if (null == kubeConfig) {
+		if (null == engineConfig) {
 			String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, name);
 
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
@@ -117,11 +118,12 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 
 		try {
 			// Create a RestProcessingFacility object using Kubernetes configuration details
-			RestProcessingFacility processingFacility = new RestProcessingFacility(null, null, kubeConfig.getId(), kubeConfig.getFacilityState(null).toString(),
-					kubeConfig.getDescription(), kubeConfig.getProcessingEngineUrl(), kubeConfig.getProcessingEngineToken(),
-					kubeConfig.getMaxJobsPerNode().longValue(), kubeConfig.getStorageManagerUrl(), kubeConfig.getExternalStorageManagerUrl(),
-					kubeConfig.getLocalStorageManagerUrl(), kubeConfig.getStorageManagerUser(), kubeConfig.getStorageManagerPassword(),
-					kubeConfig.getStorageType().toString());
+			RestProcessingFacility processingFacility = new RestProcessingFacility(null, null, engineConfig.getId(), engineConfig.getFacilityState(null).toString(),
+					engineConfig.getDescription(), engineConfig.getProcessingEngineUrl(), engineConfig.getProcessingEngineToken(),
+					engineConfig.getMaxJobsPerNode().longValue(), engineConfig.getStorageManagerUrl(), engineConfig.getExternalStorageManagerUrl(),
+					engineConfig.getLocalStorageManagerUrl(), engineConfig.getStorageManagerUser(), engineConfig.getStorageManagerPassword(),
+					engineConfig.getStorageType().toString(),
+					engineConfig.getProcessingEngineType().toString());
 
 			return new ResponseEntity<>(processingFacility, HttpStatus.OK);
 		} catch (Exception e) {
@@ -147,16 +149,16 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 
 		// Update and retrieve Kubernetes configuration
 		productionPlanner.updateKubeConfig(name);
-		de.dlr.proseo.planner.kubernetes.KubeConfig kubeConfig = productionPlanner.getKubeConfig(name);
+		EngineConfig engineConfig = productionPlanner.getEngineConfig(name);
 
-		if (null == kubeConfig) {
+		if (null == engineConfig) {
 			String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, name);
 
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
 		}
 
 		// Get the processing facility from Kubernetes configuration and ensure it is not in RUNNING or STARTING state
-		ProcessingFacility processingFacility = kubeConfig.getProcessingFacility();
+		ProcessingFacility processingFacility = engineConfig.getProcessingFacility();
 		if (processingFacility.getFacilityState() != FacilityState.RUNNING && processingFacility.getFacilityState() != FacilityState.STARTING) {
 			String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, name, processingFacility.getFacilityState().toString());
 
@@ -164,10 +166,10 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		} else {
 			try {
 				// Synchronize Kubernetes configuration
-				kubeConfig.sync();
+				engineConfig.sync();
 				try {
 					// Check for job steps to run
-					UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, false, false);
+					UtilService.getJobStepUtil().checkForJobStepsToRun(engineConfig, 0, false, false);
 				} catch (Exception e) {
 					logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 
@@ -176,11 +178,12 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 				}
 
 				// Create a RestProcessingFacility object using Kubernetes configuration details
-				RestProcessingFacility restProcessingFacility = new RestProcessingFacility(kubeConfig.getLongId(), null, kubeConfig.getId(),
-						kubeConfig.getFacilityState(null).toString(), kubeConfig.getDescription(), kubeConfig.getProcessingEngineUrl(),
-						kubeConfig.getProcessingEngineToken(), null, kubeConfig.getStorageManagerUrl(), kubeConfig.getExternalStorageManagerUrl(),
-						kubeConfig.getLocalStorageManagerUrl(), kubeConfig.getStorageManagerUser(), kubeConfig.getStorageManagerPassword(),
-						kubeConfig.getStorageType().toString());
+				RestProcessingFacility restProcessingFacility = new RestProcessingFacility(engineConfig.getLongId(), null, engineConfig.getId(),
+						engineConfig.getFacilityState(null).toString(), engineConfig.getDescription(), engineConfig.getProcessingEngineUrl(),
+						engineConfig.getProcessingEngineToken(), null, engineConfig.getStorageManagerUrl(), engineConfig.getExternalStorageManagerUrl(),
+						engineConfig.getLocalStorageManagerUrl(), engineConfig.getStorageManagerUser(), engineConfig.getStorageManagerPassword(),
+						engineConfig.getStorageType().toString(),
+						engineConfig.getProcessingEngineType().toString());
 
 				return new ResponseEntity<>(restProcessingFacility, HttpStatus.OK);
 			} catch (Exception e) {
@@ -195,21 +198,21 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 	}
 
 	/**
-	 * Kubernetes pod and job has finished with state
+	 * Engine job has finished with state
 	 * 
 	 * @param podname name of the Kubernetes pod
-	 * @param name    the Kubernetes job name
+	 * @param name    the job name
 	 * @param status  finish status
 	 * @return a JSON object describing the finished pod (currently not implemented)
 	 */
 	@Override
-	public ResponseEntity<PlannerPod> finishKubeJob(String podname, String name, String status, HttpHeaders httpHeaders) {
+	public ResponseEntity<PlannerPod> finishEngineJob(String podname, String name, String status, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> finishKubeJob({}, {}, {})", podname, name, status);
+			logger.trace(">>> finishEngineJob({}, {}, {})", podname, name, status);
 
-		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
+		EngineConfig anEngineConfig = productionPlanner.getEngineConfig(name);
 
-		if (null == aKubeConfig) {
+		if (null == anEngineConfig) {
 			String message = logger.log(GeneralMessage.FACILITY_NOT_AVAILABLE, "for job " + name, "Not connected");
 
 			return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
@@ -221,25 +224,25 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			// finish jobstep, collect log and data, ...
 
 			// delete pod
-			KubeJob kubeJob = aKubeConfig.getKubeJob(podname);
-			if (null == kubeJob) {
+			EngineJob engineJob = anEngineConfig.getEngineJob(podname);
+			if (null == engineJob) {
 				return new ResponseEntity<>(http.errorHeaders(logger.log(PlannerMessage.KUBECONFIG_JOB_NOT_FOUND, podname)),
 						HttpStatus.OK);
 			}
 
-			kubeJob.finish(aKubeConfig, podname);
+			engineJob.finish(anEngineConfig, podname);
 
 			// TODO delete finished jobs asynchron
 			// aKubeConfig.deleteJob(podname);
 
 			// TODO Correctly fill return entity PlannerPod
 			PlannerPod plannerPod = new PlannerPod();
-			plannerPod.setId(String.valueOf(kubeJob.getJobId()));
+			plannerPod.setId(String.valueOf(engineJob.getJobId()));
 			plannerPod.setName(podname);
 			plannerPod.setStatus(status);
 			plannerPod.setSucceded(Boolean.valueOf(status == "SUCCESS").toString());
 
-			String message = logger.log(PlannerMessage.KUBEJOB_FINISH_TRIGGERED, aKubeConfig.getId(), kubeJob.getJobName());
+			String message = logger.log(PlannerMessage.KUBEJOB_FINISH_TRIGGERED, anEngineConfig.getId(), engineJob.getJobName());
 
 			return new ResponseEntity<>(plannerPod, http.errorHeaders(message), HttpStatus.OK);
 		} catch (Exception e) {

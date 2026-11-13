@@ -61,8 +61,9 @@ import de.dlr.proseo.planner.PlannerResultMessage;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.ProductionPlannerConfiguration;
 import de.dlr.proseo.planner.ProductionPlannerSecurityConfig;
-import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.planner.kubernetes.KubeJob;
+import de.dlr.proseo.planner.engine.EngineConfig;
+import de.dlr.proseo.planner.engine.EngineJob;
+import de.dlr.proseo.planner.engine.kubernetes.KubeJob;
 import de.dlr.proseo.planner.service.ServiceConnection;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -390,19 +391,19 @@ public class JobStepUtil {
 				Boolean deleted = false;
 				// If force is true, attempt to forcibly terminate the job step
 				if (force != null && force) {
-					KubeConfig kubeConfig = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
+					EngineConfig engineConfig = productionPlanner.getEngineConfig(js.getJob().getProcessingFacility().getName());
 
-					if (kubeConfig != null) {
-						KubeJob kubeJob = kubeConfig.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
+					if (engineConfig != null) {
+						EngineJob engineJob = engineConfig.getEngineJob(ProductionPlanner.jobNamePrefix + js.getId());
 
-						if (kubeJob != null) {
-							deleted = kubeConfig.deleteJob(kubeJob.getJobName());
+						if (engineJob != null) {
+							deleted = engineConfig.deleteJob(engineJob.getJobName());
 						} else {
-							kubeConfig.sync();
-							kubeJob = kubeConfig.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
+							engineConfig.sync();
+							engineJob = engineConfig.getEngineJob(ProductionPlanner.jobNamePrefix + js.getId());
 
-							if (kubeJob != null) {
-								deleted = kubeConfig.deleteJob(kubeJob.getJobName());
+							if (engineJob != null) {
+								deleted = engineConfig.deleteJob(engineJob.getJobName());
 							} else {
 								// Job was not found, it was deleted anywhere else
 								deleted = true;
@@ -433,13 +434,13 @@ public class JobStepUtil {
 					}
 				} else {
 					// Check if the job step is still running
-					KubeConfig kubeConfig = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
+					EngineConfig engineConfig = productionPlanner.getEngineConfig(js.getJob().getProcessingFacility().getName());
 
-					if (kubeConfig != null) {
-						kubeConfig.sync();
-						KubeJob kj = kubeConfig.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
+					if (engineConfig != null) {
+						engineConfig.sync();
+						EngineJob ej = engineConfig.getEngineJob(ProductionPlanner.jobNamePrefix + js.getId());
 
-						if (kj != null) {
+						if (ej != null) {
 							answer.setMessage(PlannerMessage.JOBSTEP_ALREADY_RUNNING);
 						}
 					} else {
@@ -1179,12 +1180,12 @@ public class JobStepUtil {
 			logger.trace(">>> checkForJobStepsToRun()");
 
 		if (productionPlanner != null) {
-			Collection<KubeConfig> kubeConfigurations = productionPlanner.getKubeConfigs();
+			Collection<EngineConfig> kubeConfigurations = productionPlanner.getEngineConfigs();
 
 			if (kubeConfigurations != null) {
-				for (KubeConfig kubeConfig : kubeConfigurations) {
-					kubeConfig.sync();
-					checkForJobStepsToRun(kubeConfig, 0, false, false);
+				for (EngineConfig engineConfig : kubeConfigurations) {
+					engineConfig.sync();
+					checkForJobStepsToRun(engineConfig, 0, false, false);
 				}
 			}
 		}
@@ -1202,7 +1203,7 @@ public class JobStepUtil {
 	 * @param onlyRun     Indicates whether to only check for job steps to run without checking unsatisfied queries
 	 * @param onlyWaiting Indicates whether to only check for job steps in waiting state
 	 */
-	public void checkForJobStepsToRun(KubeConfig kc, long pcId, Boolean onlyRun, Boolean onlyWaiting) {
+	public void checkForJobStepsToRun(EngineConfig kc, long pcId, Boolean onlyRun, Boolean onlyWaiting) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> checkForJobStepsToRun({}, {}, {})", (null == kc ? "null" : kc.getId()), (pcId == 0 ? "null" : pcId),
 					onlyRun);
@@ -1458,7 +1459,7 @@ public class JobStepUtil {
 	 * @return true if the job step can be run, false otherwise
 	 */
 	// @Transactional(isolation = Isolation.REPEATABLE_READ)
-	public Boolean checkJobStepToRun(KubeConfig kc, long jsId) {
+	public Boolean checkJobStepToRun(EngineConfig kc, long jsId) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> checkForJobStepsToRun({}, {})", (null == kc ? "null" : kc.getId()), (0 == jsId ? "null" : jsId));
 
@@ -1616,11 +1617,11 @@ public class JobStepUtil {
 	 * starts ready job steps. This method is synchronized to prevent interference between different threads (simultaneous
 	 * event-triggered dispatching).
 	 *
-	 * @param kc    KubeConfig
+	 * @param kc    EngineConfig
 	 * @param jobId ID of the job to be checked
 	 * @throws InterruptedException If the thread is interrupted during execution
 	 */
-	public void checkJobToRun(KubeConfig kc, long jobId) throws InterruptedException {
+	public void checkJobToRun(EngineConfig kc, long jobId) throws InterruptedException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> checkJobToRun({}, {})", (null == kc ? "null" : kc.getId()), (0 == jobId ? "null" : jobId));
 
@@ -1674,11 +1675,11 @@ public class JobStepUtil {
 	 *
 	 * Method is synchronized to avoid different threads (simultaneous event-triggered dispatching) to interfere with each other.
 	 *
-	 * @param kc      KubeConfig
+	 * @param kc      EngineConfig
 	 * @param orderId The ID of the ProcessingOrder to check
 	 */
 	// @Transactional(isolation = Isolation.REPEATABLE_READ)
-	public void checkOrderToRun(KubeConfig kc, long orderId) {
+	public void checkOrderToRun(EngineConfig kc, long orderId) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> checkOrderToRun({}, {})", (null == kc ? "null" : kc.getId()), (0 == orderId ? "null" : orderId));
 

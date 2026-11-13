@@ -8,6 +8,7 @@ package de.dlr.proseo.facmgr.rest.model;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.enums.FacilityState;
+import de.dlr.proseo.model.enums.ProcessingEngineType;
 import de.dlr.proseo.model.enums.StorageType;
 
 /**
@@ -85,6 +86,9 @@ public class FacmgrUtil {
 		if (null != modelFacility.getDefaultStorageType()) {
 			restFacility.setDefaultStorageType(modelFacility.getDefaultStorageType().toString());
 		}
+		if (null != modelFacility.getProcessingEngineType()) {
+			restFacility.setProcessingEngineType(modelFacility.getProcessingEngineType().toString());
+		}
 
 		return restFacility;
 
@@ -161,6 +165,9 @@ public class FacmgrUtil {
 		}
 		if (null != restFacility.getDefaultStorageType()) {
 			modelFacility.setDefaultStorageType(StorageType.valueOf(restFacility.getDefaultStorageType()));
+		}
+		if (null != restFacility.getProcessingEngineType()) {
+			modelFacility.setProcessingEngineType(ProcessingEngineType.valueOf(restFacility.getProcessingEngineType()));
 		}
 
 		return modelFacility;

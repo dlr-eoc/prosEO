@@ -170,6 +170,8 @@ public enum PlannerMessage implements ProseoMessage {
 	SERIALIZATION_FAILED				(4152, Level.ERROR, false, "Cannot convert object to Json (cause: {0})", ""),
 	AUTH_MISSING_OR_INVALID				(4153, Level.ERROR, false, "Basic authentication missing or invalid: {0}", ""),	
 	MSG_EXCEPTION 						(4154, Level.ERROR, false, "Request failed (cause {0}: {1})", ""),
+	SLURMJOB_CREATED					(4155, Level.INFO, true, "Slurm job ''{0}/{1}'' created", ""),
+	SLURMJOB_FINISHED					(4156, Level.INFO, true, "Kubernetes job ''{0}/{1}'' finished", ""),
 	;
 	
 	private final int code;

@@ -20,6 +20,10 @@
     </Config_Files>
     <Dynamic_Processing_Parameters>
       <Processing_Parameter>
+        <Name>SleepFactor</Name>
+        <Value>2</Value>
+      </Processing_Parameter>
+      <Processing_Parameter>
         <Name>logging.root</Name>
         <Value>notice</Value>
       </Processing_Parameter>

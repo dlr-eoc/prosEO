@@ -38,8 +38,9 @@ import de.dlr.proseo.model.rest.JobstepController;
 import de.dlr.proseo.model.rest.model.RestJobStep;
 import de.dlr.proseo.model.rest.model.Status;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.planner.kubernetes.KubeJob;
+import de.dlr.proseo.planner.engine.EngineConfig;
+import de.dlr.proseo.planner.engine.EngineJob;
+import de.dlr.proseo.planner.engine.kubernetes.KubeJob;
 import de.dlr.proseo.planner.rest.model.RestUtil;
 import de.dlr.proseo.planner.util.JobStepUtil;
 import de.dlr.proseo.planner.util.UtilService;
@@ -177,9 +178,9 @@ public class JobstepControllerImpl implements JobstepController {
 						if (jobStepX.getJobStepState() == JobStepState.RUNNING && job != null) {
 							// Update log information if the job step is running and associated with a job
 							if (job.getProcessingFacility() != null) {
-								KubeConfig kubeConfig = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
-								if (kubeConfig != null) {
-									KubeJob kubeJob = kubeConfig.getKubeJob(ProductionPlanner.jobNamePrefix + jobStepX.getId());
+								EngineConfig engineConfig = productionPlanner.getEngineConfig(job.getProcessingFacility().getName());
+								if (engineConfig != null) {
+									EngineJob kubeJob = engineConfig.getEngineJob(ProductionPlanner.jobNamePrefix + jobStepX.getId());
 									if (kubeJob != null) {
 										kubeJob.updateInfo(ProductionPlanner.jobNamePrefix + jobStepX.getId());
 									}
@@ -248,14 +249,12 @@ public class JobstepControllerImpl implements JobstepController {
 						// If the job step is running and associated with a job, attempt to fetch logs from the processing facility
 						if (jobStepX.getJobStepState() == JobStepState.RUNNING && job != null) {
 							if (job.getProcessingFacility() != null) {
-								KubeConfig kubeConfig = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
-								if (kubeConfig != null && kubeConfig.isConnected()) {
-									KubeJob kubeJob = kubeConfig.getKubeJob(ProductionPlanner.jobNamePrefix + jobStepX.getId());
-									if (kubeJob != null) {
+								EngineConfig engineConfig = productionPlanner.getEngineConfig(job.getProcessingFacility().getName());
+								if (engineConfig != null && engineConfig.isConnected()) {
+									EngineJob engineJob = engineConfig.getEngineJob(ProductionPlanner.jobNamePrefix + jobStepX.getId());
+									if (engineJob != null) {
 										// Fetch logs from the running job
-										V1Pod aPod = kubeConfig
-											.getV1Pod(kubeJob.getPodNames().get(kubeJob.getPodNames().size() - 1));
-										log = kubeJob.getJobStepLogPrim(aPod);
+										log = engineJob.getJobStepLog(engineConfig);
 									}
 								}
 							}
@@ -320,8 +319,8 @@ public class JobstepControllerImpl implements JobstepController {
 				// Check the status of the requested processing facility
 				final ResponseEntity<RestJobStep> response = transactionTemplate.execute((status) -> {
 					ProcessingFacility processingFacility = this.findJobStepByNameOrId(jobstepId).getJob().getProcessingFacility();
-					KubeConfig kubeConfig = productionPlanner.updateKubeConfig(processingFacility.getName());
-					if (null == kubeConfig) {
+					EngineConfig engineConfig = productionPlanner.updateKubeConfig(processingFacility.getName());
+					if (null == engineConfig) {
 						String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, processingFacility.getName());
 
 						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);
@@ -395,11 +394,11 @@ public class JobstepControllerImpl implements JobstepController {
 						JobStep jobStepX = this.findJobStepByNameOrId(jobstepId);
 						Job job = jobStepX.getJob();
 						if (job != null && job.getProcessingFacility() != null) {
-							KubeConfig kubeConfig = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
-							if (kubeConfig != null) {
+							EngineConfig engineConfig = productionPlanner.getEngineConfig(job.getProcessingFacility().getName());
+							if (engineConfig != null) {
 								try {
 									// Check if the job step can be run
-									UtilService.getJobStepUtil().checkJobStepToRun(kubeConfig, jobStepX.getId());
+									UtilService.getJobStepUtil().checkJobStepToRun(engineConfig, jobStepX.getId());
 								} catch (Exception e) {
 									String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 
@@ -490,11 +489,11 @@ public class JobstepControllerImpl implements JobstepController {
 				}
 				if (msg.getSuccess()) {
 					if (job != null && job.getProcessingFacility() != null) {
-						KubeConfig kubeConfig = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
-						if (kubeConfig != null) {
+						EngineConfig engineConfig = productionPlanner.getEngineConfig(job.getProcessingFacility().getName());
+						if (engineConfig != null) {
 							try {
 								// Check if the job step can be run after cancellation
-								UtilService.getJobStepUtil().checkJobStepToRun(kubeConfig, jobStep.getId());
+								UtilService.getJobStepUtil().checkJobStepToRun(engineConfig, jobStep.getId());
 							} catch (Exception e) {
 								String message = logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getMessage());
 
@@ -555,8 +554,8 @@ public class JobstepControllerImpl implements JobstepController {
 				transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
 				final ResponseEntity<RestJobStep> response = transactionTemplate.execute((status) -> {
 					ProcessingFacility processingFacility = this.findJobStepByNameOrId(jobstepId).getJob().getProcessingFacility();
-					KubeConfig kubeConfig = productionPlanner.updateKubeConfig(processingFacility.getName());
-					if (null == kubeConfig) {
+					EngineConfig engineConfig = productionPlanner.updateKubeConfig(processingFacility.getName());
+					if (null == engineConfig) {
 						String message = logger.log(PlannerMessage.FACILITY_NOT_EXIST, processingFacility.getName());
 
 						return new ResponseEntity<>(http.errorHeaders(message), HttpStatus.NOT_FOUND);

@@ -1,5 +1,5 @@
 /**
- * KubeDispatcher.java
+ * EngineDispatcher.java
  *
  * © 2019 Prophos Informatik GmbH
  */
@@ -9,7 +9,7 @@ import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.logging.messages.PlannerMessage;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.kubernetes.KubeConfig;
+import de.dlr.proseo.planner.engine.EngineConfig;
 import de.dlr.proseo.planner.util.UtilService;
 
 /**
@@ -17,10 +17,10 @@ import de.dlr.proseo.planner.util.UtilService;
  *
  * @author Ernst Melchinger
  */
-public class KubeDispatcher extends Thread {
+public class EngineDispatcher extends Thread {
 
 	/** Logger for this class */
-	private static ProseoLogger logger = new ProseoLogger(KubeDispatcher.class);
+	private static ProseoLogger logger = new ProseoLogger(EngineDispatcher.class);
 
 	/** The planner instance */
 	private ProductionPlanner productionPlanner;
@@ -32,31 +32,31 @@ public class KubeDispatcher extends Thread {
 	private boolean onlyRun;
 
 	/** The kube configuration of facility */
-	private KubeConfig kubeConfig;
+	private EngineConfig engineConfig;
 
 	/**
-	 * Create new KubeDispatcher for planner
+	 * Create new EngineDispatcher for planner
 	 *
 	 * @param planner           The planner
-	 * @param kubeConfiguration The facility's kube configuration
+	 * @param engineConfiguration The facility's kube configuration
 	 * @param onlyRun           set to true to evaluate only runnable job steps or to false to check all job steps
 	 */
-	public KubeDispatcher(ProductionPlanner planner, KubeConfig kubeConfiguration, Boolean onlyRun) {
+	public EngineDispatcher(ProductionPlanner planner, EngineConfig engineConfiguration, Boolean onlyRun) {
 		// Set the thread name based on the runOnce flag
-		super((kubeConfiguration != null && planner == null) ? "KubeDispatcherRunOnce" : "KubeDispatcher");
+		super((engineConfiguration != null && planner == null) ? "KubeDispatcherRunOnce" : "EngineDispatcher");
 
 		// Set the thread as a daemon thread
 		this.setDaemon(true);
 
 		// Assign the provided planner and kubeConfiguration to the corresponding class variables
 		productionPlanner = planner;
-		kubeConfig = kubeConfiguration;
+		engineConfig = engineConfiguration;
 
 		// Set the onlyRun flag to determine whether to evaluate only runnable job steps
 		this.onlyRun = onlyRun;
 
 		// Set the runOnce flag based on the provided kubeConfiguration and planner
-		runOnce = (kubeConfiguration != null && planner == null);
+		runOnce = (engineConfiguration != null && planner == null);
 	}
 
 	/**
@@ -77,13 +77,13 @@ public class KubeDispatcher extends Thread {
 			// Execute the run-once scenario
 			logger.log(PlannerMessage.KUBEDISPATCHER_RUN_ONCE);
 
-			if (kubeConfig != null) {
+			if (engineConfig != null) {
 				try {
 					// Check for job steps to run
-					UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, false);
+					UtilService.getJobStepUtil().checkForJobStepsToRun(engineConfig, 0, onlyRun, false);
 				} catch (Exception e) {
 					if (logger.isDebugEnabled())
-						logger.debug("... exception in checkForJobStepsToRun(" + kubeConfig.getId() + ", " + 0 + ", " + onlyRun + ", true): ", e);
+						logger.debug("... exception in checkForJobStepsToRun(" + engineConfig.getId() + ", " + 0 + ", " + onlyRun + ", true): ", e);
 
 					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 				}
@@ -100,7 +100,7 @@ public class KubeDispatcher extends Thread {
 
 					try {
 						// Check for job steps to run using the JobStepUtil
-						UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, true);
+						UtilService.getJobStepUtil().checkForJobStepsToRun(engineConfig, 0, onlyRun, true);
 					} catch (Exception e) {
 						logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 						
@@ -115,10 +115,10 @@ public class KubeDispatcher extends Thread {
 						if (productionPlanner.getReleaseThreads().size() == 0) {
 							try {
 								// Check for job steps to run using the JobStepUtil
-								UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, 0, onlyRun, true);
+								UtilService.getJobStepUtil().checkForJobStepsToRun(engineConfig, 0, onlyRun, true);
 							} catch (Exception e) {
 								if (logger.isDebugEnabled())
-									logger.debug("... exception in checkForJobStepsToRun(" + kubeConfig.getId() + ", " + 0 + ", " + onlyRun + ", true): ", e);
+									logger.debug("... exception in checkForJobStepsToRun(" + engineConfig.getId() + ", " + 0 + ", " + onlyRun + ", true): ", e);
 
 								logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 							}
