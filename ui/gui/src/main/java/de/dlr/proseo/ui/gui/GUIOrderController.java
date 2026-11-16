@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -797,7 +798,7 @@ public class GUIOrderController extends GUIBaseController {
 		} else {
 			from = (long) 0;
 		}
-		if ((jobId != null || jobStepId != null) && calcP != null && calcP) {
+		if ((StringUtils.hasText(jobId) || StringUtils.hasText(jobStepId)) && calcP != null && calcP) {
 			calcPage = true;
 		}
 		Long count = countJobs(id, states);
