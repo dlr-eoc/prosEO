@@ -11,11 +11,22 @@
     - docker-ce-cli
     - containerd.io
     
-- name: Start Docker service
+- name: Have the Docker daemon listen on TCP
+  ansible.builtin.blockinfile:
+    path: /etc/systemd/system/docker.service.d/override.conf
+    create: true
+    marker: "### {mark} ANSIBLE MANAGED BLOCK ###"
+    block: |
+        [Service]
+        ExecStart=
+        ExecStart=/usr/bin/dockerd -H fd:// -H tcp://{{ inventory_hostname }}:2375 --containerd=/run/containerd/containerd.sock
+    
+- name: Restart Docker service
   systemd:
     name: docker
     enabled: yes
-    state: started
+    state: restarted
+    daemon_reload: yes
 
 - name: Download Docker Compose
   get_url:

@@ -12,10 +12,14 @@
     - containerd.io
     
 - name: Have the Docker daemon listen on TCP
-  lineinfile:
-    path: /usr/lib/systemd/system/docker.service
-    regexp: '^ExecStart='
-    line: "ExecStart=/usr/bin/dockerd -H fd:// -H tcp://{{ inventory_hostname }} --containerd=/run/containerd/containerd.sock"
+  ansible.builtin.blockinfile:
+    path: /etc/systemd/system/docker.service.d/override.conf
+    create: true
+    marker: "### {mark} ANSIBLE MANAGED BLOCK ###"
+    block: |
+        [Service]
+        ExecStart=
+        ExecStart=/usr/bin/dockerd -H fd:// -H tcp://{{ inventory_hostname }}:2375 --containerd=/run/containerd/containerd.sock
     
 - name: Restart Docker service
   systemd:
