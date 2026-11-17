@@ -217,6 +217,7 @@ public class KubeConfig extends EngineConfig{
 	}
 
 	/** Synchronizes the Kubernetes jobs and the internal KubeJob list with the Planner. */
+	@Override
 	public void sync() {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> sync()");
@@ -479,6 +480,7 @@ public class KubeConfig extends EngineConfig{
 	 * @param name the name of the job to delete
 	 * @return true if the job was successfully deleted, otherwise false
 	 */
+	@Override
 	public boolean deleteJob(String name) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteJob({})", name);

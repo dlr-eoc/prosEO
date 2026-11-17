@@ -45,20 +45,19 @@ public class SlurmConfig  extends EngineConfig{
 	private static final String DUMMY_JOF_FILENAME = "/testdata/test1.pl";
 
 	public static final String CALL_SLURM_0045 = "/slurm/v0.0.45";
-	public static final String CALL_SLURMDB_0045 = "/slurm/v0.0.45";
+	public static final String CALL_SLURMDB_0045 = "/slurmdb/v0.0.45";
 
 	/** Logger of this class */
 	private static ProseoLogger logger = new ProseoLogger(SlurmConfig.class);
 
 	public SlurmConfig(ProcessingFacility processingFacility, ProductionPlanner planner) {
 		super(processingFacility, planner);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	public boolean connect() {
-		// TODO Auto-generated method stub
-
+		if (logger.isTraceEnabled())
+			logger.trace(">>> connect()");
 		engineJobList = new HashMap<>();
 		try {
 			sync();
@@ -66,26 +65,58 @@ public class SlurmConfig  extends EngineConfig{
 			// Exception already reported
 			return false;
 		}
-		return true;
+		return isConnected();
 	}
 
 	@Override
 	public boolean isConnected() {
-		// TODO Auto-generated method stub
-		return true;
-	}
-
-	@Override
-	public void sync() {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> sync()");
-
-		// Step 1: Check facility state
-		if (getFacilityState(null) == FacilityState.DISABLED || getFacilityState(null) == FacilityState.STOPPED
-				|| getFacilityState(null) == FacilityState.STARTING) {
-			// Nothing to do if facility state is disabled, stopped, or starting
-			return;
+			logger.trace(">>> isConnected()");
+		ObjectMapper mapper = new ObjectMapper();
+		String result = "";
+		Boolean isConnected = false;
+		for (int ii = 0; ii < ProseoUtil.DB_MAX_RETRY; ii++) {
+			try {
+				result = getProductionPlanner().getServiceConnection().getFromSlurm(getProcessingFacility().getProcessingEngineUrl(), 
+						CALL_SLURM_0045 + "/ping", String.class, getProcessingFacility().getProcessingEngineToken());
+				break;
+			} catch (SlurmException e) {
+				// Get current token and retry
+				if ((ii + 1) < ProseoUtil.DB_MAX_RETRY) {
+					// get new token
+					try {
+						refreshToken();
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				} else {
+					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+					throw e;
+				}
+			}
 		}
+		Map<?,?> m = mapper.readValue(result, Map.class);
+		if (m.get("pings") != null && m.get("pings") instanceof List) {
+			for (Object lo : (List<?>)(m.get("pings"))) {
+				if (lo instanceof Map) {		
+					Map<?,?> jo = (Map<?,?>)lo;
+					if (jo.get("responding") != null && jo.get("responding") instanceof Boolean && (Boolean)(jo.get("responding"))) {
+						isConnected = true;
+						break;
+					}
+				}
+			}
+		}
+		if (logger.isTraceEnabled())
+			logger.trace("<<< isConnected() {}", isConnected);
+		return isConnected;
+	}
+	
+	// Retrieve the number of nodes being able to run.
+	public Boolean getNodeInfo() {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getNodeInfo()");
 		ObjectMapper mapper = new ObjectMapper();
 		String result = "";
 		for (int ii = 0; ii < ProseoUtil.DB_MAX_RETRY; ii++) {
@@ -109,12 +140,142 @@ public class SlurmConfig  extends EngineConfig{
 				}
 			}
 		}
+		
+		// Known node states are:
+		//
+		//ALLOCATED
+		//    The node has been allocated to one or more jobs. 
+		//
+		//ALLOCATED+
+		//    The node is allocated to one or more active jobs plus one or more jobs are in the process of COMPLETING. 
+		//
+		//BLOCKED
+		//    The node has been blocked by exclusive topo job. 
+		//
+		//COMPLETING
+		//    All jobs associated with this node are in the process of COMPLETING. This node state will be removed when all of the job's processes have terminated and the Slurm epilog program (if any) has terminated. While a node is in the COMPLETING state, it is not eligible for new job placement and no jobs will be scheduled on it. See the Epilog parameter description in the slurm.conf(5) man page for more information. 
+		//
+		//DOWN
+		//    The node is unavailable for use. Slurm can automatically place nodes in this state if some failure occurs. System administrators may also explicitly place nodes in this state. If a node resumes normal operation, Slurm can automatically return it to service. See the ReturnToService and SlurmdTimeout parameter descriptions in the slurm.conf(5) man page for more information. 
+		//
+		//DRAINED
+		//    The node is unavailable for use per system administrator request. See the update node command in the scontrol(1) man page or the slurm.conf(5) man page for more information. 
+		//
+		//DRAINING
+		//    The node is currently allocated a job, but will not be allocated additional jobs. The node state will be changed to state DRAINED when the last job on it completes. Nodes enter this state per system administrator request. See the update node command in the scontrol(1) man page or the slurm.conf(5) man page for more information. 
+		//
+		//FAIL
+		//    The node is expected to fail soon and is unavailable for use per system administrator request. See the update node command in the scontrol(1) man page or the slurm.conf(5) man page for more information. 
+		//
+		//FAILING
+		//    The node is currently executing a job, but is expected to fail soon and is unavailable for use per system administrator request. See the update node command in the scontrol(1) man page or the slurm.conf(5) man page for more information. 
+		//
+		//FUTURE
+		//    The node is currently not fully configured, but expected to be available at some point in the indefinite future for use. 
+		//
+		//IDLE
+		//    The node is not allocated to any jobs and is available for use. 
+		//
+		//INVAL
+		//    The node did not register correctly with the controller. This happens when a node registers with less resources than configured in the slurm.conf file. The node will clear from this state with a valid registration (i.e. a slurmd restart is required). 
+		//
+		//MAINT
+		//    The node is currently in a reservation with a flag value of "maintenance". 
+		//
+		//REBOOT_ISSUED
+		//    A reboot request has been sent to the agent configured to handle this request. 
+		//
+		//REBOOT_REQUESTED
+		//    A request to reboot this node has been made, but hasn't been handled yet. 
+		//
+		//MIXED
+		//    The node has some of its CPUs ALLOCATED while others are IDLE. Or the node has a suspended job allocated to some of its TRES (e.g. memory). 
+		//
+		//PLANNED
+		//    The node is planned by the backfill scheduler for a higher priority job. 
+		//
+		//POWER_DOWN
+		//    The node is pending power down. 
+		//
+		//POWERED_DOWN
+		//    The node is currently powered down and not capable of running any jobs. 
+		//
+		//POWERING_DOWN
+		//    The node is in the process of powering down and not capable of running any jobs. 
+		//
+		//POWERING_UP
+		//    The node is in the process of being powered up. 
+		//
+		//RESERVED
+		//    The node is in an advanced reservation and not generally available. 
+		//
+		//UNKNOWN
+		//    The Slurm controller has just started and the node's state has not yet been determined. 
+		
 		Map<?,?> m = mapper.readValue(result, Map.class);
+		workerCnt = 0;
 		if (m.get("nodes") != null && m.get("nodes") instanceof List) {
-			workerCnt = ((List<?>)(m.get("nodes"))).size();
+			for (Object lo : (List<?>)(m.get("nodes"))) {
+				if (lo instanceof Map) {		
+					Map<?,?> jo = (Map<?,?>)lo;
+					if (jo.get("state") != null && jo.get("state") instanceof List) {
+						Long w = 0L;
+						for (Object state : (List<?>)(jo.get("state"))) {
+							if (state instanceof String && "IDLE".equalsIgnoreCase((String)state)) {
+								w = 1L;
+								continue;
+							}
+							if (state instanceof String && "ALLOCATED".equalsIgnoreCase((String)state)) {
+								w = 1L;
+								continue;
+							}
+							if (state instanceof String && "ALLOCATED+".equalsIgnoreCase((String)state)) {
+								w = 1L;
+								continue;
+							}
+							if (state instanceof String && "COMPLETING".equalsIgnoreCase((String)state)) {
+								w = 1L;
+								continue;
+							}
+							if (state instanceof String && "PLANNED".equalsIgnoreCase((String)state)) {
+								w = 1L;
+								continue;
+							}
+							if (state instanceof String && "MIXED".equalsIgnoreCase((String)state)) {
+								w = 1L;
+								continue;
+							}
+							workerCnt += w;
+						}
+					}
+				}
+			}
 		}
-		// get current jobs
-		result = "";
+		return true;
+	}
+
+	/** Synchronizes the Slurm jobs and the internal SlurmJob list with the Planner. */
+	@Override
+	public void sync() {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> sync()");
+
+		// Step 1: Check facility state
+		if (getFacilityState(null) == FacilityState.DISABLED || getFacilityState(null) == FacilityState.STOPPED
+				|| getFacilityState(null) == FacilityState.STARTING) {
+			// Nothing to do if facility state is disabled, stopped, or starting
+			return;
+		}
+		try {
+			getNodeInfo(); // TODO Should this info be processed?
+		} catch (Exception e) {
+			logger.log(GeneralMessage.RUNTIME_EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
+			return;
+		}
+		
+		// Step 2: Rebuild runtime data by retrieving all jobs 
+		ObjectMapper mapper = new ObjectMapper();
+		String result = "";
 		for (int ii = 0; ii < ProseoUtil.DB_MAX_RETRY; ii++) {
 			try {
 				result = getProductionPlanner().getServiceConnection().getFromSlurm(getProcessingFacility().getProcessingEngineUrl(), 
@@ -137,28 +298,30 @@ public class SlurmConfig  extends EngineConfig{
 			}
 		}		
 		// get database jobs
-		String dbResult = "";
-		for (int ii = 0; ii < ProseoUtil.DB_MAX_RETRY; ii++) {
-			try {
-				dbResult = getProductionPlanner().getServiceConnection().getFromSlurm(getProcessingFacility().getProcessingEngineUrl(), 
-						CALL_SLURMDB_0045 + "/jobs", String.class, getProcessingFacility().getProcessingEngineToken());
-				break;
-			} catch (SlurmException e) {
-				// Get current token and retry
-				if ((ii + 1) < ProseoUtil.DB_MAX_RETRY) {
-					// get new token
-					try {
-						refreshToken();
-					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				} else {
-					if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
-					throw e;
-				}
-			}
-		}
+		// TODO? currently not used
+		//String dbResult = "";
+		//for (int ii = 0; ii < ProseoUtil.DB_MAX_RETRY; ii++) {
+		//	try {
+		//		dbResult = getProductionPlanner().getServiceConnection().getFromSlurm(getProcessingFacility().getProcessingEngineUrl(), 
+		//				CALL_SLURMDB_0045 + "/jobs", String.class, getProcessingFacility().getProcessingEngineToken());
+		//		break;
+		//	} catch (SlurmException e) {
+		//		// Get current token and retry
+		//		if ((ii + 1) < ProseoUtil.DB_MAX_RETRY) {
+		//			// get new token
+		//			try {
+		//				refreshToken();
+		//			} catch (Exception e1) {
+		//				// TODO Auto-generated catch block
+		//				e1.printStackTrace();
+		//			}
+		//		} else {
+		//			if (logger.isDebugEnabled()) logger.debug("... failing after {} attempts!", ProseoUtil.DB_MAX_RETRY);
+		//			throw e;
+		//		}
+		//	}
+		//}
+		
 		// Look for the id, name and job states:
 		//  
 		//	BOOT_FAIL	terminated due to node boot failure
@@ -174,13 +337,13 @@ public class SlurmConfig  extends EngineConfig{
 		//	SUSPENDED	allocated resources but execution suspended, such as from preemption or a direct request from an authorized user
 		//	TIMEOUT	terminated due to reaching the time limit, such as those configured in slurm.conf or specified for the individual job
 		// 
-		
 
+		// Step 3: Update engineJob list
 		Map<String, JobStepState> slurmJobs = new HashMap<>();
 		JobStepState jobState;
 		String jobName;
 		Integer slurmId;
-		m = mapper.readValue(result, Map.class);
+		Map<?,?> m = mapper.readValue(result, Map.class);
 		if (m.get("jobs") != null && m.get("jobs") instanceof List) {
 			for (Object lo : (List<?>)(m.get("jobs"))) {
 				if (lo instanceof Map) {	
@@ -212,7 +375,7 @@ public class SlurmConfig  extends EngineConfig{
 					slurmJobs.put(jobName, jobState);
 					if (jobState != null && jobName != null && slurmId != null) {
 						// Build a slurm job for "active" jobs
-						// Ensure that the kube job is contained in the configuration's map of kube jobs
+						// Ensure that the slurm job is contained in the configuration's map of slurm jobs
 						if (getEngineJob(jobName) == null) {
 							if (!getEngineJobList().containsKey(jobName) && jobState.equals(JobStepState.RUNNING)) {
 								Long jobId = Long.valueOf(jobName.substring(ProductionPlanner.jobNamePrefix.length()));
@@ -227,7 +390,7 @@ public class SlurmConfig  extends EngineConfig{
 				}
 			}
 		}
-		// Step 4: Remove elements from KubeJob list without existing Kubernetes jobs
+		// Step 4: Remove elements from engineJob list without existing Slurm jobs
 		List<EngineJob> sjList = new ArrayList<>();
 		sjList.addAll(engineJobList.values());
 		for (EngineJob sj : sjList) {
@@ -237,7 +400,7 @@ public class SlurmConfig  extends EngineConfig{
 				engineJobList.remove(sj.getJobName());
 			}
 		}
-		// Step 5: Check if any Kubernetes job has finished without triggering a message event to the Planner
+		// Step 5: Check if any slurm job has finished without triggering a message event to the Planner
 		for (String aJobName : slurmJobs.keySet()) {
 			EngineJob slurmJob = engineJobList.get(aJobName);
 			if (slurmJob != null && ! slurmJobs.get(aJobName).equals(JobStepState.RUNNING) 
@@ -261,7 +424,7 @@ public class SlurmConfig  extends EngineConfig{
 			return null;
 		});
 
-		// These job steps have to be in the Kubernetes job list. If not, there was a problem. Set it to failed.
+		// These job steps have to be in the slurm job list. If not, there was a problem. Set it to failed.
 		for (Long jobStepId : jobStepIds) {
 			for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 				try {
@@ -341,10 +504,16 @@ public class SlurmConfig  extends EngineConfig{
 			}
 
 		}
-
-		
 	}
 
+	/**
+	 * Creates a new job on the cluster with the specified name and log levels.
+	 *
+	 * @param name           the name of the new job
+	 * @param stdoutLogLevel the log level for stdout
+	 * @param stderrLogLevel the log level for stderr
+	 * @return the created job or null
+	 */
 	@Override
 	public SlurmJob createJob(String name, String stdoutLogLevel, String stderrLogLevel) {
 		if (logger.isTraceEnabled())
@@ -375,6 +544,14 @@ public class SlurmConfig  extends EngineConfig{
 		return newJob;
 	}
 
+	/**
+	 * Creates a new job on the cluster with the specified ID and log levels.
+	 *
+	 * @param id             the ID of the job
+	 * @param stdoutLogLevel the log level for stdout
+	 * @param stderrLogLevel the log level for stderr
+	 * @return the created job or null
+	 */
 	@Override
 	public SlurmJob createJob(long id, String stdoutLogLevel, String stderrLogLevel) {
 		if (logger.isTraceEnabled())
@@ -400,6 +577,12 @@ public class SlurmConfig  extends EngineConfig{
 	
 	}
 
+	/**
+	 * Deletes a named job from the cluster.
+	 *
+	 * @param name the name of the job to delete
+	 * @return true if the job was successfully deleted, otherwise false
+	 */
 	@Override
 	public boolean deleteJob(String name) {
 		if (logger.isTraceEnabled())
@@ -456,8 +639,6 @@ public class SlurmConfig  extends EngineConfig{
 		for (int i = 0; i < ProseoUtil.DB_MAX_RETRY; i++) {
 			try {
 				transactionTemplate.execute((status) -> {
-
-					Boolean success = Boolean.FALSE;
 					Long jobStepId = slurmJobLoc.getJobId();
 					Optional<JobStep> jobStep = RepositoryService.getJobStepRepository().findById(jobStepId);
 					if (jobStep.isPresent()) {
@@ -481,6 +662,7 @@ public class SlurmConfig  extends EngineConfig{
 		return true;
 	}
 
+	// Get new token for authentication
 	public void refreshToken() throws Exception {
 
 		ProcessBuilder processBuilder = new ProcessBuilder();

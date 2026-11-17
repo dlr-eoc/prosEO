@@ -75,7 +75,7 @@ public class EngineDispatcher extends Thread {
 
 		if (runOnce) {
 			// Execute the run-once scenario
-			logger.log(PlannerMessage.KUBEDISPATCHER_RUN_ONCE);
+			logger.log(PlannerMessage.ENGINEDISPATCHER_RUN_ONCE);
 
 			if (engineConfig != null) {
 				try {
@@ -88,7 +88,7 @@ public class EngineDispatcher extends Thread {
 					logger.log(GeneralMessage.EXCEPTION_ENCOUNTERED, e.getClass() + " - " + e.getMessage());
 				}
 			} else {
-				logger.log(PlannerMessage.KUBEDISPATCHER_CONFIG_NOT_SET);
+				logger.log(PlannerMessage.ENGINEDISPATCHER_CONFIG_NOT_SET);
 			}
 
 		} else {
@@ -96,7 +96,7 @@ public class EngineDispatcher extends Thread {
 
 			if (productionPlanner != null) {
 				if (wait <= 0) {
-					logger.log(PlannerMessage.KUBEDISPATCHER_RUN_ONCE);
+					logger.log(PlannerMessage.ENGINEDISPATCHER_RUN_ONCE);
 
 					try {
 						// Check for job steps to run using the JobStepUtil
@@ -109,7 +109,7 @@ public class EngineDispatcher extends Thread {
 				} else {
 					while (!this.isInterrupted()) {
 						// Look for job steps to run
-						logger.log(PlannerMessage.KUBEDISPATCHER_CYCLE);
+						logger.log(PlannerMessage.ENGINEDISPATCHER_CYCLE);
 
 						// Only check for job steps if there are no released threads in the production planner
 						if (productionPlanner.getReleaseThreads().size() == 0) {
@@ -126,17 +126,17 @@ public class EngineDispatcher extends Thread {
 
 						try {
 							// Sleep for the specified wait time
-							logger.log(PlannerMessage.KUBEDISPATCHER_SLEEP, wait);
+							logger.log(PlannerMessage.ENGINEDISPATCHER_SLEEP, wait);
 							sleep(wait);
 						} catch (InterruptedException e) {
 							// Log the interruption message
-							logger.log(PlannerMessage.KUBEDISPATCHER_INTERRUPT);
+							logger.log(PlannerMessage.ENGINEDISPATCHER_INTERRUPT);
 							this.interrupt();
 						}
 					}
 				}
 			} else {
-				logger.log(PlannerMessage.KUBEDISPATCHER_PLANNER_NOT_SET);
+				logger.log(PlannerMessage.ENGINEDISPATCHER_PLANNER_NOT_SET);
 			}
 		}
 	}

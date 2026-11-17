@@ -52,8 +52,12 @@ public class SlurmJob extends EngineJob {
 	/** Logger of this class */
 	private static ProseoLogger logger = new ProseoLogger(SlurmJob.class);
 
-	private long slurmJobId;
-	
+	/**
+	 * The id of the Slurm job
+	 */
+	private long slurmJobId;	
+
+	/** The processing facility running the job step */
 	private SlurmConfig  slurmConfig;
 		
 	private ProductionPlannerConfiguration config;
@@ -510,8 +514,6 @@ public class SlurmJob extends EngineJob {
 					}
 					JobStep jobStep = jobStepOptional.get();
 
-					// Search for pods associated with the slurm job, update the job log, and save the job step to the repository.
-					// searchPod();
 					updateJobLog(jobStep);
 					RepositoryService.getJobStepRepository().save(jobStep);
 
@@ -543,6 +545,13 @@ public class SlurmJob extends EngineJob {
 		return this;
 	}
 
+	/**
+	 * If the slurm configuration is available, retrieve the job information, and update the
+	 * job step accordingly. Then, start a SlurmJobFinish thread to monitor the completion of the slurm job.
+	 *
+	 * @param engineConfig The slurm configuration associated with the processing facility
+	 * @param jobName    The name of the slurm job
+	 */
 	@Override
 	public void finish(EngineConfig engineConfigVar, String jobName) {
 		if (logger.isTraceEnabled())
@@ -614,6 +623,17 @@ public class SlurmJob extends EngineJob {
 		
 	}
 
+	/**
+	 * Update all the information of a slurm job which is stored in the job step.
+	 *
+	 * This method retrieves the information of a slurm job with the provided name and updates the corresponding job step
+	 * accordingly. It also performs additional checks and updates based on the job status. The method returns the success
+	 * status of the update operation.
+	 *
+	 * @param jobName The name of the Slurm job
+	 * @return The result of the update operation: TRUE if the update was successful, FALSE if an error occurred, and CHANGED if the
+	 *         job step was modified by others during the update process
+	 */
 	@Override
 	public Boolean updateInfo(String jobName) {
 		if (logger.isTraceEnabled())
@@ -825,6 +845,13 @@ public class SlurmJob extends EngineJob {
 
 	}
 
+	/**
+	 * Retrieves and store the completion information of the slurm job specified by the given job name. Additionally, perform
+	 * cleanup operations and delete the slurm job.
+	 *
+	 * @param jobName The name of the slurm job
+	 * @return True if the update and deletion were successful, false otherwise
+	 */
 	@Override
 	public boolean updateFinishInfoAndDelete(String jobName) {
 		if (logger.isTraceEnabled())
@@ -872,6 +899,11 @@ public class SlurmJob extends EngineJob {
 		return success;
 	}
 
+	/**
+	 * Updates the job step log based on the latest job's log.
+	 *
+	 * @param jobStep The JobStep to update the log for
+	 */
 	@Override
 	protected void updateJobLog(JobStep jobStep) {
 		// TODO Auto-generated method stub
