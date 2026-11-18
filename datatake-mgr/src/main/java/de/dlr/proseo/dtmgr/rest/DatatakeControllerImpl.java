@@ -51,13 +51,12 @@ public class DatatakeControllerImpl implements DatatakeController {
 	@Override
 	public ResponseEntity<List<RestDatatake>> getDatatakes(String spacecraftCode, String payload, String datatakeId,
 			String startTimeFrom, String startTimeTo, Long recordFrom, Long recordTo, String[] orderBy) {
-	//public ResponseEntity<List<RestDatatake>> getRestDatatakes(String spacecraft, Long from, Long to, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getRestDatatakes({}, {}, {}, {}, {})", spacecraftCode, payload, datatakeId, startTimeFrom, startTimeTo);
+			logger.trace(">>> getDatatakes({}, {}, {}, {}, {})", spacecraftCode, payload, datatakeId, startTimeFrom, startTimeTo);
 		
 		try {
 			return new ResponseEntity<>(
-					datatakeManager.getRestDatatakes(spacecraftCode, payload, datatakeId, startTimeFrom, startTimeTo, 
+					datatakeManager.getDatatakes(spacecraftCode, payload, datatakeId, startTimeFrom, startTimeTo, 
 							recordFrom, recordTo, orderBy), 
 					HttpStatus.OK);
 		} catch (IllegalArgumentException e) {
@@ -68,11 +67,12 @@ public class DatatakeControllerImpl implements DatatakeController {
 	}
 
 	/**
-	 * Mark the datatake with the given datatake ID as completed (sets processing time)
+	 * Mark the datatake with the given datatake ID as completed (sets processing time for L0 product)
 	 * 
 	 * @param id the database ID of the datatake
      * @return HTTP status "OK" and the JSON representation of the updated datatake, or
-	 *         HTTP status "NOT_FOUND" and an error message, if the spacecraft code or the datatake ID cannot be found
+	 *         HTTP status "NOT_FOUND" and an error message, if no datatake with the given database ID can be found, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
 	 */
 	@Override
 	public ResponseEntity<RestDatatake> markProcessed(Long id) {
@@ -83,38 +83,129 @@ public class DatatakeControllerImpl implements DatatakeController {
 					datatakeManager.markProcessed(id), HttpStatus.OK);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
+	/**
+	 * Create a datatake from the given JSON object
+	 * 
+	 * @param restDatatake a JSON representation of a datatake
+	 * @return HTTP status "CREATED" and the JSON representation of the new datatake, or
+	 *         HTTP status "BAD_REQUEST" and an error message, if the request is not processable, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
+	 */
 	@Override
 	public ResponseEntity<RestDatatake> createDatatake(RestDatatake restDatatake) {
-		// TODO Auto-generated method stub
-		return null;
+		if (logger.isTraceEnabled()) logger.trace(">>> createDatatake({})", 
+				null == restDatatake ? null : restDatatake.getDatatakeId());
+		
+		try {
+			return new ResponseEntity<>(
+					/* TODO */ HttpStatus.CREATED);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
 	}
 
+	/**
+	 * Count datatakes filtered by spacecraft, payload, datatake ID, start time range;
+	 * only datatakes belonging to the mission the user is logged in to will be counted
+	 * 
+	 * @param spacecraftCode the spacecraft code (optional)
+	 * @param payload the spacecraft payload name (optional)
+	 * @param datatakeId the (external) datatake ID (optional)
+	 * @param startTimeFrom earliest sensing start time (optional)
+	 * @param startTimeTo latest sensing start time (optional)
+	 * @return HTTP status "OK" and the number of datatakes as plain text, or
+	 *         HTTP status "NOT_FOUND" and an error message, if no datatakes with the given search criteria can be found
+	 */
 	@Override
 	public ResponseEntity<?> countDatatakes(String spacecraftCode, String payload, String datatakeId, String startTimeFrom,
 			String startTimeTo) {
-		// TODO Auto-generated method stub
-		return null;
+		if (logger.isTraceEnabled()) logger.trace(">>> countDatatakes({}, {}, {}, {}, {})", 
+				spacecraftCode, payload, datatakeId, startTimeFrom, startTimeTo);
+		
+		try {
+			return new ResponseEntity<>(
+					/* TODO */ HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		}
 	}
 
+	/**
+	 * Find the datatake with the given database ID
+	 * 
+	 * @param id the database ID of the datatake
+     * @return HTTP status "OK" and the JSON representation of the requested datatake, or
+	 *         HTTP status "NOT_FOUND" and an error message, if no datatake with the given database ID can be found, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
+	 */
 	@Override
 	public ResponseEntity<RestDatatake> getDatatakeById(Long id) {
-		// TODO Auto-generated method stub
-		return null;
+		if (logger.isTraceEnabled()) logger.trace(">>> getDatatakeById({})", id);
+		
+		try {
+			return new ResponseEntity<>(
+					/* TODO */ HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
 	}
 
+	/**
+	 * Delete a datatake by database ID
+	 * 
+	 * @param id the database ID of the datatake
+     * @return HTTP status "NO_CONTENT" and an empty body on success, or
+	 *         HTTP status "NOT_FOUND" and an error message, if no datatake with the given database ID can be found, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
+	 */
 	@Override
 	public ResponseEntity<?> deleteDatatakeById(Long id) {
-		// TODO Auto-generated method stub
-		return null;
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteDatatakeById({})", id);
+		
+		try {
+			return new ResponseEntity<>(
+					/* TODO */ HttpStatus.NO_CONTENT);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
 	}
 
+	/**
+	 * Update the datatake with the given database ID from the given JSON object
+	 * 
+	 * @param id the database ID of the datatake
+	 * @param restDatatake a JSON object containing the modified (and unmodified) attributes
+     * @return HTTP status "OK" and the JSON representation of the updated datatake, or
+	 *         HTTP status "NOT_FOUND" and an error message, if no datatake with the given database ID can be found, or
+	 *         HTTP status "BAD_REQUEST" and an error message, if the request is not processable, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
+	 */
 	@Override
 	public ResponseEntity<RestDatatake> modifyDatatake(Long id, RestDatatake restDatatake) {
-		// TODO Auto-generated method stub
-		return null;
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyDatatake({}, {})", id,
+				null == restDatatake ? null : restDatatake.getDatatakeId());
+		
+		try {
+			return new ResponseEntity<>(
+					/* TODO */ HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(http.errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
 	}
 
 }

@@ -5,30 +5,23 @@
  */
 package de.dlr.proseo.dtmgr.rest;
 
-import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
+import javax.enterprise.inject.Instance;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Isolation;
 
-import de.dlr.proseo.model.DataSegment;
 import de.dlr.proseo.model.Datatake;
-import de.dlr.proseo.model.GroundStation;
 import de.dlr.proseo.model.dao.DatatakeRepository;
 import de.dlr.proseo.dtmgr.rest.model.DatatakeUtil;
-import de.dlr.proseo.dtmgr.rest.model.RestDataSegment;
 import de.dlr.proseo.dtmgr.rest.model.RestDatatake;
-import de.dlr.proseo.dtmgr.rest.model.RestGroundStation;
 import de.dlr.proseo.logging.logger.ProseoLogger;
 import de.dlr.proseo.logging.messages.DatatakeMgrMessage;
 import de.dlr.proseo.model.Spacecraft;
@@ -44,7 +37,7 @@ import jakarta.persistence.EntityNotFoundException;
  */
 @Component
 public class DatatakeManager {
-
+	
 	/** Repository for spacecrafts */
 	@Autowired
 	private SpacecraftRepository spacecraftRepo;
@@ -78,7 +71,7 @@ public class DatatakeManager {
 		
 		// TODO Build and execute database query, see Order Manager "/select"
 		
-		return null;
+		return new ArrayList<>();
 	}
 
 	/**
@@ -87,8 +80,8 @@ public class DatatakeManager {
 	 * @param spacecraftCode the spacecraft code (optional)
 	 * @param payload the spacecraft payload name (optional)
 	 * @param datatakeId the (external) datatake ID (optional)
-	 * @param startTimeFrom earliest sensing start time (optional)
-	 * @param startTimeTo latest sensing start time (optional)
+	 * @param startTimeFrom earliest sensing start time (optional, default start of mission)
+	 * @param startTimeTo latest sensing start time (optional, default end of mission)
 	 * @param recordFrom first record of filtered and ordered result to return (optional, default first)
 	 * @param recordTo last record of filtered and ordered result to return (optional, default last)
 	 * @param orderBy array of strings containing a column name and an optional sort direction (ASC/DESC), may be empty
@@ -97,7 +90,7 @@ public class DatatakeManager {
 	 * @throws EntityNotFoundException if no datatakes with the given search criteria can be found
 	 */
 	@Transactional(isolation = Isolation.REPEATABLE_READ, readOnly = true)
-	public List<RestDatatake> getRestDatatakes(String spacecraftCode, String payload, String datatakeId, String startTimeFrom, String startTimeTo, Long recordFrom, Long recordTo, String[] orderBy)
+	public List<RestDatatake> getDatatakes(String spacecraftCode, String payload, String datatakeId, String startTimeFrom, String startTimeTo, Long recordFrom, Long recordTo, String[] orderBy)
 			throws IllegalArgumentException, EntityNotFoundException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestDatatakes({}, {}, {}, {}, {}, {}, {}, {})", spacecraftCode, payload, datatakeId, startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
 		
@@ -106,17 +99,24 @@ public class DatatakeManager {
 			recordFrom = 0L;
 		if (null != recordTo) {
 			if (recordTo < recordFrom) {
-				throw new IllegalArgumentException(logger.log(DatatakeMgrMessage.BOUNDS_MISMATCH, recordTo, recordFrom));
+				throw new IllegalArgumentException(logger.log(DatatakeMgrMessage.BOUNDS_MISMATCH, recordFrom, recordTo));
 			}
 		}
 		
 		Instant sensingStartTimeFrom = null, sensingStartTimeTo = null;
 		try {
-			sensingStartTimeFrom = OrbitTimeFormatter.parseDateTime(startTimeFrom);
-			sensingStartTimeTo = OrbitTimeFormatter.parseDateTime(startTimeTo);
+			if (null != startTimeFrom) {
+				sensingStartTimeFrom = OrbitTimeFormatter.parseDateTime(startTimeFrom);
+			}
+			if (null != startTimeTo) {
+				sensingStartTimeTo = OrbitTimeFormatter.parseDateTime(startTimeTo); // must be set if startTimeFrom is set
+			}
 		} catch (DateTimeParseException e) {
-			throw new IllegalArgumentException(logger.log(DatatakeMgrMessage.INVALID_START_TIMES,
-					startTimeFrom, startTimeTo, datatakeId));
+			throw new IllegalArgumentException(
+					logger.log(DatatakeMgrMessage.INVALID_START_TIMES, startTimeFrom, startTimeTo, datatakeId));
+		}
+		if (null != startTimeFrom && null != startTimeTo && sensingStartTimeFrom.isAfter(sensingStartTimeTo)) {
+			throw new IllegalArgumentException(logger.log(DatatakeMgrMessage.INVALID_START_TIMES, startTimeFrom, startTimeTo));
 		}
 		
 		// Find the spacecraft
@@ -129,6 +129,10 @@ public class DatatakeManager {
 		// Get the datatake list
 		List<Datatake> datatakes = selectDatatakes(spacecraftCode, payload, datatakeId, sensingStartTimeFrom, sensingStartTimeTo,
 				recordFrom, recordTo, orderBy);
+		
+		if (null == datatakes || 0 == datatakes.size()) {
+			throw new EntityNotFoundException(logger.log(DatatakeMgrMessage.NO_DATATAKES_FOUND, securityService.getMission()));
+		}
 		
 		// Convert the list to RestDatatakes
 		List<RestDatatake> result = new ArrayList<>();
@@ -146,7 +150,7 @@ public class DatatakeManager {
 	}
 
 	/**
-	 * Mark the datatake with the given datatake ID as processed (sets L0ASP processing time), assuming the mission
+	 * Mark the datatake with the given datatake ID as processed (sets processing time for L0 product), assuming the mission
 	 * code is set due to a user login
 	 * 
 	 * @param id the database ID of the datatake
@@ -161,7 +165,7 @@ public class DatatakeManager {
 		Optional<Datatake> datatake = datatakeRepo.findById(id);
 		if (datatake.isEmpty()) {
 			throw new EntityNotFoundException(logger.log(DatatakeMgrMessage.DATATAKE_NOT_FOUND,
-					id, datatake.get().getSpacecraft().getCode(), securityService.getMission()));
+					id, securityService.getMission()));
 		}
 		
 		

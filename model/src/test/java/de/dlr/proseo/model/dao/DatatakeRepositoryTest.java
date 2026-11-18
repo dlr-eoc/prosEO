@@ -16,14 +16,14 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.model.DataSegment;
 import de.dlr.proseo.model.Datatake;
 import de.dlr.proseo.model.Mission;
@@ -62,7 +62,7 @@ public class DatatakeRepositoryTest {
 	private EntityManager em;
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(DatatakeRepositoryTest.class);
+	private static ProseoLogger logger = new ProseoLogger(DatatakeRepositoryTest.class);
 	
 	/**
 	 * @throws java.lang.Exception if an error occurs
@@ -133,7 +133,7 @@ public class DatatakeRepositoryTest {
 		assertEquals(datatake.getDatatakeDuration(), newDatatake.getDatatakeDuration(), "Duration wrong");
 		assertEquals(datatake.getParameters().get(TEST_PARAM_KEY), newDatatake.getParameters().get(TEST_PARAM_KEY), "Parameter wrong");
 		
-		logger.info("OK: Test for findByMissionAndPayloadAndId completed");
+		logger.log(GeneralMessage.UNIT_TEST_OK, "findByMissionAndPayloadAndId");
 		
 		// Subclassing test: Create a Radar datatake and find it by sensing start time
 		RadarDatatake radarDatatake = new RadarDatatake();
@@ -153,13 +153,13 @@ public class DatatakeRepositoryTest {
 		newDatatake = newRadarDatatakes.get(0);
 		assertTrue(newDatatake instanceof RadarDatatake, "Datatake type wrong (expecting RadarDatatype)");
 		
-		logger.info("Status of RADAR datatake after read from database: " + ((RadarDatatake) newDatatake));
+		logger.debug("Status of RADAR datatake after read from database: " + ((RadarDatatake) newDatatake));
 		
 		assertEquals(TEST_ID_RADAR, newDatatake.getDatatakeId(), "Datatake ID wrong for RadarDatatake");
 		assertEquals(radarDatatake.getInstrumentSwath(), ((RadarDatatake) newDatatake).getInstrumentSwath(), "Swath wrong");
 		assertEquals(radarDatatake.getPolarization(), ((RadarDatatake) newDatatake).getPolarization(), "Polarization wrong");
 		
-		logger.info("OK: Test for findByMissionAndPayloadAndSensingStartBetween and RadarDatatake completed");
+		logger.log(GeneralMessage.UNIT_TEST_OK, "findByMissionAndPayloadAndSensingStartBetween and RadarDatatake");
 		
 		// Segment list test: Add two segments to the first datatake and check the ordering
 		DataSegment ds1 = new DataSegment();
@@ -183,7 +183,7 @@ public class DatatakeRepositoryTest {
 		newDatatakeOpt = RepositoryService.getDatatakeRepository().findById(datatake.getId());
 		assertFalse(newDatatakeOpt.isEmpty(), "Find by database ID failed");
 
-		logger.info("Status of datatake with segments after read from database: " + newDatatakeOpt.get());
+		logger.debug("Status of datatake with segments after read from database: " + newDatatakeOpt.get());
 		
 		newDatatake = newDatatakeOpt.get();
 		assertEquals(2, newDatatake.getDataSegments().size(), "Unexpected number of data segments");
@@ -193,7 +193,7 @@ public class DatatakeRepositoryTest {
 		assertEquals(TEST_DURATION.dividedBy(2), 
 				newDatatake.getDataSegments().iterator().next().getSegmentDuration(), "Wrong duration");
 		
-		logger.info("OK: Test for data segment ordering completed");
+		logger.log(GeneralMessage.UNIT_TEST_OK, "data segment ordering");
 		
 	}
 

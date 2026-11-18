@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ConfigurationProperties(prefix = "proseo.dtmgr")
+@EntityScan(basePackages = "de.dlr.proseo.model")
 public class DatatakeManagerConfiguration {
 	
 	/** A list of spacecraft codes */
@@ -28,11 +30,11 @@ public class DatatakeManagerConfiguration {
 	 * The interval between datatake checks in milliseconds
 	 * (default once per hour; 0 disables processing of incomplete datatakes)
 	 */
-	@Value("${proseo.dtmgr.check.interval:3600000}")
+	@Value("${check.interval:3600000}")
 	private Long checkInterval;
 	
 	/** The datatake timeout period in seconds (default 200 min, roughly corresponding to two orbits in LEO) */
-	@Value("${proseo.dtmgr.timeout:12000}")
+	@Value("${timeout:12000}")
 	private Long timeout;
 	
 	/**

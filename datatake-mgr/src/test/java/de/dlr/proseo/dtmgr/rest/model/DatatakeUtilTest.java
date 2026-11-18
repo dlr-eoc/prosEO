@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.logging.logger.ProseoLogger;
+import de.dlr.proseo.logging.messages.GeneralMessage;
 import de.dlr.proseo.model.DataSegment;
 import de.dlr.proseo.model.Datatake;
 import de.dlr.proseo.model.Mission;
@@ -49,7 +51,7 @@ class DatatakeUtilTest {
 	private static final String TEST_PARAM_VALUE = "value1";
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(DatatakeUtilTest.class);
+	private static ProseoLogger logger = new ProseoLogger(DatatakeUtilTest.class);
 	
 	/**
 	 * @throws java.lang.Exception
@@ -122,7 +124,7 @@ class DatatakeUtilTest {
 		assertNotNull(restDatatake, "toRestDatatake returns null");
 		
 		ObjectMapper mapper = JsonMapper.builder().configure(SerializationFeature.INDENT_OUTPUT, true).build();
-		logger.info("... REST datatake:\n{}", mapper.writeValueAsString(restDatatake));
+		logger.debug("... REST datatake:\n{}", mapper.writeValueAsString(restDatatake));
 		
 		assertEquals(datatake.getSpacecraft().getMission().getCode(), restDatatake.getMissionCode(), "Mission code mismatch");
 		assertEquals(datatake.getPayload().getName(), restDatatake.getPayloadName(), "Payload name mismatch");
@@ -155,7 +157,7 @@ class DatatakeUtilTest {
 		// Check parameters
 		//assertEquals()
 		
-		logger.info("OK: Test for conversion to REST datatake completed");
+		logger.log(GeneralMessage.UNIT_TEST_OK, "Conversion to REST datatake");
 	}
 
 	/**
@@ -189,7 +191,7 @@ class DatatakeUtilTest {
 		restDatatake.getDataSegments().add(restDataSegment);
 		
 		ObjectMapper mapper = JsonMapper.builder().configure(SerializationFeature.INDENT_OUTPUT, true).build();
-		logger.info("... REST datatake:\n{}", mapper.writeValueAsString(restDatatake));
+		logger.debug("... REST datatake:\n{}", mapper.writeValueAsString(restDatatake));
 
 		Datatake datatake = DatatakeUtil.toModelDatatake(restDatatake);
 		assertNotNull(datatake, "toModelDatatake returns null");
@@ -213,7 +215,7 @@ class DatatakeUtilTest {
 		assertEquals(TEST_START_TIME, ds1.getSensingStartTime(), "Start time mismatch in segment");
 		assertEquals(TEST_DURATION, ds1.getSegmentDuration(), "Duration mismatch in segment");
 		
-		logger.info("OK: Test for conversion to model datatake completed");
+		logger.log(GeneralMessage.UNIT_TEST_OK, "Conversion to model datatake");
 	}
 
 }
